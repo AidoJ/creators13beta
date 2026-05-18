@@ -1,0 +1,1 @@
+UPDATE public.creator_types SET color_hex = '#F02000' WHERE name = 'Mountain';

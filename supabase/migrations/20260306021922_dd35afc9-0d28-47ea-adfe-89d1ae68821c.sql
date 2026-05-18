@@ -1,0 +1,1 @@
+UPDATE creator_type_profiles SET primary_type = initcap(primary_type), secondary_type = initcap(secondary_type), type_3 = initcap(type_3), type_4 = initcap(type_4) WHERE primary_type IS DISTINCT FROM initcap(primary_type) OR secondary_type IS DISTINCT FROM initcap(secondary_type) OR type_3 IS DISTINCT FROM initcap(type_3) OR type_4 IS DISTINCT FROM initcap(type_4);

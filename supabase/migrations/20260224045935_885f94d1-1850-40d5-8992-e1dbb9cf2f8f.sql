@@ -1,0 +1,1 @@
+UPDATE profiles SET enrollment_step = 'photos_uploaded' WHERE user_id = '5d8fd875-bd2b-4c90-a419-75b7a0982038' AND (enrollment_step IS NULL OR enrollment_step = 'plan_selected' OR enrollment_step = 'signed_up' OR enrollment_step = 'payment_complete');

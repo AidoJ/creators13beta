@@ -1,0 +1,1 @@
+ALTER TYPE public.case_study_status ADD VALUE IF NOT EXISTS 'profiling_submitted' AFTER 'draft';

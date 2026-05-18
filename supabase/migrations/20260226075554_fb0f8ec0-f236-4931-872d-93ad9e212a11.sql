@@ -1,0 +1,8 @@
+UPDATE email_templates
+SET html_body = REPLACE(
+  html_body,
+  E'<div style="margin:0 auto;max-width:480px"><a href="https://www.youtube.com/watch?v=N_hAuOoWFjM" target="_blank" style="display:block;text-decoration:none"><div style="background:url(\'https://img.youtube.com/vi/N_hAuOoWFjM/hqdefault.jpg\') center/cover no-repeat;border-radius:12px;min-height:220px;display:flex;align-items:center;justify-content:center"><img src="https://creators13.lovable.app/email/play-button.png" alt="Play Video" width="68" height="48" style="display:inline-block" /></div></a></div>',
+  E'<div style="margin:0 auto;max-width:480px"><a href="https://www.youtube.com/watch?v=N_hAuOoWFjM" target="_blank" style="display:block;text-decoration:none"><div style="background:url(\'https://img.youtube.com/vi/N_hAuOoWFjM/hqdefault.jpg\') center/cover no-repeat;border-radius:12px;min-height:220px;display:flex;align-items:center;justify-content:center"><!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" style="width:68px;height:48px" arcsize="20%" fillcolor="#FF0000" stroke="f"><v:textbox style="mso-fit-shape-to-text:true" inset="0,0,0,0"><center style="font-size:28px;color:#ffffff">&#9654;</center></v:textbox></v:roundrect><![endif]--><!--[if !mso]><!--><div style="width:68px;height:48px;background:#FF0000;border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3)"><div style="width:0;height:0;border-top:12px solid transparent;border-bottom:12px solid transparent;border-left:20px solid #ffffff;margin-left:4px"></div></div><!--<![endif]--></div></a></div>'
+),
+updated_at = now()
+WHERE template_key = 'case_study_invite';

@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Lilita+One&family=Questrial&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Warm ivory background */
+    --background: 45 40% 97%;
+    --foreground: 340 50% 18%;
+
+    /* Soft warm cards */
+    --card: 45 35% 95%;
+    --card-foreground: 340 50% 18%;
+
+    --popover: 45 35% 95%;
+    --popover-foreground: 340 50% 18%;
+
+    /* Magenta/crimson primary from logo text & fill */
+    --primary: 338 75% 42%;
+    --primary-foreground: 45 40% 97%;
+
+    /* Gold accent secondary from logo outline */
+    --secondary: 40 72% 50%;
+    --secondary-foreground: 340 50% 18%;
+
+    /* Warm muted tones */
+    --muted: 35 25% 90%;
+    --muted-foreground: 340 20% 45%;
+
+    /* Ocean blue accent from logo swirls */
+    --accent: 210 65% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 35 25% 85%;
+    --input: 35 25% 85%;
+    --ring: 338 75% 42%;
+
+    --radius: 0.75rem;
+
+    /* Logo-derived palette extras */
+    --gold: 40 72% 50%;
+    --gold-light: 40 65% 72%;
+    --gold-dark: 40 75% 38%;
+    --forest: 140 45% 35%;
+    --forest-light: 140 35% 50%;
+    --sage: 145 25% 45%;
+    --earth: 15 45% 35%;
+    --cream: 45 40% 97%;
+    --warm-white: 45 25% 99%;
+    --magenta: 338 75% 42%;
+    --ocean: 210 65% 50%;
+    --zoom-blue: 220 100% 52%;
+    --lemon: 55 75% 65%;
+    --terracotta: 20 55% 50%;
+
+    --sidebar-background: 338 60% 22%;
+    --sidebar-foreground: 45 40% 97%;
+    --sidebar-primary: 40 72% 50%;
+    --sidebar-primary-foreground: 340 50% 18%;
+    --sidebar-accent: 338 55% 30%;
+    --sidebar-accent-foreground: 45 40% 97%;
+    --sidebar-border: 338 50% 18%;
+    --sidebar-ring: 40 72% 50%;
+  }
+
+  .dark {
+    --background: 340 30% 8%;
+    --foreground: 45 25% 92%;
+
+    --card: 340 25% 12%;
+    --card-foreground: 45 25% 92%;
+
+    --popover: 340 25% 12%;
+    --popover-foreground: 45 25% 92%;
+
+    --primary: 338 75% 48%;
+    --primary-foreground: 45 40% 97%;
+
+    --secondary: 40 65% 45%;
+    --secondary-foreground: 340 50% 10%;
+
+    --muted: 340 15% 18%;
+    --muted-foreground: 35 20% 60%;
+
+    --accent: 210 55% 45%;
+    --accent-foreground: 0 0% 100%;
+    --zoom-blue: 220 100% 52%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 340 15% 18%;
+    --input: 340 15% 18%;
+    --ring: 338 75% 48%;
+
+    --sidebar-background: 338 50% 10%;
+    --sidebar-foreground: 45 40% 97%;
+    --sidebar-primary: 40 65% 45%;
+    --sidebar-primary-foreground: 340 50% 10%;
+    --sidebar-accent: 338 45% 15%;
+    --sidebar-accent-foreground: 45 40% 97%;
+    --sidebar-border: 338 40% 15%;
+    --sidebar-ring: 40 65% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-size: 24px;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+/* Contain Stripe Embedded Checkout iframe */
+#stripe-checkout-container iframe {
+  max-width: 100% !important;
+  position: relative !important;
+}
+
+#stripe-checkout-container > div {
+  position: relative !important;
+}

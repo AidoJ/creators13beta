@@ -1,0 +1,1 @@
+ALTER TABLE public.creator_types ADD COLUMN IF NOT EXISTS profile_content jsonb DEFAULT NULL;

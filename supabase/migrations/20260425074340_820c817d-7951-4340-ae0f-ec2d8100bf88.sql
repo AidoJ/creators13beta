@@ -1,0 +1,1 @@
+UPDATE public.case_studies SET status = 'approved', reviewed_at = now(), reviewer_notes = COALESCE(reviewer_notes, '') || E'\n[Manually approved - migrated case study under prior rules]' WHERE id IN ('9a436b0f-1fc3-4b51-8c28-1eabdaaa35d7','1dd9d637-51c3-4c9b-b647-5bab402ee451');

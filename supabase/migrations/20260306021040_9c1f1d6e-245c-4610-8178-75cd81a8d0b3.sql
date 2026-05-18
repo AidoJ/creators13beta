@@ -1,0 +1,1 @@
+UPDATE case_studies SET status = 'submitted', reviewed_at = NULL, reviewed_by = NULL WHERE id = '34b2291d-9722-42fd-a090-5246227e3e04';

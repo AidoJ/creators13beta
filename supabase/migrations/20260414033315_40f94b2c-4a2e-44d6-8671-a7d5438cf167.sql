@@ -1,0 +1,1 @@
+ALTER TABLE public.case_studies ADD COLUMN profiling_complete boolean NOT NULL DEFAULT false;

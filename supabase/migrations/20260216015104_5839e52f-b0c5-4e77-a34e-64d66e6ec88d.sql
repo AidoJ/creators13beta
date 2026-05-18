@@ -1,0 +1,1 @@
+ALTER TABLE public.case_studies ADD COLUMN reviewer_notes text;

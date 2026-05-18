@@ -1,0 +1,1 @@
+ALTER TABLE public.training_resources ADD COLUMN category text NOT NULL DEFAULT 'uncategorised';

@@ -1,0 +1,1 @@
+UPDATE profiles SET case_study_consent_at = now() WHERE user_id = '30a4d133-b059-40cd-a52a-26064b7e2e15' AND case_study_consent_at IS NULL;

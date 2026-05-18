@@ -1,0 +1,1 @@
+ALTER TABLE public.creator_type_profiles ADD CONSTRAINT creator_type_profiles_user_id_key UNIQUE (user_id);
