@@ -1,2 +1,0 @@
-[functions.discord-oauth-callback]
-verify_jwt = false
