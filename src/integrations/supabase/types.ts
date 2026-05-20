@@ -448,6 +448,36 @@ export type Database = {
         }
         Relationships: []
       }
+      discord_links: {
+        Row: {
+          discord_user_id: string
+          discord_username: string | null
+          id: string
+          last_synced_at: string | null
+          last_synced_role: string | null
+          linked_at: string
+          user_id: string
+        }
+        Insert: {
+          discord_user_id: string
+          discord_username?: string | null
+          id?: string
+          last_synced_at?: string | null
+          last_synced_role?: string | null
+          linked_at?: string
+          user_id: string
+        }
+        Update: {
+          discord_user_id?: string
+          discord_username?: string | null
+          id?: string
+          last_synced_at?: string | null
+          last_synced_role?: string | null
+          linked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           created_at: string

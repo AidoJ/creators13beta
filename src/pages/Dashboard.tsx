@@ -15,6 +15,7 @@ import UpsellBanner from "@/components/dashboard/UpsellBanner";
 import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
+import DiscordLinkCard from "@/components/dashboard/DiscordLinkCard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ProfileData {
@@ -218,6 +219,9 @@ export default function Dashboard() {
 
         {/* Zoom session recordings */}
         <ZoomRecordingsCard />
+
+        {/* Discord community linking */}
+        {user && <DiscordLinkCard userId={user.id} />}
 
         {/* Subscription details — full width */}
         <SubscriptionCard />
