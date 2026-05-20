@@ -19,13 +19,8 @@ This plan merges three inputs into one roadmap: (1) the existing Discord integra
 - **Discord link is OPTIONAL for Wren** (confirmed). Free + Wren can play solo / 1v1 without linking. Robin+ gets a soft nudge.
 - **Owl client-supervision in Discord** (confirmed) — private `#owl-supervision` channel, role-gated.
 
-### Stage 1 — Free Tier "Gateway" + Profile v1 (3–4 days)
-Pivot needed because the doc introduces a **Free tier** that currently doesn't exist (today the lowest paid tier is Wren).
-- New `free` subscription tier in `tiers.ts` + `subscriptions` table (`tier = 'free'`, no Stripe customer).
-- Signup flow: email/password creates a Free account immediately; payment becomes optional, not gating.
-- Light profile: name, photo, 3 prompts ("What are you curious about?", "What do you create?", "What are you hoping to find here?").
-- Update `RoleGuard` / `useEnrollmentGate` to allow Free users into game + directory but block Robin+ features.
-- Landing page CTA changes: **"Play Free"** (primary) / **"Get Profiled $27/mo"** (secondary).
+### Stage 1 — SKIPPED (No Free tier)
+Confirmed: **Wren remains the entry tier at $27**. No `free` tier is introduced. Existing tier ladder in `tiers.ts` is unchanged (Wren $27 / Robin $77 / Falcon $197 / Owl $5K+$147).
 
 ### Stage 2 — Card Game Core (3 weeks, the moat)
 **Database (new tables):**
