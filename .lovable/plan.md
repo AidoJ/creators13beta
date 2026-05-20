@@ -44,7 +44,8 @@ Confirmed: **Wren remains the entry tier at $27**. No `free` tier is introduced.
 - `HexagonCard` — clip-path hex, drag source/target, flip animation reveals fun fact.
 - `PlayerHand`, `DrawPile`, `UsedPile`, `TurnControls`.
 - `MatchLobby` (find player / quick match / invite) + `BotMatch` for tutorial.
-- Realtime via Supabase `postgres_changes` on `game_matches` + `game_actions`.
+- **Realtime, both players present** (confirmed): Supabase Realtime `postgres_changes` on `game_matches` + `game_actions`, plus a **presence channel** per match (online/typing/thinking indicators). Server-authoritative turn lock prevents double-plays. Disconnect → 60s grace → forfeit. No async/push-notification turns.
+- **Card art**: emoji + coloured hexes as placeholders for now; swap in A'Hara's assets when delivered (loaded from `game_cards.art_url`, Supabase storage bucket `game-card-art`).
 
 **Game rules implemented exactly per PDF:**
 - Win = 4 Creators (1 of each Earth/Air/Fire/Water OR Sky substitute) surrounded by 12 matching Animals.
