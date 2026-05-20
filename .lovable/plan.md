@@ -1,109 +1,120 @@
 
+# Messaging: Discord-Integrated Instead of In-App
 
-# 13 Creators — Phase 1: Full Foundations, Enrollment & Practitioner Portal
+## Why this is the right call
+You'd be opting out of:
+- Storing message content, voice notes, images (no GDPR export/delete tooling to build)
+- Abuse reporting + moderation queue
+- Minor-safety controls (kids tier would have been a nightmare)
+- Realtime infrastructure cost and presence handling
+- Notification fan-out (Discord pushes for free on iOS/Android/desktop)
 
-## Vision
-Build the complete foundational architecture matching the mind map — **Website** as the central hub connecting **LMS**, **APP (PWA)**, **Subscriptions**, **Community**, **Game**, and **Shop**. Every branch gets its database structure from day one so nothing needs rewriting as features are added.
+You'd be gaining: voice rooms, video, threads, reactions, search, mobile/desktop apps, screen share, scheduled events — all already built and battle-tested.
 
----
+## How it slots into the platform
 
-## Foundations (All Branches Structured from Day One)
+### 1. Single 13CREATORS Discord server (you own it)
+Structured by tier and purpose:
 
-### Role & Tier Architecture
-- **6 user roles** (users can hold multiple simultaneously): Trainer, Practitioner, Trainee, Client, Community Participant, Gamer
-- **4 subscription tiers** (independent from roles): Wren (free), Robin, Falcon, Owl
-- Roles and tiers stored as separate systems — either can evolve independently
+```
+INFO
+  #welcome
+  #rules
+  #announcements (announcement channel, read-only)
 
-### Core Database Structure
-- **User profiles** — personal info, physical details (height, shoe size, DOB, gender), avatar, medical history
-- **User roles** — multi-role table (a user can be Practitioner + Community Participant + Gamer simultaneously)
-- **Subscriptions** — tier, billing status, Stripe IDs, payment method preferences
-- **Creator Type profiles** — each user's determined Creator Type(s) and profiling data
-- **Client-Practitioner relationships** — linking Practitioners/Trainees to their assigned Clients
-- **Photo storage** — secure blob storage for 8 profiling photos per client (URLs stored in DB, files in Supabase Storage)
-- **Booking records** — Zoom/Calendly session scheduling and history
-- **LMS structure** — courses, modules, lessons (video/text/audio), assessments, case studies, progress tracking
-- **Case studies** — practitioner-created profiles of individuals they've profiled, linked to LMS
-- **Community structure** — placeholder tables for posts, discussions, member interactions
-- **Game structure** — placeholder tables for future Golden Games features
-- **Shop structure** — placeholder tables for product catalog (physical + digital), orders, fulfillment
-- **Row-Level Security** on all tables with role-based access policies
+🪶 WREN (everyone)
+  #general
+  #card-game-lobby     ← "looking for a game" posts
+  #introductions
+  voice: 🌱 Open Cuppa Room
 
----
+🐦 ROBIN (paid)
+  #robin-lounge
+  #daily-forecasts     ← bot posts CT-of-the-day
+  voice: 🎙️ Robin Voice
 
-## Phase 1 Features (What Gets Built Now)
+🦅 FALCON (trainee practitioners)
+  #falcon-trainees
+  voice: 🦅 Falcon Study Room
 
-### 1. Public Website / Landing Page
-- Hero section with Creator Types branding — earthy golds, forest greens, warm naturals
-- Overview of the 4 subscription tiers with pricing
-- Call-to-action to enroll
-- About section explaining Creator Types and the 13 forces of nature
-- Navigation linking to all future sections (Community, Shop, Game shown as "Coming Soon")
+🦉 OWL (certified practitioners)
+  #owl-practitioners
+  #client-supervision
+  voice: 🦉 Owl Practice Room
 
-### 2. Enrollment Flow (6-Step Guided Process)
-1. **Plan Selection** — Choose tier with monthly/annual toggle and pricing breakdown
-2. **Signup** — Email/password + full personal details (name, DOB, gender, height, shoe size, phone, address, medical history)
-3. **Payment** — Stripe Checkout supporting multiple payment methods (card, EFT/bank transfer, BECS Direct Debit, PayID)
-4. **Photo Upload** — 8 specific photos (3 face, 3 body, feet, hands) with visual guidelines, stored securely in blob storage
-5. **Zoom Booking** — Embedded Calendly widget to schedule initial profiling session
-6. **Dashboard** — Confirmation with enrollment status and next steps
+🌳 CREATOR TYPES (13 channels, all members)
+  #lava #fire #sun ... #sky     ← one per type for affinity chat
 
-### 3. Authentication & Role Management
-- Email + password sign-up and login
-- Auto-assign roles based on chosen subscription tier
-- Protected routes — role-based access to different sections of the app
-- Trainer (owner) has admin-level access to everything
+ADMIN / MOD (private)
+```
 
-### 4. APP — Client Dashboard (Wrens / Robins / Subscribers)
-- **My Profile** — Personal details, Creator Type results (once profiled), photo management
-- **My Sessions** — Upcoming and past Zoom bookings
-- **Enrollment Status** — Visual progress tracker through the profiling journey
-- **Subscription** — View plan, upgrade, cancel, payment history
-- **Community** — "Coming Soon" link (foundation ready)
-- **Gamer** — "Coming Soon" link (foundation ready)
+### 2. Account linking via Discord OAuth
+- "Connect Discord" button on user profile → standard Discord OAuth (`identify` + `guilds.join` scopes)
+- Edge function stores `discord_user_id` + refresh token on profile
+- User is auto-invited to the guild on link
 
-### 5. APP — Practitioner Dashboard (Trainees / Practitioners)
-- **My Clients** — Assigned clients with profiling status and submitted photos
-- **My Training** — Access LMS course modules and track progress
-- **My Sessions** — Upcoming/past Zoom sessions with clients
-- **My Case Studies** — Create and manage case studies of profiled individuals (stored in LMS)
-- **My Profile** — Personal details and Creator Type info
+### 3. Tier → Discord role sync (the magic)
+A new edge function `sync-discord-roles`:
+- Triggered by the existing Stripe webhook (subscription create/update/cancel)
+- Also triggered on Discord-link and nightly cron as a safety net
+- Calls Discord Bot API to add/remove roles: `wren`, `robin`, `falcon`, `owl`, `moderator`, `trainer`
+- Discord's channel permissions do the gatekeeping — no per-channel logic in our code
 
-### 6. APP — Admin Panel (Trainer / Owner)
-- **User Management** — View all users, search/filter, assign or change roles
-- **Client Oversight** — See all clients across all practitioners, reassign as needed
-- **LMS Content Management** — Create/edit/reorder courses, modules, lessons, assessments
-- **Case Study Review** — View and approve practitioner-submitted case studies
-- **Enrollment Overview** — Dashboard of signups, payment status, pipeline metrics
-- **Role Assignment** — Promote Trainees to Practitioners, manage all permissions
+Result: someone upgrades to Falcon → within seconds they can see `#falcon-trainees` in Discord. Cancel → role removed automatically.
 
-### 7. LMS (Full Framework)
-- **Courses & Modules** — organized into sections with individual lessons
-- **Content Types** — video, text, audio, and photos
-- **Case Studies** — practitioners create case studies of profiled individuals, with peer review and trainer sign-off workflow; the core training mechanism
-- **Training Materials** — downloadable resources and reference materials
-- **Progress Tracking** — per-user completion markers and advancement indicators
-- **Access Control** — only Trainees, Practitioners, and Trainer see training content
+### 4. Profile → Discord deep links (replaces in-app DMs)
+On each member profile in `/home`:
+- "Message on Discord" button → `discord://discordapp.com/users/{discord_user_id}` (opens app) with web fallback
+- "Invite to voice cuppa" → creates a Discord scheduled event via bot, shares invite link
+- Only shown if the target user has linked Discord and has the "open to DMs" preference on
 
-### 8. Stripe Payments (Multiple Methods)
-- 4 subscription products matching tier pricing
-- Owl tier: one-time enrollment fee + recurring subscription
-- Payment methods at checkout: credit/debit card, bank transfer/EFT, BECS Direct Debit, PayID
-- Payment history in user dashboard
-- Subscription management (upgrade/downgrade/cancel)
+This means **zero message data ever touches our database**. The privacy policy gets dramatically shorter.
 
-### 9. Coming Soon Pages (Foundations Ready)
-- **Community** — placeholder page with "Coming Soon" messaging, database tables ready
-- **Game** — placeholder page with "Coming Soon" messaging, database tables ready
-- **Shop** — placeholder page with "Coming Soon" messaging, database tables ready (Shopify integration to be enabled when ready for physical products)
+### 5. Bot-driven bridges (one-way, no message storage)
+A small `13creators-bot`:
+- Posts daily CT forecasts to `#daily-forecasts` (Robin+)
+- Posts new event announcements to `#announcements` from our events table
+- Posts game-match invites to `#card-game-lobby` when a user clicks "find an opponent"
+- Listens for slash commands: `/profile @user` returns a public profile embed; `/whoami` shows the user their tier
+- **Never reads private messages or channel history** — purely outbound + slash commands
 
----
+### 6. What stays in-app
+- The card game itself (gameplay, board, points)
+- Profile + matching + map/face view
+- Events calendar (with "Join in Discord voice" buttons)
+- Practitioner portal (Owl)
+- Shop + subscriptions
+- Public lobby / game match invites
 
-## Design Direction
-- **Warm & nature-inspired** — earthy gold (#D4AF37), forest greens, warm creams and neutrals
-- Nature motifs reflecting the 13 Creator Types (River, Tree, Sun, Mountain, etc.)
-- Clean, welcoming typography with organic shapes and rounded corners
-- Smooth progress indicators throughout enrollment and LMS
-- Fully mobile-responsive, PWA-ready
-- Consistent navigation structure reflecting the mind map hierarchy
+All conversation, all DMs, all group chat → Discord.
 
+## Trade-offs (worth being honest about)
+- **Users must accept a Discord account.** Discord has 200M+ MAUs and is free, but it's not zero friction. Mitigate with a 30-second "Why we use Discord" page during onboarding.
+- **Branding is split.** Your community lives in Discord's UI, not yours. Mitigate with strong server branding (custom emoji per CT, role colours from Appendix 1 palette, bot avatar = 13CREATORS logo).
+- **Falcon/Owl trainee privacy** — practitioner supervision channels live on Discord servers (encrypted in transit, stored by Discord). Confirm this is acceptable for your Owl-tier client supervision use case. If not, Owl-only practitioner notes stay in the in-app practitioner portal (which they already do today).
+- **No "open to a virtual cuppa" inside the app** — instead it becomes a profile toggle that exposes the "Invite to voice cuppa" button on your profile.
+
+## Implementation impact on the build plan
+
+This **simplifies** Stage 3 dramatically and lets us bring it forward:
+
+| Old Stage 3 (in-app messaging, ~1.5 weeks) | New Stage 3 (Discord, ~4 days) |
+|---|---|
+| DM tables, RLS, realtime channels | Discord OAuth + account linking |
+| Group chat schema + UI | Server setup (channels, roles, permissions) — done in Discord UI |
+| Audio recording + self-destruct timer | n/a — Discord handles voice |
+| Image upload + RLS storage bucket | n/a |
+| Notification preferences UI | Discord handles all notifications |
+| Moderation tools | Discord has them |
+| **Build:** OAuth flow, role-sync edge function, bot service, profile deep-link buttons, "Connect Discord" onboarding | |
+
+Approximate saved time: ~1 full week, plus removal of entire compliance/storage burden.
+
+## What I need from you before building
+
+1. **Server ownership** — you (or A'Hara) creates the Discord server and gives the bot owner access. I'll provide a setup checklist.
+2. **Bot credentials** — I'll need a Discord Bot Token + Application ID added as secrets when we're ready.
+3. **Owl client-supervision question** — confirm Owl practitioner channels on Discord are acceptable, or that Owl supervision stays in the in-app portal only.
+4. **Mandatory or optional Discord link?** — should Wren users be allowed to skip linking Discord (and just play the game solo/with bot), or is linking required to use any social feature?
+
+Say the word on those four and I'll fold this into the master build plan I gave you earlier, then we can start Stage 0.
