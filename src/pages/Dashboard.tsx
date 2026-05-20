@@ -220,6 +220,9 @@ export default function Dashboard() {
         {/* Zoom session recordings */}
         <ZoomRecordingsCard />
 
+        {/* Discord community linking */}
+        {user && <DiscordLinkCard userId={user.id} />}
+
         {/* Subscription details — full width */}
         <SubscriptionCard />
 
