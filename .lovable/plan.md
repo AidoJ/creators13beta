@@ -19,13 +19,8 @@ This plan merges three inputs into one roadmap: (1) the existing Discord integra
 - **Discord link is OPTIONAL for Wren** (confirmed). Free + Wren can play solo / 1v1 without linking. Robin+ gets a soft nudge.
 - **Owl client-supervision in Discord** (confirmed) — private `#owl-supervision` channel, role-gated.
 
-### Stage 1 — Free Tier "Gateway" + Profile v1 (3–4 days)
-Pivot needed because the doc introduces a **Free tier** that currently doesn't exist (today the lowest paid tier is Wren).
-- New `free` subscription tier in `tiers.ts` + `subscriptions` table (`tier = 'free'`, no Stripe customer).
-- Signup flow: email/password creates a Free account immediately; payment becomes optional, not gating.
-- Light profile: name, photo, 3 prompts ("What are you curious about?", "What do you create?", "What are you hoping to find here?").
-- Update `RoleGuard` / `useEnrollmentGate` to allow Free users into game + directory but block Robin+ features.
-- Landing page CTA changes: **"Play Free"** (primary) / **"Get Profiled $27/mo"** (secondary).
+### Stage 1 — SKIPPED (No Free tier)
+Confirmed: **Wren remains the entry tier at $27**. No `free` tier is introduced. Existing tier ladder in `tiers.ts` is unchanged (Wren $27 / Robin $77 / Falcon $197 / Owl $5K+$147).
 
 ### Stage 2 — Card Game Core (3 weeks, the moat)
 **Database (new tables):**
@@ -49,7 +44,8 @@ Pivot needed because the doc introduces a **Free tier** that currently doesn't e
 - `HexagonCard` — clip-path hex, drag source/target, flip animation reveals fun fact.
 - `PlayerHand`, `DrawPile`, `UsedPile`, `TurnControls`.
 - `MatchLobby` (find player / quick match / invite) + `BotMatch` for tutorial.
-- Realtime via Supabase `postgres_changes` on `game_matches` + `game_actions`.
+- **Realtime, both players present** (confirmed): Supabase Realtime `postgres_changes` on `game_matches` + `game_actions`, plus a **presence channel** per match (online/typing/thinking indicators). Server-authoritative turn lock prevents double-plays. Disconnect → 60s grace → forfeit. No async/push-notification turns.
+- **Card art**: emoji + coloured hexes as placeholders for now; swap in A'Hara's assets when delivered (loaded from `game_cards.art_url`, Supabase storage bucket `game-card-art`).
 
 **Game rules implemented exactly per PDF:**
 - Win = 4 Creators (1 of each Earth/Air/Fire/Water OR Sky substitute) surrounded by 12 matching Animals.
@@ -112,20 +108,17 @@ I'll generate a new self-contained HTML file at **`/mnt/documents/13creators_moc
 
 ---
 
-## Open questions before I code anything
+## Confirmed answers (locked)
 
-1. **Free tier introduction** — the doc adds a Free tier below Wren. Today Wren is the entry tier. Confirm we're adding `free` (no payment) as a new lowest rung, and Wren stays at $27.
-2. **Pricing in the doc** (Wren $27, Robin $77, Falcon $197, Owl $5K+$147) — these match what's in `tiers.ts` today, just confirming nothing changed.
-3. **Game art** — for the mockup I'll use emoji + coloured hexes as placeholders. Do you have card art assets from A'Hara, or should I generate creator-type illustrations later in Stage 2?
-4. **Async vs realtime** — doc says async ("player takes turn, you get notification"). Confirm push-notification-style async is correct (not live realtime board with both players present).
+1. **No Free tier** — Wren stays the entry tier at $27.
+2. **Pricing unchanged** — matches `tiers.ts` today.
+3. **Card art** — A'Hara to supply; placeholders (emoji + coloured hexes) until then.
+4. **Realtime, not async** — both players present on the board with a presence channel.
 
 ---
 
-## What happens on approval
+## What happens next
 
-1. I generate `/mnt/documents/13creators_mockup_v2.html` with the honeycomb board and deliver it as a `<presentation-artifact>` for you to open.
-2. You review; we iterate on the mockup until it feels right.
-3. Then I start Stage 0.5 (Stripe-webhook → Discord role sync) — small, finishes Stage 0 cleanly.
-4. Then Stage 1 (Free tier) → Stage 2 (game core).
-
-No project source files are changed until you approve and we move past the mockup.
+1. **Stage 0.5 starts now** — Stripe webhook → `sync-discord-role` on subscription changes + nightly `pg_cron` safety-net.
+2. Then Stage 2 (game core, realtime architecture) → Stage 3 (points) → Stage 4 (Discord bridges) → Stage 5 (community) → Stage 6 (polish).
+3. Mockup v2 (`13creators_mockup_v2.html`) remains the visual reference for the honeycomb board.
