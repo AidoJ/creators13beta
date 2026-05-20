@@ -1,120 +1,131 @@
 
-# Messaging: Discord-Integrated Instead of In-App
+# 13 Creators — Consolidated Build Plan + Honeycomb Mockup
 
-## Why this is the right call
-You'd be opting out of:
-- Storing message content, voice notes, images (no GDPR export/delete tooling to build)
-- Abuse reporting + moderation queue
-- Minor-safety controls (kids tier would have been a nightmare)
-- Realtime infrastructure cost and presence handling
-- Notification fan-out (Discord pushes for free on iOS/Android/desktop)
+This plan merges three inputs into one roadmap: (1) the existing Discord integration we just shipped, (2) the B Creators card game rules PDF, and (3) A'Hara's revised build plan doc (free-tier gateway, points economy, async multiplayer, projects). It also defines the revised HTML mockup with a **true honeycomb game board** to replace the placeholder grid.
 
-You'd be gaining: voice rooms, video, threads, reactions, search, mobile/desktop apps, screen share, scheduled events — all already built and battle-tested.
+---
 
-## How it slots into the platform
+## PART A — Completed Build Plan
 
-### 1. Single 13CREATORS Discord server (you own it)
-Structured by tier and purpose:
+### Stage 0 — Discord Foundation ✅ (done)
+- `discord_links` table + RLS
+- OAuth callback edge function (auto-join guild + assign tier role)
+- `DiscordLinkCard` on dashboard
+- Tier role IDs wired (Wren / Robin / Falcon / Owl)
 
-```
-INFO
-  #welcome
-  #rules
-  #announcements (announcement channel, read-only)
+### Stage 0.5 — Finish Discord properly (1 day)
+- **Stripe webhook → role-sync**: extend `stripe-webhook` to call a new `sync-discord-role` helper on `customer.subscription.{created,updated,deleted}`. Adds/removes the correct tier role, with the previous tier role removed first.
+- **Nightly safety-net cron** (`pg_cron` → `sync-discord-role` for all linked users) to repair drift.
+- **Discord link is OPTIONAL for Wren** (confirmed). Free + Wren can play solo / 1v1 without linking. Robin+ gets a soft nudge.
+- **Owl client-supervision in Discord** (confirmed) — private `#owl-supervision` channel, role-gated.
 
-🪶 WREN (everyone)
-  #general
-  #card-game-lobby     ← "looking for a game" posts
-  #introductions
-  voice: 🌱 Open Cuppa Room
+### Stage 1 — Free Tier "Gateway" + Profile v1 (3–4 days)
+Pivot needed because the doc introduces a **Free tier** that currently doesn't exist (today the lowest paid tier is Wren).
+- New `free` subscription tier in `tiers.ts` + `subscriptions` table (`tier = 'free'`, no Stripe customer).
+- Signup flow: email/password creates a Free account immediately; payment becomes optional, not gating.
+- Light profile: name, photo, 3 prompts ("What are you curious about?", "What do you create?", "What are you hoping to find here?").
+- Update `RoleGuard` / `useEnrollmentGate` to allow Free users into game + directory but block Robin+ features.
+- Landing page CTA changes: **"Play Free"** (primary) / **"Get Profiled $27/mo"** (secondary).
 
-🐦 ROBIN (paid)
-  #robin-lounge
-  #daily-forecasts     ← bot posts CT-of-the-day
-  voice: 🎙️ Robin Voice
+### Stage 2 — Card Game Core (3 weeks, the moat)
+**Database (new tables):**
+- `game_cards` — static deck definition (creator/animal/sky-creator/sky-creator-card/golden-body/golden-hive/disaster), element, matching-creator id, art url, fun-fact text.
+- `game_matches` — `id, mode ('1v1'|'2p'|'3p'|'4p'|'bot'), status, started_at, ended_at, winner_id, current_turn_player_id, turn_number, game_state jsonb`.
+- `game_match_players` — `match_id, user_id, player_number, ecosystem jsonb (array of {card_id, q, r}), hand jsonb, eliminated bool`.
+- `game_actions` — append-only turn log for replay/audit.
+- `game_invitations` — pending invites between users.
+- `player_stats` — wins/losses/streak/elo/perfect-ecosystems.
+- `point_transactions` + `profiles.points_balance`.
+- `unlocked_features` — per-user trial unlocks (DMs, 2v2, etc.).
 
-🦅 FALCON (trainee practitioners)
-  #falcon-trainees
-  voice: 🦅 Falcon Study Room
+**Edge functions:**
+- `game-create-match` (validates tier: 1v1 free, 2–4p Wren+)
+- `game-play-turn` (server-authoritative: validates legal move, applies disaster/steal/hive, checks win, advances turn, awards points)
+- `game-bot-turn` (simple AI for Free tutorial + solo play)
+- `award-points` (single source of truth for point ledger)
 
-🦉 OWL (certified practitioners)
-  #owl-practitioners
-  #client-supervision
-  voice: 🦉 Owl Practice Room
+**Frontend (`/game` route, lazy-loaded):**
+- `HoneycombBoard` — axial-coord hex grid, free-form growth (cards added adjacent to any existing card).
+- `HexagonCard` — clip-path hex, drag source/target, flip animation reveals fun fact.
+- `PlayerHand`, `DrawPile`, `UsedPile`, `TurnControls`.
+- `MatchLobby` (find player / quick match / invite) + `BotMatch` for tutorial.
+- Realtime via Supabase `postgres_changes` on `game_matches` + `game_actions`.
 
-🌳 CREATOR TYPES (13 channels, all members)
-  #lava #fire #sun ... #sky     ← one per type for affinity chat
+**Game rules implemented exactly per PDF:**
+- Win = 4 Creators (1 of each Earth/Air/Fire/Water OR Sky substitute) surrounded by 12 matching Animals.
+- Turn = draw 2 → optional rearrange → play 2.
+- Disaster (creator card played to used pile wipes matching animals from opponents).
+- Golden Hive blocks one disaster.
+- Sky Creature steals one animal.
+- Golden Body substitutes for any animal.
 
-ADMIN / MOD (private)
-```
+### Stage 3 — Points + Subliminal Learning (1 week, parallel to Stage 2)
+- Earn rules per doc (5/10/15/30 + bonuses).
+- Spend: discount codes on Stripe checkout, trial feature unlocks.
+- Card-flip fun-fact UI uses existing `creatorTypeProfilingData` (single source of truth — no new content).
+- "You've seen X/13 types" tracker on dashboard.
 
-### 2. Account linking via Discord OAuth
-- "Connect Discord" button on user profile → standard Discord OAuth (`identify` + `guilds.join` scopes)
-- Edge function stores `discord_user_id` + refresh token on profile
-- User is auto-invited to the guild on link
+### Stage 4 — Discord Bridges (3 days, after game ships)
+- Bot posts new game-lobby invites → `#card-game-lobby`.
+- Bot posts daily forecasts → `#daily-forecasts` (Robin+).
+- Slash commands: `/whoami`, `/profile @user`, `/challenge @user`.
+- Profile deep-links: "Message on Discord" button on member profiles (Wren+).
 
-### 3. Tier → Discord role sync (the magic)
-A new edge function `sync-discord-roles`:
-- Triggered by the existing Stripe webhook (subscription create/update/cancel)
-- Also triggered on Discord-link and nightly cron as a safety net
-- Calls Discord Bot API to add/remove roles: `wren`, `robin`, `falcon`, `owl`, `moderator`, `trainer`
-- Discord's channel permissions do the gatekeeping — no per-channel logic in our code
+### Stage 5 — Community / Projects (2 weeks)
+- `projects` table, project pages, teaser-view for Free, full participation Robin+.
+- Member directory by Creator Type (already partially modeled).
+- Achievements + leaderboard.
 
-Result: someone upgrades to Falcon → within seconds they can see `#falcon-trainees` in Discord. Cancel → role removed automatically.
+### Stage 6 — Polish + Launch Prep (1 week)
+- Tutorial (5-min interactive) + first bot game.
+- Push notifications via PWA.
+- Beta cohort (50 users), bug bash, performance tune.
 
-### 4. Profile → Discord deep links (replaces in-app DMs)
-On each member profile in `/home`:
-- "Message on Discord" button → `discord://discordapp.com/users/{discord_user_id}` (opens app) with web fallback
-- "Invite to voice cuppa" → creates a Discord scheduled event via bot, shares invite link
-- Only shown if the target user has linked Discord and has the "open to DMs" preference on
+---
 
-This means **zero message data ever touches our database**. The privacy policy gets dramatically shorter.
+## PART B — Revised Mockup (Honeycomb Board)
 
-### 5. Bot-driven bridges (one-way, no message storage)
-A small `13creators-bot`:
-- Posts daily CT forecasts to `#daily-forecasts` (Robin+)
-- Posts new event announcements to `#announcements` from our events table
-- Posts game-match invites to `#card-game-lobby` when a user clicks "find an opponent"
-- Listens for slash commands: `/profile @user` returns a public profile embed; `/whoami` shows the user their tier
-- **Never reads private messages or channel history** — purely outbound + slash commands
+I'll generate a new self-contained HTML file at **`/mnt/documents/13creators_mockup_v2.html`** replacing the placeholder 4×3 grid with a real hex tessellation. Key changes vs the v1 mockup you uploaded:
 
-### 6. What stays in-app
-- The card game itself (gameplay, board, points)
-- Profile + matching + map/face view
-- Events calendar (with "Join in Discord voice" buttons)
-- Practitioner portal (Owl)
-- Shop + subscriptions
-- Public lobby / game match invites
+### Visual / Structural
+- **True honeycomb board**: SVG-based hex grid using axial coords `(q, r)`, pointy-top hexes, ~80px radius. Cards tessellate edge-to-edge with no gaps. Ecosystem grows organically (any shape, per PDF rules).
+- **Free-form growth zone**: empty hexes shown as faint dashed outlines only on positions adjacent to existing cards (legal drop targets), glow on drag-hover.
+- **Center 4 Creator slots highlighted** in a 2×2 inner cluster as the conceptual "core", surrounded by 12 animal hex rings — matches the PDF's "Sample Complete Ecosystem".
+- Uses the **canonical 13 Creator Type palette** from `src/lib/creatorTypes.ts` (Lava #E85500, Fire #F07000, … Sky #5BB8D4) — no more generic purple gradient cards.
+- Type names rendered Title Case ("Lava", "Whirlwind"), display font Lilita One, body Questrial — matches project memory.
 
-All conversation, all DMs, all group chat → Discord.
+### Views in the mockup (4 tabs)
+1. **Landing** — "Play Free" primary CTA, tier ladder (Free → Wren → Robin → Falcon → Owl) with points-discount callouts.
+2. **Game Board (Honeycomb)** — opponent's board (read-only, smaller) on left, your honeycomb center, hand + draw/used piles right, turn controls bottom. Card-flip animation showing fun fact on hover.
+3. **Lobby / Matchmaking** — quick match, browse players (avatar + bio + types), pending invites, "Posted to #card-game-lobby ✓" Discord indicator.
+4. **Dashboard** — points balance, unlock progress bars (25/50/100/250/500), achievements, Discord-link status, ecosystem-stats.
 
-## Trade-offs (worth being honest about)
-- **Users must accept a Discord account.** Discord has 200M+ MAUs and is free, but it's not zero friction. Mitigate with a 30-second "Why we use Discord" page during onboarding.
-- **Branding is split.** Your community lives in Discord's UI, not yours. Mitigate with strong server branding (custom emoji per CT, role colours from Appendix 1 palette, bot avatar = 13CREATORS logo).
-- **Falcon/Owl trainee privacy** — practitioner supervision channels live on Discord servers (encrypted in transit, stored by Discord). Confirm this is acceptable for your Owl-tier client supervision use case. If not, Owl-only practitioner notes stay in the in-app practitioner portal (which they already do today).
-- **No "open to a virtual cuppa" inside the app** — instead it becomes a profile toggle that exposes the "Invite to voice cuppa" button on your profile.
+### Interactions shown (CSS/JS only — no backend)
+- Hover hex → lift + glow in type colour.
+- Click empty adjacent hex → places top hand card (mock).
+- Disaster card play → opponent's matching animals briefly shake + fade.
+- Sky Creature steal → arrow animation from opponent hex to your hand.
 
-## Implementation impact on the build plan
+### What I will NOT change in the mockup
+- Won't invent any Creator Type content beyond what's in `creatorTypeProfilingData.ts`.
+- Won't introduce new tier names or new "primary/secondary" hierarchy (per memory: equal forces).
 
-This **simplifies** Stage 3 dramatically and lets us bring it forward:
+---
 
-| Old Stage 3 (in-app messaging, ~1.5 weeks) | New Stage 3 (Discord, ~4 days) |
-|---|---|
-| DM tables, RLS, realtime channels | Discord OAuth + account linking |
-| Group chat schema + UI | Server setup (channels, roles, permissions) — done in Discord UI |
-| Audio recording + self-destruct timer | n/a — Discord handles voice |
-| Image upload + RLS storage bucket | n/a |
-| Notification preferences UI | Discord handles all notifications |
-| Moderation tools | Discord has them |
-| **Build:** OAuth flow, role-sync edge function, bot service, profile deep-link buttons, "Connect Discord" onboarding | |
+## Open questions before I code anything
 
-Approximate saved time: ~1 full week, plus removal of entire compliance/storage burden.
+1. **Free tier introduction** — the doc adds a Free tier below Wren. Today Wren is the entry tier. Confirm we're adding `free` (no payment) as a new lowest rung, and Wren stays at $27.
+2. **Pricing in the doc** (Wren $27, Robin $77, Falcon $197, Owl $5K+$147) — these match what's in `tiers.ts` today, just confirming nothing changed.
+3. **Game art** — for the mockup I'll use emoji + coloured hexes as placeholders. Do you have card art assets from A'Hara, or should I generate creator-type illustrations later in Stage 2?
+4. **Async vs realtime** — doc says async ("player takes turn, you get notification"). Confirm push-notification-style async is correct (not live realtime board with both players present).
 
-## What I need from you before building
+---
 
-1. **Server ownership** — you (or A'Hara) creates the Discord server and gives the bot owner access. I'll provide a setup checklist.
-2. **Bot credentials** — I'll need a Discord Bot Token + Application ID added as secrets when we're ready.
-3. **Owl client-supervision question** — confirm Owl practitioner channels on Discord are acceptable, or that Owl supervision stays in the in-app portal only.
-4. **Mandatory or optional Discord link?** — should Wren users be allowed to skip linking Discord (and just play the game solo/with bot), or is linking required to use any social feature?
+## What happens on approval
 
-Say the word on those four and I'll fold this into the master build plan I gave you earlier, then we can start Stage 0.
+1. I generate `/mnt/documents/13creators_mockup_v2.html` with the honeycomb board and deliver it as a `<presentation-artifact>` for you to open.
+2. You review; we iterate on the mockup until it feels right.
+3. Then I start Stage 0.5 (Stripe-webhook → Discord role sync) — small, finishes Stage 0 cleanly.
+4. Then Stage 1 (Free tier) → Stage 2 (game core).
+
+No project source files are changed until you approve and we move past the mockup.
