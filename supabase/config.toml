@@ -2,3 +2,6 @@ project_id = "kbcxvycgwtoxqkbpcesi"
 
 [functions.discord-oauth-callback]
 verify_jwt = false
+
+[functions.sync-discord-role]
+verify_jwt = false
