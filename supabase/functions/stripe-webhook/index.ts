@@ -155,6 +155,7 @@ serve(async (req) => {
           .eq("user_id", subRecord.user_id);
 
         logStep("Subscription canceled", { userId: subRecord.user_id });
+        await triggerDiscordRoleSync(subRecord.user_id);
       }
     }
 
