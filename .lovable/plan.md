@@ -91,7 +91,7 @@ I'll generate a new self-contained HTML file at **`/mnt/documents/13creators_moc
 - Type names rendered Title Case ("Lava", "Whirlwind"), display font Lilita One, body Questrial — matches project memory.
 
 ### Views in the mockup (4 tabs)
-1. **Landing** — "Play Free" primary CTA, tier ladder (Free → Wren → Robin → Falcon → Owl) with points-discount callouts.
+1. **Landing** — "Play free" primary CTA, tier ladder (Wren free → Robin $28 → Falcon $88 → Owl $44) with points-discount callouts on Robin upgrade.
 2. **Game Board (Honeycomb)** — opponent's board (read-only, smaller) on left, your honeycomb center, hand + draw/used piles right, turn controls bottom. Card-flip animation showing fun fact on hover.
 3. **Lobby / Matchmaking** — quick match, browse players (avatar + bio + types), pending invites, "Posted to #card-game-lobby ✓" Discord indicator.
 4. **Dashboard** — points balance, unlock progress bars (25/50/100/250/500), achievements, Discord-link status, ecosystem-stats.
