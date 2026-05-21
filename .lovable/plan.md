@@ -16,7 +16,7 @@ This plan merges three inputs into one roadmap: (1) the existing Discord integra
 ### Stage 0.5 — Finish Discord properly (1 day)
 - **Stripe webhook → role-sync**: extend `stripe-webhook` to call a new `sync-discord-role` helper on `customer.subscription.{created,updated,deleted}`. Adds/removes the correct tier role, with the previous tier role removed first.
 - **Nightly safety-net cron** (`pg_cron` → `sync-discord-role` for all linked users) to repair drift.
-- **Discord link is OPTIONAL for Wren** (confirmed). Free + Wren can play solo / 1v1 without linking. Robin+ gets a soft nudge.
+- **Discord link is OPTIONAL for free Wren** (confirmed). Wren is the free entry tier — no payment needed to play. Robin+ gets a soft nudge.
 - **Owl client-supervision in Discord** (confirmed) — private `#owl-supervision` channel, role-gated.
 
 ### Stage 1 — REMOVED
