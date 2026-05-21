@@ -110,7 +110,7 @@ I'll generate a new self-contained HTML file at **`/mnt/documents/13creators_moc
 
 ## Confirmed answers (locked)
 
-1. **No Free tier** — Wren stays the entry tier at $27.
+1. **Wren is FREE** — entry tier with no payment. Card game lives inside it.
 2. **Pricing unchanged** — matches `tiers.ts` today.
 3. **Card art** — A'Hara to supply; placeholders (emoji + coloured hexes) until then.
 4. **Realtime, not async** — both players present on the board with a presence channel.
