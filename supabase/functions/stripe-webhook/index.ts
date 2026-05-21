@@ -134,6 +134,7 @@ serve(async (req) => {
           .eq("user_id", subRecord.user_id);
 
         logStep("Subscription updated", { userId: subRecord.user_id, status: subscription.status });
+        await triggerDiscordRoleSync(subRecord.user_id);
       }
     }
 
