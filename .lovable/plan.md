@@ -16,11 +16,11 @@ This plan merges three inputs into one roadmap: (1) the existing Discord integra
 ### Stage 0.5 — Finish Discord properly (1 day)
 - **Stripe webhook → role-sync**: extend `stripe-webhook` to call a new `sync-discord-role` helper on `customer.subscription.{created,updated,deleted}`. Adds/removes the correct tier role, with the previous tier role removed first.
 - **Nightly safety-net cron** (`pg_cron` → `sync-discord-role` for all linked users) to repair drift.
-- **Discord link is OPTIONAL for Wren** (confirmed). Free + Wren can play solo / 1v1 without linking. Robin+ gets a soft nudge.
+- **Discord link is OPTIONAL for free Wren** (confirmed). Wren is the free entry tier — no payment needed to play. Robin+ gets a soft nudge.
 - **Owl client-supervision in Discord** (confirmed) — private `#owl-supervision` channel, role-gated.
 
-### Stage 1 — REMOVED
-No Free tier. Wren ($27/mo) remains the entry tier. Tier ladder in `tiers.ts` is unchanged.
+### Stage 1 — Free Wren is the entry tier
+Wren is **free** ($0). Robin $28/mo, Falcon $88/mo, Owl $44/mo — matches `src/lib/tiers.ts` today. No new tier added; the card game lives entirely inside the existing free Wren tier so anyone can play without paying.
 
 ### Stage 2 — Card Game Core (3 weeks, the moat)
 **Database (new tables):**
@@ -91,7 +91,7 @@ I'll generate a new self-contained HTML file at **`/mnt/documents/13creators_moc
 - Type names rendered Title Case ("Lava", "Whirlwind"), display font Lilita One, body Questrial — matches project memory.
 
 ### Views in the mockup (4 tabs)
-1. **Landing** — "Play Free" primary CTA, tier ladder (Free → Wren → Robin → Falcon → Owl) with points-discount callouts.
+1. **Landing** — "Play free" primary CTA, tier ladder (Wren free → Robin $28 → Falcon $88 → Owl $44) with points-discount callouts on Robin upgrade.
 2. **Game Board (Honeycomb)** — opponent's board (read-only, smaller) on left, your honeycomb center, hand + draw/used piles right, turn controls bottom. Card-flip animation showing fun fact on hover.
 3. **Lobby / Matchmaking** — quick match, browse players (avatar + bio + types), pending invites, "Posted to #card-game-lobby ✓" Discord indicator.
 4. **Dashboard** — points balance, unlock progress bars (25/50/100/250/500), achievements, Discord-link status, ecosystem-stats.
@@ -110,7 +110,7 @@ I'll generate a new self-contained HTML file at **`/mnt/documents/13creators_moc
 
 ## Confirmed answers (locked)
 
-1. **No Free tier** — Wren stays the entry tier at $27.
+1. **Wren is FREE** — entry tier with no payment. Card game lives inside it.
 2. **Pricing unchanged** — matches `tiers.ts` today.
 3. **Card art** — A'Hara to supply; placeholders (emoji + coloured hexes) until then.
 4. **Realtime, not async** — both players present on the board with a presence channel.
