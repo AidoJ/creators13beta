@@ -109,6 +109,7 @@ serve(async (req) => {
         .eq("user_id", userId);
 
       logStep("Subscription activated and profile updated", { userId });
+      await triggerDiscordRoleSync(userId);
     }
 
     if (event.type === "customer.subscription.updated") {
