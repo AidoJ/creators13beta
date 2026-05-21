@@ -13,6 +13,27 @@ const logStep = (step: string, details?: any) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
+// Fire-and-forget call to sync-discord-role so role drift is corrected after
+// every subscription change. Failures are logged but don't break the webhook.
+async function triggerDiscordRoleSync(userId: string) {
+  try {
+    const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/sync-discord-role`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+      },
+      body: JSON.stringify({ user_id: userId }),
+    });
+    if (!res.ok) {
+      console.log(`[STRIPE-WEBHOOK] discord_sync_failed - ${res.status} ${await res.text()}`);
+    }
+  } catch (e) {
+    console.log(`[STRIPE-WEBHOOK] discord_sync_error - ${String(e)}`);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -88,6 +109,7 @@ serve(async (req) => {
         .eq("user_id", userId);
 
       logStep("Subscription activated and profile updated", { userId });
+      await triggerDiscordRoleSync(userId);
     }
 
     if (event.type === "customer.subscription.updated") {
@@ -112,6 +134,7 @@ serve(async (req) => {
           .eq("user_id", subRecord.user_id);
 
         logStep("Subscription updated", { userId: subRecord.user_id, status: subscription.status });
+        await triggerDiscordRoleSync(subRecord.user_id);
       }
     }
 
@@ -132,6 +155,7 @@ serve(async (req) => {
           .eq("user_id", subRecord.user_id);
 
         logStep("Subscription canceled", { userId: subRecord.user_id });
+        await triggerDiscordRoleSync(subRecord.user_id);
       }
     }
 
