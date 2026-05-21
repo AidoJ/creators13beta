@@ -19,8 +19,8 @@ This plan merges three inputs into one roadmap: (1) the existing Discord integra
 - **Discord link is OPTIONAL for free Wren** (confirmed). Wren is the free entry tier — no payment needed to play. Robin+ gets a soft nudge.
 - **Owl client-supervision in Discord** (confirmed) — private `#owl-supervision` channel, role-gated.
 
-### Stage 1 — REMOVED
-No Free tier. Wren ($27/mo) remains the entry tier. Tier ladder in `tiers.ts` is unchanged.
+### Stage 1 — Free Wren is the entry tier
+Wren is **free** ($0). Robin $28/mo, Falcon $88/mo, Owl $44/mo — matches `src/lib/tiers.ts` today. No new tier added; the card game lives entirely inside the existing free Wren tier so anyone can play without paying.
 
 ### Stage 2 — Card Game Core (3 weeks, the moat)
 **Database (new tables):**
