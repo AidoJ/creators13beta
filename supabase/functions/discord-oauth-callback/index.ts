@@ -19,16 +19,38 @@ const TIER_ROLE_IDS: Record<string, string> = {
   owl: "1506465736766525543",
 };
 
+const getSafeRedirectBase = (value: string | null) => {
+  if (!value) return "https://creators13.lovable.app";
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol === "https:" && parsed.hostname.endsWith(".lovable.app")) return parsed.origin;
+  } catch (_) {
+    // Ignore malformed redirect values and use the production fallback.
+  }
+  return "https://creators13.lovable.app";
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const url = new URL(req.url);
     const code = url.searchParams.get("code");
-    const state = url.searchParams.get("state"); // user_id passed from client
-    const redirectBase = url.searchParams.get("redirect_base") || "https://creators13.lovable.app";
+    const state = url.searchParams.get("state");
+    let userId = state; // legacy state format: user_id only
+    let redirectBase = getSafeRedirectBase(url.searchParams.get("redirect_base"));
 
-    if (!code || !state) {
+    if (state) {
+      try {
+        const parsedState = JSON.parse(state);
+        if (typeof parsedState.userId === "string") userId = parsedState.userId;
+        if (typeof parsedState.redirectBase === "string") redirectBase = getSafeRedirectBase(parsedState.redirectBase);
+      } catch (_) {
+        // Keep supporting existing links where state is just the user id.
+      }
+    }
+
+    if (!code || !userId) {
       return new Response("Missing code or state", { status: 400, headers: corsHeaders });
     }
 
@@ -67,7 +89,7 @@ Deno.serve(async (req) => {
     const { data: sub } = await admin
       .from("subscriptions")
       .select("tier")
-      .eq("user_id", state)
+      .eq("user_id", userId)
       .maybeSingle();
     const tier = (sub?.tier || "wren").toLowerCase();
     const roleId = TIER_ROLE_IDS[tier];
@@ -93,7 +115,7 @@ Deno.serve(async (req) => {
     // Store the link
     await admin.from("discord_links").upsert(
       {
-        user_id: state,
+        user_id: userId,
         discord_user_id: discordUserId,
         discord_username: discordUsername,
         linked_at: new Date().toISOString(),
