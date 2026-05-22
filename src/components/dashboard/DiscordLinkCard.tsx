@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 const DISCORD_APP_ID = "1506460224859672596";
 const DISCORD_GUILD_ID = "1506458550208172082";
@@ -13,6 +14,20 @@ interface Props { userId: string }
 export default function DiscordLinkCard({ userId }: Props) {
   const [link, setLink] = useState<{ discord_username: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [unlinking, setUnlinking] = useState(false);
+
+  const handleUnlink = async () => {
+    if (!confirm("Unlink your Discord account? You can re-link with a different Discord account afterwards.")) return;
+    setUnlinking(true);
+    const { error } = await supabase.from("discord_links").delete().eq("user_id", userId);
+    setUnlinking(false);
+    if (error) {
+      toast.error("Failed to unlink Discord");
+      return;
+    }
+    setLink(null);
+    toast.success("Discord unlinked. Log out of Discord in another tab before re-linking.");
+  };
 
   useEffect(() => {
     supabase
@@ -74,6 +89,9 @@ export default function DiscordLinkCard({ userId }: Props) {
               <a href={DISCORD_INVITE_URL} target="_blank" rel="noopener noreferrer">
                 Join via Invite
               </a>
+            </Button>
+            <Button onClick={handleUnlink} size="sm" variant="ghost" disabled={unlinking}>
+              {unlinking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Unlink"}
             </Button>
           </div>
         </>
