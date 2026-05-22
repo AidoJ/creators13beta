@@ -90,6 +90,9 @@ export default function DiscordLinkCard({ userId }: Props) {
                 Join via Invite
               </a>
             </Button>
+            <Button onClick={handleUnlink} size="sm" variant="ghost" disabled={unlinking}>
+              {unlinking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Unlink"}
+            </Button>
           </div>
         </>
       ) : (
