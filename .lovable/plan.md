@@ -1,124 +1,140 @@
 
-# 13 Creators — Consolidated Build Plan + Honeycomb Mockup
+# 13 Creators — Honeycomb Card Game: Summary + Phased Build Plan
 
-This plan merges three inputs into one roadmap: (1) the existing Discord integration we just shipped, (2) the B Creators card game rules PDF, and (3) A'Hara's revised build plan doc (free-tier gateway, points economy, async multiplayer, projects). It also defines the revised HTML mockup with a **true honeycomb game board** to replace the placeholder grid.
+## Part 1 — High-level summary of the game
+
+**Premise.** Each player builds an **ecosystem** on a honeycomb of hex cards. The first player to surround **4 Creators** (one per element — Fire / Air / Water / Earth, or a Sky substitute) with **3 matching Animals each** (12 animals total → 16 cards in a complete ecosystem) wins.
+
+**The 13 Creator Types** (canonical palette, equal forces):
+Lava, Fire, Sun (Fire) · Whirlwind, Lightning, Sky (Air) · Snow, Lake, Ocean, River (Water) · Tree, Mountain, Soil (Earth). Sky is the universal substitute.
+
+**Cards (≈90 total, exact count TBD from A'Hara's spreadsheet).**
+- **Creators** (13) — placed in the centre of your hive; cannot be picked up once played.
+- **Animals** (39 = 3 per type) — match a single Creator type.
+- **Golden Body** — wild animal, substitutes for any animal.
+- **Golden Hive** — defence; blocks the next Disaster played against you.
+- **Sky Creature** — steal one animal from another player's board.
+- **Disaster trigger** — any Creator card played to the **Used pile** wipes every matching animal off every opponent's board.
+
+**Turn sequence (3 phases).**
+1. **Draw 2** — from the New Pile or the top of the Used Pile.
+2. **Rearrange (optional)** — move cards already in your ecosystem; never remove placed cards.
+3. **Play 2** — onto the board (adjacent to an existing cell) or into the Used Pile (where Creator cards become Disasters).
+
+**Key clarifications from the audio review.**
+- Creators are **never picked back up** once placed; you can place *additional* Creators of the same element to open more animal slots.
+- Animal cards can only leave the board via **Disaster** or **Sky Creature steal**.
+- A Creator card in your hand can be sacrificed to the Used Pile as a **Disaster** — wipes every matching animal across all opponents, but the next player may pick it up.
+- On placement, the card **flips/zooms** to reveal the animal art + fun fact for that Creator Type (subliminal learning — drives the "X of 13 seen" tracker).
+- Modes: **Bot tutorial, 1v1, 2p, 3p, 4p** — realtime, both players present, with presence channel + server-authoritative turn lock.
+- **Free Wren tier** can play the full game; Robin+ unlocks 2–4p, DMs, tournaments.
+
+**Visual direction (locked by the mockup):**
+Paper / parchment dual theme · Instrument Serif display + Geist UI · pointy-top axial hex grid (HEX_SIZE 50) · 13 canonical palette colours · striped placeholder art until A'Hara's deck arrives.
 
 ---
 
-## PART A — Completed Build Plan
+## Part 2 — Phased build plan
 
-### Stage 0 — Discord Foundation ✅ (done)
-- `discord_links` table + RLS
-- OAuth callback edge function (auto-join guild + assign tier role)
-- `DiscordLinkCard` on dashboard
-- Tier role IDs wired (Wren / Robin / Falcon / Owl)
+### Phase 1 — Data foundation & card catalogue *(3 days)*
+**Goal:** every card the game needs lives in the database, sourced from A'Hara's incoming spreadsheet.
 
-### Stage 0.5 — Finish Discord properly (1 day)
-- **Stripe webhook → role-sync**: extend `stripe-webhook` to call a new `sync-discord-role` helper on `customer.subscription.{created,updated,deleted}`. Adds/removes the correct tier role, with the previous tier role removed first.
-- **Nightly safety-net cron** (`pg_cron` → `sync-discord-role` for all linked users) to repair drift.
-- **Discord link is OPTIONAL for free Wren** (confirmed). Wren is the free entry tier — no payment needed to play. Robin+ gets a soft nudge.
-- **Owl client-supervision in Discord** (confirmed) — private `#owl-supervision` channel, role-gated.
+- New table **`game_cards`** — `id, kind (creator|animal|golden_body|golden_hive|sky_creature), type, element, name, art_url, fun_fact, rarity, copies_in_deck`.
+- Storage bucket `game-card-art` (public read, admin-write).
+- Seed migration: 13 Creators + 39 Animals + Golden Body + Golden Hive + Sky Creature, copy counts per the PDF rules.
+- `src/lib/gameCards.ts` — strongly-typed loader mirroring `creatorTypes.ts`.
+- Admin import edge function `admin-import-cards` for the CSV A'Hara is preparing.
+- Port the uploaded `data.jsx` content (TYPES, ANIMALS, fun-fact placeholders) into the seed as the day-one fallback.
 
-### Stage 1 — Free Wren is the entry tier
-Wren is **free** ($0). Robin $28/mo, Falcon $88/mo, Owl $44/mo — matches `src/lib/tiers.ts` today. No new tier added; the card game lives entirely inside the existing free Wren tier so anyone can play without paying.
+**Exit criteria:** `select count(*) from game_cards` matches the printed deck; art renders as striped placeholders.
 
-### Stage 2 — Card Game Core (3 weeks, the moat)
-**Database (new tables):**
-- `game_cards` — static deck definition (creator/animal/sky-creator/sky-creator-card/golden-body/golden-hive/disaster), element, matching-creator id, art url, fun-fact text.
-- `game_matches` — `id, mode ('1v1'|'2p'|'3p'|'4p'|'bot'), status, started_at, ended_at, winner_id, current_turn_player_id, turn_number, game_state jsonb`.
-- `game_match_players` — `match_id, user_id, player_number, ecosystem jsonb (array of {card_id, q, r}), hand jsonb, eliminated bool`.
-- `game_actions` — append-only turn log for replay/audit.
-- `game_invitations` — pending invites between users.
-- `player_stats` — wins/losses/streak/elo/perfect-ecosystems.
-- `point_transactions` + `profiles.points_balance`.
-- `unlocked_features` — per-user trial unlocks (DMs, 2v2, etc.).
+---
 
-**Edge functions:**
-- `game-create-match` (validates tier: 1v1 free, 2–4p Wren+)
-- `game-play-turn` (server-authoritative: validates legal move, applies disaster/steal/hive, checks win, advances turn, awards points)
-- `game-bot-turn` (simple AI for Free tutorial + solo play)
-- `award-points` (single source of truth for point ledger)
+### Phase 2 — Match engine & state model *(1 week)*
+**Goal:** server-authoritative game logic, no UI yet.
 
-**Frontend (`/game` route, lazy-loaded):**
-- `HoneycombBoard` — axial-coord hex grid, free-form growth (cards added adjacent to any existing card).
-- `HexagonCard` — clip-path hex, drag source/target, flip animation reveals fun fact.
-- `PlayerHand`, `DrawPile`, `UsedPile`, `TurnControls`.
-- `MatchLobby` (find player / quick match / invite) + `BotMatch` for tutorial.
-- **Realtime, both players present** (confirmed): Supabase Realtime `postgres_changes` on `game_matches` + `game_actions`, plus a **presence channel** per match (online/typing/thinking indicators). Server-authoritative turn lock prevents double-plays. Disconnect → 60s grace → forfeit. No async/push-notification turns.
-- **Card art**: emoji + coloured hexes as placeholders for now; swap in A'Hara's assets when delivered (loaded from `game_cards.art_url`, Supabase storage bucket `game-card-art`).
+- Tables: **`game_matches`**, **`game_match_players`** (board jsonb of `{card_id,q,r}`, hand jsonb), **`game_actions`** (append-only turn log), **`game_invitations`**.
+- Edge functions:
+  - `game-create-match` — validates tier, deals 5-card opening hand, picks dealer.
+  - `game-play-turn` — validates the action against current phase (draw/rearrange/place), enforces adjacency, applies Disaster/Hive/Steal/Golden Body, advances phase + turn, checks win condition (4 creators × 3 matching animals, all 4 elements covered).
+  - `game-bot-turn` — simple AI for tutorial + solo.
+- Pure-function rules core `supabase/functions/_shared/gameRules.ts` so the same code runs on server and (read-only) on client for previews.
+- Unit tests for: adjacency, disaster wipe, hive cancel, sky steal, win detection, illegal-move rejection.
 
-**Game rules implemented exactly per PDF:**
-- Win = 4 Creators (1 of each Earth/Air/Fire/Water OR Sky substitute) surrounded by 12 matching Animals.
-- Turn = draw 2 → optional rearrange → play 2.
-- Disaster (creator card played to used pile wipes matching animals from opponents).
-- Golden Hive blocks one disaster.
-- Sky Creature steals one animal.
-- Golden Body substitutes for any animal.
+**Exit criteria:** scripted match (bot vs bot) completes end-to-end with valid action log; illegal moves rejected.
 
-### Stage 3 — Points + Subliminal Learning (1 week, parallel to Stage 2)
-- Earn rules per doc (5/10/15/30 + bonuses).
-- Spend: discount codes on Stripe checkout, trial feature unlocks.
-- Card-flip fun-fact UI uses existing `creatorTypeProfilingData` (single source of truth — no new content).
-- "You've seen X/13 types" tracker on dashboard.
+---
 
-### Stage 4 — Discord Bridges (3 days, after game ships)
-- Bot posts new game-lobby invites → `#card-game-lobby`.
-- Bot posts daily forecasts → `#daily-forecasts` (Robin+).
+### Phase 3 — Honeycomb UI (single player vs bot) *(1 week)*
+**Goal:** port the uploaded mockup (`game.jsx` + `index.html`) into the React app, wired to Phase 2 backend, vs bot only.
+
+- Route `/game` (lazy-loaded), with sub-routes `/game/lobby`, `/game/match/:id`, `/game/tutorial`.
+- Components (1:1 from mockup, refactored to TSX + design tokens):
+  - `HoneycombBoard` (SVG, axial coords, auto-fit viewBox).
+  - `HexCell`, `DropTarget`, `HandCard`, `Piles`, `PhaseTracker`, `OpponentMini`, `ActionLog`, `FunFactOverlay`.
+- Wire palette to existing `src/lib/creatorTypes.ts` (no duplicated colours).
+- Card-flip / zoom animation on placement (Motion).
+- "X of 13 discovered" tracker stored on `profiles.types_seen` (text[]).
+- Tutorial mode = scripted bot match with coach-marks.
+
+**Exit criteria:** a Wren-tier user can finish a full bot match on mobile + desktop; fun-fact overlay fires on first-sight of each type.
+
+---
+
+### Phase 4 — Realtime multiplayer & lobby *(1 week)*
+**Goal:** two humans on one board, live.
+
+- Enable `supabase_realtime` on `game_matches` + `game_actions`.
+- Presence channel per match (`thinking…`, online dot, disconnect grace 60s → forfeit).
+- Server-authoritative turn lock (row-level `current_turn_player_id` guard).
+- Lobby UI: quick match, browse players by Creator Type, send/accept invite, "Posted to #card-game-lobby ✓" indicator (Discord bot in Phase 6).
+- Mode toggles: 1v1 (free), 2p/3p/4p (Robin+ gated by `unlocked_features`).
+
+**Exit criteria:** two browsers in different sessions play a full 1v1; reconnect after 30s drop works.
+
+---
+
+### Phase 5 — Points economy & subliminal learning *(4 days, parallel to Phase 4)*
+- Tables: `point_transactions`, `unlocked_features`, `profiles.points_balance`.
+- Earn rules from A'Hara's doc (5/10/15/30 + bonuses for new-type discovery, perfect ecosystem, comeback win).
+- `award-points` edge function as single source of truth.
+- Spend: discount codes on Stripe checkout (extends existing `create-checkout`); trial unlocks (DM channel, 2v2 mode).
+- Dashboard widget: balance, unlock progress bars (25/50/100/250/500), types-discovered ring.
+
+**Exit criteria:** finishing a match credits the correct points; discount code is honoured at checkout.
+
+---
+
+### Phase 6 — Discord bridges *(3 days)*
+- Extend existing `sync-discord-role` flow: bot posts new lobby invites → `#card-game-lobby`, daily forecasts → `#daily-forecasts` (Robin+).
 - Slash commands: `/whoami`, `/profile @user`, `/challenge @user`.
-- Profile deep-links: "Message on Discord" button on member profiles (Wren+).
+- "Message on Discord" deep-link button on member profiles (Wren+).
+- Owl-only private `#owl-supervision` channel role-gated via existing tier role IDs.
 
-### Stage 5 — Community / Projects (2 weeks)
-- `projects` table, project pages, teaser-view for Free, full participation Robin+.
-- Member directory by Creator Type (already partially modeled).
-- Achievements + leaderboard.
-
-### Stage 6 — Polish + Launch Prep (1 week)
-- Tutorial (5-min interactive) + first bot game.
-- Push notifications via PWA.
-- Beta cohort (50 users), bug bash, performance tune.
+**Exit criteria:** challenging a Discord user via slash command produces a working invite in the web app lobby.
 
 ---
 
-## PART B — Revised Mockup (Honeycomb Board)
+### Phase 7 — Polish, balance, launch prep *(1 week)*
+- 5-minute interactive tutorial with first-game reward.
+- PWA push notifications for "your turn" + "invite received".
+- Sound design (place / draw / disaster / win cues — toggleable).
+- Accessibility pass: keyboard play, screen-reader announcements for action log, prefers-reduced-motion.
+- Performance: lazy-load `/game` route; SVG hex cap ~64 cells/board.
+- Beta cohort (50 users — practitioners + early Wrens), bug bash, balance pass on Disaster frequency.
+- Replace striped placeholder art with A'Hara's final deck the moment it lands.
 
-I'll generate a new self-contained HTML file at **`/mnt/documents/13creators_mockup_v2.html`** replacing the placeholder 4×3 grid with a real hex tessellation. Key changes vs the v1 mockup you uploaded:
-
-### Visual / Structural
-- **True honeycomb board**: SVG-based hex grid using axial coords `(q, r)`, pointy-top hexes, ~80px radius. Cards tessellate edge-to-edge with no gaps. Ecosystem grows organically (any shape, per PDF rules).
-- **Free-form growth zone**: empty hexes shown as faint dashed outlines only on positions adjacent to existing cards (legal drop targets), glow on drag-hover.
-- **Center 4 Creator slots highlighted** in a 2×2 inner cluster as the conceptual "core", surrounded by 12 animal hex rings — matches the PDF's "Sample Complete Ecosystem".
-- Uses the **canonical 13 Creator Type palette** from `src/lib/creatorTypes.ts` (Lava #E85500, Fire #F07000, … Sky #5BB8D4) — no more generic purple gradient cards.
-- Type names rendered Title Case ("Lava", "Whirlwind"), display font Lilita One, body Questrial — matches project memory.
-
-### Views in the mockup (4 tabs)
-1. **Landing** — "Play free" primary CTA, tier ladder (Wren free → Robin $28 → Falcon $88 → Owl $44) with points-discount callouts on Robin upgrade.
-2. **Game Board (Honeycomb)** — opponent's board (read-only, smaller) on left, your honeycomb center, hand + draw/used piles right, turn controls bottom. Card-flip animation showing fun fact on hover.
-3. **Lobby / Matchmaking** — quick match, browse players (avatar + bio + types), pending invites, "Posted to #card-game-lobby ✓" Discord indicator.
-4. **Dashboard** — points balance, unlock progress bars (25/50/100/250/500), achievements, Discord-link status, ecosystem-stats.
-
-### Interactions shown (CSS/JS only — no backend)
-- Hover hex → lift + glow in type colour.
-- Click empty adjacent hex → places top hand card (mock).
-- Disaster card play → opponent's matching animals briefly shake + fade.
-- Sky Creature steal → arrow animation from opponent hex to your hand.
-
-### What I will NOT change in the mockup
-- Won't invent any Creator Type content beyond what's in `creatorTypeProfilingData.ts`.
-- Won't introduce new tier names or new "primary/secondary" hierarchy (per memory: equal forces).
+**Exit criteria:** 50-player beta runs a week with no P0 bugs; final art swapped in.
 
 ---
 
-## Confirmed answers (locked)
-
-1. **Wren is FREE** — entry tier with no payment. Card game lives inside it.
-2. **Pricing unchanged** — matches `tiers.ts` today.
-3. **Card art** — A'Hara to supply; placeholders (emoji + coloured hexes) until then.
-4. **Realtime, not async** — both players present on the board with a presence channel.
+## Open items needing A'Hara
+1. **Card spreadsheet** — name, kind, two associated Creator Types, art reference, fun fact body (per audio, ~90 cards).
+2. **Final deck art** (replaces striped placeholders).
+3. **Exact points-economy numbers** if any differ from the existing build-plan doc.
+4. **Tournament / season mechanic** — decide before Phase 7 if it ships at launch or post-launch.
 
 ---
 
-## What happens next
-
-1. **Stage 0.5 starts now** — Stripe webhook → `sync-discord-role` on subscription changes + nightly `pg_cron` safety-net.
-2. Then Stage 2 (game core, realtime architecture) → Stage 3 (points) → Stage 4 (Discord bridges) → Stage 5 (community) → Stage 6 (polish).
-3. Mockup v2 (`13creators_mockup_v2.html`) remains the visual reference for the honeycomb board.
+## Deliverable on approval
+On approval I'll also write a standalone Markdown summary doc to `/mnt/documents/13creators_game_overview.md` covering Part 1 above, suitable to share with A'Hara, beta testers, and the practitioner cohort.
