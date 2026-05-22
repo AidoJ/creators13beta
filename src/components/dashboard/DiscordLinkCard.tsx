@@ -47,18 +47,51 @@ export default function DiscordLinkCard({ userId }: Props) {
         <h3 className="font-display text-base font-bold text-foreground">13CREATORS Discord</h3>
       </div>
       {link ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <CheckCircle2 className="h-4 w-4 text-green-500" />
-          Linked as <span className="font-medium text-foreground">{link.discord_username}</span>
-        </div>
+        <>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            Linked as <span className="font-medium text-foreground">{link.discord_username}</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              asChild
+              size="sm"
+              className="bg-[#5865F2] hover:bg-[#4752c4] text-white"
+            >
+              <a
+                href={`discord://discord.com/channels/${DISCORD_GUILD_ID}`}
+                onClick={(e) => {
+                  // Fallback to web after a short delay if app isn't installed
+                  setTimeout(() => {
+                    window.open(`https://discord.com/channels/${DISCORD_GUILD_ID}`, "_blank", "noopener");
+                  }, 500);
+                }}
+              >
+                Open Discord
+              </a>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <a href={DISCORD_INVITE_URL} target="_blank" rel="noopener noreferrer">
+                Join via Invite
+              </a>
+            </Button>
+          </div>
+        </>
       ) : (
         <>
           <p className="text-sm text-muted-foreground">
             Connect your Discord account to join the 13CREATORS server and get your tier role.
           </p>
-          <Button onClick={handleLink} size="sm" className="bg-[#5865F2] hover:bg-[#4752c4] text-white">
-            Link Discord
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={handleLink} size="sm" className="bg-[#5865F2] hover:bg-[#4752c4] text-white">
+              Link Discord
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <a href={DISCORD_INVITE_URL} target="_blank" rel="noopener noreferrer">
+                Open Discord
+              </a>
+            </Button>
+          </div>
         </>
       )}
     </div>
