@@ -14,6 +14,20 @@ interface Props { userId: string }
 export default function DiscordLinkCard({ userId }: Props) {
   const [link, setLink] = useState<{ discord_username: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [unlinking, setUnlinking] = useState(false);
+
+  const handleUnlink = async () => {
+    if (!confirm("Unlink your Discord account? You can re-link with a different Discord account afterwards.")) return;
+    setUnlinking(true);
+    const { error } = await supabase.from("discord_links").delete().eq("user_id", userId);
+    setUnlinking(false);
+    if (error) {
+      toast.error("Failed to unlink Discord");
+      return;
+    }
+    setLink(null);
+    toast.success("Discord unlinked. Log out of Discord in another tab before re-linking.");
+  };
 
   useEffect(() => {
     supabase
