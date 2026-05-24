@@ -13,7 +13,7 @@
  * instead of the chat iframe.
  */
 
-export const DISCORD_GUILD_ID = "1390094847379406938"; // 13 Creators server
+export const DISCORD_GUILD_ID = ""; // TODO: paste 13 Creators server ID here
 export const LOBBY_CHANNEL_ID = ""; // TODO: paste #card-game-lobby ID here
 
 export const widgetBotUrl = (channelId: string) =>
