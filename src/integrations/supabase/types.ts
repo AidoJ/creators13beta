@@ -1322,7 +1322,7 @@ export type Database = {
         | "canceled"
         | "trialing"
         | "incomplete"
-      subscription_tier: "wren" | "robin" | "falcon" | "owl"
+      subscription_tier: "wren" | "robin" | "cockatoo" | "owl"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1494,7 +1494,7 @@ export const Constants = {
         "trialing",
         "incomplete",
       ],
-      subscription_tier: ["wren", "robin", "falcon", "owl"],
+      subscription_tier: ["wren", "robin", "cockatoo", "owl"],
     },
   },
 } as const
