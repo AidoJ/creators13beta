@@ -26,9 +26,9 @@ export const TIERS = {
       "Monthly Live Group Teachings",
     ],
   },
-  falcon: {
-    name: "Falcon",
-    subtitle: "Advanced Seekers",
+  cockatoo: {
+    name: "Cockatoo",
+    subtitle: "Certified L1 Practitioners + Business Owners",
     monthlyPrice: 88,
     annualPrice: 880,
     stripe: {
@@ -37,15 +37,15 @@ export const TIERS = {
     },
     features: [
       "Everything in Robin",
-      "Advanced Body Profile (4 Creator Types)",
+      "Co-creator Showcase + Project Creation",
       "Co-creator Skills Live Jam",
-      "Co-creator Showcase",
+      "Team + Business Tools",
       "Masterclasses + VIP Events",
     ],
   },
   owl: {
     name: "Owl",
-    subtitle: "Older Wiser Learners",
+    subtitle: "Certified L2 Practitioners",
     monthlyPrice: 44,
     annualPrice: 440,
     stripe: {
@@ -53,8 +53,8 @@ export const TIERS = {
       price_id: "price_1SzVbuKn3GaB6FyYK79PeTVa",
     },
     features: [
-      "Everything in Falcon",
-      "Client Management Tools",
+      "Everything in Robin",
+      "Event Creation + Client Tools",
       "Private Group + Live Mentoring",
       "Practitioner-only Resources",
       "Community Builder Bonus",

@@ -14,7 +14,7 @@ import EnrollmentHeader from "@/components/enrollment/EnrollmentHeader";
 import logo from "@/assets/13creators-logo.png";
 import birdWren from "@/assets/bird-wren.png";
 import birdRobin from "@/assets/bird-robin.png";
-import birdFalcon from "@/assets/bird-falcon.png";
+import birdCockatoo from "@/assets/bird-cockatoo.png";
 import birdOwl from "@/assets/bird-owl.png";
 
 const stripePromise = loadStripe("pk_test_51PGxKUKn3GaB6FyY1qeTOeYxWnBMDax8bUZhdP7RggDi1OyUp4BbSJWPhgb7hcvDynNqakuSfpGzwfuVhOsTvXmb001lwoCn7a");
@@ -22,7 +22,7 @@ const stripePromise = loadStripe("pk_test_51PGxKUKn3GaB6FyY1qeTOeYxWnBMDax8bUZhd
 const BIRD_IMAGES: Record<TierKey, string> = {
   wren: birdWren,
   robin: birdRobin,
-  falcon: birdFalcon,
+  cockatoo: birdCockatoo,
   owl: birdOwl,
 };
 
