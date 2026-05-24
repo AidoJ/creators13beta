@@ -435,7 +435,7 @@ export default function PlanSelection() {
 
                 const tierBg: Record<string, string> = {
                   robin: "bg-gradient-to-b from-pink-100/60 via-pink-50/40 to-white",
-                  falcon: "bg-gradient-to-b from-blue-100/40 via-pink-50/30 to-white",
+                  cockatoo: "bg-gradient-to-b from-blue-100/40 via-pink-50/30 to-white",
                   owl: "bg-gradient-to-b from-purple-100/40 via-pink-50/20 to-white",
                 };
 

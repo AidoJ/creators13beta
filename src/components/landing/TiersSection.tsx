@@ -40,7 +40,7 @@ const tiers = [
     popular: true,
   },
   {
-    name: "Falcon",
+    name: "Cockatoo",
     subtitle: "Advanced Seekers",
     image: birdCockatoo,
     monthlyPrice: 88,
@@ -62,7 +62,7 @@ const tiers = [
     monthlyPrice: 44,
     annualPrice: 440,
     features: [
-      "Everything in Falcon",
+      "Everything in Cockatoo",
       "Client Management Tools",
       "Private Group + Live Mentoring",
       "Practitioner-only Resources",

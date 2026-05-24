@@ -28,7 +28,7 @@ interface SubscribersTabProps {
 const tierColors: Record<string, string> = {
   wren: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
   robin: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-  falcon: "bg-purple-500/10 text-purple-600 border-purple-500/20",
+  cockatoo: "bg-purple-500/10 text-purple-600 border-purple-500/20",
   owl: "bg-amber-500/10 text-amber-600 border-amber-500/20",
 };
 
@@ -40,7 +40,7 @@ export default function SubscribersTab({ users, caseStudies, assignedPracMap }: 
     [caseStudies]
   );
 
-  // Paying subscribers = users with a paid tier (robin/falcon/owl)
+  // Paying subscribers = users with a paid tier (robin/cockatoo/owl)
   // Case study subjects on Wren are NOT subscribers — they appear under Practitioners
   const subscribers = useMemo(() => {
     return users.filter(u => isPaidTier(u.tier));
@@ -142,7 +142,7 @@ export default function SubscribersTab({ users, caseStudies, assignedPracMap }: 
       </div>
 
       <p className="text-[10px] text-muted-foreground">
-        Showing {filtered.length} paying subscriber{filtered.length !== 1 ? "s" : ""} (Robin, Falcon, or Owl tier).
+        Showing {filtered.length} paying subscriber{filtered.length !== 1 ? "s" : ""} (Robin, Cockatoo, or Owl tier).
       </p>
     </div>
   );

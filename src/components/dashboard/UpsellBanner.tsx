@@ -13,8 +13,8 @@ const UPGRADE_MAP: Record<string, { target: TierKey; message: string }> = {
     message: "Upgrade to Robin to unlock full Creator Type profiling, 1-on-1 Zoom sessions, and personalised insights.",
   },
   robin: {
-    target: "falcon",
-    message: "Level up to Falcon for ongoing coaching, advanced profiling insights, and priority booking.",
+    target: "cockatoo",
+    message: "Level up to Cockatoo for ongoing coaching, advanced profiling insights, and priority booking.",
   },
 };
 
