@@ -9,13 +9,13 @@ import welcomeBg from "@/assets/welcome-bg.png";
 
 import wrenImg from "@/assets/bird-wren.png";
 import robinImg from "@/assets/bird-robin.png";
-import falconImg from "@/assets/bird-falcon.png";
+import cockatooImg from "@/assets/bird-cockatoo.png";
 import owlImg from "@/assets/bird-owl.png";
 
 const TIER_BIRDS: Record<string, string> = {
   wren: wrenImg,
   robin: robinImg,
-  falcon: falconImg,
+  cockatoo: cockatooImg,
   owl: owlImg,
 };
 

@@ -5,14 +5,14 @@
  * in at least one `case_studies` record.
  *
  * A **paying subscriber** is any user whose subscription tier is
- * robin, falcon, or owl (i.e. not the free wren tier).
+ * robin, cockatoo, or owl (i.e. not the free wren tier).
  *
  * A user can be both (e.g. a case study subject who later upgrades).
  */
 
 export type ClientClassification = "subscriber" | "case_study" | "both";
 
-const PAID_TIERS = new Set(["robin", "falcon", "owl"]);
+const PAID_TIERS = new Set(["robin", "cockatoo", "owl"]);
 
 /** True when the tier represents a paid subscription. */
 export function isPaidTier(tier: string | null | undefined): boolean {

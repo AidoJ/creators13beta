@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import origLevelsDivider from "@/assets/orig-levels-divider.png";
 import birdWren from "@/assets/bird-wren.png";
 import birdRobin from "@/assets/bird-robin.png";
-import birdFalcon from "@/assets/bird-falcon.png";
+import birdCockatoo from "@/assets/bird-cockatoo.png";
 import birdOwl from "@/assets/bird-owl.png";
 import origStartHere from "@/assets/orig-start-here.png";
 
@@ -40,9 +40,9 @@ const tiers = [
     popular: true,
   },
   {
-    name: "Falcon",
+    name: "Cockatoo",
     subtitle: "Advanced Seekers",
-    image: birdFalcon,
+    image: birdCockatoo,
     monthlyPrice: 88,
     annualPrice: 880,
     features: [
@@ -62,7 +62,7 @@ const tiers = [
     monthlyPrice: 44,
     annualPrice: 440,
     features: [
-      "Everything in Falcon",
+      "Everything in Cockatoo",
       "Client Management Tools",
       "Private Group + Live Mentoring",
       "Practitioner-only Resources",

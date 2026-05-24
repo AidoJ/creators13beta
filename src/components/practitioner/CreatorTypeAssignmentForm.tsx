@@ -25,7 +25,7 @@ interface CreatorTypeAssignmentFormProps {
 const TIER_TYPE_LIMITS: Record<string, number> = {
   wren: 1,
   robin: 2,
-  falcon: 4,
+  cockatoo: 4,
   owl: 4,
 };
 

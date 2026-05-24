@@ -15,7 +15,7 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const TIER_ROLE_IDS: Record<string, string> = {
   wren: "1506466229576142870",
   robin: "1506466135883649124",
-  falcon: "1506466059795042374",
+  cockatoo: "1506466059795042374",
   owl: "1506465736766525543",
 };
 

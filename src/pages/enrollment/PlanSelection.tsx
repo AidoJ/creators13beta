@@ -15,13 +15,13 @@ import { TIERS, TierKey } from "@/lib/tiers";
 import EnrollmentHeader from "@/components/enrollment/EnrollmentHeader";
 import birdWren from "@/assets/bird-wren.png";
 import birdRobin from "@/assets/bird-robin.png";
-import birdFalcon from "@/assets/bird-falcon.png";
+import birdCockatoo from "@/assets/bird-cockatoo.png";
 import birdOwl from "@/assets/bird-owl.png";
 
 const birdImages: Record<TierKey, string> = {
   wren: birdWren,
   robin: birdRobin,
-  falcon: birdFalcon,
+  cockatoo: birdCockatoo,
   owl: birdOwl,
 };
 
@@ -435,7 +435,7 @@ export default function PlanSelection() {
 
                 const tierBg: Record<string, string> = {
                   robin: "bg-gradient-to-b from-pink-100/60 via-pink-50/40 to-white",
-                  falcon: "bg-gradient-to-b from-blue-100/40 via-pink-50/30 to-white",
+                  cockatoo: "bg-gradient-to-b from-blue-100/40 via-pink-50/30 to-white",
                   owl: "bg-gradient-to-b from-purple-100/40 via-pink-50/20 to-white",
                 };
 
