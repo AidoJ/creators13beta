@@ -12,7 +12,8 @@
  */
 
 import type { CreatorTypeName, GameCard } from "@/lib/gameCards";
-import type { EdgeIndex, Rotation } from "./types";
+import type { EdgeIndex } from "./board";
+import type { Rotation } from "./types";
 
 /** Which edges (at rotation 0) belong to typeA / typeB respectively. */
 export const TYPE_A_EDGES_BASE: ReadonlyArray<EdgeIndex> = [5, 0, 1];
