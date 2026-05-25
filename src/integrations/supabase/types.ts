@@ -541,6 +541,48 @@ export type Database = {
         }
         Relationships: []
       }
+      game_cards: {
+        Row: {
+          art_path: string | null
+          created_at: string
+          descriptor: string | null
+          id: string
+          mythical: boolean
+          name: string
+          slug: string
+          sort_order: number
+          type_a: string
+          type_b: string
+          updated_at: string
+        }
+        Insert: {
+          art_path?: string | null
+          created_at?: string
+          descriptor?: string | null
+          id?: string
+          mythical?: boolean
+          name: string
+          slug: string
+          sort_order?: number
+          type_a: string
+          type_b: string
+          updated_at?: string
+        }
+        Update: {
+          art_path?: string | null
+          created_at?: string
+          descriptor?: string | null
+          id?: string
+          mythical?: boolean
+          name?: string
+          slug?: string
+          sort_order?: number
+          type_a?: string
+          type_b?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       game_scores: {
         Row: {
           game_type: string | null
