@@ -25,6 +25,7 @@ import NotFound from "./pages/NotFound";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CardPreview from "./pages/CardPreview";
+import Play from "./pages/Play";
 import GlobalFooter from "@/components/shared/GlobalFooter";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ const App = () => (
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route path="/card-preview" element={<CardPreview />} />
+                <Route path="/play" element={<Play />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
