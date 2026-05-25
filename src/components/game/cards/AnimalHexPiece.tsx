@@ -88,16 +88,18 @@ export function AnimalHexPiece({ card, imageSrc, size = 140 }: Props) {
         </div>
       )}
 
-      {/* Name plate */}
+      {/* Name plate — washed-out translucent background */}
       <div
-        className="absolute left-1/2 -translate-x-1/2 bg-white/95 text-center rounded-sm px-2 py-0.5"
+        className="absolute left-1/2 -translate-x-1/2 text-center rounded-sm px-1.5 py-0.5 backdrop-blur-sm"
         style={{
-          bottom: "10%",
-          width: "70%",
+          bottom: "11%",
+          width: "78%",
           fontFamily: '"Lilita One", sans-serif',
-          fontSize: size * 0.1,
+          fontSize: size * 0.072,
           color: "#3a2615",
           lineHeight: 1,
+          background: "rgba(255,255,255,0.55)",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
         }}
       >
         <div className="truncate uppercase tracking-wide">{card.name}</div>
