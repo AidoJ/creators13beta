@@ -16,39 +16,44 @@ export function AnimalCardTile({ card, imageSrc, size = 220 }: Props) {
   const c1 = CREATOR_TYPE_COLORS[t1];
   const c2 = CREATOR_TYPE_COLORS[t2];
 
+  // Name plate takes the bottom ~28% of the card, so the coloured "art" area
+  // is the top ~72%. We split THAT area 50/50 corner-to-corner so neither
+  // colour visually dominates.
   return (
     <div
       className="relative rounded-2xl overflow-hidden shadow-lg border border-border/30 flex flex-col"
       style={{ width: size, height: size * 1.35 }}
     >
-      {/* True 50/50 split background — diagonal from top-right corner to bottom-left corner */}
-      <svg
-        viewBox="0 0 1 1"
-        preserveAspectRatio="none"
-        className="absolute inset-0 w-full h-full"
-        aria-hidden
-      >
-        <polygon points="0,0 1,0 0,1" fill={c1} />
-        <polygon points="1,0 1,1 0,1" fill={c2} />
-      </svg>
-      {/* Mythical badge */}
-      {card.mythical && (
-        <div className="absolute top-2 right-2 z-20 text-[10px] font-bold uppercase tracking-wider bg-black/40 text-white px-2 py-0.5 rounded-full backdrop-blur-sm">
-          Mythical
-        </div>
-      )}
-      {/* Illustration */}
-      <div className="relative z-10 flex-1 flex items-center justify-center p-3">
-        {imageSrc ? (
-          <img
-            src={imageSrc}
-            alt={card.name}
-            loading="lazy"
-            className="max-h-full max-w-full object-contain drop-shadow-md"
-          />
-        ) : (
-          <div className="text-white/70 text-xs font-medium">no art</div>
+      {/* True 50/50 split of the coloured art area */}
+      <div className="relative" style={{ height: "72%" }}>
+        <svg
+          viewBox="0 0 1 1"
+          preserveAspectRatio="none"
+          className="absolute inset-0 w-full h-full"
+          aria-hidden
+        >
+          <polygon points="0,0 1,0 0,1" fill={c1} />
+          <polygon points="1,0 1,1 0,1" fill={c2} />
+        </svg>
+        {/* Mythical badge */}
+        {card.mythical && (
+          <div className="absolute top-2 right-2 z-20 text-[10px] font-bold uppercase tracking-wider bg-black/40 text-white px-2 py-0.5 rounded-full backdrop-blur-sm">
+            Mythical
+          </div>
         )}
+        {/* Illustration */}
+        <div className="absolute inset-0 z-10 flex items-center justify-center p-3">
+          {imageSrc ? (
+            <img
+              src={imageSrc}
+              alt={card.name}
+              loading="lazy"
+              className="max-h-full max-w-full object-contain drop-shadow-md"
+            />
+          ) : (
+            <div className="text-white/70 text-xs font-medium">no art</div>
+          )}
+        </div>
       </div>
       {/* Name plate */}
       <div className="relative z-10 bg-white/95 backdrop-blur-sm px-3 py-2 text-center">
