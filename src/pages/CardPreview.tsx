@@ -1,10 +1,108 @@
 import { ANIMAL_CARDS, CREATOR_TYPE_ORDER, CREATOR_TYPE_COLORS } from "@/data/cards";
 import { AnimalCardTile } from "@/components/game/cards/AnimalCardTile";
 import { AnimalHexPiece } from "@/components/game/cards/AnimalHexPiece";
+import bearImg from "@/assets/cards/animal-bear.png";
+import beeImg from "@/assets/cards/animal-bee.png";
+import cassowaryImg from "@/assets/cards/animal-cassowary.png";
+import echidnaImg from "@/assets/cards/animal-echidna.png";
+import eelImg from "@/assets/cards/animal-eel.png";
 import foxImg from "@/assets/cards/animal-fox.png";
+import griffinImg from "@/assets/cards/animal-griffin.png";
+import iguanaImg from "@/assets/cards/animal-iguana.png";
+import octopusImg from "@/assets/cards/animal-octopus.png";
+import tigerImg from "@/assets/cards/animal-tiger.png";
+import waspImg from "@/assets/cards/animal-wasp.png";
+import wolfImg from "@/assets/cards/animal-wolf.png";
+import camelImg from "@/assets/cards/animal-camel.png";
+import cheetahImg from "@/assets/cards/animal-cheetah.png";
+import dragonImg from "@/assets/cards/animal-dragon.png";
+import gorillaImg from "@/assets/cards/animal-gorilla.png";
+import lemurImg from "@/assets/cards/animal-lemur.png";
+import mouseImg from "@/assets/cards/animal-mouse.png";
+import otterImg from "@/assets/cards/animal-otter.png";
+import pandaImg from "@/assets/cards/animal-panda.png";
+import sealImg from "@/assets/cards/animal-seal.png";
+import squirrelImg from "@/assets/cards/animal-squirrel.png";
+import zebraImg from "@/assets/cards/animal-zebra.png";
+import arcticHareImg from "@/assets/cards/animal-arctic-hare.png";
+import dolphinImg from "@/assets/cards/animal-dolphin.png";
+import dragonflyImg from "@/assets/cards/animal-dragonfly.png";
+import fairyImg from "@/assets/cards/animal-fairy.png";
+import fireflyImg from "@/assets/cards/animal-firefly.png";
+import horseImg from "@/assets/cards/animal-horse.png";
+import kangarooImg from "@/assets/cards/animal-kangaroo.png";
+import ostrichImg from "@/assets/cards/animal-ostrich.png";
+import rabbitImg from "@/assets/cards/animal-rabbit.png";
+import sharkImg from "@/assets/cards/animal-shark.png";
+import woodpeckerImg from "@/assets/cards/animal-woodpecker.png";
+import alpacaImg from "@/assets/cards/animal-alpaca.png";
+import deerImg from "@/assets/cards/animal-deer.png";
+import duckImg from "@/assets/cards/animal-duck.png";
+import leopardImg from "@/assets/cards/animal-leopard.png";
+import peacockImg from "@/assets/cards/animal-peacock.png";
+import penguinImg from "@/assets/cards/animal-penguin.png";
+import snowLeopardImg from "@/assets/cards/animal-snow-leopard.png";
+import spiderImg from "@/assets/cards/animal-spider.png";
+import swanImg from "@/assets/cards/animal-swan.png";
+import unicornImg from "@/assets/cards/animal-unicorn.png";
+import catfishImg from "@/assets/cards/animal-catfish.png";
+import craneImg from "@/assets/cards/animal-crane.png";
+import falconImg from "@/assets/cards/animal-falcon.png";
+import flyingFoxImg from "@/assets/cards/animal-flying-fox.png";
+import giraffeImg from "@/assets/cards/animal-giraffe.png";
+import platypusImg from "@/assets/cards/animal-platypus.png";
+import swordfishImg from "@/assets/cards/animal-swordfish.png";
+import thunderbirdImg from "@/assets/cards/animal-thunderbird.png";
+import elephantImg from "@/assets/cards/animal-elephant.png";
+import kingfisherImg from "@/assets/cards/animal-kingfisher.png";
+import koalaImg from "@/assets/cards/animal-koala.png";
+import lionImg from "@/assets/cards/animal-lion.png";
+import rainbowSerpentImg from "@/assets/cards/animal-rainbow-serpent.png";
+import starfishImg from "@/assets/cards/animal-starfish.png";
+import turtleImg from "@/assets/cards/animal-turtle.png";
+import beaverImg from "@/assets/cards/animal-beaver.png";
+import bunyipImg from "@/assets/cards/animal-bunyip.png";
+import crabImg from "@/assets/cards/animal-crab.png";
+import frogImg from "@/assets/cards/animal-frog.png";
+import jellyfishImg from "@/assets/cards/animal-jellyfish.png";
+import wombatImg from "@/assets/cards/animal-wombat.png";
+import crocodileImg from "@/assets/cards/animal-crocodile.png";
+import merperImg from "@/assets/cards/animal-merper.png";
+import seahorseImg from "@/assets/cards/animal-seahorse.png";
+import stingrayImg from "@/assets/cards/animal-stingray.png";
+import whaleImg from "@/assets/cards/animal-whale.png";
+import goatImg from "@/assets/cards/animal-goat.png";
+import knomeImg from "@/assets/cards/animal-knome.png";
+import slothImg from "@/assets/cards/animal-sloth.png";
+import snakeImg from "@/assets/cards/animal-snake.png";
+import bigfootImg from "@/assets/cards/animal-bigfoot.png";
+import bisonImg from "@/assets/cards/animal-bison.png";
+import salamanderImg from "@/assets/cards/animal-salamander.png";
+import anteaterImg from "@/assets/cards/animal-anteater.png";
+import hobbitImg from "@/assets/cards/animal-hobbit.png";
+import seamonsterImg from "@/assets/cards/animal-seamonster.png";
 
 const ART: Record<string, string> = {
-  fox: foxImg,
+  "bear": bearImg, "bee": beeImg, "cassowary": cassowaryImg, "echidna": echidnaImg,
+  "eel": eelImg, "fox": foxImg, "griffin": griffinImg, "iguana": iguanaImg,
+  "octopus": octopusImg, "tiger": tigerImg, "wasp": waspImg, "wolf": wolfImg,
+  "camel": camelImg, "cheetah": cheetahImg, "dragon": dragonImg, "gorilla": gorillaImg,
+  "lemur": lemurImg, "mouse": mouseImg, "otter": otterImg, "panda": pandaImg,
+  "seal": sealImg, "squirrel": squirrelImg, "zebra": zebraImg, "arctic-hare": arcticHareImg,
+  "dolphin": dolphinImg, "dragonfly": dragonflyImg, "fairy": fairyImg, "firefly": fireflyImg,
+  "horse": horseImg, "kangaroo": kangarooImg, "ostrich": ostrichImg, "rabbit": rabbitImg,
+  "shark": sharkImg, "woodpecker": woodpeckerImg, "alpaca": alpacaImg, "deer": deerImg,
+  "duck": duckImg, "leopard": leopardImg, "peacock": peacockImg, "penguin": penguinImg,
+  "snow-leopard": snowLeopardImg, "spider": spiderImg, "swan": swanImg, "unicorn": unicornImg,
+  "catfish": catfishImg, "crane": craneImg, "falcon": falconImg, "flying-fox": flyingFoxImg,
+  "giraffe": giraffeImg, "platypus": platypusImg, "swordfish": swordfishImg, "thunderbird": thunderbirdImg,
+  "elephant": elephantImg, "kingfisher": kingfisherImg, "koala": koalaImg, "lion": lionImg,
+  "rainbow-serpent": rainbowSerpentImg, "starfish": starfishImg, "turtle": turtleImg, "beaver": beaverImg,
+  "bunyip": bunyipImg, "crab": crabImg, "frog": frogImg, "jellyfish": jellyfishImg,
+  "wombat": wombatImg, "crocodile": crocodileImg, "merper": merperImg, "seahorse": seahorseImg,
+  "stingray": stingrayImg, "whale": whaleImg, "goat": goatImg, "knome": knomeImg,
+  "sloth": slothImg, "snake": snakeImg, "bigfoot": bigfootImg, "bison": bisonImg,
+  "salamander": salamanderImg, "anteater": anteaterImg, "hobbit": hobbitImg, "seamonster": seamonsterImg,
 };
 
 /** A small honeycomb mock showing how hex pieces tessellate. */
