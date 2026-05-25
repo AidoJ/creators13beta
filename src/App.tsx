@@ -56,6 +56,7 @@ const App = () => (
                 <Route path="/admin" element={<ProtectedRoute><RoleGuard allowedRoles={["trainer", "admin"]}><AdminDashboard /></RoleGuard></ProtectedRoute>} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
+                <Route path="/card-preview" element={<CardPreview />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
