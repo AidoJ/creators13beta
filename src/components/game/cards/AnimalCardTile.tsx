@@ -21,12 +21,16 @@ export function AnimalCardTile({ card, imageSrc, size = 220 }: Props) {
       className="relative rounded-2xl overflow-hidden shadow-lg border border-border/30 flex flex-col"
       style={{ width: size, height: size * 1.35 }}
     >
-      {/* Split background */}
-      <div
-        className="absolute inset-0"
-        style={{ background: `linear-gradient(135deg, ${c1} 0%, ${c1} 50%, ${c2} 50%, ${c2} 100%)` }}
+      {/* True 50/50 split background — diagonal from top-right corner to bottom-left corner */}
+      <svg
+        viewBox="0 0 1 1"
+        preserveAspectRatio="none"
+        className="absolute inset-0 w-full h-full"
         aria-hidden
-      />
+      >
+        <polygon points="0,0 1,0 0,1" fill={c1} />
+        <polygon points="1,0 1,1 0,1" fill={c2} />
+      </svg>
       {/* Mythical badge */}
       {card.mythical && (
         <div className="absolute top-2 right-2 z-20 text-[10px] font-bold uppercase tracking-wider bg-black/40 text-white px-2 py-0.5 rounded-full backdrop-blur-sm">
