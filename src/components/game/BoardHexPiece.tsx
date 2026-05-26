@@ -105,10 +105,10 @@ export function EmptyHexCell({
   const fill = hover
     ? "hsl(var(--board-hex-active) / 0.16)"
     : active
-      ? "hsl(var(--board-hex-empty) / 0.76)"
-      : "hsl(var(--board-hex-empty) / 0.5)";
+      ? "hsl(var(--board-hex-empty) / 0.86)"
+      : "hsl(var(--board-hex-empty) / 0.62)";
   const stroke = active ? "hsl(var(--board-hex-active))" : "hsl(var(--board-hex-line))";
-  const strokeOpacity = active ? 0.98 : 0.82;
+  const strokeOpacity = active ? 0.98 : 0.92;
   return (
     <div
       onClick={onClick}
@@ -131,7 +131,7 @@ export function EmptyHexCell({
           fill={fill}
           stroke={stroke}
           strokeOpacity={strokeOpacity}
-          strokeWidth={active ? 0.045 : 0.026}
+          strokeWidth={active ? 0.045 : 0.038}
           strokeDasharray={active ? "0.08,0.035" : undefined}
           vectorEffect="non-scaling-stroke"
         />
