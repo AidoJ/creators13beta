@@ -20,11 +20,19 @@ export const TYPE_TO_ELEMENT: Record<CreatorTypeName, Element | "Sky"> = {
   Sky: "Sky",
 };
 
+// Element colours are aligned to the canonical Creator Type palette
+// (spreadsheet hexes) so element Creator cards visually match the
+// corresponding animal half-hexes on the board.
+//  Fire  → Fire creator type   (#eda35e)
+//  Air   → Whirlwind            (#abd49e)
+//  Water → Ocean                (#6173b0)
+//  Earth → Soil                 (#944a47)
+//  Sky   → Sky                  (#bdb2e5)
 export const ELEMENT_COLORS: Record<Element | "Sky", string> = {
-  Earth: "#7d5a3a",
-  Fire: "#e85500",
-  Air: "#c2e5cf",
-  Water: "#1b3fb5",
+  Earth: "#944a47",
+  Fire: "#eda35e",
+  Air: "#abd49e",
+  Water: "#6173b0",
   Sky: "#bdb2e5",
 };
 

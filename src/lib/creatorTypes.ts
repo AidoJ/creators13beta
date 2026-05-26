@@ -4,19 +4,19 @@
  */
 
 export const CREATOR_TYPE_COLORS: Record<string, string> = {
-  lava:      "#E85500",
-  fire:      "#F07000",
-  whirlwind: "#2D7A00",
-  sun:       "#F5A300",
-  lightning: "#7CC800",
-  snow:      "#00B887",
-  sky:       "#5BB8D4",
-  mountain:  "#F02000",
-  tree:      "#b00000",
-  soil:      "#8B1717",
-  river:     "#00AAEE",
-  ocean:     "#1B3FB5",
-  lake:      "#00A8CC",
+  lava:      "#da7028",
+  fire:      "#eda35e",
+  whirlwind: "#abd49e",
+  snow:      "#c2e5cf",
+  lightning: "#8fd4b8",
+  sun:       "#f2d178",
+  lake:      "#7db2d9",
+  ocean:     "#6173b0",
+  tree:      "#db7d75",
+  mountain:  "#c45463",
+  soil:      "#944a47",
+  river:     "#99ccd4",
+  sky:       "#bdb2e5",
 };
 
 /** Ordered list of all creator type names in canonical display order. */
