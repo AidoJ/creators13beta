@@ -87,6 +87,11 @@ export function Ecosystem({
           return (
             <div
               key={`e-${k}`}
+              role={canDrop ? "button" : "presentation"}
+              aria-label={canDrop ? `Place selected card at hex ${k}` : `Empty board hex ${k}`}
+              data-hex-key={k}
+              data-legal-drop={canDrop ? "true" : "false"}
+              tabIndex={canDrop ? 0 : -1}
               className="absolute"
               style={{ left: x + offX, top: y + offY, transform: isOver ? "scale(1.08)" : undefined, transition: "transform 120ms" }}
               onDragOver={canDrop ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverKey(k); } : undefined}
