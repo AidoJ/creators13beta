@@ -50,6 +50,7 @@ interface SubData {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { ready: gateReady } = useEnrollmentGate();
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -60,6 +61,7 @@ export default function Dashboard() {
   const [creatorTypes, setCreatorTypes] = useState<string[]>([]);
   const [hasTrainerPractitioner, setHasTrainerPractitioner] = useState(false);
   const [photoCount, setPhotoCount] = useState(0);
+
 
   useEffect(() => {
     if (!user) return;
