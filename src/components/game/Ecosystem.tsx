@@ -25,21 +25,21 @@ interface Props {
 }
 
 /** Show only the currently playable empty cells, matching the compact reference board. */
-function buildScaffold(eco: EcoType): Axial[] {
-  return legalEcoCells(eco);
+function buildScaffold(eco: EcoType, excludeKey?: string | null): Axial[] {
+  return legalEcoCells(eco, excludeKey ?? undefined);
 }
 
 export function Ecosystem({
   eco, size = 90, selectable, showEmpties = true,
-  onPlace, onStealClick, onRotateClick, minHeight = 300,
+  onPlace, onStealClick, onRotateClick, minHeight = 300, moveFromKey = null,
 }: Props) {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 
   const { placed, empties, legal, legalKeys, bounds } = useMemo(() => {
     const placed = Array.from(eco.placed.values());
-    const legal = legalEcoCells(eco);
+    const legal = legalEcoCells(eco, moveFromKey ?? undefined);
     const legalKeys = new Set(legal.map(keyOf));
-    const empties = showEmpties || selectable ? buildScaffold(eco) : [];
+    const empties = showEmpties || selectable ? buildScaffold(eco, moveFromKey) : [];
     const all: Axial[] = [...placed.map((p) => p.pos), ...empties];
     if (all.length === 0) all.push({ q: 0, r: 0 });
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -57,7 +57,7 @@ export function Ecosystem({
         height: maxY - minY + size * 1.1547 + pad * 2,
       },
     };
-  }, [eco, selectable, showEmpties, size]);
+  }, [eco, selectable, showEmpties, size, moveFromKey]);
 
   const offX = -bounds.minX;
   const offY = -bounds.minY;
