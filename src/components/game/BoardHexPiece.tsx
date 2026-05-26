@@ -154,6 +154,35 @@ export function EmptyHexCell({
           vectorEffect="non-scaling-stroke"
         />
       </svg>
-    </div>
+  </div>
   );
+}
+
+function resolveTypeChips(card: DeckCard): { label: string; color: string; glyph?: string }[] {
+  if (card.kind === "animal" || card.kind === "sky_creature") {
+    const [t1, t2] = card.types ?? [];
+    const c1 = CREATOR_TYPE_COLORS[t1 as keyof typeof CREATOR_TYPE_COLORS] ?? "#888";
+    const c2 = CREATOR_TYPE_COLORS[t2 as keyof typeof CREATOR_TYPE_COLORS] ?? c1;
+    return [
+      { label: String(t1 ?? ""), color: c1, glyph: glyphForType(t1 as string) },
+      ...(t2 && t2 !== t1 ? [{ label: String(t2), color: c2, glyph: glyphForType(t2 as string) }] : []),
+    ].filter((c) => c.label);
+  }
+  if (card.kind === "creator") {
+    const c = ELEMENT_COLORS[card.element!];
+    const g = ELEMENT_GLYPHS[card.element!];
+    return [{ label: card.element!, color: c, glyph: g }];
+  }
+  if (card.kind === "sky_creator") {
+    const c = ELEMENT_COLORS.Sky;
+    const g = CREATOR_TYPE_GLYPHS.Sky;
+    return [{ label: "Sky", color: c, glyph: g }];
+  }
+  if (card.kind === "golden_body") {
+    return [{ label: "Golden Body", color: "#f5c542" }];
+  }
+  if (card.kind === "golden_hive") {
+    return [{ label: "Hive", color: "#e0a920" }];
+  }
+  return [];
 }
