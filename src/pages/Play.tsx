@@ -344,6 +344,10 @@ export default function Play() {
     phaseHint = `Pick up ${2 - state.drawnThisTurn} card${2 - state.drawnThisTurn === 1 ? "" : "s"} (draw pile or top of used pile).`;
   } else if (mode === "steal") {
     phaseHint = `Click an animal in ${opponent.name}'s ecosystem to steal it.`;
+  } else if (mode === "move") {
+    phaseHint = moveFromKey
+      ? "Click an empty glowing hex to drop the card (cards can't leave your ecosystem)."
+      : "Click any of your placed cards to pick it up and reposition it.";
   } else if (selectedCard) {
     phaseHint = "Drag this card onto a glowing hex, click a glowing hex to snap it in, or use a card-power button.";
   } else {
