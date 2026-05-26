@@ -175,6 +175,39 @@ export function Ecosystem({
             </div>
           );
         })}
+        {matches.map((m) => (
+          <div
+            key={`m-${m.key}`}
+            className="absolute z-30 pointer-events-none animate-scale-in"
+            style={{
+              left: m.x + offX,
+              top: m.y + offY,
+              transform: "translate(-50%, -50%)",
+            }}
+            title={`Matched: ${m.label}`}
+          >
+            <div
+              className="flex items-center gap-1 rounded-full pl-1 pr-1.5 py-0.5 bg-black/85 border border-white/60 shadow-lg backdrop-blur-sm"
+              style={{ boxShadow: `0 0 10px ${m.color}, 0 2px 4px rgba(0,0,0,0.6)` }}
+            >
+              <span
+                className="rounded-full shrink-0"
+                style={{
+                  width: Math.max(8, size * 0.12),
+                  height: Math.max(8, size * 0.12),
+                  background: m.color,
+                  boxShadow: `0 0 6px ${m.color}`,
+                }}
+              />
+              <span
+                className="font-bold uppercase tracking-wider text-white leading-none"
+                style={{ fontFamily: '"Lilita One", sans-serif', fontSize: Math.max(9, size * 0.11) }}
+              >
+                {m.label}
+              </span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
