@@ -49,8 +49,12 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
           {forceFlipped === undefined && (
             <button
               type="button"
+              onPointerDown={(e) => { e.stopPropagation(); }}
+              onPointerUp={(e) => { e.stopPropagation(); }}
+              onMouseDown={(e) => { e.stopPropagation(); }}
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 setZoomed(true);
               }}
               className="absolute top-1.5 left-1.5 z-30 bg-black/55 hover:bg-black/75 text-white rounded-full p-1 backdrop-blur-sm"

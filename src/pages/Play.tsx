@@ -523,7 +523,9 @@ export default function Play() {
                 onStealClick={undefined}
                 onRotateClick={isYourTurn ? onPlacedHexClick : undefined}
                 minHeight={isMobile ? 220 : 360}
+                moveFromKey={mode === "move" ? moveFromKey : null}
               />
+
             </div>
           </Card>
         </div>

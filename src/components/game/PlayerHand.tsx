@@ -24,6 +24,8 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
               onClick={() => !disabled && onSelect(card.uid)}
               onPointerDown={(e) => {
                 if (disabled) return;
+                // Don't hijack pointer events that targeted an inner button (e.g. Info ⓘ).
+                if ((e.target as HTMLElement).closest("button")) return;
                 e.currentTarget.setPointerCapture?.(e.pointerId);
                 onSelect(card.uid);
               }}
