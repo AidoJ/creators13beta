@@ -490,7 +490,7 @@ export default function Play() {
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[200px_1fr_200px] gap-2 p-2 min-h-0 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[240px_1fr_240px] gap-2 p-2 min-h-0 overflow-hidden">
         <div className="flex flex-col gap-2 min-w-0 min-h-0 lg:contents">
           <div className="lg:hidden flex gap-2">
             <Collapsible open={showOpponent} onOpenChange={setShowOpponent} className="flex-1">
