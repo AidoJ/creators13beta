@@ -11,7 +11,7 @@ interface Props {
   selectable?: boolean;
   /** Always show empty hexes (even if not selectable), so the board scaffold is visible. */
   showEmpties?: boolean;
-  onPlace?: (pos: Axial) => void;
+  onPlace?: (pos: Axial, cardUid?: string) => void;
   onStealClick?: (posKey: string) => void;
   /** Wrap content in a centered viewport. */
   minHeight?: number;
@@ -91,11 +91,17 @@ export function Ecosystem({
               style={{ left: x + offX, top: y + offY, transform: isOver ? "scale(1.08)" : undefined, transition: "transform 120ms" }}
               onDragOver={canDrop ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverKey(k); } : undefined}
               onDragLeave={canDrop ? () => setDragOverKey((cur) => (cur === k ? null : cur)) : undefined}
-              onDrop={canDrop ? (e) => { e.preventDefault(); setDragOverKey(null); onPlace?.(cell); } : undefined}
+              onDrop={canDrop ? (e) => {
+                e.preventDefault();
+                setDragOverKey(null);
+                onPlace?.(cell, e.dataTransfer.getData("text/plain") || undefined);
+              } : undefined}
             >
               <EmptyHexCell
                 size={size}
                 pulse={canDrop}
+                active={canDrop}
+                hover={isOver}
                 onClick={canDrop ? () => onPlace?.(cell) : undefined}
               />
             </div>
