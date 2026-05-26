@@ -18,6 +18,10 @@ interface Props {
   onRotateClick?: (posKey: string) => void;
   /** Wrap content in a centered viewport. */
   minHeight?: number;
+  /** When in "move" mode, the key of the placed card the player has picked up.
+   *  Empty hexes are recomputed as if this hex were removed, and the source is
+   *  highlighted to show it's selected. */
+  moveFromKey?: string | null;
 }
 
 /** Show only the currently playable empty cells, matching the compact reference board. */
