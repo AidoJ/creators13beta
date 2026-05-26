@@ -1,41 +1,31 @@
 import type { MatchState } from "@/lib/game/types";
+import { ecosystemSummary } from "@/lib/game/engine";
 
-interface Props {
-  state: MatchState;
-}
-
-export function ScorePanel({ state }: Props) {
+export function ScorePanel({ state }: { state: MatchState }) {
   return (
-    <div className="flex items-center gap-6 px-4 py-3 border-b border-border/40 bg-card/40 backdrop-blur">
+    <div className="flex flex-wrap items-center gap-6 px-4 py-3 border-b border-border/40 bg-card/40 backdrop-blur">
       {state.players.map((p, i) => {
         const active = i === state.turn && !state.finished;
+        const sum = ecosystemSummary(p.ecosystem);
         return (
-          <div
-            key={p.id}
-            className={`flex items-baseline gap-2 ${active ? "" : "opacity-60"}`}
-          >
-            <span
-              className={`text-sm uppercase tracking-wider ${
-                active ? "text-primary font-semibold" : ""
-              }`}
-            >
-              {p.name}
-            </span>
-            <span
-              className="text-2xl"
-              style={{ fontFamily: '"Lilita One", sans-serif' }}
-            >
-              {p.score}
-            </span>
+          <div key={p.id} className={`flex flex-col ${active ? "" : "opacity-60"}`}>
+            <div className="flex items-baseline gap-2">
+              <span className={`text-sm uppercase tracking-wider ${active ? "text-primary font-semibold" : ""}`}>{p.name}</span>
+              <span className="text-xs text-muted-foreground">
+                {sum.creators}/4 creators · {sum.animals}/12 animals
+              </span>
+              {p.hiveShield && <span className="text-xs">🛡</span>}
+            </div>
           </div>
         );
       })}
       <div className="ml-auto text-xs text-muted-foreground">
-        Turn {state.turnNumber} · Deck {state.deck.length} · Discard {state.discard.length}
+        Turn {state.turnNumber} · Draw {state.draw.length} · Used {state.used.length}
+        {state.phase === "draw" && !state.finished && <span className="ml-2 text-primary">Pick up {2 - state.drawnThisTurn} more</span>}
+        {state.phase === "place" && !state.finished && <span className="ml-2 text-primary">Play {2 - state.placedThisTurn} more</span>}
         {state.finished && (
           <span className="ml-3 font-semibold text-primary">
-            Match over — winner:{" "}
-            {state.players.find((p) => p.id === state.winnerId)?.name ?? "—"}
+            Winner: {state.players.find((p) => p.id === state.winnerId)?.name ?? "—"}
           </span>
         )}
       </div>

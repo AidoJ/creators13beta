@@ -1,59 +1,35 @@
-import type { GameCard } from "@/lib/gameCards";
+import type { DeckCard } from "@/lib/game/types";
 import { BoardHexPiece } from "./BoardHexPiece";
-import { Button } from "@/components/ui/button";
 
 interface Props {
-  hand: GameCard[];
-  selectedSlug?: string | null;
-  onSelect: (slug: string) => void;
-  onDiscard: () => void;
+  hand: DeckCard[];
+  selectedUid?: string | null;
+  onSelect: (uid: string) => void;
   disabled?: boolean;
   size?: number;
 }
 
-export function PlayerHand({
-  hand,
-  selectedSlug,
-  onSelect,
-  onDiscard,
-  disabled,
-  size = 100,
-}: Props) {
+export function PlayerHand({ hand, selectedUid, onSelect, disabled, size = 90 }: Props) {
   return (
     <div className="border-t border-border/40 bg-card/40 backdrop-blur p-3">
-      <div className="flex items-end justify-between gap-4">
-        <div className="flex flex-wrap items-end gap-3">
-          {hand.map((card) => {
-            const selected = card.slug === selectedSlug;
-            return (
-              <div
-                key={card.slug}
-                className={`transition-transform ${selected ? "-translate-y-2" : ""} ${
-                  disabled ? "opacity-50 pointer-events-none" : ""
-                }`}
-              >
-                <BoardHexPiece
-                  card={card}
-                  size={size}
-                  onClick={() => onSelect(card.slug)}
-                  highlight={selected ? "selected" : null}
-                />
-              </div>
-            );
-          })}
-          {hand.length === 0 && (
-            <div className="text-sm text-muted-foreground italic">
-              No cards in hand.
+      <div className="flex flex-wrap items-end gap-3 justify-center">
+        {hand.map((card) => {
+          const selected = card.uid === selectedUid;
+          return (
+            <div
+              key={card.uid}
+              className={`transition-transform ${selected ? "-translate-y-2" : ""} ${disabled ? "opacity-50 pointer-events-none" : ""}`}
+            >
+              <BoardHexPiece
+                card={card}
+                size={size}
+                onClick={() => onSelect(card.uid)}
+                highlight={selected ? "selected" : null}
+              />
             </div>
-          )}
-        </div>
-        <Button
-          variant="outline"
-          onClick={onDiscard}
-          disabled={disabled || !selectedSlug}
-        >
-          Discard selected
-        </Button>
+          );
+        })}
+        {hand.length === 0 && <div className="text-sm text-muted-foreground italic">No cards in hand.</div>}
       </div>
     </div>
   );

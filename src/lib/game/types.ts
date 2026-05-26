@@ -1,54 +1,85 @@
 /**
- * Core types for the 13 Creators honeycomb match engine.
+ * Core types for the 13 Creators "B Creators" ecosystem-building card game.
  *
- * Coordinate system: AXIAL (q, r) for a pointy-top hex grid.
- *   - q = column axis (east)
- *   - r = row axis  (south-east)
- *   - implicit s = -q - r
+ * Each player builds their OWN honeycomb ecosystem of 16 cards:
+ *   - 4 Creator Cards (one of each element: Earth / Fire / Air / Water,
+ *     with Sky Creator able to substitute for any element)
+ *   - 12 Animal Cards (3 matching each Creator, by shared Creator Type;
+ *     Golden Body substitutes for any animal)
  *
- * Each placed card occupies one axial cell and stores its rotation in
- * 60° increments (0..5). Rotation rotates the entire hex visual + the
- * type-half assignment, so the card's two halves face different edges
- * depending on rotation.
+ * Coordinates are axial (q,r) on a pointy-top hex grid.
  */
 
 import type { CreatorTypeName, GameCard } from "@/lib/gameCards";
+import type { Element } from "./elements";
 
 export type Axial = { q: number; r: number };
 
-/** 0..5 — 60° increments. 0 = canonical card orientation (typeA on top-left half, typeB on bottom-right half). */
-export type Rotation = 0 | 1 | 2 | 3 | 4 | 5;
+export type CardKind =
+  | "animal"        // standard animal, 1 or 2 Creator Types
+  | "creator"       // Earth / Fire / Air / Water creator card
+  | "sky_creator"   // wildcard creator — counts as any element
+  | "sky_creature"  // mythical animal — also playable as a STEALER
+  | "golden_body"   // wildcard animal
+  | "golden_hive";  // blocks one disaster
+
+/** A single physical copy of a card in the deck / hand / ecosystem. */
+export interface DeckCard {
+  /** Unique-per-copy id (e.g. "fox#1"). */
+  uid: string;
+  kind: CardKind;
+  name: string;
+  /** For animals / sky_creatures — the Creator Types they belong to (1-2). */
+  types?: CreatorTypeName[];
+  /** For animals / sky_creatures — the underlying art / descriptor. */
+  source?: GameCard;
+  /** For 'creator' cards — the element they represent. */
+  element?: Element;
+  /** True if this is a mythical / golden / sky variant (for badge styling). */
+  special?: boolean;
+}
 
 export interface PlacedCard {
-  card: GameCard;
+  card: DeckCard;
   pos: Axial;
-  rotation: Rotation;
-  /** Owner / player id who placed this card. */
-  ownerId: string;
+}
+
+export interface Ecosystem {
+  /** Placed cards keyed by "q,r". */
+  placed: Map<string, PlacedCard>;
 }
 
 export interface PlayerState {
   id: string;
   name: string;
-  hand: GameCard[];
+  hand: DeckCard[];
+  ecosystem: Ecosystem;
+  /** Active hive shield (true after picking up / playing a hive proactively). */
+  hiveShield: boolean;
+  /** Cumulative gameplay score for end-of-match display. */
   score: number;
 }
 
+export type TurnPhase = "draw" | "place";
+
 export interface MatchState {
   players: PlayerState[];
-  /** Index into players[] of the player whose turn it is. */
   turn: number;
-  /** Cards still in the draw pile. */
-  deck: GameCard[];
-  /** Used / discarded cards (unplayable matches, etc.). */
-  discard: GameCard[];
-  /** Placed cards keyed by "q,r". */
-  board: Map<string, PlacedCard>;
-  /** Increments every successful placement. */
+  draw: DeckCard[];
+  used: DeckCard[];
+  phase: TurnPhase;
+  /** How many cards picked up so far this turn (0..2). */
+  drawnThisTurn: number;
+  /** How many cards placed/discarded so far this turn (0..2). */
+  placedThisTurn: number;
   turnNumber: number;
-  /** True once an end-of-match condition has fired. */
   finished: boolean;
   winnerId: string | null;
+  /** Most recent rule-relevant event, for the UI to surface. */
+  lastEvent?: string;
 }
 
 export const HAND_SIZE = 5;
+export const ECOSYSTEM_TARGET = 16; // 4 creators + 12 animals
+export const CREATORS_NEEDED = 4;
+export const ANIMALS_PER_CREATOR = 3;
