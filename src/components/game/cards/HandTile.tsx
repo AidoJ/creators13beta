@@ -88,10 +88,6 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                   alt={card.name}
                   loading="lazy"
                   className="max-h-full max-w-full object-contain pointer-events-none"
-                  style={{
-                    filter:
-                      "drop-shadow(0 4px 8px rgba(0,0,0,0.5)) drop-shadow(0 2px 3px rgba(0,0,0,0.35))",
-                  }}
                 />
               ) : (
                 <div className="text-white/80 text-[10px] font-medium uppercase tracking-wide">{card.kind}</div>
@@ -244,7 +240,6 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                       src={art}
                       alt={card.name}
                       className="max-h-full max-w-full object-contain pointer-events-none"
-                      style={{ filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.45))" }}
                     />
                   </div>
                 )}
