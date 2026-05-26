@@ -53,13 +53,35 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false }: 
               src={art}
               alt={card.name}
               loading="lazy"
-              className="max-h-full max-w-full object-contain drop-shadow-md pointer-events-none"
+              className="max-h-full max-w-full object-contain pointer-events-none"
+              style={{
+                filter:
+                  "drop-shadow(0 4px 8px rgba(0,0,0,0.5)) drop-shadow(0 2px 3px rgba(0,0,0,0.35))",
+              }}
             />
           ) : (
             <div className="text-white/80 text-[10px] font-medium uppercase tracking-wide">{card.kind}</div>
           )}
         </div>
       </div>
+
+      {/* Name plate */}
+      <div className="relative z-10 bg-white px-1.5 py-1 text-center flex-1 flex flex-col justify-center">
+        <div
+          className="font-bold uppercase tracking-wide leading-none truncate"
+          style={{ fontFamily: '"Lilita One", sans-serif', fontSize: size * 0.11, color: "#000" }}
+        >
+          {card.name}
+        </div>
+        <div className="flex items-center justify-center gap-1 mt-1 flex-wrap">
+          {chips.map((chip, i) => (
+            <span key={chip.label + i} className="contents">
+              {i > 0 && <span className="text-black/40 text-[9px]">+</span>}
+              <span
+                className="inline-flex items-center gap-1 font-semibold uppercase tracking-wider"
+                style={{ fontSize: size * 0.075, color: "#000" }}
+              >
+
 
       {/* Name plate */}
       <div className="relative z-10 bg-white px-1.5 py-1 text-center flex-1 flex flex-col justify-center">
