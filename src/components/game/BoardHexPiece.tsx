@@ -51,8 +51,14 @@ export function BoardHexPiece({ card, size = 110, onClick, highlight = null }: P
       aria-label={card.name}
     >
       <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full drop-shadow-lg">
-        <polygon points={halfA} fill={c1} />
-        <polygon points={halfB} fill={c2} />
+        {card.kind === "animal" || card.kind === "sky_creature" ? (
+          <>
+            <polygon points={halfA} fill={c1} />
+            <polygon points={halfB} fill={c2} />
+          </>
+        ) : (
+          <polygon points={hexPoints} fill={c1} />
+        )}
         <polygon points={hexPoints} fill="none" stroke={ring} strokeWidth={highlight ? 0.06 : 0.04} vectorEffect="non-scaling-stroke" />
       </svg>
       {card.source?.art_url && (

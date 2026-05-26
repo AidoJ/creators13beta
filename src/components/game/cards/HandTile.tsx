@@ -33,8 +33,14 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false }: 
       {/* Art panel */}
       <div className="relative" style={{ height: "72%" }}>
         <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full" aria-hidden>
-          <polygon points="0,0 1,0 0,1" fill={c1} />
-          <polygon points="1,0 1,1 0,1" fill={c2} />
+          {card.kind === "animal" || card.kind === "sky_creature" ? (
+            <>
+              <polygon points="0,0 1,0 0,1" fill={c1} />
+              <polygon points="1,0 1,1 0,1" fill={c2} />
+            </>
+          ) : (
+            <polygon points="0,0 1,0 1,1 0,1" fill={c1} />
+          )}
         </svg>
         {badge && (
           <div className="absolute top-1.5 right-1.5 z-20 text-[8px] font-bold uppercase tracking-wider bg-black/45 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm">
