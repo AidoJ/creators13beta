@@ -42,7 +42,7 @@ import { HandTile } from "@/components/game/cards/HandTile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
-type Mode = "place" | "disaster" | "steal";
+type Mode = "place" | "disaster" | "steal" | "move";
 
 const LOCAL_STORAGE_KEY = "creators13.play.local-match.v1";
 
