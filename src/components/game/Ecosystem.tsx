@@ -136,6 +136,7 @@ export function Ecosystem({
                 size={size}
                 rotation={pc.rotation ?? 0}
                 onClick={clickHandler}
+                highlight={moveFromKey === k ? "selected" : null}
               />
             </div>
           );
