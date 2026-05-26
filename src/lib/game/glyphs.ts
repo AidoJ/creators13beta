@@ -16,12 +16,14 @@ export const CREATOR_TYPE_GLYPHS: Record<string, string> = {
   Lava, Fire, Whirlwind, Snow, Lightning, Sun, Lake, Ocean, Tree, Mountain, Soil, River, Sky,
 };
 
-/** Representative glyph for each of the 4 elements (used by element Creator cards). */
+/** Representative glyph for each of the 4 elements (used by element Creator cards).
+ *  Mapped to the canonical Creator Type that matches each element's palette:
+ *  Earth → Soil, Fire → Fire, Air → Whirlwind, Water → Ocean. */
 export const ELEMENT_GLYPHS: Record<string, string> = {
-  Fire,        // Fire element → Fire glyph
+  Fire,
   Air: Whirlwind,
   Water: Ocean,
-  Earth: Tree,
+  Earth: Soil,
   Sky,
 };
 
