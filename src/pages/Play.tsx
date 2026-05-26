@@ -246,7 +246,8 @@ export default function Play() {
         <div className="flex flex-col min-w-0">
           <Card className="flex-1 p-1 flex flex-col min-h-0 bg-[hsl(var(--board-surface))]">
             <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1">Your ecosystem</div>
-            <div className="flex-1 overflow-hidden flex items-center justify-center bg-[hsl(var(--board-hex-ghost))]">
+            <div className="flex-1 overflow-hidden flex items-center justify-center">
+              <div className="aspect-square h-[min(64vh,680px)] max-h-full max-w-full flex items-center justify-center bg-[hsl(var(--board-hex-ghost))]">
               <Ecosystem
                 eco={you.ecosystem}
                 size={116}
@@ -256,6 +257,7 @@ export default function Play() {
                 onStealClick={undefined}
                 minHeight={520}
               />
+              </div>
             </div>
           </Card>
         </div>
