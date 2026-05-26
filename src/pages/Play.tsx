@@ -61,6 +61,7 @@ export default function Play() {
   const [showPiles, setShowPiles] = useState(false);
   const [lobbyOpen, setLobbyOpen] = useState(false);
   const [waitingForGuest, setWaitingForGuest] = useState(false);
+  const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const saveSeqRef = useRef(0);
 
