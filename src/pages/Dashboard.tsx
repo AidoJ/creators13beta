@@ -3,6 +3,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useEnrollmentGate } from "@/hooks/useEnrollmentGate";
 import type { TierKey } from "@/lib/tiers";
+import { useNavigate } from "react-router-dom";
+import { Gamepad2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import WelcomeHero from "@/components/dashboard/WelcomeHero";
@@ -17,6 +20,7 @@ import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
 import DiscordLinkCard from "@/components/dashboard/DiscordLinkCard";
 import { Skeleton } from "@/components/ui/skeleton";
+
 
 interface ProfileData {
   first_name: string | null;
@@ -46,6 +50,7 @@ interface SubData {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { ready: gateReady } = useEnrollmentGate();
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -56,6 +61,7 @@ export default function Dashboard() {
   const [creatorTypes, setCreatorTypes] = useState<string[]>([]);
   const [hasTrainerPractitioner, setHasTrainerPractitioner] = useState(false);
   const [photoCount, setPhotoCount] = useState(0);
+
 
   useEffect(() => {
     if (!user) return;
@@ -145,6 +151,29 @@ export default function Dashboard() {
             <p className="text-sm text-muted-foreground max-w-lg mx-auto">
               The only place online where you can meet other Creators by their body type
             </p>
+          </div>
+        </div>
+
+        {/* Play Game card */}
+        <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-card/90 to-secondary/10 p-5 sm:p-6 shadow-md">
+          <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-secondary/15 blur-2xl" />
+          <div className="relative flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+            <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+              <Gamepad2 className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1 text-center sm:text-left space-y-1">
+              <h3 className="text-base font-display font-bold text-foreground">Creator Types Ecosystem Game</h3>
+              <p className="text-sm text-muted-foreground">
+                Build the ecosystem, match Creator Types, and outplay disasters.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/25"
+              onClick={() => navigate("/play")}
+            >
+              Play Now
+            </Button>
           </div>
         </div>
 
