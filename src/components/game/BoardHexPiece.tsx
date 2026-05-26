@@ -109,9 +109,18 @@ export function EmptyHexCell({
       style={{ width: size, height: h }}
     >
       <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full drop-shadow-sm">
+        {active && (
+          <polygon
+            points={hexPoints}
+            fill="none"
+            stroke="hsl(var(--gold) / 0.55)"
+            strokeWidth={0.09}
+            vectorEffect="non-scaling-stroke"
+          />
+        )}
         <polygon
           points={hexPoints}
-          fill={hover ? "hsl(var(--primary) / 0.18)" : active ? "hsl(var(--gold) / 0.18)" : "hsl(var(--foreground) / 0.035)"}
+          fill={hover ? "hsl(var(--primary) / 0.22)" : active ? "hsl(var(--gold) / 0.2)" : "hsl(var(--foreground) / 0.035)"}
           stroke={active ? "hsl(var(--gold))" : "hsl(var(--foreground) / 0.45)"}
           strokeWidth={active ? 0.04 : 0.026}
           strokeDasharray={active ? undefined : "0.04,0.03"}
