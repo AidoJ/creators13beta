@@ -1,5 +1,6 @@
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "@/lib/game/elements";
+import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType } from "@/lib/game/glyphs";
 import type { DeckCard } from "@/lib/game/types";
 
 interface Props {
@@ -18,8 +19,8 @@ interface Props {
  */
 export function HandTile({ card, size = 96, selected = false, dimmed = false }: Props) {
   const height = size * 1.35;
-  const { c1, c2, chips, badge } = resolveColours(card);
-  const art = card.source?.art_url;
+  const { c1, c2, chips, badge, artGlyph } = resolveColours(card);
+  const art = card.source?.art_url ?? artGlyph;
 
   return (
     <div
