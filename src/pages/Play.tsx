@@ -19,6 +19,7 @@ import {
   playSkyCreatureSteal,
   botStep,
   rotateMyPlacedHex,
+  moveMyPlacedHex,
 } from "@/lib/game";
 import {
   createMatchRow,
