@@ -1,11 +1,14 @@
 import { useEffect, useState, useCallback } from "react";
 import { fetchAllCards, type GameCard } from "@/lib/gameCards";
-import { createMatch, placeCard, discardCard } from "@/lib/game/engine";
-import type { MatchState, Axial } from "@/lib/game/types";
-import { pickBotMove } from "@/lib/game/bot";
-import { GameBoard } from "@/components/game/GameBoard";
+import {
+  buildDeck, createMatch, pickFromDraw, pickFromUsed,
+  placeOnEcosystem, discardCard, playDisaster, playSkyCreatureSteal, botStep,
+} from "@/lib/game";
+import type { MatchState, Axial, DeckCard } from "@/lib/game/types";
+import { Ecosystem } from "@/components/game/Ecosystem";
 import { PlayerHand } from "@/components/game/PlayerHand";
 import { ScorePanel } from "@/components/game/ScorePanel";
+import { BoardHexPiece } from "@/components/game/BoardHexPiece";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 
@@ -15,143 +18,152 @@ const BOT_ID = "bot";
 export default function Play() {
   const [allCards, setAllCards] = useState<GameCard[] | null>(null);
   const [state, setState] = useState<MatchState | null>(null);
-  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
-  const [hexSize, setHexSize] = useState(110);
+  const [selectedUid, setSelectedUid] = useState<string | null>(null);
+  const [stealMode, setStealMode] = useState(false);
 
-  // Initial fetch
   useEffect(() => {
     fetchAllCards()
-      .then((cards) => {
-        setAllCards(cards);
-      })
-      .catch((err) => {
-        console.error(err);
-        toast({ title: "Failed to load cards", description: String(err), variant: "destructive" });
-      });
+      .then(setAllCards)
+      .catch((err) => toast({ title: "Failed to load cards", description: String(err), variant: "destructive" }));
   }, []);
 
   const newMatch = useCallback(() => {
     if (!allCards) return;
-    const m = createMatch({
-      players: [
-        { id: HUMAN_ID, name: "You" },
-        { id: BOT_ID, name: "Bot" },
-      ],
-      deck: allCards,
-    });
-    setState(m);
-    setSelectedSlug(null);
+    const deck = buildDeck(allCards);
+    setState(createMatch({
+      players: [{ id: HUMAN_ID, name: "You" }, { id: BOT_ID, name: "Bot" }],
+      deck,
+    }));
+    setSelectedUid(null); setStealMode(false);
   }, [allCards]);
 
-  // Start a match once cards are loaded.
-  useEffect(() => {
-    if (allCards && !state) newMatch();
-  }, [allCards, state, newMatch]);
+  useEffect(() => { if (allCards && !state) newMatch(); }, [allCards, state, newMatch]);
 
-  // Bot turn driver
+  // Bot driver
   useEffect(() => {
     if (!state || state.finished) return;
-    const current = state.players[state.turn];
-    if (current.id !== BOT_ID) return;
-
-    const handle = setTimeout(() => {
-      const move = pickBotMove(state);
+    if (state.players[state.turn].id !== BOT_ID) return;
+    const h = setTimeout(() => {
       try {
-        if (move.kind === "place") {
-          const { state: next, pointsAwarded } = placeCard(
-            state,
-            move.cardSlug,
-            move.pos,
-            move.rotation,
-          );
+        const next = botStep(state);
+        if (next !== state) {
           setState(next);
-          if (pointsAwarded > 0) {
-            toast({ title: `Bot matched ${pointsAwarded} edge${pointsAwarded > 1 ? "s" : ""}` });
-          }
-        } else {
-          setState(discardCard(state, move.cardSlug));
-          toast({ title: "Bot discarded a card" });
+          if (next.lastEvent) toast({ title: next.lastEvent });
         }
-      } catch (err) {
-        console.error("bot move failed", err);
-      }
-    }, 700);
-    return () => clearTimeout(handle);
+      } catch (e) { console.error(e); }
+    }, 600);
+    return () => clearTimeout(h);
   }, [state]);
 
   if (!allCards || !state) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        Loading deck…
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading deck…</div>;
   }
 
   const human = state.players.find((p) => p.id === HUMAN_ID)!;
+  const bot = state.players.find((p) => p.id === BOT_ID)!;
   const isHumanTurn = state.players[state.turn]?.id === HUMAN_ID && !state.finished;
-  const selectedCard = human.hand.find((c) => c.slug === selectedSlug) ?? null;
+  const selectedCard: DeckCard | null = human.hand.find((c) => c.uid === selectedUid) ?? null;
 
-  const handlePlace = (pos: Axial) => {
-    if (!isHumanTurn || !selectedCard) return;
+  const guarded = (fn: () => MatchState) => {
     try {
-      const { state: next, pointsAwarded } = placeCard(state, selectedCard.slug, pos);
-      setState(next);
-      setSelectedSlug(null);
-      if (pointsAwarded > 0) {
-        toast({ title: `+${pointsAwarded} point${pointsAwarded > 1 ? "s" : ""}` });
-      }
+      const next = fn();
+      setState(next); setSelectedUid(null); setStealMode(false);
+      if (next.lastEvent) toast({ title: next.lastEvent });
     } catch (err: any) {
-      toast({ title: "Illegal move", description: err?.message, variant: "destructive" });
+      toast({ title: "Can't do that", description: err?.message, variant: "destructive" });
     }
   };
 
+  const handlePlace = (pos: Axial) => {
+    if (!isHumanTurn || !selectedCard) return;
+    guarded(() => placeOnEcosystem(state, selectedCard.uid, pos));
+  };
   const handleDiscard = () => {
     if (!isHumanTurn || !selectedCard) return;
-    setState(discardCard(state, selectedCard.slug));
-    setSelectedSlug(null);
+    guarded(() => discardCard(state, selectedCard.uid));
   };
+  const handleDisaster = () => {
+    if (!isHumanTurn || !selectedCard) return;
+    guarded(() => playDisaster(state, selectedCard.uid));
+  };
+  const handleStealTarget = (posKey: string) => {
+    if (!isHumanTurn || !selectedCard || !stealMode) return;
+    guarded(() => playSkyCreatureSteal(state, selectedCard.uid, BOT_ID, posKey));
+  };
+
+  const canDisaster = selectedCard && (selectedCard.kind === "creator" || selectedCard.kind === "sky_creator");
+  const canSteal = selectedCard?.kind === "sky_creature";
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
       <ScorePanel state={state} />
 
-      <div className="flex-1 overflow-auto p-6">
-        <div className="flex justify-between items-center mb-4 max-w-5xl mx-auto">
-          <p className="text-xs text-muted-foreground">
-            {isHumanTurn
-              ? selectedCard
-                ? "Click a glowing hex to place — rotation is chosen automatically to maximise matches."
-                : "Pick a card from your hand."
-              : "Bot is thinking…"}
-          </p>
-          <div className="flex gap-2 items-center">
-            <label className="text-xs text-muted-foreground">Hex size</label>
-            <input
-              type="range"
-              min={70}
-              max={160}
-              value={hexSize}
-              onChange={(e) => setHexSize(Number(e.target.value))}
-            />
-            <Button size="sm" variant="outline" onClick={newMatch}>
-              New match
-            </Button>
+      <div className="flex-1 overflow-auto p-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Bot ecosystem */}
+        <section className="rounded-lg border border-border/40 bg-card/30 p-4">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="font-display text-lg">Bot's ecosystem</h2>
+            {stealMode && <span className="text-xs text-primary">Click an animal to steal it</span>}
           </div>
-        </div>
+          <Ecosystem eco={bot.ecosystem} size={70} onStealClick={stealMode ? handleStealTarget : undefined} />
+        </section>
 
-        <GameBoard
-          state={state}
-          size={hexSize}
-          selectedCard={isHumanTurn ? selectedCard : null}
-          onPlace={handlePlace}
-        />
+        {/* Human ecosystem */}
+        <section className="rounded-lg border border-border/40 bg-card/30 p-4">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="font-display text-lg">Your ecosystem</h2>
+            <Button size="sm" variant="outline" onClick={newMatch}>New match</Button>
+          </div>
+          <Ecosystem
+            eco={human.ecosystem}
+            size={90}
+            selectable={isHumanTurn && !!selectedCard && state.phase === "place" && !stealMode &&
+              selectedCard.kind !== "golden_hive" && !canSteal}
+            onPlace={handlePlace}
+          />
+        </section>
+      </div>
+
+      {/* Piles + actions */}
+      <div className="border-t border-border/40 bg-card/40 backdrop-blur p-3 flex flex-wrap gap-4 items-center justify-center">
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-xs text-muted-foreground">Draw ({state.draw.length})</span>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!isHumanTurn || state.phase !== "draw" || state.draw.length === 0}
+            onClick={() => guarded(() => pickFromDraw(state))}
+          >Pick from draw</Button>
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-xs text-muted-foreground">Used ({state.used.length})</span>
+          {state.used.length > 0 && (
+            <div className="mb-1"><BoardHexPiece card={state.used[state.used.length - 1]} size={60} /></div>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!isHumanTurn || state.phase !== "draw" || state.used.length === 0}
+            onClick={() => guarded(() => pickFromUsed(state))}
+          >Pick from used</Button>
+        </div>
+        <div className="flex flex-col gap-2">
+          <Button size="sm" variant="secondary" disabled={!isHumanTurn || !selectedCard || state.phase !== "place"} onClick={handleDiscard}>
+            Discard selected
+          </Button>
+          <Button size="sm" disabled={!isHumanTurn || !canDisaster || state.phase !== "place"} onClick={handleDisaster}>
+            🔥 Play as Disaster
+          </Button>
+          <Button size="sm" disabled={!isHumanTurn || !canSteal || state.phase !== "place"} onClick={() => setStealMode((s) => !s)}>
+            {stealMode ? "Cancel steal" : "🦋 Steal animal"}
+          </Button>
+        </div>
       </div>
 
       <PlayerHand
         hand={human.hand}
-        selectedSlug={selectedSlug}
-        onSelect={(slug) => setSelectedSlug((cur) => (cur === slug ? null : slug))}
-        onDiscard={handleDiscard}
+        selectedUid={selectedUid}
+        onSelect={(uid) => { setSelectedUid((cur) => (cur === uid ? null : uid)); setStealMode(false); }}
         disabled={!isHumanTurn}
       />
     </div>
