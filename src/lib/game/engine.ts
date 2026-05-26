@@ -25,6 +25,7 @@ import {
 } from "./types";
 import { keyOf, neighbours } from "./board";
 import { TYPE_TO_ELEMENT } from "./elements";
+import { bestRotationForPlacement, rotatePlacedHex } from "./rotation";
 
 /* --------------------------- helpers --------------------------- */
 
