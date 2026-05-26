@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Info } from "lucide-react";
+import { Info, X } from "lucide-react";
+import { createPortal } from "react-dom";
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType } from "@/lib/game/glyphs";
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function HandTile({ card, size = 96, selected = false, dimmed = false, forceFlipped }: Props) {
+  const [zoomed, setZoomed] = useState(false);
   const [flipped, setFlipped] = useState(false);
   const isFlipped = forceFlipped ?? flipped;
   const height = size * 1.35;
