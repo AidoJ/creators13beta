@@ -3,6 +3,19 @@ import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType } from "@/lib/game/glyphs";
 import type { DeckCard } from "@/lib/game/types";
 
+/** Lighten (amt > 0) or darken (amt < 0) a hex colour by mixing with white/black. */
+function shade(hex: string, amt: number): string {
+  const m = hex.replace("#", "");
+  const n = m.length === 3 ? m.split("").map((c) => c + c).join("") : m;
+  const r = parseInt(n.slice(0, 2), 16);
+  const g = parseInt(n.slice(2, 4), 16);
+  const b = parseInt(n.slice(4, 6), 16);
+  const t = amt < 0 ? 0 : 255;
+  const p = Math.abs(amt);
+  const mix = (c: number) => Math.round((t - c) * p + c);
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+}
+
 interface Props {
   card: DeckCard;
   size?: number;
@@ -59,21 +72,40 @@ export function BoardHexPiece({ card, size = 110, onClick, highlight = null, rot
       <svg
         viewBox="0 0 1 1"
         preserveAspectRatio="none"
-        className="absolute inset-0 w-full h-full drop-shadow-lg"
+        className="absolute inset-0 w-full h-full"
         style={{
           transform: rotation ? `rotate(${rotation * 60}deg)` : undefined,
           transformOrigin: "center",
           transition: "transform 220ms ease",
+          filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.45))",
         }}
       >
+        <defs>
+          <radialGradient id={`g1-${card.uid}`} cx="0.35" cy="0.3" r="0.9">
+            <stop offset="0%" stopColor={shade(c1, 0.4)} />
+            <stop offset="55%" stopColor={c1} />
+            <stop offset="100%" stopColor={shade(c1, -0.3)} />
+          </radialGradient>
+          <radialGradient id={`g2-${card.uid}`} cx="0.65" cy="0.7" r="0.9">
+            <stop offset="0%" stopColor={shade(c2, 0.4)} />
+            <stop offset="55%" stopColor={c2} />
+            <stop offset="100%" stopColor={shade(c2, -0.3)} />
+          </radialGradient>
+          <linearGradient id={`sheen-${card.uid}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.55)" />
+            <stop offset="40%" stopColor="rgba(255,255,255,0.05)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.3)" />
+          </linearGradient>
+        </defs>
         {card.kind === "animal" || card.kind === "sky_creature" ? (
           <>
-            <polygon points={halfA} fill={c1} />
-            <polygon points={halfB} fill={c2} />
+            <polygon points={halfA} fill={`url(#g1-${card.uid})`} />
+            <polygon points={halfB} fill={`url(#g2-${card.uid})`} />
           </>
         ) : (
-          <polygon points={hexPoints} fill={c1} />
+          <polygon points={hexPoints} fill={`url(#g1-${card.uid})`} />
         )}
+        <polygon points={hexPoints} fill={`url(#sheen-${card.uid})`} style={{ mixBlendMode: "soft-light" as any }} />
         <polygon points={hexPoints} fill="none" stroke={ring} strokeWidth={highlight ? 0.06 : 0.04} vectorEffect="non-scaling-stroke" />
       </svg>
       {art && (
