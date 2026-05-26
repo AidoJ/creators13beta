@@ -108,6 +108,10 @@ export default function Play() {
     if (!state || !selectedUid) return;
     guarded(() => discardCard(state, selectedUid));
   }
+  function onRotateMyHex(posKey: string) {
+    if (!state) return;
+    setState((s) => (s ? rotateMyPlacedHex(s, "you", posKey) : s));
+  }
   function onDisaster() {
     if (!state || !selectedUid) return;
     guarded(() => playDisaster(state, selectedUid));
