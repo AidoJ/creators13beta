@@ -583,6 +583,54 @@ export type Database = {
         }
         Relationships: []
       }
+      game_matches: {
+        Row: {
+          created_at: string
+          guest_name: string | null
+          guest_user_id: string | null
+          host_name: string
+          host_user_id: string
+          id: string
+          invite_token: string | null
+          last_action_by: string | null
+          mode: Database["public"]["Enums"]["match_mode"]
+          state: Json
+          status: Database["public"]["Enums"]["match_status"]
+          updated_at: string
+          winner_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          guest_name?: string | null
+          guest_user_id?: string | null
+          host_name: string
+          host_user_id: string
+          id?: string
+          invite_token?: string | null
+          last_action_by?: string | null
+          mode?: Database["public"]["Enums"]["match_mode"]
+          state: Json
+          status?: Database["public"]["Enums"]["match_status"]
+          updated_at?: string
+          winner_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          guest_name?: string | null
+          guest_user_id?: string | null
+          host_name?: string
+          host_user_id?: string
+          id?: string
+          invite_token?: string | null
+          last_action_by?: string | null
+          mode?: Database["public"]["Enums"]["match_mode"]
+          state?: Json
+          status?: Database["public"]["Enums"]["match_status"]
+          updated_at?: string
+          winner_user_id?: string | null
+        }
+        Relationships: []
+      }
       game_scores: {
         Row: {
           game_type: string | null
@@ -1286,6 +1334,10 @@ export type Database = {
       }
     }
     Functions: {
+      accept_game_invite: {
+        Args: { _guest_name: string; _token: string }
+        Returns: string
+      }
       generate_practitioner_code:
         | { Args: never; Returns: string }
         | { Args: { _first_name?: string }; Returns: string }
@@ -1349,6 +1401,8 @@ export type Database = {
         | "booking_made"
         | "awaiting_profiling"
         | "complete"
+      match_mode: "solo" | "pvp"
+      match_status: "waiting" | "active" | "finished"
       order_status:
         | "pending"
         | "paid"
@@ -1519,6 +1573,8 @@ export const Constants = {
         "awaiting_profiling",
         "complete",
       ],
+      match_mode: ["solo", "pvp"],
+      match_status: ["waiting", "active", "finished"],
       order_status: [
         "pending",
         "paid",
