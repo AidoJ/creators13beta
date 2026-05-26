@@ -3,6 +3,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useEnrollmentGate } from "@/hooks/useEnrollmentGate";
 import type { TierKey } from "@/lib/tiers";
+import { useNavigate } from "react-router-dom";
+import { Gamepad2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import WelcomeHero from "@/components/dashboard/WelcomeHero";
@@ -17,6 +20,7 @@ import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
 import DiscordLinkCard from "@/components/dashboard/DiscordLinkCard";
 import { Skeleton } from "@/components/ui/skeleton";
+
 
 interface ProfileData {
   first_name: string | null;
