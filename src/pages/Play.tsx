@@ -305,7 +305,7 @@ export default function Play() {
         selectedUid={selectedUid}
         onSelect={(uid) => setSelectedUid(uid)}
         disabled={!isYourTurn || state.phase !== "place"}
-        size={84}
+        size={126}
       />
     </div>
   );
