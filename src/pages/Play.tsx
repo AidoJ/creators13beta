@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { HelpCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { fetchAllCards, type GameCard } from "@/lib/gameCards";
 import {
   buildDeck,
@@ -12,7 +13,6 @@ import {
   discardCard,
   playDisaster,
   playSkyCreatureSteal,
-  legalEcoCells,
   botStep,
   rotateMyPlacedHex,
 } from "@/lib/game";
@@ -21,6 +21,10 @@ import { Ecosystem } from "@/components/game/Ecosystem";
 import { PlayerHand } from "@/components/game/PlayerHand";
 import { ScorePanel } from "@/components/game/ScorePanel";
 import { BoardHexPiece } from "@/components/game/BoardHexPiece";
+import { MatchOverDialog } from "@/components/game/MatchOverDialog";
+import { TutorialOverlay, resetTutorial } from "@/components/game/TutorialOverlay";
+import { HandTile } from "@/components/game/cards/HandTile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
 type Mode = "place" | "disaster" | "steal";
@@ -31,8 +35,10 @@ export default function Play() {
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("place");
   const [error, setError] = useState<string | null>(null);
+  const [showOpponent, setShowOpponent] = useState(false);
+  const [showPiles, setShowPiles] = useState(false);
+  const isMobile = useIsMobile();
 
-  // Load cards + create match once
   useEffect(() => {
     let cancelled = false;
     fetchAllCards()
@@ -56,7 +62,6 @@ export default function Play() {
     };
   }, []);
 
-  // Drive the bot
   useEffect(() => {
     if (!state || state.finished) return;
     if (state.players[state.turn].id !== "bot") return;
@@ -91,31 +96,19 @@ export default function Play() {
     }
   };
 
-  function onPickDraw() {
-    if (!state) return;
-    guarded(() => pickFromDraw(state));
-  }
-  function onPickUsed() {
-    if (!state) return;
-    guarded(() => pickFromUsed(state));
-  }
+  function onPickDraw() { if (state) guarded(() => pickFromDraw(state)); }
+  function onPickUsed() { if (state) guarded(() => pickFromUsed(state)); }
   function onPlace(pos: Axial, draggedUid?: string) {
     const cardUid = draggedUid ?? selectedUid;
     if (!state || !cardUid) return;
     guarded(() => placeOnEcosystem(state, cardUid, pos));
   }
-  function onDiscard() {
-    if (!state || !selectedUid) return;
-    guarded(() => discardCard(state, selectedUid));
-  }
+  function onDiscard() { if (state && selectedUid) guarded(() => discardCard(state, selectedUid)); }
   function onRotateMyHex(posKey: string) {
     if (!state) return;
     setState((s) => (s ? rotateMyPlacedHex(s, "you", posKey) : s));
   }
-  function onDisaster() {
-    if (!state || !selectedUid) return;
-    guarded(() => playDisaster(state, selectedUid));
-  }
+  function onDisaster() { if (state && selectedUid) guarded(() => playDisaster(state, selectedUid)); }
   function onStealHex(posKey: string) {
     if (!state || !selectedUid) return;
     guarded(() => playSkyCreatureSteal(state, selectedUid, "bot", posKey));
@@ -155,7 +148,6 @@ export default function Play() {
     );
   }
 
-  // Phase hint text
   let phaseHint = "";
   if (state.finished) {
     phaseHint = `Match over — winner: ${state.players.find((p) => p.id === state.winnerId)?.name ?? "—"}`;
@@ -178,138 +170,162 @@ export default function Play() {
   const canSteal = isYourTurn && state.phase === "place" && !!selectedCard
     && selectedCard.kind === "sky_creature";
 
+  /* --- Reusable rail blocks --- */
+
+  const opponentBlock = (
+    <Card className="p-3">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Tutorial Bot</div>
+      <Ecosystem eco={bot.ecosystem} size={isMobile ? 28 : 36} minHeight={isMobile ? 140 : 180} showEmpties={false} />
+    </Card>
+  );
+
+  const pilesBlock = (
+    <Card className="p-3">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Piles</div>
+      <div className="flex gap-2 items-center">
+        <Button variant="outline" size="sm" className="flex-1"
+          disabled={!isYourTurn || state.phase !== "draw" || state.draw.length === 0}
+          onClick={onPickDraw}>
+          Draw ({state.draw.length})
+        </Button>
+        <Button variant="outline" size="sm" className="flex-1"
+          disabled={!isYourTurn || state.phase !== "draw" || state.used.length === 0}
+          onClick={onPickUsed}>
+          Used ({state.used.length})
+        </Button>
+      </div>
+      {usedTop && (
+        <div className="mt-3 flex justify-center">
+          <BoardHexPiece card={usedTop} size={64} />
+        </div>
+      )}
+    </Card>
+  );
+
+  const actionsBlock = (
+    <Card className="p-3">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Card actions</div>
+      <div className="flex flex-col gap-2">
+        <Button size="sm" variant="secondary" disabled={!canDiscard} onClick={onDiscard}>
+          Discard selected
+        </Button>
+        <Button size="sm" variant="secondary" disabled={!canDisaster} onClick={onDisaster}>
+          Play as Disaster
+        </Button>
+        <Button size="sm" variant={mode === "steal" ? "default" : "secondary"}
+          disabled={!canSteal}
+          onClick={() => setMode(mode === "steal" ? "place" : "steal")}>
+          {mode === "steal" ? "Cancel steal" : "Steal with Sky Creature"}
+        </Button>
+      </div>
+      <div className="text-[11px] text-muted-foreground mt-3 leading-relaxed">
+        Creators ⇒ Disaster (after your 4 are placed). Sky Creature ⇒ Steal. Golden Hive ⇒ pick up to arm shield. Golden Body ⇒ wildcard animal.
+      </div>
+    </Card>
+  );
+
+  const selectedBlock = mode === "steal" ? (
+    <Card className="p-3">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Click an animal to steal</div>
+      <Ecosystem eco={bot.ecosystem} size={isMobile ? 36 : 56} showEmpties={false}
+        onStealClick={onStealHex} minHeight={isMobile ? 200 : 300} />
+    </Card>
+  ) : (
+    <Card className="p-3">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Selected</div>
+      {selectedCard ? (
+        <div className="flex flex-col items-center gap-2">
+          <HandTile card={selectedCard} size={140} selected />
+          <div className="text-[11px] text-muted-foreground text-center">Tap the ⓘ to flip the card.</div>
+        </div>
+      ) : (
+        <div className="text-xs text-muted-foreground">Click a card in your hand.</div>
+      )}
+    </Card>
+  );
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <ScorePanel state={state} />
 
-      <div className="px-4 py-2 bg-card/30 border-b border-border/40 flex items-center justify-between gap-4 flex-wrap">
-        <div className="text-sm">
+      <div className="px-3 py-2 bg-card/30 border-b border-border/40 flex items-center justify-between gap-3 flex-wrap">
+        <div className="text-sm flex-1 min-w-0">
           {phaseHint}
           {isYourTurn && state.phase === "place" && mode !== "steal" && (
-            <span className="ml-2 text-muted-foreground">
+            <span className="ml-2 text-muted-foreground hidden md:inline">
               · Tip: click any placed hex to rotate its colours.
             </span>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <Button size="sm" variant="ghost" onClick={() => { resetTutorial(); window.location.reload(); }}>
+            <HelpCircle className="w-4 h-4 mr-1" /> Help
+          </Button>
           {state.finished && (
             <Button size="sm" onClick={onNewGame}>New game</Button>
           )}
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-[220px_1fr_220px] gap-3 p-2 min-h-0">
-        {/* LEFT RAIL */}
-        <div className="flex flex-col gap-3 min-w-0">
-          <Card className="p-3">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Tutorial Bot</div>
-            <Ecosystem eco={bot.ecosystem} size={36} minHeight={180} showEmpties={false} />
-          </Card>
+      {/* MAIN LAYOUT: 3-col on lg+, stacked on smaller. */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[220px_1fr_220px] gap-3 p-2 min-h-0">
+        {/* LEFT RAIL (collapsible below lg) */}
+        <div className="flex flex-col gap-3 min-w-0 lg:contents">
+          <div className="lg:hidden flex gap-2">
+            <Collapsible open={showOpponent} onOpenChange={setShowOpponent} className="flex-1">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full">
+                  {showOpponent ? "Hide" : "Show"} opponent
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2">{opponentBlock}</CollapsibleContent>
+            </Collapsible>
+            <Collapsible open={showPiles} onOpenChange={setShowPiles} className="flex-1">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full">
+                  {showPiles ? "Hide" : "Show"} piles
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2 space-y-2">
+                {pilesBlock}
+                {actionsBlock}
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
 
-          <Card className="p-3">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Piles</div>
-            <div className="flex gap-2 items-center">
-              <Button
-                variant="outline" size="sm" className="flex-1"
-                disabled={!isYourTurn || state.phase !== "draw" || state.draw.length === 0}
-                onClick={onPickDraw}
-              >
-                Draw ({state.draw.length})
-              </Button>
-              <Button
-                variant="outline" size="sm" className="flex-1"
-                disabled={!isYourTurn || state.phase !== "draw" || state.used.length === 0}
-                onClick={onPickUsed}
-              >
-                Used ({state.used.length})
-              </Button>
-            </div>
-            {usedTop && (
-              <div className="mt-3 flex justify-center">
-                <BoardHexPiece card={usedTop} size={64} />
-              </div>
-            )}
-          </Card>
-
-          <Card className="p-3">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Card actions</div>
-            <div className="flex flex-col gap-2">
-              <Button size="sm" variant="secondary" disabled={!canDiscard} onClick={onDiscard}>
-                Discard selected
-              </Button>
-              <Button size="sm" variant="secondary" disabled={!canDisaster} onClick={onDisaster}>
-                Play as Disaster
-              </Button>
-              <Button
-                size="sm" variant={mode === "steal" ? "default" : "secondary"}
-                disabled={!canSteal}
-                onClick={() => setMode(mode === "steal" ? "place" : "steal")}
-              >
-                {mode === "steal" ? "Cancel steal" : "Steal with Sky Creature"}
-              </Button>
-            </div>
-            <div className="text-[11px] text-muted-foreground mt-3 leading-relaxed">
-              Creators ⇒ Disaster (after your 4 are placed). Sky Creature ⇒ Steal. Golden Hive ⇒ pick up to arm shield. Golden Body ⇒ wildcard animal.
-            </div>
-          </Card>
+          {/* Desktop: render left rail directly via lg:contents on parent. */}
+          <div className="hidden lg:flex lg:flex-col lg:gap-3 lg:col-start-1">
+            {opponentBlock}
+            {pilesBlock}
+            {actionsBlock}
+          </div>
         </div>
 
         {/* CENTRE */}
-        <div className="flex flex-col min-w-0">
+        <div className="flex flex-col min-w-0 lg:col-start-2">
           <Card className="flex-1 p-1 flex flex-col min-h-0 bg-[hsl(var(--board-surface))]">
             <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1">Your ecosystem</div>
             <div className="flex-1 overflow-hidden flex items-center justify-center">
-              <div className="aspect-square h-[min(64vh,680px)] max-h-full max-w-full flex items-center justify-center bg-[hsl(var(--board-hex-ghost))]">
-              <Ecosystem
-                eco={you.ecosystem}
-                size={116}
-                selectable={canUseBoard}
-                onPlace={onPlace}
-                showEmpties
-                onStealClick={undefined}
-                onRotateClick={isYourTurn ? onRotateMyHex : undefined}
-                minHeight={520}
-              />
+              <div className="aspect-square h-[min(56vh,680px)] max-h-full max-w-full flex items-center justify-center bg-[hsl(var(--board-hex-ghost))]">
+                <Ecosystem
+                  eco={you.ecosystem}
+                  size={isMobile ? 64 : 116}
+                  selectable={canUseBoard}
+                  onPlace={onPlace}
+                  showEmpties
+                  onStealClick={undefined}
+                  onRotateClick={isYourTurn ? onRotateMyHex : undefined}
+                  minHeight={isMobile ? 280 : 520}
+                />
               </div>
             </div>
           </Card>
         </div>
 
-
-
-        {/* RIGHT RAIL - bot ecosystem big for steal target */}
-        {mode === "steal" && (
-          <Card className="p-3 col-start-3">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-              Click an animal to steal
-            </div>
-            <Ecosystem
-              eco={bot.ecosystem}
-              size={56}
-              showEmpties={false}
-              onStealClick={onStealHex}
-              minHeight={300}
-            />
-          </Card>
-        )}
-        {mode !== "steal" && (
-          <Card className="p-3 col-start-3">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Selected</div>
-            {selectedCard ? (
-              <div className="flex flex-col items-center gap-2">
-                <BoardHexPiece card={selectedCard} size={120} highlight="selected" />
-                <div className="text-sm font-medium text-center">{selectedCard.name}</div>
-                {selectedCard.source?.descriptor && (
-                  <div className="text-xs text-muted-foreground text-center max-h-32 overflow-auto">
-                    {selectedCard.source.descriptor}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-xs text-muted-foreground">Click a card in your hand.</div>
-            )}
-          </Card>
-        )}
+        {/* RIGHT RAIL */}
+        <div className="lg:col-start-3 min-w-0">
+          {selectedBlock}
+        </div>
       </div>
 
       {/* HAND */}
@@ -318,8 +334,11 @@ export default function Play() {
         selectedUid={selectedUid}
         onSelect={(uid) => setSelectedUid(uid)}
         disabled={!isYourTurn || state.phase !== "place"}
-        size={126}
+        size={isMobile ? 86 : 126}
       />
+
+      <MatchOverDialog state={state} onPlayAgain={onNewGame} />
+      <TutorialOverlay />
     </div>
   );
 }
