@@ -55,13 +55,17 @@ function cloneState(s: MatchState): MatchState {
   };
 }
 
-export function legalEcoCells(eco: Ecosystem): Axial[] {
-  if (eco.placed.size === 0) return [{ q: 0, r: 0 }];
+export function legalEcoCells(eco: Ecosystem, excludeKey?: string): Axial[] {
+  const sources = Array.from(eco.placed.values()).filter(
+    (pc) => !excludeKey || keyOf(pc.pos) !== excludeKey,
+  );
+  if (sources.length === 0) return [{ q: 0, r: 0 }];
+  const occupied = new Set(sources.map((pc) => keyOf(pc.pos)));
   const empty = new Map<string, Axial>();
-  for (const pc of eco.placed.values()) {
+  for (const pc of sources) {
     for (const n of neighbours(pc.pos)) {
       const k = keyOf(n);
-      if (!eco.placed.has(k) && !empty.has(k)) empty.set(k, n);
+      if (!occupied.has(k) && !empty.has(k)) empty.set(k, n);
     }
   }
   return Array.from(empty.values());
