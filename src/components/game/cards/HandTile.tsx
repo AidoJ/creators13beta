@@ -59,7 +59,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
           )}
 
           {/* Art panel */}
-          <div className="relative" style={{ height: "72%" }}>
+          <div className="relative group/art" style={{ height: "72%" }}>
             <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full" aria-hidden>
               {card.kind === "animal" || card.kind === "sky_creature" ? (
                 <>
@@ -90,6 +90,32 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
               ) : (
                 <div className="text-white/80 text-[10px] font-medium uppercase tracking-wide">{card.kind}</div>
               )}
+            </div>
+            {/* Hover tooltip overlay */}
+            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center opacity-0 group-hover/art:opacity-100 transition-opacity duration-150 pointer-events-none">
+              <div className="bg-black/80 backdrop-blur-sm rounded-lg px-2 py-1.5 flex flex-col items-center gap-1 max-w-[90%]">
+                <span
+                  className="font-bold uppercase tracking-wide leading-none text-white truncate max-w-full"
+                  style={{ fontFamily: '"Lilita One", sans-serif', fontSize: size * 0.1, textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
+                >
+                  {card.name}
+                </span>
+                <div className="flex items-center gap-1 flex-wrap justify-center">
+                  {chips.map((chip, i) => (
+                    <span key={chip.label + i} className="contents">
+                      {i > 0 && <span className="text-white/50 text-[8px]">+</span>}
+                      <span className="inline-flex items-center gap-0.5 font-semibold uppercase tracking-wider text-white" style={{ fontSize: size * 0.07 }}>
+                        {chip.glyph ? (
+                          <img src={chip.glyph} alt="" className="object-contain" style={{ width: size * 0.1, height: size * 0.1 }} aria-hidden />
+                        ) : (
+                          <span className="rounded-full" style={{ width: size * 0.06, height: size * 0.06, background: chip.color }} aria-hidden />
+                        )}
+                        {chip.label}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 

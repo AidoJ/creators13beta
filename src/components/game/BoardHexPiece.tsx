@@ -1,6 +1,6 @@
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "@/lib/game/elements";
-import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS } from "@/lib/game/glyphs";
+import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType } from "@/lib/game/glyphs";
 import type { DeckCard } from "@/lib/game/types";
 
 interface Props {
@@ -51,7 +51,7 @@ export function BoardHexPiece({ card, size = 110, onClick, highlight = null, rot
   return (
     <div
       onClick={onClick}
-      className={`relative inline-block ${onClick ? "cursor-pointer transition-transform hover:scale-105" : ""}`}
+      className={`group relative inline-block ${onClick ? "cursor-pointer transition-transform hover:scale-105" : ""}`}
       style={{ width: size, height: h }}
       aria-label={card.name}
       title={card.name}
@@ -89,6 +89,32 @@ export function BoardHexPiece({ card, size = 110, onClick, highlight = null, rot
           }}
         />
       )}
+      {/* Hover tooltip overlay */}
+      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none">
+        <div className="bg-black/80 backdrop-blur-sm rounded-lg px-2 py-1.5 flex flex-col items-center gap-1 max-w-[90%]">
+          <span
+            className="font-bold uppercase tracking-wide leading-none text-white truncate max-w-full"
+            style={{ fontFamily: '"Lilita One", sans-serif', fontSize: size * 0.1, textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
+          >
+            {card.name}
+          </span>
+          <div className="flex items-center gap-1 flex-wrap justify-center">
+            {resolveTypeChips(card).map((chip, i) => (
+              <span key={chip.label + i} className="contents">
+                {i > 0 && <span className="text-white/50 text-[8px]">+</span>}
+                <span className="inline-flex items-center gap-0.5 font-semibold uppercase tracking-wider text-white" style={{ fontSize: size * 0.07 }}>
+                  {chip.glyph ? (
+                    <img src={chip.glyph} alt="" className="object-contain" style={{ width: size * 0.1, height: size * 0.1 }} aria-hidden />
+                  ) : (
+                    <span className="rounded-full" style={{ width: size * 0.06, height: size * 0.06, background: chip.color }} aria-hidden />
+                  )}
+                  {chip.label}
+                </span>
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -128,6 +154,35 @@ export function EmptyHexCell({
           vectorEffect="non-scaling-stroke"
         />
       </svg>
-    </div>
+  </div>
   );
+}
+
+function resolveTypeChips(card: DeckCard): { label: string; color: string; glyph?: string }[] {
+  if (card.kind === "animal" || card.kind === "sky_creature") {
+    const [t1, t2] = card.types ?? [];
+    const c1 = CREATOR_TYPE_COLORS[t1 as keyof typeof CREATOR_TYPE_COLORS] ?? "#888";
+    const c2 = CREATOR_TYPE_COLORS[t2 as keyof typeof CREATOR_TYPE_COLORS] ?? c1;
+    return [
+      { label: String(t1 ?? ""), color: c1, glyph: glyphForType(t1 as string) },
+      ...(t2 && t2 !== t1 ? [{ label: String(t2), color: c2, glyph: glyphForType(t2 as string) }] : []),
+    ].filter((c) => c.label);
+  }
+  if (card.kind === "creator") {
+    const c = ELEMENT_COLORS[card.element!];
+    const g = ELEMENT_GLYPHS[card.element!];
+    return [{ label: card.element!, color: c, glyph: g }];
+  }
+  if (card.kind === "sky_creator") {
+    const c = ELEMENT_COLORS.Sky;
+    const g = CREATOR_TYPE_GLYPHS.Sky;
+    return [{ label: "Sky", color: c, glyph: g }];
+  }
+  if (card.kind === "golden_body") {
+    return [{ label: "Golden Body", color: "#f5c542" }];
+  }
+  if (card.kind === "golden_hive") {
+    return [{ label: "Hive", color: "#e0a920" }];
+  }
+  return [];
 }
