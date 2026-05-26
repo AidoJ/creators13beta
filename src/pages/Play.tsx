@@ -370,19 +370,22 @@ export default function Play() {
     <Card className="p-3">
       <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Card actions</div>
       <div className="flex flex-col gap-2">
-        <Button size="sm" variant="secondary" disabled={!canDiscard} onClick={onDiscard}>
+        <Button size="sm" variant="secondary" disabled={!canDiscard} onClick={onDiscard}
+          className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center">
           Discard selected
         </Button>
-        <Button size="sm" variant="secondary" disabled={!canDisaster} onClick={onDisaster}>
+        <Button size="sm" variant="secondary" disabled={!canDisaster} onClick={onDisaster}
+          className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center">
           Play as Disaster
         </Button>
         <Button size="sm" variant={mode === "steal" ? "default" : "secondary"}
           disabled={!canSteal}
-          onClick={() => setMode(mode === "steal" ? "place" : "steal")}>
+          onClick={() => setMode(mode === "steal" ? "place" : "steal")}
+          className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center">
           {mode === "steal" ? "Cancel steal" : "Steal with Sky Creature"}
         </Button>
       </div>
-      <div className="text-[11px] text-muted-foreground mt-3 leading-relaxed">
+      <div className="text-[10px] text-muted-foreground mt-3 leading-relaxed break-words">
         Creators ⇒ Disaster (after your 4 are placed). Sky Creature ⇒ Steal. Golden Hive ⇒ pick up to arm shield. Golden Body ⇒ wildcard animal.
       </div>
     </Card>
