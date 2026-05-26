@@ -23,9 +23,26 @@ import { NEIGHBOUR_DIRS, keyOf } from "./board";
 const BASE_HALVES: Array<"A" | "B"> = ["B", "A", "A", "A", "B", "B"];
 
 /** Which half (A or B) of a hex with `rotation` faces neighbour direction `dir`. */
-function halfFacing(dir: number, rotation: number): "A" | "B" {
+export function halfFacing(dir: number, rotation: number): "A" | "B" {
   const r = ((rotation % 6) + 6) % 6;
   return BASE_HALVES[(dir - r + 6) % 6];
+}
+
+/** The Creator-Type / Element label that the given hex shows on the edge
+ *  facing neighbour direction `dir`. Used by the board to render match badges. */
+export function facingTypeLabel(
+  card: DeckCard,
+  rotation: number,
+  dir: number,
+): string | null {
+  if (card.kind === "animal" || card.kind === "sky_creature") {
+    const [t1, t2] = card.types ?? [];
+    const half = halfFacing(dir, rotation);
+    return ((half === "A" ? t1 : t2) ?? t1 ?? null) as string | null;
+  }
+  if (card.kind === "creator") return card.element ?? null;
+  if (card.kind === "sky_creator") return "Sky";
+  return null;
 }
 
 /** Returns [colorA, colorB] for the split background of any card kind.
