@@ -1,5 +1,5 @@
 import type { DeckCard } from "@/lib/game/types";
-import { BoardHexPiece } from "./BoardHexPiece";
+import { HandTile } from "./cards/HandTile";
 
 interface Props {
   hand: DeckCard[];
@@ -11,7 +11,7 @@ interface Props {
   size?: number;
 }
 
-export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd, disabled, size = 90 }: Props) {
+export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd, disabled, size = 104 }: Props) {
   return (
     <div className="border-t border-border/40 bg-card/40 backdrop-blur p-3">
       <div className="flex flex-wrap items-end gap-3 justify-center">
@@ -21,6 +21,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
             <div
               key={card.uid}
               draggable={!disabled}
+              onClick={() => !disabled && onSelect(card.uid)}
               onPointerDown={(e) => {
                 if (disabled) return;
                 e.currentTarget.setPointerCapture?.(e.pointerId);
@@ -47,14 +48,9 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                 dropTarget?.click();
                 onDragEnd?.();
               }}
-              className={`transition-transform cursor-grab active:cursor-grabbing ${selected ? "-translate-y-2" : ""} ${disabled ? "opacity-90 pointer-events-none saturate-75" : ""}`}
+              className={`cursor-grab active:cursor-grabbing ${disabled ? "pointer-events-none" : ""}`}
             >
-              <BoardHexPiece
-                card={card}
-                size={size}
-                onClick={() => onSelect(card.uid)}
-                highlight={selected ? "selected" : null}
-              />
+              <HandTile card={card} size={size} selected={selected} dimmed={disabled} />
             </div>
           );
         })}
