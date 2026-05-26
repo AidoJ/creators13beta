@@ -250,7 +250,7 @@ export default function Play() {
               <Ecosystem
                 eco={you.ecosystem}
                 size={86}
-                selectable={canPlace}
+                selectable={canUseBoard}
                 onPlace={onPlace}
                 showEmpties
                 onStealClick={undefined}
