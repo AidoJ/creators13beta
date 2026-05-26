@@ -98,9 +98,10 @@ export default function Play() {
     if (!state) return;
     guarded(() => pickFromUsed(state));
   }
-  function onPlace(pos: Axial) {
-    if (!state || !selectedUid) return;
-    guarded(() => placeOnEcosystem(state, selectedUid, pos));
+  function onPlace(pos: Axial, draggedUid?: string) {
+    const cardUid = draggedUid ?? selectedUid;
+    if (!state || !cardUid) return;
+    guarded(() => placeOnEcosystem(state, cardUid, pos));
   }
   function onDiscard() {
     if (!state || !selectedUid) return;
@@ -249,12 +250,12 @@ export default function Play() {
             <div className="flex-1 overflow-auto">
               <Ecosystem
                 eco={you.ecosystem}
-                size={72}
+                size={86}
                 selectable={canPlace}
                 onPlace={onPlace}
                 showEmpties
                 onStealClick={undefined}
-                minHeight={360}
+                minHeight={520}
               />
             </div>
           </Card>
