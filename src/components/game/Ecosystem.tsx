@@ -27,7 +27,7 @@ function buildScaffold(eco: EcoType): Axial[] {
 
 export function Ecosystem({
   eco, size = 90, selectable, showEmpties = true,
-  onPlace, onStealClick, minHeight = 300,
+  onPlace, onStealClick, onRotateClick, minHeight = 300,
 }: Props) {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 
