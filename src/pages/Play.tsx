@@ -19,6 +19,7 @@ import {
   playSkyCreatureSteal,
   botStep,
   rotateMyPlacedHex,
+  moveMyPlacedHex,
 } from "@/lib/game";
 import {
   createMatchRow,
@@ -41,7 +42,7 @@ import { HandTile } from "@/components/game/cards/HandTile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
-type Mode = "place" | "disaster" | "steal";
+type Mode = "place" | "disaster" | "steal" | "move";
 
 const LOCAL_STORAGE_KEY = "creators13.play.local-match.v1";
 
@@ -60,6 +61,7 @@ export default function Play() {
   const [showPiles, setShowPiles] = useState(false);
   const [lobbyOpen, setLobbyOpen] = useState(false);
   const [waitingForGuest, setWaitingForGuest] = useState(false);
+  const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const saveSeqRef = useRef(0);
 
@@ -221,13 +223,32 @@ export default function Play() {
   function onPickDraw() { if (state) guarded(() => pickFromDraw(state)); }
   function onPickUsed() { if (state) guarded(() => pickFromUsed(state)); }
   function onPlace(pos: Axial, draggedUid?: string) {
+    if (!state) return;
+    if (mode === "move" && moveFromKey) {
+      const fromKey = moveFromKey;
+      try {
+        const next = moveMyPlacedHex(state, selfSlot, fromKey, pos);
+        setState(next);
+        schedulePersist(next);
+        setMoveFromKey(null);
+      } catch (e: any) {
+        toast.error(e?.message ?? "Cannot move here");
+      }
+      return;
+    }
     const cardUid = draggedUid ?? selectedUid;
-    if (!state || !cardUid) return;
+    if (!cardUid) return;
     guarded(() => placeOnEcosystem(state, cardUid, pos));
   }
   function onDiscard() { if (state && selectedUid) guarded(() => discardCard(state, selectedUid)); }
-  function onRotateMyHex(posKey: string) {
+  function onPlacedHexClick(posKey: string) {
     if (!state || !selfPlayer) return;
+    if (mode === "move") {
+      // Toggle: pick up or drop-on-self (no-op)
+      setMoveFromKey((cur) => (cur === posKey ? null : posKey));
+      return;
+    }
+    // Default: rotate
     setState((s) => {
       if (!s) return s;
       const next = rotateMyPlacedHex(s, selfSlot, posKey);
@@ -323,6 +344,10 @@ export default function Play() {
     phaseHint = `Pick up ${2 - state.drawnThisTurn} card${2 - state.drawnThisTurn === 1 ? "" : "s"} (draw pile or top of used pile).`;
   } else if (mode === "steal") {
     phaseHint = `Click an animal in ${opponent.name}'s ecosystem to steal it.`;
+  } else if (mode === "move") {
+    phaseHint = moveFromKey
+      ? "Click an empty glowing hex to drop the card (cards can't leave your ecosystem)."
+      : "Click any of your placed cards to pick it up and reposition it.";
   } else if (selectedCard) {
     phaseHint = "Drag this card onto a glowing hex, click a glowing hex to snap it in, or use a card-power button.";
   } else {
@@ -370,6 +395,15 @@ export default function Play() {
     <Card className="p-3">
       <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Card actions</div>
       <div className="flex flex-col gap-2">
+        <Button size="sm" variant={mode === "move" ? "default" : "secondary"}
+          disabled={!isYourTurn || selfPlayer.ecosystem.placed.size === 0}
+          onClick={() => {
+            setMode(mode === "move" ? "place" : "move");
+            setMoveFromKey(null);
+          }}
+          className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center">
+          {mode === "move" ? (moveFromKey ? "Click an empty hex to drop" : "Cancel move") : "Move a placed card"}
+        </Button>
         <Button size="sm" variant="secondary" disabled={!canDiscard} onClick={onDiscard}
           className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center">
           Discard selected
@@ -386,7 +420,7 @@ export default function Play() {
         </Button>
       </div>
       <div className="text-[10px] text-muted-foreground mt-3 leading-relaxed break-words">
-        Creators ⇒ Disaster (after your 4 are placed). Sky Creature ⇒ Steal. Golden Hive ⇒ pick up to arm shield. Golden Body ⇒ wildcard animal.
+        Move = reposition a placed card (cards can never leave your ecosystem). Creators ⇒ Disaster (after your 4 are placed). Sky Creature ⇒ Steal. Golden Hive ⇒ pick up to arm shield. Golden Body ⇒ wildcard animal.
       </div>
     </Card>
   );
@@ -482,13 +516,14 @@ export default function Play() {
                 <Ecosystem
                   eco={selfPlayer.ecosystem}
                   size={isMobile ? 64 : 116}
-                  selectable={canUseBoard}
+                  selectable={canUseBoard || (isYourTurn && mode === "move" && !!moveFromKey)}
                   onPlace={onPlace}
                   showEmpties
                   onStealClick={undefined}
-                  onRotateClick={isYourTurn ? onRotateMyHex : undefined}
+                  onRotateClick={isYourTurn ? onPlacedHexClick : undefined}
                   minHeight={isMobile ? 280 : 520}
                 />
+
               </div>
             </div>
           </Card>
