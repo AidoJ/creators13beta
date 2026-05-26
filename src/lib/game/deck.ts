@@ -29,11 +29,22 @@ function animal(source: GameCard, kind: CardKind = "animal"): DeckCard {
   };
 }
 
+// Each of the 4 elements displays under one canonical Creator Type name/glyph
+// (Earth → Soil, Fire → Fire, Air → Whirlwind, Water → Ocean) since there is
+// no Creator Type literally named "Earth", "Air" or "Water".
+const ELEMENT_DISPLAY_TYPE: Record<"Earth" | "Fire" | "Air" | "Water", string> = {
+  Earth: "Soil",
+  Fire: "Fire",
+  Air: "Whirlwind",
+  Water: "Ocean",
+};
+
 function creatorCard(element: "Earth" | "Fire" | "Air" | "Water"): DeckCard {
+  const display = ELEMENT_DISPLAY_TYPE[element];
   return {
-    uid: nextUid(`creator-${element.toLowerCase()}`),
+    uid: nextUid(`creator-${display.toLowerCase()}`),
     kind: "creator",
-    name: `${element} Creator`,
+    name: `${display} Creator`,
     element,
   };
 }
