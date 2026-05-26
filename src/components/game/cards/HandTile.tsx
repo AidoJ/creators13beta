@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Info } from "lucide-react";
+import { Info, X } from "lucide-react";
+import { createPortal } from "react-dom";
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType } from "@/lib/game/glyphs";
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function HandTile({ card, size = 96, selected = false, dimmed = false, forceFlipped }: Props) {
+  const [zoomed, setZoomed] = useState(false);
   const [flipped, setFlipped] = useState(false);
   const isFlipped = forceFlipped ?? flipped;
   const height = size * 1.35;
@@ -49,7 +51,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setFlipped(true);
+                setZoomed(true);
               }}
               className="absolute top-1.5 left-1.5 z-30 bg-black/55 hover:bg-black/75 text-white rounded-full p-1 backdrop-blur-sm"
               aria-label="Show descriptor"
@@ -199,6 +201,78 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
           </div>
         </div>
       </div>
+      {zoomed && typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+            onClick={() => setZoomed(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${card.name} card detail`}
+          >
+            <div
+              className="relative bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-w-[min(92vw,820px)] w-full max-h-[90vh] animate-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setZoomed(false)}
+                aria-label="Close"
+                className="absolute top-2 right-2 z-30 bg-black/55 hover:bg-black/80 text-white rounded-full p-1.5 backdrop-blur-sm"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              {/* Large art panel */}
+              <div className="relative flex-1 min-h-[280px] md:min-h-[420px]">
+                <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full" aria-hidden>
+                  {card.kind === "animal" || card.kind === "sky_creature" ? (
+                    <>
+                      <polygon points="0,0 1,0 0,1" fill={c1} />
+                      <polygon points="1,0 1,1 0,1" fill={c2} />
+                    </>
+                  ) : (
+                    <polygon points="0,0 1,0 1,1 0,1" fill={c1} />
+                  )}
+                </svg>
+                {art && (
+                  <div className="absolute inset-0 flex items-center justify-center p-6">
+                    <img
+                      src={art}
+                      alt={card.name}
+                      className="max-h-full max-w-full object-contain pointer-events-none"
+                      style={{ filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.45))" }}
+                    />
+                  </div>
+                )}
+              </div>
+              {/* Descriptor panel */}
+              <div className="md:w-[340px] flex flex-col bg-white text-black p-5 md:p-6 overflow-y-auto">
+                <div
+                  className="font-bold uppercase tracking-wide leading-none mb-3"
+                  style={{ fontFamily: '"Lilita One", sans-serif', fontSize: 28 }}
+                >
+                  {card.name}
+                </div>
+                <div className="flex items-center gap-2 flex-wrap mb-4">
+                  {chips.map((chip, i) => (
+                    <span
+                      key={chip.label + i}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-white text-xs font-semibold uppercase tracking-wider"
+                      style={{ background: chip.color }}
+                    >
+                      {chip.glyph && <img src={chip.glyph} alt="" className="w-4 h-4 object-contain" aria-hidden />}
+                      {chip.label}
+                    </span>
+                  ))}
+                </div>
+                <div className="text-[15px] leading-relaxed whitespace-pre-line" style={{ fontFamily: '"Questrial", sans-serif' }}>
+                  {descriptor}
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
