@@ -85,7 +85,6 @@ export function BoardHexPiece({ card, size = 110, onClick, highlight = null, rot
           style={{
             width: size * 0.82,
             height: size * 0.82,
-            filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45)) drop-shadow(0 1px 2px rgba(0,0,0,0.3))",
           }}
         />
       )}

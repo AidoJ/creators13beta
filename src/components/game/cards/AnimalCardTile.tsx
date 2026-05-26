@@ -48,7 +48,7 @@ export function AnimalCardTile({ card, imageSrc, size = 220 }: Props) {
               src={imageSrc}
               alt={card.name}
               loading="lazy"
-              className="max-h-full max-w-full object-contain drop-shadow-md"
+              className="max-h-full max-w-full object-contain"
             />
           ) : (
             <div className="text-white/70 text-xs font-medium">no art</div>
