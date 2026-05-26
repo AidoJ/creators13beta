@@ -3,19 +3,6 @@ import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType } from "@/lib/game/glyphs";
 import type { DeckCard } from "@/lib/game/types";
 
-/** Lighten (amt > 0) or darken (amt < 0) a hex colour by mixing with white/black. */
-function shade(hex: string, amt: number): string {
-  const m = hex.replace("#", "");
-  const n = m.length === 3 ? m.split("").map((c) => c + c).join("") : m;
-  const r = parseInt(n.slice(0, 2), 16);
-  const g = parseInt(n.slice(2, 4), 16);
-  const b = parseInt(n.slice(4, 6), 16);
-  const t = amt < 0 ? 0 : 255;
-  const p = Math.abs(amt);
-  const mix = (c: number) => Math.round((t - c) * p + c);
-  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
-}
-
 interface Props {
   card: DeckCard;
   size?: number;
