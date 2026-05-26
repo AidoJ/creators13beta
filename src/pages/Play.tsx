@@ -371,23 +371,35 @@ export default function Play() {
   const pilesBlock = (
     <Card className="p-3">
       <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Piles</div>
-      <div className="flex gap-2 items-center">
-        <Button variant="outline" size="sm" className="flex-1"
+      <div className="flex flex-col gap-2">
+        <Button variant="outline" size="sm" className="w-full text-xs"
           disabled={!isYourTurn || state.phase !== "draw" || state.draw.length === 0}
           onClick={onPickDraw}>
-          Draw ({state.draw.length})
+          Draw pile ({state.draw.length})
         </Button>
-        <Button variant="outline" size="sm" className="flex-1"
+        <Button variant="outline" size="sm" className="w-full text-xs"
           disabled={!isYourTurn || state.phase !== "draw" || state.used.length === 0}
           onClick={onPickUsed}>
-          Used ({state.used.length})
+          Used pile ({state.used.length})
         </Button>
       </div>
-      {usedTop && (
-        <div className="mt-3 flex justify-center">
-          <BoardHexPiece card={usedTop} size={64} />
+      <div className="mt-3 flex flex-col items-center gap-1">
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          Top of used pile
         </div>
-      )}
+        {usedTop ? (
+          <>
+            <BoardHexPiece card={usedTop} size={72} />
+            <div className="text-[11px] text-center text-foreground/80 leading-tight truncate max-w-full">
+              {usedTop.name}
+            </div>
+          </>
+        ) : (
+          <div className="text-[10px] text-muted-foreground italic text-center py-2">
+            Empty — nothing discarded yet
+          </div>
+        )}
+      </div>
     </Card>
   );
 
