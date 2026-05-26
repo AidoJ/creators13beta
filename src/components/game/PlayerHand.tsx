@@ -28,7 +28,13 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                 onSelect(card.uid);
                 onDragStart?.(card.uid);
               }}
-              onDragEnd={() => onDragEnd?.()}
+              onDragEnd={(e) => {
+                const dropTarget = document
+                  .elementFromPoint(e.clientX, e.clientY)
+                  ?.closest('[data-legal-drop="true"]') as HTMLElement | null;
+                dropTarget?.click();
+                onDragEnd?.();
+              }}
               className={`transition-transform cursor-grab active:cursor-grabbing ${selected ? "-translate-y-2" : ""} ${disabled ? "opacity-50 pointer-events-none" : ""}`}
             >
               <BoardHexPiece
