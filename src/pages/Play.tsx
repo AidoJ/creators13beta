@@ -503,13 +503,14 @@ export default function Play() {
                 <Ecosystem
                   eco={selfPlayer.ecosystem}
                   size={isMobile ? 64 : 116}
-                  selectable={canUseBoard}
+                  selectable={canUseBoard || (isYourTurn && mode === "move" && !!moveFromKey)}
                   onPlace={onPlace}
                   showEmpties
                   onStealClick={undefined}
-                  onRotateClick={isYourTurn ? onRotateMyHex : undefined}
+                  onRotateClick={isYourTurn ? onPlacedHexClick : undefined}
                   minHeight={isMobile ? 280 : 520}
                 />
+
               </div>
             </div>
           </Card>
