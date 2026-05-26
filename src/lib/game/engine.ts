@@ -213,6 +213,37 @@ export function rotateMyPlacedHex(
   return next;
 }
 
+/** Move an already-placed card in your own ecosystem to another empty hex.
+ *  Rule book: between draw and place, "you can move any existing cards to a
+ *  better placement before you put down your 2 cards." Cards cannot be removed
+ *  from the ecosystem — only repositioned. Does not consume a turn action. */
+export function moveMyPlacedHex(
+  state: MatchState,
+  playerId: string,
+  fromKey: string,
+  toPos: Axial,
+): MatchState {
+  if (state.finished) throw new Error("Match is over");
+  const next = cloneState(state);
+  const player = next.players.find((p) => p.id === playerId);
+  if (!player) throw new Error("Player not found");
+  const existing = player.ecosystem.placed.get(fromKey);
+  if (!existing) throw new Error("No card at that hex");
+  const toKey = keyOf(toPos);
+  if (toKey === fromKey) return next;
+  const tempPlaced = new Map(player.ecosystem.placed);
+  tempPlaced.delete(fromKey);
+  if (tempPlaced.has(toKey)) throw new Error("That hex is already occupied");
+  if (tempPlaced.size > 0) {
+    const adjacent = neighbours(toPos).some((n) => tempPlaced.has(keyOf(n)));
+    if (!adjacent) throw new Error("Target hex must touch your ecosystem");
+  }
+  tempPlaced.set(toKey, { ...existing, pos: toPos });
+  player.ecosystem = { placed: tempPlaced };
+  next.lastEvent = `${player.name} moved ${existing.card.name}`;
+  return next;
+}
+
 export function discardCard(state: MatchState, cardUid: string): MatchState {
   if (state.finished) throw new Error("Match is over");
   if (state.phase !== "place") throw new Error("Pick up 2 cards first");
