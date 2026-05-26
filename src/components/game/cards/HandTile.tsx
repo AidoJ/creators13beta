@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { Info } from "lucide-react";
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType } from "@/lib/game/glyphs";
@@ -8,95 +10,188 @@ interface Props {
   size?: number;
   selected?: boolean;
   dimmed?: boolean;
+  /** Forces the descriptor side to be visible (e.g. for the right-rail preview). */
+  forceFlipped?: boolean;
 }
 
-export function HandTile({ card, size = 96, selected = false, dimmed = false }: Props) {
+export function HandTile({ card, size = 96, selected = false, dimmed = false, forceFlipped }: Props) {
+  const [flipped, setFlipped] = useState(false);
+  const isFlipped = forceFlipped ?? flipped;
   const height = size * 1.35;
   const { c1, c2, chips, badge, artGlyph } = resolveColours(card);
   const art = card.source?.art_url ?? artGlyph;
 
+  const descriptor = card.source?.descriptor?.trim() || defaultDescriptor(card);
+
   return (
     <div
-      className={`relative rounded-2xl overflow-hidden shadow-lg border bg-white flex flex-col transition-all ${
-        selected ? "border-amber-400 ring-2 ring-amber-300 -translate-y-2" : "border-border/40"
-      } ${dimmed ? "opacity-70 saturate-75" : ""}`}
-      style={{ width: size, height }}
+      className="relative"
+      style={{ width: size, height, perspective: 1200 }}
       aria-label={card.name}
     >
-      {/* Art panel */}
-      <div className="relative" style={{ height: "72%" }}>
-        <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full" aria-hidden>
-          {card.kind === "animal" || card.kind === "sky_creature" ? (
-            <>
-              <polygon points="0,0 1,0 0,1" fill={c1} />
-              <polygon points="1,0 1,1 0,1" fill={c2} />
-            </>
-          ) : (
-            <polygon points="0,0 1,0 1,1 0,1" fill={c1} />
-          )}
-        </svg>
-        {badge && (
-          <div className="absolute top-1.5 right-1.5 z-20 text-[8px] font-bold uppercase tracking-wider bg-black/55 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm">
-            {badge}
-          </div>
-        )}
-        <div className="absolute inset-0 z-10 flex items-center justify-center p-2">
-          {art ? (
-            <img
-              src={art}
-              alt={card.name}
-              loading="lazy"
-              className="max-h-full max-w-full object-contain pointer-events-none"
-              style={{
-                filter:
-                  "drop-shadow(0 4px 8px rgba(0,0,0,0.5)) drop-shadow(0 2px 3px rgba(0,0,0,0.35))",
-              }}
-            />
-          ) : (
-            <div className="text-white/80 text-[10px] font-medium uppercase tracking-wide">{card.kind}</div>
-          )}
-        </div>
-      </div>
-
-      {/* Name plate */}
-      <div className="relative z-10 bg-white px-1.5 py-1 text-center flex-1 flex flex-col justify-center">
+      <div
+        className="relative w-full h-full transition-transform duration-500"
+        style={{
+          transformStyle: "preserve-3d",
+          transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+        }}
+      >
+        {/* FRONT — art side */}
         <div
-          className="font-bold uppercase tracking-wide leading-none truncate"
-          style={{ fontFamily: '"Lilita One", sans-serif', fontSize: size * 0.11, color: "#000" }}
+          className={`absolute inset-0 rounded-2xl overflow-hidden shadow-lg border bg-white flex flex-col ${
+            selected ? "border-amber-400 ring-2 ring-amber-300 -translate-y-2" : "border-border/40"
+          } ${dimmed ? "opacity-70 saturate-75" : ""}`}
+          style={{ backfaceVisibility: "hidden" }}
         >
-          {card.name}
-        </div>
-        <div className="flex items-center justify-center gap-1 mt-1 flex-wrap">
-          {chips.map((chip, i) => (
-            <span key={chip.label + i} className="contents">
-              {i > 0 && <span className="text-black/40 text-[9px]">+</span>}
-              <span
-                className="inline-flex items-center gap-1 font-semibold uppercase tracking-wider"
-                style={{ fontSize: size * 0.075, color: "#000" }}
-              >
-                {chip.glyph ? (
-                  <img
-                    src={chip.glyph}
-                    alt=""
-                    className="object-contain"
-                    style={{ width: size * 0.11, height: size * 0.11 }}
-                    aria-hidden
-                  />
-                ) : (
+          {/* Flip button (top-left) */}
+          {forceFlipped === undefined && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setFlipped(true);
+              }}
+              className="absolute top-1.5 left-1.5 z-30 bg-black/55 hover:bg-black/75 text-white rounded-full p-1 backdrop-blur-sm"
+              aria-label="Show descriptor"
+            >
+              <Info className="w-3 h-3" />
+            </button>
+          )}
+
+          {/* Art panel */}
+          <div className="relative" style={{ height: "72%" }}>
+            <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full" aria-hidden>
+              {card.kind === "animal" || card.kind === "sky_creature" ? (
+                <>
+                  <polygon points="0,0 1,0 0,1" fill={c1} />
+                  <polygon points="1,0 1,1 0,1" fill={c2} />
+                </>
+              ) : (
+                <polygon points="0,0 1,0 1,1 0,1" fill={c1} />
+              )}
+            </svg>
+            {badge && (
+              <div className="absolute top-1.5 right-1.5 z-20 text-[8px] font-bold uppercase tracking-wider bg-black/55 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm">
+                {badge}
+              </div>
+            )}
+            <div className="absolute inset-0 z-10 flex items-center justify-center p-2">
+              {art ? (
+                <img
+                  src={art}
+                  alt={card.name}
+                  loading="lazy"
+                  className="max-h-full max-w-full object-contain pointer-events-none"
+                  style={{
+                    filter:
+                      "drop-shadow(0 4px 8px rgba(0,0,0,0.5)) drop-shadow(0 2px 3px rgba(0,0,0,0.35))",
+                  }}
+                />
+              ) : (
+                <div className="text-white/80 text-[10px] font-medium uppercase tracking-wide">{card.kind}</div>
+              )}
+            </div>
+          </div>
+
+          {/* Name plate */}
+          <div className="relative z-10 bg-white px-1.5 py-1 text-center flex-1 flex flex-col justify-center">
+            <div
+              className="font-bold uppercase tracking-wide leading-none truncate"
+              style={{ fontFamily: '"Lilita One", sans-serif', fontSize: size * 0.11, color: "#000" }}
+            >
+              {card.name}
+            </div>
+            <div className="flex items-center justify-center gap-1 mt-1 flex-wrap">
+              {chips.map((chip, i) => (
+                <span key={chip.label + i} className="contents">
+                  {i > 0 && <span className="text-black/40 text-[9px]">+</span>}
                   <span
-                    className="rounded-full"
-                    style={{ width: size * 0.06, height: size * 0.06, background: chip.color }}
-                    aria-hidden
-                  />
-                )}
-                {chip.label}
-              </span>
-            </span>
-          ))}
+                    className="inline-flex items-center gap-1 font-semibold uppercase tracking-wider"
+                    style={{ fontSize: size * 0.075, color: "#000" }}
+                  >
+                    {chip.glyph ? (
+                      <img
+                        src={chip.glyph}
+                        alt=""
+                        className="object-contain"
+                        style={{ width: size * 0.11, height: size * 0.11 }}
+                        aria-hidden
+                      />
+                    ) : (
+                      <span
+                        className="rounded-full"
+                        style={{ width: size * 0.06, height: size * 0.06, background: chip.color }}
+                        aria-hidden
+                      />
+                    )}
+                    {chip.label}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* BACK — descriptor side */}
+        <div
+          className="absolute inset-0 rounded-2xl overflow-hidden shadow-lg border border-border/40 bg-card text-card-foreground flex flex-col"
+          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+        >
+          {forceFlipped === undefined && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setFlipped(false);
+              }}
+              className="absolute top-1.5 right-1.5 z-30 bg-black/55 hover:bg-black/75 text-white rounded-full px-1.5 py-0.5 text-[9px] uppercase tracking-wider backdrop-blur-sm"
+              aria-label="Show art"
+            >
+              Art
+            </button>
+          )}
+          {/* Header band using the card's primary colour */}
+          <div
+            className="px-2 py-1.5 flex items-center gap-1.5"
+            style={{ background: c1 }}
+          >
+            {chips[0]?.glyph && (
+              <img src={chips[0].glyph} alt="" className="object-contain" style={{ width: size * 0.14, height: size * 0.14 }} />
+            )}
+            <div
+              className="font-bold uppercase tracking-wide leading-none truncate text-white"
+              style={{ fontFamily: '"Lilita One", sans-serif', fontSize: size * 0.1, textShadow: "0 1px 2px rgba(0,0,0,0.4)" }}
+            >
+              {card.name}
+            </div>
+          </div>
+          <div
+            className="flex-1 overflow-auto px-2 py-1.5 leading-snug"
+            style={{ fontSize: size * 0.072, color: "#111" }}
+          >
+            {descriptor}
+          </div>
         </div>
       </div>
     </div>
   );
+}
+
+function defaultDescriptor(card: DeckCard): string {
+  switch (card.kind) {
+    case "creator":
+      return `${card.element} Creator Card. Place all four Creator Cards (one per element) in your ecosystem. After your 4 Creators are placed, extra Creators can be played as a Disaster — they wipe matching Animals from rival ecosystems.`;
+    case "sky_creator":
+      return `Sky Creator (wildcard). Counts as any element when matching Animals. After your 4 Creators are placed, can also be played as a Disaster.`;
+    case "sky_creature":
+      return `Mythical Sky Creature. Acts as an Animal of its two Creator Types, AND can be played as a Stealer — discard it to take any one Animal from a rival ecosystem.`;
+    case "golden_body":
+      return `Golden Body wildcard — counts as an Animal of any Creator Type when filling your ecosystem.`;
+    case "golden_hive":
+      return `Golden Hive — pick up to arm a shield that absorbs the next Disaster cast against you.`;
+    default:
+      return "Animal card.";
+  }
 }
 
 function resolveColours(card: DeckCard): {
