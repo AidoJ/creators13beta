@@ -78,20 +78,16 @@ export async function saveMatchState(args: {
   matchId: string;
   actingUserId: string;
   state: MatchState;
+  /** For pvp, caller maps slot ("host"/"guest") to a real user_id. */
+  winnerUserId?: string | null;
 }): Promise<void> {
   const status: MatchStatus = args.state.finished ? "finished" : "active";
-  const winnerId =
-    args.state.finished && args.state.winnerId
-      ? args.state.players.find((p) => p.id === args.state.winnerId)?.id ?? null
-      : null;
-
-  // For pvp, our player ids are user_ids — so winnerId IS the user_id.
   const { error } = await supabase
     .from("game_matches")
     .update({
       state: serializeMatch(args.state) as any,
       status,
-      winner_user_id: winnerId,
+      winner_user_id: args.state.finished ? args.winnerUserId ?? null : null,
       last_action_by: args.actingUserId,
     })
     .eq("id", args.matchId);
