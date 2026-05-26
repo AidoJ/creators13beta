@@ -223,13 +223,32 @@ export default function Play() {
   function onPickDraw() { if (state) guarded(() => pickFromDraw(state)); }
   function onPickUsed() { if (state) guarded(() => pickFromUsed(state)); }
   function onPlace(pos: Axial, draggedUid?: string) {
+    if (!state) return;
+    if (mode === "move" && moveFromKey) {
+      const fromKey = moveFromKey;
+      try {
+        const next = moveMyPlacedHex(state, selfSlot, fromKey, pos);
+        setState(next);
+        schedulePersist(next);
+        setMoveFromKey(null);
+      } catch (e: any) {
+        toast.error(e?.message ?? "Cannot move here");
+      }
+      return;
+    }
     const cardUid = draggedUid ?? selectedUid;
-    if (!state || !cardUid) return;
+    if (!cardUid) return;
     guarded(() => placeOnEcosystem(state, cardUid, pos));
   }
   function onDiscard() { if (state && selectedUid) guarded(() => discardCard(state, selectedUid)); }
-  function onRotateMyHex(posKey: string) {
+  function onPlacedHexClick(posKey: string) {
     if (!state || !selfPlayer) return;
+    if (mode === "move") {
+      // Toggle: pick up or drop-on-self (no-op)
+      setMoveFromKey((cur) => (cur === posKey ? null : posKey));
+      return;
+    }
+    // Default: rotate
     setState((s) => {
       if (!s) return s;
       const next = rotateMyPlacedHex(s, selfSlot, posKey);
