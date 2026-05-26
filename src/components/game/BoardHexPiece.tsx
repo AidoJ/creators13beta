@@ -56,7 +56,16 @@ export function BoardHexPiece({ card, size = 110, onClick, highlight = null, rot
       aria-label={card.name}
       title={card.name}
     >
-      <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full drop-shadow-lg">
+      <svg
+        viewBox="0 0 1 1"
+        preserveAspectRatio="none"
+        className="absolute inset-0 w-full h-full drop-shadow-lg"
+        style={{
+          transform: rotation ? `rotate(${rotation * 60}deg)` : undefined,
+          transformOrigin: "center",
+          transition: "transform 220ms ease",
+        }}
+      >
         {card.kind === "animal" || card.kind === "sky_creature" ? (
           <>
             <polygon points={halfA} fill={c1} />
