@@ -517,7 +517,7 @@ export default function Play() {
 
       {/* PvP waiting overlay (host) */}
       {waitingForGuest && matchRow?.invite_token && (
-        <Dialog open>
+        <Dialog open onOpenChange={(o) => { if (!o) setWaitingForGuest(false); }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle className="font-display text-xl">Waiting for your friend…</DialogTitle>
@@ -538,8 +538,13 @@ export default function Play() {
                 <Copy className="w-4 h-4" />
               </Button>
             </div>
-            <div className="flex justify-end gap-2 mt-2">
-              <Button variant="outline" onClick={() => navigate("/play")}>Cancel</Button>
+            <div className="flex justify-end gap-2 mt-2 flex-wrap">
+              <Button variant="ghost" onClick={() => setWaitingForGuest(false)}>
+                Keep waiting in background
+              </Button>
+              <Button variant="outline" onClick={() => { setWaitingForGuest(false); navigate("/play"); }}>
+                Cancel & play solo
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
