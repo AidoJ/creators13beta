@@ -8,12 +8,15 @@ interface Props {
   size?: number;
   onClick?: () => void;
   highlight?: "selected" | "match" | null;
+  /** 0..5 — 60° clockwise rotations applied to the hex background only. */
+  rotation?: number;
 }
 
 /** Hex piece that renders any DeckCard kind (animal, creator, special).
  *  Board pieces show ONLY the artwork / glyph — no name plate — since the
- *  player has already chosen the card from the deck-style hand tile. */
-export function BoardHexPiece({ card, size = 110, onClick, highlight = null }: Props) {
+ *  player has already chosen the card from the deck-style hand tile.
+ *  Only the coloured background rotates; the artwork stays upright. */
+export function BoardHexPiece({ card, size = 110, onClick, highlight = null, rotation = 0 }: Props) {
   const h = size * 1.1547;
   const hexPoints = "0.5,0 1,0.25 1,0.75 0.5,1 0,0.75 0,0.25";
   const halfA = "0.5,0 1,0.25 0,0.75 0,0.25";
@@ -53,7 +56,16 @@ export function BoardHexPiece({ card, size = 110, onClick, highlight = null }: P
       aria-label={card.name}
       title={card.name}
     >
-      <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full drop-shadow-lg">
+      <svg
+        viewBox="0 0 1 1"
+        preserveAspectRatio="none"
+        className="absolute inset-0 w-full h-full drop-shadow-lg"
+        style={{
+          transform: rotation ? `rotate(${rotation * 60}deg)` : undefined,
+          transformOrigin: "center",
+          transition: "transform 220ms ease",
+        }}
+      >
         {card.kind === "animal" || card.kind === "sky_creature" ? (
           <>
             <polygon points={halfA} fill={c1} />

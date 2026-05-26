@@ -13,6 +13,9 @@ interface Props {
   showEmpties?: boolean;
   onPlace?: (pos: Axial, cardUid?: string) => void;
   onStealClick?: (posKey: string) => void;
+  /** Click a placed hex you own to rotate its background (only animals/sky-creatures
+   *  have a visible split, but the handler fires for any hex). */
+  onRotateClick?: (posKey: string) => void;
   /** Wrap content in a centered viewport. */
   minHeight?: number;
 }
@@ -24,7 +27,7 @@ function buildScaffold(eco: EcoType): Axial[] {
 
 export function Ecosystem({
   eco, size = 90, selectable, showEmpties = true,
-  onPlace, onStealClick, minHeight = 300,
+  onPlace, onStealClick, onRotateClick, minHeight = 300,
 }: Props) {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 
@@ -117,12 +120,18 @@ export function Ecosystem({
         {placed.map((pc) => {
           const { x, y } = axialToPixel(pc.pos.q, pc.pos.r, size);
           const k = keyOf(pc.pos);
+          const clickHandler = onStealClick
+            ? () => onStealClick(k)
+            : onRotateClick
+            ? () => onRotateClick(k)
+            : undefined;
           return (
             <div key={`p-${k}`} className="absolute" style={{ left: x + offX, top: y + offY }}>
               <BoardHexPiece
                 card={pc.card}
                 size={size}
-                onClick={onStealClick ? () => onStealClick(k) : undefined}
+                rotation={pc.rotation ?? 0}
+                onClick={clickHandler}
               />
             </div>
           );

@@ -25,6 +25,7 @@ import {
 } from "./types";
 import { keyOf, neighbours } from "./board";
 import { TYPE_TO_ELEMENT } from "./elements";
+import { bestRotationForPlacement, rotatePlacedHex } from "./rotation";
 
 /* --------------------------- helpers --------------------------- */
 
@@ -189,12 +190,27 @@ export function placeOnEcosystem(
 
   // Rules: animals must adjoin / belong to a matching Creator. We enforce a
   // soft rule — animals can be placed freely; win-check verifies linkage.
-  player.ecosystem.placed.set(keyOf(pos), { card, pos });
+  const rotation = bestRotationForPlacement(player.ecosystem, card, pos);
+  player.ecosystem.placed.set(keyOf(pos), { card, pos, rotation });
   player.hand.splice(idx, 1);
   player.score += card.kind === "creator" || card.kind === "sky_creator" ? 3 : 1;
   next.placedThisTurn += 1;
   next.lastEvent = `${player.name} placed ${card.name}`;
   return afterAction(next);
+}
+
+/** Manually rotate a placed hex (+60° clockwise) in a player's ecosystem.
+ *  Does not consume a turn / action — purely a presentation tweak. */
+export function rotateMyPlacedHex(
+  state: MatchState,
+  playerId: string,
+  posKey: string,
+): MatchState {
+  const next = cloneState(state);
+  const player = next.players.find((p) => p.id === playerId);
+  if (!player) return state;
+  player.ecosystem = rotatePlacedHex(player.ecosystem, posKey);
+  return next;
 }
 
 export function discardCard(state: MatchState, cardUid: string): MatchState {

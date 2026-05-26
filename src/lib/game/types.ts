@@ -42,6 +42,10 @@ export interface DeckCard {
 export interface PlacedCard {
   card: DeckCard;
   pos: Axial;
+  /** 0..5 — number of 60° clockwise rotations applied to the hex background.
+   *  Only affects two-colour split cards (animals / sky_creatures). The
+   *  artwork itself always stays upright. */
+  rotation?: number;
 }
 
 export interface Ecosystem {

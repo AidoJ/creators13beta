@@ -14,6 +14,7 @@ import {
   playSkyCreatureSteal,
   legalEcoCells,
   botStep,
+  rotateMyPlacedHex,
 } from "@/lib/game";
 import type { Axial, DeckCard, MatchState } from "@/lib/game/types";
 import { Ecosystem } from "@/components/game/Ecosystem";
@@ -107,6 +108,10 @@ export default function Play() {
     if (!state || !selectedUid) return;
     guarded(() => discardCard(state, selectedUid));
   }
+  function onRotateMyHex(posKey: string) {
+    if (!state) return;
+    setState((s) => (s ? rotateMyPlacedHex(s, "you", posKey) : s));
+  }
   function onDisaster() {
     if (!state || !selectedUid) return;
     guarded(() => playDisaster(state, selectedUid));
@@ -178,7 +183,14 @@ export default function Play() {
       <ScorePanel state={state} />
 
       <div className="px-4 py-2 bg-card/30 border-b border-border/40 flex items-center justify-between gap-4 flex-wrap">
-        <div className="text-sm">{phaseHint}</div>
+        <div className="text-sm">
+          {phaseHint}
+          {isYourTurn && state.phase === "place" && mode !== "steal" && (
+            <span className="ml-2 text-muted-foreground">
+              · Tip: click any placed hex to rotate its colours.
+            </span>
+          )}
+        </div>
         <div className="flex gap-2">
           {state.finished && (
             <Button size="sm" onClick={onNewGame}>New game</Button>
@@ -255,6 +267,7 @@ export default function Play() {
                 onPlace={onPlace}
                 showEmpties
                 onStealClick={undefined}
+                onRotateClick={isYourTurn ? onRotateMyHex : undefined}
                 minHeight={520}
               />
               </div>
