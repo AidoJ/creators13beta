@@ -161,13 +161,12 @@ export default function Play() {
   } else if (mode === "steal") {
     phaseHint = "Click an animal in Bot's ecosystem to steal it.";
   } else if (selectedCard) {
-    phaseHint = "Place on a glowing hex, or use one of the card-power buttons.";
+    phaseHint = "Drag this card onto a glowing hex, click a glowing hex to snap it in, or use a card-power button.";
   } else {
     phaseHint = `Select a card from your hand to play it. (${2 - state.placedThisTurn} play${2 - state.placedThisTurn === 1 ? "" : "s"} left this turn.)`;
   }
 
-  const selectedForPlacement = selectedCard && selectedCard.kind !== "golden_hive" ? selectedCard : undefined;
-  const canPlace = isYourTurn && state.phase === "place" && mode === "place" && !!selectedForPlacement;
+  const canUseBoard = !!isYourTurn && state.phase === "place" && mode === "place";
   const canDiscard = isYourTurn && state.phase === "place" && !!selectedCard;
   const canDisaster = isYourTurn && state.phase === "place" && !!selectedCard
     && (selectedCard.kind === "creator" || selectedCard.kind === "sky_creator");
