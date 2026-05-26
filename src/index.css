@@ -58,6 +58,13 @@
     --lemon: 55 75% 65%;
     --terracotta: 20 55% 50%;
 
+    /* Game board honeycomb */
+    --board-surface: 45 40% 97%;
+    --board-hex-empty: 43 78% 90%;
+    --board-hex-line: 39 70% 72%;
+    --board-hex-ghost: 35 22% 90%;
+    --board-hex-active: 28 95% 56%;
+
     --sidebar-background: 338 60% 22%;
     --sidebar-foreground: 45 40% 97%;
     --sidebar-primary: 40 72% 50%;

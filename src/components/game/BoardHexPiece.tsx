@@ -102,6 +102,13 @@ export function EmptyHexCell({
 }) {
   const h = size * 1.1547;
   const hexPoints = "0.5,0 1,0.25 1,0.75 0.5,1 0,0.75 0,0.25";
+  const fill = hover
+    ? "hsl(var(--board-hex-active) / 0.16)"
+    : active
+      ? "hsl(var(--board-hex-empty) / 0.86)"
+      : "hsl(var(--board-hex-empty) / 0.62)";
+  const stroke = active ? "hsl(var(--board-hex-active))" : "hsl(var(--board-hex-line))";
+  const strokeOpacity = active ? 0.98 : 0.92;
   return (
     <div
       onClick={onClick}
@@ -113,18 +120,19 @@ export function EmptyHexCell({
           <polygon
             points={hexPoints}
             fill="none"
-            stroke="#f5c542"
-            strokeOpacity={0.5}
+            stroke="hsl(var(--board-hex-active))"
+            strokeOpacity={0.42}
             strokeWidth={0.1}
             vectorEffect="non-scaling-stroke"
           />
         )}
         <polygon
           points={hexPoints}
-          fill={hover ? "rgba(245,197,66,0.18)" : active ? "rgba(245,197,66,0.14)" : "rgba(255,255,255,0.02)"}
-          stroke={active ? "#f5c542" : "rgba(245,197,66,0.55)"}
-          strokeWidth={active ? 0.045 : 0.03}
-          strokeDasharray={active ? undefined : "0.05,0.035"}
+          fill={fill}
+          stroke={stroke}
+          strokeOpacity={strokeOpacity}
+          strokeWidth={active ? 0.045 : 0.038}
+          strokeDasharray={active ? "0.08,0.035" : undefined}
           vectorEffect="non-scaling-stroke"
         />
       </svg>

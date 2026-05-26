@@ -61,7 +61,7 @@ export function Ecosystem({
       minX = Math.min(minX, x); maxX = Math.max(maxX, x);
       minY = Math.min(minY, y); maxY = Math.max(maxY, y);
     }
-    const pad = size * 0.2;
+    const pad = 0;
     return {
       placed, empties, legal, legalKeys,
       bounds: {
@@ -126,7 +126,7 @@ export function Ecosystem({
             >
               <EmptyHexCell
                 size={size}
-                pulse={canDrop}
+                pulse={false}
                 active={canDrop}
                 hover={isOver}
                 onClick={canDrop ? () => onPlace?.(cell) : undefined}
