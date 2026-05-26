@@ -11,7 +11,7 @@ interface Props {
   selectable?: boolean;
   /** Always show empty hexes (even if not selectable), so the board scaffold is visible. */
   showEmpties?: boolean;
-  onPlace?: (pos: Axial) => void;
+  onPlace?: (pos: Axial, cardUid?: string) => void;
   onStealClick?: (posKey: string) => void;
   /** Wrap content in a centered viewport. */
   minHeight?: number;
@@ -48,7 +48,7 @@ export function Ecosystem({
 }: Props) {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 
-  const { placed, empties, legalKeys, bounds } = useMemo(() => {
+  const { placed, empties, legal, legalKeys, bounds } = useMemo(() => {
     const placed = Array.from(eco.placed.values());
     const legal = legalEcoCells(eco);
     const legalKeys = new Set(legal.map(keyOf));
@@ -63,7 +63,7 @@ export function Ecosystem({
     }
     const pad = size * 0.2;
     return {
-      placed, empties, legalKeys,
+      placed, empties, legal, legalKeys,
       bounds: {
         minX: minX - pad, minY: minY - pad,
         width: maxX - minX + size + pad * 2,
@@ -75,9 +75,31 @@ export function Ecosystem({
   const offX = -bounds.minX;
   const offY = -bounds.minY;
 
+  const placeNearestLegalHex = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!selectable || legal.length === 0) return;
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+    const nearest = legal.reduce((best, cell) => {
+      const { x, y } = axialToPixel(cell.q, cell.r, size);
+      const cx = x + offX + size / 2;
+      const cy = y + offY + (size * 1.1547) / 2;
+      const d = (cx - px) ** 2 + (cy - py) ** 2;
+      return d < best.d ? { cell, d } : best;
+    }, { cell: legal[0], d: Number.POSITIVE_INFINITY });
+    setDragOverKey(null);
+    onPlace?.(nearest.cell, e.dataTransfer.getData("text/plain") || undefined);
+  };
+
   return (
     <div className="flex items-center justify-center w-full" style={{ minHeight }}>
-      <div className="relative" style={{ width: bounds.width, height: bounds.height }}>
+      <div
+        className="relative"
+        style={{ width: bounds.width, height: bounds.height }}
+        onDragOver={selectable ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } : undefined}
+        onDrop={selectable ? placeNearestLegalHex : undefined}
+      >
         {empties.map((cell) => {
           const { x, y } = axialToPixel(cell.q, cell.r, size);
           const k = keyOf(cell);
@@ -87,15 +109,26 @@ export function Ecosystem({
           return (
             <div
               key={`e-${k}`}
+              role={canDrop ? "button" : "presentation"}
+              aria-label={canDrop ? `Place selected card at hex ${k}` : `Empty board hex ${k}`}
+              data-hex-key={k}
+              data-legal-drop={canDrop ? "true" : "false"}
+              tabIndex={canDrop ? 0 : -1}
               className="absolute"
               style={{ left: x + offX, top: y + offY, transform: isOver ? "scale(1.08)" : undefined, transition: "transform 120ms" }}
               onDragOver={canDrop ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverKey(k); } : undefined}
               onDragLeave={canDrop ? () => setDragOverKey((cur) => (cur === k ? null : cur)) : undefined}
-              onDrop={canDrop ? (e) => { e.preventDefault(); setDragOverKey(null); onPlace?.(cell); } : undefined}
+              onDrop={canDrop ? (e) => {
+                e.preventDefault();
+                setDragOverKey(null);
+                onPlace?.(cell, e.dataTransfer.getData("text/plain") || undefined);
+              } : undefined}
             >
               <EmptyHexCell
                 size={size}
                 pulse={canDrop}
+                active={canDrop}
+                hover={isOver}
                 onClick={canDrop ? () => onPlace?.(cell) : undefined}
               />
             </div>

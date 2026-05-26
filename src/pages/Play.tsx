@@ -98,9 +98,10 @@ export default function Play() {
     if (!state) return;
     guarded(() => pickFromUsed(state));
   }
-  function onPlace(pos: Axial) {
-    if (!state || !selectedUid) return;
-    guarded(() => placeOnEcosystem(state, selectedUid, pos));
+  function onPlace(pos: Axial, draggedUid?: string) {
+    const cardUid = draggedUid ?? selectedUid;
+    if (!state || !cardUid) return;
+    guarded(() => placeOnEcosystem(state, cardUid, pos));
   }
   function onDiscard() {
     if (!state || !selectedUid) return;
@@ -160,13 +161,12 @@ export default function Play() {
   } else if (mode === "steal") {
     phaseHint = "Click an animal in Bot's ecosystem to steal it.";
   } else if (selectedCard) {
-    phaseHint = "Place on a glowing hex, or use one of the card-power buttons.";
+    phaseHint = "Drag this card onto a glowing hex, click a glowing hex to snap it in, or use a card-power button.";
   } else {
     phaseHint = `Select a card from your hand to play it. (${2 - state.placedThisTurn} play${2 - state.placedThisTurn === 1 ? "" : "s"} left this turn.)`;
   }
 
-  const canPlace = isYourTurn && state.phase === "place" && !!selectedCard && mode === "place"
-    && selectedCard.kind !== "golden_hive";
+  const canUseBoard = !!isYourTurn && state.phase === "place" && mode === "place";
   const canDiscard = isYourTurn && state.phase === "place" && !!selectedCard;
   const canDisaster = isYourTurn && state.phase === "place" && !!selectedCard
     && (selectedCard.kind === "creator" || selectedCard.kind === "sky_creator");
@@ -249,12 +249,12 @@ export default function Play() {
             <div className="flex-1 overflow-auto">
               <Ecosystem
                 eco={you.ecosystem}
-                size={72}
-                selectable={canPlace}
+                size={86}
+                selectable={canUseBoard}
                 onPlace={onPlace}
                 showEmpties
                 onStealClick={undefined}
-                minHeight={360}
+                minHeight={520}
               />
             </div>
           </Card>
@@ -299,7 +299,7 @@ export default function Play() {
       <PlayerHand
         hand={you.hand}
         selectedUid={selectedUid}
-        onSelect={(uid) => setSelectedUid(uid === selectedUid ? null : uid)}
+        onSelect={(uid) => setSelectedUid(uid)}
         disabled={!isYourTurn || state.phase !== "place"}
         size={72}
       />
