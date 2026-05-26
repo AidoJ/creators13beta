@@ -529,9 +529,10 @@ export default function Play() {
         </div>
 
 
-        <div className="lg:col-start-3 min-w-0">
+        <div className="lg:col-start-3 min-w-0 min-h-0 overflow-y-auto">
           {selectedBlock}
         </div>
+
       </div>
 
       <PlayerHand
