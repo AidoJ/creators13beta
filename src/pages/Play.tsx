@@ -14,6 +14,7 @@ import {
   playSkyCreatureSteal,
   legalEcoCells,
   botStep,
+  rotateMyPlacedHex,
 } from "@/lib/game";
 import type { Axial, DeckCard, MatchState } from "@/lib/game/types";
 import { Ecosystem } from "@/components/game/Ecosystem";
