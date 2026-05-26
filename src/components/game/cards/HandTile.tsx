@@ -1,5 +1,6 @@
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "@/lib/game/elements";
+import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType } from "@/lib/game/glyphs";
 import type { DeckCard } from "@/lib/game/types";
 
 interface Props {
@@ -18,8 +19,8 @@ interface Props {
  */
 export function HandTile({ card, size = 96, selected = false, dimmed = false }: Props) {
   const height = size * 1.35;
-  const { c1, c2, chips, badge } = resolveColours(card);
-  const art = card.source?.art_url;
+  const { c1, c2, chips, badge, artGlyph } = resolveColours(card);
+  const art = card.source?.art_url ?? artGlyph;
 
   return (
     <div
@@ -70,11 +71,21 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false }: 
                 className="inline-flex items-center gap-1 font-semibold uppercase tracking-wider"
                 style={{ fontSize: size * 0.075, color: "#3a2615" }}
               >
-                <span
-                  className="rounded-full"
-                  style={{ width: size * 0.06, height: size * 0.06, background: chip.color }}
-                  aria-hidden
-                />
+                {chip.glyph ? (
+                  <img
+                    src={chip.glyph}
+                    alt=""
+                    className="object-contain"
+                    style={{ width: size * 0.11, height: size * 0.11 }}
+                    aria-hidden
+                  />
+                ) : (
+                  <span
+                    className="rounded-full"
+                    style={{ width: size * 0.06, height: size * 0.06, background: chip.color }}
+                    aria-hidden
+                  />
+                )}
                 {chip.label}
               </span>
             </span>
@@ -88,26 +99,43 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false }: 
 function resolveColours(card: DeckCard): {
   c1: string;
   c2: string;
-  chips: { label: string; color: string }[];
+  chips: { label: string; color: string; glyph?: string }[];
   badge?: string;
+  artGlyph?: string;
 } {
   if (card.kind === "animal" || card.kind === "sky_creature") {
     const [t1, t2] = card.types ?? [];
     const c1 = CREATOR_TYPE_COLORS[t1 as keyof typeof CREATOR_TYPE_COLORS] ?? "#888";
     const c2 = CREATOR_TYPE_COLORS[t2 as keyof typeof CREATOR_TYPE_COLORS] ?? c1;
     const chips = [
-      { label: String(t1 ?? ""), color: c1 },
-      ...(t2 && t2 !== t1 ? [{ label: String(t2), color: c2 }] : []),
+      { label: String(t1 ?? ""), color: c1, glyph: glyphForType(t1 as string) },
+      ...(t2 && t2 !== t1
+        ? [{ label: String(t2), color: c2, glyph: glyphForType(t2 as string) }]
+        : []),
     ].filter((c) => c.label);
     return { c1, c2, chips, badge: card.kind === "sky_creature" ? "Sky" : undefined };
   }
   if (card.kind === "creator") {
     const c = ELEMENT_COLORS[card.element!];
-    return { c1: c, c2: c, chips: [{ label: card.element!, color: c }], badge: "Creator" };
+    const g = ELEMENT_GLYPHS[card.element!];
+    return {
+      c1: c,
+      c2: c,
+      chips: [{ label: card.element!, color: c, glyph: g }],
+      badge: "Creator",
+      artGlyph: g,
+    };
   }
   if (card.kind === "sky_creator") {
     const c = ELEMENT_COLORS.Sky;
-    return { c1: c, c2: "#ffffff", chips: [{ label: "Sky", color: c }], badge: "Wild" };
+    const g = CREATOR_TYPE_GLYPHS.Sky;
+    return {
+      c1: c,
+      c2: "#ffffff",
+      chips: [{ label: "Sky", color: c, glyph: g }],
+      badge: "Wild",
+      artGlyph: g,
+    };
   }
   if (card.kind === "golden_body") {
     return {
