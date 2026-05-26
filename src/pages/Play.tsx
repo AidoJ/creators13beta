@@ -183,7 +183,14 @@ export default function Play() {
       <ScorePanel state={state} />
 
       <div className="px-4 py-2 bg-card/30 border-b border-border/40 flex items-center justify-between gap-4 flex-wrap">
-        <div className="text-sm">{phaseHint}</div>
+        <div className="text-sm">
+          {phaseHint}
+          {isYourTurn && state.phase === "place" && mode !== "steal" && (
+            <span className="ml-2 text-muted-foreground">
+              · Tip: click any placed hex to rotate its colours.
+            </span>
+          )}
+        </div>
         <div className="flex gap-2">
           {state.finished && (
             <Button size="sm" onClick={onNewGame}>New game</Button>
