@@ -446,7 +446,8 @@ export default function Play() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
+
       <ScorePanel state={state} />
 
       <div className="px-3 py-2 bg-card/30 border-b border-border/40 flex items-center justify-between gap-3 flex-wrap">
@@ -477,8 +478,8 @@ export default function Play() {
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[220px_1fr_220px] gap-3 p-2 min-h-0">
-        <div className="flex flex-col gap-3 min-w-0 lg:contents">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[200px_1fr_200px] gap-2 p-2 min-h-0 overflow-hidden">
+        <div className="flex flex-col gap-2 min-w-0 min-h-0 lg:contents">
           <div className="lg:hidden flex gap-2">
             <Collapsible open={showOpponent} onOpenChange={setShowOpponent} className="flex-1">
               <CollapsibleTrigger asChild>
@@ -501,37 +502,37 @@ export default function Play() {
             </Collapsible>
           </div>
 
-          <div className="hidden lg:flex lg:flex-col lg:gap-3 lg:col-start-1">
+          <div className="hidden lg:flex lg:flex-col lg:gap-2 lg:col-start-1 lg:min-h-0 lg:overflow-y-auto">
             {opponentBlock}
             {pilesBlock}
             {actionsBlock}
           </div>
         </div>
 
-        <div className="flex flex-col min-w-0 lg:col-start-2">
-          <Card className="flex-1 p-1 flex flex-col min-h-0 bg-[hsl(var(--board-surface))]">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1">Your ecosystem</div>
-            <div className="flex-1 overflow-hidden flex items-center justify-center">
-              <div className="aspect-square h-[min(56vh,680px)] max-h-full max-w-full flex items-center justify-center bg-[hsl(var(--board-hex-ghost))]">
-                <Ecosystem
-                  eco={selfPlayer.ecosystem}
-                  size={isMobile ? 64 : 116}
-                  selectable={canUseBoard || (isYourTurn && mode === "move" && !!moveFromKey)}
-                  onPlace={onPlace}
-                  showEmpties
-                  onStealClick={undefined}
-                  onRotateClick={isYourTurn ? onPlacedHexClick : undefined}
-                  minHeight={isMobile ? 280 : 520}
-                />
 
-              </div>
+        <div className="flex flex-col min-w-0 min-h-0 lg:col-start-2">
+          <Card className="flex-1 p-1 flex flex-col min-h-0 bg-transparent border-0 shadow-none">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1">Your ecosystem</div>
+            <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center">
+              <Ecosystem
+                eco={selfPlayer.ecosystem}
+                size={isMobile ? 52 : 88}
+                selectable={canUseBoard || (isYourTurn && mode === "move" && !!moveFromKey)}
+                onPlace={onPlace}
+                showEmpties
+                onStealClick={undefined}
+                onRotateClick={isYourTurn ? onPlacedHexClick : undefined}
+                minHeight={isMobile ? 220 : 360}
+              />
             </div>
           </Card>
         </div>
 
-        <div className="lg:col-start-3 min-w-0">
+
+        <div className="lg:col-start-3 min-w-0 min-h-0 overflow-y-auto">
           {selectedBlock}
         </div>
+
       </div>
 
       <PlayerHand
