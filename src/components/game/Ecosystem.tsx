@@ -1,7 +1,10 @@
 import { useMemo, useState } from "react";
 import type { Axial, Ecosystem as EcoType } from "@/lib/game/types";
-import { axialToPixel, keyOf } from "@/lib/game/board";
+import { axialToPixel, keyOf, NEIGHBOUR_DIRS } from "@/lib/game/board";
 import { legalEcoCells } from "@/lib/game/engine";
+import { facingTypeLabel } from "@/lib/game/rotation";
+import { CREATOR_TYPE_COLORS } from "@/data/cards";
+import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { BoardHexPiece, EmptyHexCell } from "./BoardHexPiece";
 
 interface Props {
