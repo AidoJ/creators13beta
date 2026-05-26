@@ -4,3 +4,4 @@ export * from "./elements";
 export * from "./engine";
 export * from "./deck";
 export * from "./bot";
+export * from "./rotation";
