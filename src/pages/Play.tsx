@@ -260,6 +260,7 @@ export default function Play() {
                 onPlace={onPlace}
                 showEmpties
                 onStealClick={undefined}
+                onRotateClick={isYourTurn ? onRotateMyHex : undefined}
                 minHeight={520}
               />
               </div>
