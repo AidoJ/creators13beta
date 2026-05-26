@@ -13,6 +13,9 @@ interface Props {
   showEmpties?: boolean;
   onPlace?: (pos: Axial, cardUid?: string) => void;
   onStealClick?: (posKey: string) => void;
+  /** Click a placed hex you own to rotate its background (only animals/sky-creatures
+   *  have a visible split, but the handler fires for any hex). */
+  onRotateClick?: (posKey: string) => void;
   /** Wrap content in a centered viewport. */
   minHeight?: number;
 }
