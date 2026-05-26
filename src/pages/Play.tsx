@@ -244,14 +244,8 @@ export default function Play() {
 
         {/* CENTRE */}
         <div className="flex flex-col min-w-0">
-          <Card
-            className="flex-1 p-2 flex flex-col min-h-0 border-border/40"
-            style={{
-              background:
-                "radial-gradient(ellipse at center, hsl(222 47% 11%) 0%, hsl(222 47% 7%) 100%)",
-            }}
-          >
-            <div className="text-xs uppercase tracking-wider text-amber-300/70 mb-1 px-1">Your ecosystem</div>
+          <Card className="flex-1 p-2 flex flex-col min-h-0">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1">Your ecosystem</div>
             <div className="flex-1 overflow-auto flex items-center justify-center">
               <Ecosystem
                 eco={you.ecosystem}
@@ -265,6 +259,7 @@ export default function Play() {
             </div>
           </Card>
         </div>
+
 
 
         {/* RIGHT RAIL - bot ecosystem big for steal target */}
