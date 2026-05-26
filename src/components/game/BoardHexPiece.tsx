@@ -83,8 +83,8 @@ export function BoardHexPiece({ card, size = 110, onClick, highlight = null, rot
           loading="lazy"
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 object-contain pointer-events-none"
           style={{
-            width: size * 1.025,
-            height: size * 1.025,
+            width: size * 0.82,
+            height: size * 0.82,
           }}
         />
       )}
