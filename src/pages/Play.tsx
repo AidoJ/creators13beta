@@ -166,8 +166,8 @@ export default function Play() {
     phaseHint = `Select a card from your hand to play it. (${2 - state.placedThisTurn} play${2 - state.placedThisTurn === 1 ? "" : "s"} left this turn.)`;
   }
 
-  const canPlace = isYourTurn && state.phase === "place" && !!selectedCard && mode === "place"
-    && selectedCard.kind !== "golden_hive";
+  const selectedForPlacement = selectedCard && selectedCard.kind !== "golden_hive" ? selectedCard : undefined;
+  const canPlace = isYourTurn && state.phase === "place" && mode === "place" && !!selectedForPlacement;
   const canDiscard = isYourTurn && state.phase === "place" && !!selectedCard;
   const canDisaster = isYourTurn && state.phase === "place" && !!selectedCard
     && (selectedCard.kind === "creator" || selectedCard.kind === "sky_creator");
@@ -300,7 +300,7 @@ export default function Play() {
       <PlayerHand
         hand={you.hand}
         selectedUid={selectedUid}
-        onSelect={(uid) => setSelectedUid(uid === selectedUid ? null : uid)}
+        onSelect={(uid) => setSelectedUid(uid)}
         disabled={!isYourTurn || state.phase !== "place"}
         size={72}
       />
