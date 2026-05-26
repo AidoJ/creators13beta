@@ -69,11 +69,11 @@ export function AnimalHexPiece({ card, imageSrc, size = 140 }: Props) {
           src={imageSrc}
           alt={card.name}
           loading="lazy"
-          className="absolute left-1/2 -translate-x-1/2 object-contain drop-shadow-md pointer-events-none"
+          className="absolute left-1/2 -translate-x-1/2 object-contain pointer-events-none"
           style={{
-            top: "12%",
-            width: size * 0.78,
-            height: size * 0.78,
+            top: "6%",
+            width: size * 0.975,
+            height: size * 0.975,
           }}
         />
       )}
