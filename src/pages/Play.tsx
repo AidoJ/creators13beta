@@ -391,6 +391,15 @@ export default function Play() {
     <Card className="p-3">
       <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Card actions</div>
       <div className="flex flex-col gap-2">
+        <Button size="sm" variant={mode === "move" ? "default" : "secondary"}
+          disabled={!isYourTurn || selfPlayer.ecosystem.placed.size === 0}
+          onClick={() => {
+            setMode(mode === "move" ? "place" : "move");
+            setMoveFromKey(null);
+          }}
+          className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center">
+          {mode === "move" ? (moveFromKey ? "Click an empty hex to drop" : "Cancel move") : "Move a placed card"}
+        </Button>
         <Button size="sm" variant="secondary" disabled={!canDiscard} onClick={onDiscard}
           className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center">
           Discard selected
@@ -407,7 +416,7 @@ export default function Play() {
         </Button>
       </div>
       <div className="text-[10px] text-muted-foreground mt-3 leading-relaxed break-words">
-        Creators ⇒ Disaster (after your 4 are placed). Sky Creature ⇒ Steal. Golden Hive ⇒ pick up to arm shield. Golden Body ⇒ wildcard animal.
+        Move = reposition a placed card (cards can never leave your ecosystem). Creators ⇒ Disaster (after your 4 are placed). Sky Creature ⇒ Steal. Golden Hive ⇒ pick up to arm shield. Golden Body ⇒ wildcard animal.
       </div>
     </Card>
   );
