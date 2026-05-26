@@ -425,7 +425,11 @@ export default function Play() {
           )}
         </div>
         <div className="flex gap-2 items-center">
-          {!isPvp && (
+          {isPvp ? (
+            <Button size="sm" variant="outline" onClick={() => navigate("/play")}>
+              Solo vs Bot
+            </Button>
+          ) : (
             <Button size="sm" variant="outline" onClick={onOpenMultiplayer}>
               <Users className="w-4 h-4 mr-1" /> Multiplayer
             </Button>
@@ -433,7 +437,7 @@ export default function Play() {
           <Button size="sm" variant="ghost" onClick={() => { resetTutorial(); window.location.reload(); }}>
             <HelpCircle className="w-4 h-4 mr-1" /> Help
           </Button>
-          {state.finished && (
+          {(state.finished || !isPvp) && (
             <Button size="sm" onClick={onNewGame}>New game</Button>
           )}
         </div>
