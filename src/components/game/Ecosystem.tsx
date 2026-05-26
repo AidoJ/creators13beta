@@ -120,12 +120,18 @@ export function Ecosystem({
         {placed.map((pc) => {
           const { x, y } = axialToPixel(pc.pos.q, pc.pos.r, size);
           const k = keyOf(pc.pos);
+          const clickHandler = onStealClick
+            ? () => onStealClick(k)
+            : onRotateClick
+            ? () => onRotateClick(k)
+            : undefined;
           return (
             <div key={`p-${k}`} className="absolute" style={{ left: x + offX, top: y + offY }}>
               <BoardHexPiece
                 card={pc.card}
                 size={size}
-                onClick={onStealClick ? () => onStealClick(k) : undefined}
+                rotation={pc.rotation ?? 0}
+                onClick={clickHandler}
               />
             </div>
           );
