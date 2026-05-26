@@ -87,7 +87,19 @@ export function BoardHexPiece({ card, size = 110, onClick, highlight = null }: P
   );
 }
 
-export function EmptyHexCell({ size = 110, onClick, pulse = false }: { size?: number; onClick?: () => void; pulse?: boolean }) {
+export function EmptyHexCell({
+  size = 110,
+  onClick,
+  pulse = false,
+  active = false,
+  hover = false,
+}: {
+  size?: number;
+  onClick?: () => void;
+  pulse?: boolean;
+  active?: boolean;
+  hover?: boolean;
+}) {
   const h = size * 1.1547;
   const hexPoints = "0.5,0 1,0.25 1,0.75 0.5,1 0,0.75 0,0.25";
   return (
@@ -96,8 +108,15 @@ export function EmptyHexCell({ size = 110, onClick, pulse = false }: { size?: nu
       className={`relative inline-block ${onClick ? "cursor-pointer" : ""} ${pulse ? "animate-pulse" : ""}`}
       style={{ width: size, height: h }}
     >
-      <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full">
-        <polygon points={hexPoints} fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.45)" strokeWidth="0.025" strokeDasharray="0.04,0.03" vectorEffect="non-scaling-stroke" />
+      <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full drop-shadow-sm">
+        <polygon
+          points={hexPoints}
+          fill={hover ? "hsl(var(--primary) / 0.18)" : active ? "hsl(var(--gold) / 0.18)" : "hsl(var(--foreground) / 0.035)"}
+          stroke={active ? "hsl(var(--gold))" : "hsl(var(--foreground) / 0.45)"}
+          strokeWidth={active ? 0.04 : 0.026}
+          strokeDasharray={active ? undefined : "0.04,0.03"}
+          vectorEffect="non-scaling-stroke"
+        />
       </svg>
     </div>
   );
