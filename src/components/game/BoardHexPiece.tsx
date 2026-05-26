@@ -108,22 +108,23 @@ export function EmptyHexCell({
       className={`relative inline-block ${onClick ? "cursor-pointer" : ""} ${pulse ? "animate-pulse" : ""}`}
       style={{ width: size, height: h }}
     >
-      <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full drop-shadow-sm">
+      <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full">
         {active && (
           <polygon
             points={hexPoints}
             fill="none"
-            stroke="hsl(var(--gold) / 0.55)"
-            strokeWidth={0.09}
+            stroke="#f5c542"
+            strokeOpacity={0.5}
+            strokeWidth={0.1}
             vectorEffect="non-scaling-stroke"
           />
         )}
         <polygon
           points={hexPoints}
-          fill={hover ? "hsl(var(--primary) / 0.22)" : active ? "hsl(var(--gold) / 0.2)" : "hsl(var(--foreground) / 0.035)"}
-          stroke={active ? "hsl(var(--gold))" : "hsl(var(--foreground) / 0.45)"}
-          strokeWidth={active ? 0.04 : 0.026}
-          strokeDasharray={active ? undefined : "0.04,0.03"}
+          fill={hover ? "rgba(245,197,66,0.18)" : active ? "rgba(245,197,66,0.14)" : "rgba(255,255,255,0.02)"}
+          stroke={active ? "#f5c542" : "rgba(245,197,66,0.55)"}
+          strokeWidth={active ? 0.045 : 0.03}
+          strokeDasharray={active ? undefined : "0.05,0.035"}
           vectorEffect="non-scaling-stroke"
         />
       </svg>

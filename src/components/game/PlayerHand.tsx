@@ -47,7 +47,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                 dropTarget?.click();
                 onDragEnd?.();
               }}
-              className={`transition-transform cursor-grab active:cursor-grabbing ${selected ? "-translate-y-2" : ""} ${disabled ? "opacity-50 pointer-events-none" : ""}`}
+              className={`transition-transform cursor-grab active:cursor-grabbing ${selected ? "-translate-y-2" : ""} ${disabled ? "opacity-90 pointer-events-none saturate-75" : ""}`}
             >
               <BoardHexPiece
                 card={card}

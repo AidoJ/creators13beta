@@ -29,14 +29,14 @@ function buildScaffold(eco: EcoType): Axial[] {
       if (!eco.placed.has(k) && !seen.has(k)) seen.set(k, n);
     }
   }
-  // Also if ecosystem is completely empty, add a 2-ring around (0,0)
-  if (eco.placed.size === 0) {
-    for (let q = -2; q <= 2; q++) {
-      for (let r = -2; r <= 2; r++) {
-        if (Math.abs(q + r) > 2) continue;
-        const k = keyOf({ q, r });
-        if (!seen.has(k)) seen.set(k, { q, r });
-      }
+  // Also always pad out with a wider ring (radius 3) around (0,0) so the
+  // board reads as a full honeycomb shape even early in the game.
+  const RING = 3;
+  for (let q = -RING; q <= RING; q++) {
+    for (let r = -RING; r <= RING; r++) {
+      if (Math.abs(q + r) > RING) continue;
+      const k = keyOf({ q, r });
+      if (!eco.placed.has(k) && !seen.has(k)) seen.set(k, { q, r });
     }
   }
   return Array.from(seen.values());
