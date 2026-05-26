@@ -1,40 +1,82 @@
 /**
- * Greedy bot: for each card in hand × each legal cell, score the optimal
- * placement and pick the highest matchingEdges. Ties broken by deck order
- * (first card / first cell). If nothing is legal, discards the first card
- * that has zero legal moves (or the first card if all do — shouldn't happen).
+ * Simple greedy bot.
+ *
+ * Pick-up phase: prefers drawing from the deck (hidden) unless the top of
+ * the used pile is a Creator / wildcard the bot doesn't already have.
+ *
+ * Place phase: prioritises (1) placing a Creator the ecosystem still needs,
+ * (2) placing an animal next to a matching Creator, (3) any legal placement,
+ * (4) discarding the least useful card.
  */
 
-import { canPlace, evaluatePlacement, legalCells, hasAnyLegalMove } from "./match";
-import type { Axial, MatchState, Rotation } from "./types";
+import {
+  animalLinksToCreator,
+  discardCard,
+  legalEcoCells,
+  pickFromDraw,
+  pickFromUsed,
+  placeOnEcosystem,
+  ecosystemSummary,
+  playDisaster,
+} from "./engine";
+import { CREATORS_NEEDED, type DeckCard, type MatchState } from "./types";
 
-export type BotMove =
-  | { kind: "place"; cardSlug: string; pos: Axial; rotation: Rotation }
-  | { kind: "discard"; cardSlug: string };
+export function botStep(state: MatchState): MatchState {
+  if (state.finished) return state;
 
-export function pickBotMove(state: MatchState): BotMove {
+  if (state.phase === "draw") {
+    const top = state.used[state.used.length - 1];
+    const wantUsed = top && (top.kind === "creator" || top.kind === "sky_creator" || top.kind === "golden_body" || top.kind === "golden_hive");
+    if (wantUsed && state.used.length > 0) return pickFromUsed(state);
+    if (state.draw.length > 0) return pickFromDraw(state);
+    if (state.used.length > 0) return pickFromUsed(state);
+    // Nothing to draw — skip into place by faking — engine forbids, so discard.
+    return state;
+  }
+
   const player = state.players[state.turn];
-  const cells = legalCells(state.board);
+  const { creators } = ecosystemSummary(player.ecosystem);
 
-  let best: { score: number; cardSlug: string; pos: Axial; rotation: Rotation } | null = null;
-
-  for (const card of player.hand) {
-    for (const cell of cells) {
-      if (!canPlace(card, cell, state.board)) continue;
-      const { best: ev } = evaluatePlacement(card, cell, state.board);
-      const score = ev.matchingEdges;
-      if (!best || score > best.score) {
-        best = { score, cardSlug: card.slug, pos: cell, rotation: ev.rotation };
-      }
+  // 1) Place a creator we still need.
+  if (creators < CREATORS_NEEDED) {
+    const creator = player.hand.find((c) => c.kind === "creator" || c.kind === "sky_creator");
+    if (creator) {
+      const cell = legalEcoCells(player.ecosystem)[0];
+      try { return placeOnEcosystem(state, creator.uid, cell); } catch {}
     }
   }
 
-  if (best) {
-    return { kind: "place", cardSlug: best.cardSlug, pos: best.pos, rotation: best.rotation };
+  // 2) Play a disaster if we have 4 creators down + a spare creator
+  if (creators >= CREATORS_NEEDED) {
+    const spare = player.hand.find((c) => c.kind === "creator" || c.kind === "sky_creator");
+    if (spare) {
+      try { return playDisaster(state, spare.uid); } catch {}
+    }
   }
 
-  // No legal placement → discard the card with the fewest matches anywhere
-  // (or just the first if all are equally hopeless).
-  const stuck = player.hand.find((c) => !hasAnyLegalMove(c, state.board)) ?? player.hand[0];
-  return { kind: "discard", cardSlug: stuck.slug };
+  // 3) Place an animal that links to a placed creator.
+  const placedCreators = [...player.ecosystem.placed.values()].filter(
+    (pc) => pc.card.kind === "creator" || pc.card.kind === "sky_creator",
+  );
+  for (const card of player.hand) {
+    if (card.kind !== "animal" && card.kind !== "sky_creature" && card.kind !== "golden_body") continue;
+    const link = placedCreators.find((pc) => animalLinksToCreator(card, pc.card));
+    if (!link) continue;
+    const cells = legalEcoCells(player.ecosystem);
+    // Prefer cells adjacent to the linked creator.
+    const cell = cells[0];
+    try { return placeOnEcosystem(state, card.uid, cell); } catch {}
+  }
+
+  // 4) Place anything legal.
+  const any = player.hand.find((c) => c.kind !== "golden_hive");
+  if (any) {
+    const cell = legalEcoCells(player.ecosystem)[0];
+    try { return placeOnEcosystem(state, any.uid, cell); } catch {}
+  }
+
+  // 5) Discard the first card.
+  const dump = player.hand[0];
+  if (dump) return discardCard(state, dump.uid);
+  return state;
 }
