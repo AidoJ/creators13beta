@@ -154,6 +154,29 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Play Game card */}
+        <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-card/90 to-secondary/10 p-5 sm:p-6 shadow-md">
+          <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-secondary/15 blur-2xl" />
+          <div className="relative flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+            <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+              <Gamepad2 className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1 text-center sm:text-left space-y-1">
+              <h3 className="text-base font-display font-bold text-foreground">Creator Types Ecosystem Game</h3>
+              <p className="text-sm text-muted-foreground">
+                Build the ecosystem, match Creator Types, and outplay disasters.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/25"
+              onClick={() => navigate("/play")}
+            >
+              Play Now
+            </Button>
+          </div>
+        </div>
+
         {/* Hero welcome */}
         <WelcomeHero
           firstName={profile?.first_name}
