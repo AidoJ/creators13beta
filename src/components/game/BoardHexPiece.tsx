@@ -102,13 +102,9 @@ export function EmptyHexCell({
 }) {
   const h = size * 1.1547;
   const hexPoints = "0.5,0 1,0.25 1,0.75 0.5,1 0,0.75 0,0.25";
-  const fill = hover
-    ? "hsl(var(--board-hex-active) / 0.16)"
-    : active
-      ? "hsl(var(--board-hex-empty) / 0.86)"
-      : "hsl(var(--board-hex-empty) / 0.62)";
+  const fill = hover ? "hsl(var(--board-hex-active) / 0.1)" : "hsl(var(--board-hex-empty) / 0.18)";
   const stroke = active ? "hsl(var(--board-hex-active))" : "hsl(var(--board-hex-line))";
-  const strokeOpacity = active ? 0.98 : 0.92;
+  const strokeOpacity = active ? 0.86 : 0.7;
   return (
     <div
       onClick={onClick}
@@ -116,23 +112,13 @@ export function EmptyHexCell({
       style={{ width: size, height: h }}
     >
       <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full">
-        {active && (
-          <polygon
-            points={hexPoints}
-            fill="none"
-            stroke="hsl(var(--board-hex-active))"
-            strokeOpacity={0.42}
-            strokeWidth={0.1}
-            vectorEffect="non-scaling-stroke"
-          />
-        )}
         <polygon
           points={hexPoints}
           fill={fill}
           stroke={stroke}
           strokeOpacity={strokeOpacity}
-          strokeWidth={active ? 0.045 : 0.038}
-          strokeDasharray={active ? "0.08,0.035" : undefined}
+          strokeWidth={active ? 2.5 : 1.5}
+          strokeDasharray="10 7"
           vectorEffect="non-scaling-stroke"
         />
       </svg>

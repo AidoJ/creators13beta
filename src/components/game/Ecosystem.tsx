@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Axial, Ecosystem as EcoType } from "@/lib/game/types";
-import { axialToPixel, keyOf, neighbours } from "@/lib/game/board";
+import { axialToPixel, keyOf } from "@/lib/game/board";
 import { legalEcoCells } from "@/lib/game/engine";
 import { BoardHexPiece, EmptyHexCell } from "./BoardHexPiece";
 
@@ -17,29 +17,9 @@ interface Props {
   minHeight?: number;
 }
 
-/** Build a visible board scaffold: all legal cells PLUS their neighbours (one ring out),
- *  so the player always sees a honeycomb shape, not a single hex. */
+/** Show only the currently playable empty cells, matching the compact reference board. */
 function buildScaffold(eco: EcoType): Axial[] {
-  const legal = legalEcoCells(eco);
-  const seen = new Map<string, Axial>();
-  for (const c of legal) seen.set(keyOf(c), c);
-  for (const c of legal) {
-    for (const n of neighbours(c)) {
-      const k = keyOf(n);
-      if (!eco.placed.has(k) && !seen.has(k)) seen.set(k, n);
-    }
-  }
-  // Also always pad out with a wider ring (radius 3) around (0,0) so the
-  // board reads as a full honeycomb shape even early in the game.
-  const RING = 3;
-  for (let q = -RING; q <= RING; q++) {
-    for (let r = -RING; r <= RING; r++) {
-      if (Math.abs(q + r) > RING) continue;
-      const k = keyOf({ q, r });
-      if (!eco.placed.has(k) && !seen.has(k)) seen.set(k, { q, r });
-    }
-  }
-  return Array.from(seen.values());
+  return legalEcoCells(eco);
 }
 
 export function Ecosystem({
@@ -127,7 +107,7 @@ export function Ecosystem({
               <EmptyHexCell
                 size={size}
                 pulse={false}
-                active={canDrop}
+                active={canDrop || showEmpties}
                 hover={isOver}
                 onClick={canDrop ? () => onPlace?.(cell) : undefined}
               />
