@@ -5,18 +5,11 @@ import type { DeckCard } from "@/lib/game/types";
 
 interface Props {
   card: DeckCard;
-  size?: number; // px width
+  size?: number;
   selected?: boolean;
   dimmed?: boolean;
 }
 
-/**
- * Rectangular hand / deck tile (mirrors AnimalCardTile design language) that
- * works for every DeckCard kind. Top ~72% is the coloured art panel
- * (diagonal 50/50 split for dual-type animals); bottom ~28% is a white name
- * plate with the card name + creator-type / element chips so players can
- * read the type without relying on colour alone.
- */
 export function HandTile({ card, size = 96, selected = false, dimmed = false }: Props) {
   const height = size * 1.35;
   const { c1, c2, chips, badge, artGlyph } = resolveColours(card);
@@ -43,7 +36,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false }: 
           )}
         </svg>
         {badge && (
-          <div className="absolute top-1.5 right-1.5 z-20 text-[8px] font-bold uppercase tracking-wider bg-black/45 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm">
+          <div className="absolute top-1.5 right-1.5 z-20 text-[8px] font-bold uppercase tracking-wider bg-black/55 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm">
             {badge}
           </div>
         )}
@@ -53,7 +46,11 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false }: 
               src={art}
               alt={card.name}
               loading="lazy"
-              className="max-h-full max-w-full object-contain drop-shadow-md pointer-events-none"
+              className="max-h-full max-w-full object-contain pointer-events-none"
+              style={{
+                filter:
+                  "drop-shadow(0 4px 8px rgba(0,0,0,0.5)) drop-shadow(0 2px 3px rgba(0,0,0,0.35))",
+              }}
             />
           ) : (
             <div className="text-white/80 text-[10px] font-medium uppercase tracking-wide">{card.kind}</div>
@@ -65,17 +62,17 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false }: 
       <div className="relative z-10 bg-white px-1.5 py-1 text-center flex-1 flex flex-col justify-center">
         <div
           className="font-bold uppercase tracking-wide leading-none truncate"
-          style={{ fontFamily: '"Lilita One", sans-serif', fontSize: size * 0.11, color: "#3a2615" }}
+          style={{ fontFamily: '"Lilita One", sans-serif', fontSize: size * 0.11, color: "#000" }}
         >
           {card.name}
         </div>
         <div className="flex items-center justify-center gap-1 mt-1 flex-wrap">
           {chips.map((chip, i) => (
             <span key={chip.label + i} className="contents">
-              {i > 0 && <span className="text-[#3a2615]/40 text-[9px]">+</span>}
+              {i > 0 && <span className="text-black/40 text-[9px]">+</span>}
               <span
                 className="inline-flex items-center gap-1 font-semibold uppercase tracking-wider"
-                style={{ fontSize: size * 0.075, color: "#3a2615" }}
+                style={{ fontSize: size * 0.075, color: "#000" }}
               >
                 {chip.glyph ? (
                   <img
@@ -124,40 +121,18 @@ function resolveColours(card: DeckCard): {
   if (card.kind === "creator") {
     const c = ELEMENT_COLORS[card.element!];
     const g = ELEMENT_GLYPHS[card.element!];
-    return {
-      c1: c,
-      c2: c,
-      chips: [{ label: card.element!, color: c, glyph: g }],
-      badge: "Creator",
-      artGlyph: g,
-    };
+    return { c1: c, c2: c, chips: [{ label: card.element!, color: c, glyph: g }], badge: "Creator", artGlyph: g };
   }
   if (card.kind === "sky_creator") {
     const c = ELEMENT_COLORS.Sky;
     const g = CREATOR_TYPE_GLYPHS.Sky;
-    return {
-      c1: c,
-      c2: "#ffffff",
-      chips: [{ label: "Sky", color: c, glyph: g }],
-      badge: "Wild",
-      artGlyph: g,
-    };
+    return { c1: c, c2: "#ffffff", chips: [{ label: "Sky", color: c, glyph: g }], badge: "Wild", artGlyph: g };
   }
   if (card.kind === "golden_body") {
-    return {
-      c1: "#f5c542",
-      c2: "#e0a920",
-      chips: [{ label: "Golden", color: "#e0a920" }],
-      badge: "Wild Body",
-    };
+    return { c1: "#f5c542", c2: "#e0a920", chips: [{ label: "Golden", color: "#e0a920" }], badge: "Wild Body" };
   }
   if (card.kind === "golden_hive") {
-    return {
-      c1: "#f5c542",
-      c2: "#ffffff",
-      chips: [{ label: "Hive", color: "#e0a920" }],
-      badge: "Shield",
-    };
+    return { c1: "#f5c542", c2: "#ffffff", chips: [{ label: "Hive", color: "#e0a920" }], badge: "Shield" };
   }
   return { c1: "#666", c2: "#666", chips: [] };
 }
