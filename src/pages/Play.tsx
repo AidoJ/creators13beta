@@ -186,7 +186,7 @@ export default function Play() {
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-[220px_1fr_220px] gap-3 p-3 min-h-0">
+      <div className="flex-1 grid grid-cols-[220px_1fr_220px] gap-3 p-2 min-h-0">
         {/* LEFT RAIL */}
         <div className="flex flex-col gap-3 min-w-0">
           <Card className="p-3">
@@ -246,15 +246,15 @@ export default function Play() {
         <div className="flex flex-col min-w-0">
           <Card className="flex-1 p-1 flex flex-col min-h-0 bg-[hsl(var(--board-surface))]">
             <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1">Your ecosystem</div>
-            <div className="flex-1 overflow-auto flex items-center justify-center">
+            <div className="flex-1 overflow-hidden flex items-center justify-center">
               <Ecosystem
                 eco={you.ecosystem}
-                size={144}
+                size={116}
                 selectable={canUseBoard}
                 onPlace={onPlace}
                 showEmpties
                 onStealClick={undefined}
-                minHeight={660}
+                minHeight={640}
               />
             </div>
           </Card>
