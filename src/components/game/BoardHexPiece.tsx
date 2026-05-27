@@ -30,8 +30,9 @@ export function BoardHexPiece({ card, size = 110, onClick, highlight = null, rot
     c1 = CREATOR_TYPE_COLORS[t1 as keyof typeof CREATOR_TYPE_COLORS] ?? "#444";
     c2 = CREATOR_TYPE_COLORS[t2 as keyof typeof CREATOR_TYPE_COLORS] ?? c1;
   } else if (card.kind === "creator") {
-    c1 = c2 = ELEMENT_COLORS[card.element!];
-    artGlyph = ELEMENT_GLYPHS[card.element!];
+    const dt = card.displayType;
+    c1 = c2 = dt ? (CREATOR_TYPE_COLORS[dt as keyof typeof CREATOR_TYPE_COLORS] ?? ELEMENT_COLORS[card.element!]) : ELEMENT_COLORS[card.element!];
+    artGlyph = dt ? (CREATOR_TYPE_GLYPHS[dt] ?? ELEMENT_GLYPHS[card.element!]) : ELEMENT_GLYPHS[card.element!];
   } else if (card.kind === "sky_creator") {
     c1 = c2 = ELEMENT_COLORS.Sky;
     artGlyph = CREATOR_TYPE_GLYPHS.Sky;
