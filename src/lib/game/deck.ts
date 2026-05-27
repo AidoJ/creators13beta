@@ -11,9 +11,10 @@
  *   -  2 Golden Hive Cards (block one disaster)
  */
 
-import type { GameCard } from "@/lib/gameCards";
+import type { GameCard, CreatorTypeName } from "@/lib/gameCards";
 import type { CardKind, DeckCard } from "./types";
-import { ELEMENTS } from "./elements";
+import { TYPE_TO_ELEMENT, type Element } from "./elements";
+import { CREATOR_TYPE_NAMES } from "@/lib/creatorTypes";
 
 let _seq = 0;
 const nextUid = (slug: string) => `${slug}#${++_seq}`;
@@ -29,23 +30,16 @@ function animal(source: GameCard, kind: CardKind = "animal"): DeckCard {
   };
 }
 
-// Each of the 4 elements displays under one canonical Creator Type name/glyph
-// (Earth → Soil, Fire → Fire, Air → Whirlwind, Water → Ocean) since there is
-// no Creator Type literally named "Earth", "Air" or "Water".
-const ELEMENT_DISPLAY_TYPE: Record<"Earth" | "Fire" | "Air" | "Water", string> = {
-  Earth: "Soil",
-  Fire: "Fire",
-  Air: "Whirlwind",
-  Water: "Ocean",
-};
-
-function creatorCard(element: "Earth" | "Fire" | "Air" | "Water"): DeckCard {
-  const display = ELEMENT_DISPLAY_TYPE[element];
+function creatorCardForType(displayType: CreatorTypeName): DeckCard {
+  const mapped = TYPE_TO_ELEMENT[displayType];
+  // Sky type is handled via the dedicated sky_creator wildcard.
+  const element = (mapped === "Sky" ? "Air" : mapped) as Element;
   return {
-    uid: nextUid(`creator-${display.toLowerCase()}`),
+    uid: nextUid(`creator-${displayType.toLowerCase()}`),
     kind: "creator",
-    name: `${display} Creator`,
+    name: `${displayType} Creator`,
     element,
+    displayType,
   };
 }
 
@@ -85,9 +79,12 @@ export function buildDeck(allCards: GameCard[]): DeckCard[] {
     deck.push(animal(c, c.mythical ? "sky_creature" : "animal"));
   }
 
-  // 4 of each of the 4 elements
-  for (const el of ELEMENTS) {
-    for (let i = 0; i < 4; i++) deck.push(creatorCard(el));
+  // 2 Creator cards per Creator Type (excluding Sky, which has its own
+  // wildcard sky_creator). That covers all 12 element-mapped types so every
+  // Creator Type shows up in play — 24 creator cards total.
+  for (const t of CREATOR_TYPE_NAMES) {
+    if (t === "Sky") continue;
+    for (let i = 0; i < 2; i++) deck.push(creatorCardForType(t as CreatorTypeName));
   }
 
   // Wildcards / specials

@@ -35,6 +35,8 @@ export interface DeckCard {
   source?: GameCard;
   /** For 'creator' cards — the element they represent. */
   element?: Element;
+  /** For 'creator' cards — the specific Creator Type displayed (e.g. "Snow"). */
+  displayType?: CreatorTypeName;
   /** True if this is a mythical / golden / sky variant (for badge styling). */
   special?: boolean;
 }
