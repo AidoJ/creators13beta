@@ -79,9 +79,12 @@ export function buildDeck(allCards: GameCard[]): DeckCard[] {
     deck.push(animal(c, c.mythical ? "sky_creature" : "animal"));
   }
 
-  // 4 of each of the 4 elements
-  for (const el of ELEMENTS) {
-    for (let i = 0; i < 4; i++) deck.push(creatorCard(el));
+  // 2 Creator cards per Creator Type (excluding Sky, which has its own
+  // wildcard sky_creator). That covers all 12 element-mapped types so every
+  // Creator Type shows up in play — 24 creator cards total.
+  for (const t of CREATOR_TYPE_NAMES) {
+    if (t === "Sky") continue;
+    for (let i = 0; i < 2; i++) deck.push(creatorCardForType(t as CreatorTypeName));
   }
 
   // Wildcards / specials
