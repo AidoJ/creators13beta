@@ -284,11 +284,8 @@ export function playDisaster(
     throw new Error("Only Creator Cards can be played as a Disaster");
   }
 
-  // Rule: only after you have your 4 creators may you spend extras as Disasters.
-  const placedCreators = countCreators(player.ecosystem);
-  if (placedCreators < CREATORS_NEEDED) {
-    throw new Error(`Place your ${CREATORS_NEEDED} Creators in your ecosystem first`);
-  }
+  // Per rule book: any Creator Card in hand can be played as a Disaster by
+  // sending it to the Used Pile. No prerequisite on placed creators.
 
   player.hand.splice(idx, 1);
   next.used.push(creator);
