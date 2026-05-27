@@ -118,6 +118,11 @@ export default function Signup() {
     }
     setCreatedUserId(userId);
 
+    // Save phone to profile for player signups
+    if (isPlayer && phone.trim()) {
+      await supabase.from("profiles").update({ phone: phone.trim() }).eq("user_id", userId);
+    }
+
     // 2. Call the edge function to create all DB records (role, subscription, profile update)
     //    This works for both free and paid tiers — it handles everything server-side.
     const priceId = tierInfo.stripe?.price_id || null;
