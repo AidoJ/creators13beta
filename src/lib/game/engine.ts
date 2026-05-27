@@ -140,6 +140,28 @@ export function pickFromUsed(state: MatchState): MatchState {
   return next;
 }
 
+/** Skip the pick-up phase entirely and go straight to placement.
+ *  Rule book treats pickup as up to 2 cards — players may choose to draw
+ *  fewer (including zero) if their hand is already full or they don't need
+ *  more cards. */
+export function skipDraws(state: MatchState): MatchState {
+  if (state.finished) return state;
+  if (state.phase !== "draw") return state;
+  const next = cloneState(state);
+  next.phase = "place";
+  next.lastEvent = `${next.players[next.turn].name} skipped pick-up`;
+  return next;
+}
+
+/** End the current turn early (after placing 0 or 1 cards instead of 2). */
+export function endTurnEarly(state: MatchState): MatchState {
+  if (state.finished) return state;
+  const next = cloneState(state);
+  next.lastEvent = `${next.players[next.turn].name} ended their turn`;
+  advanceTurn(next);
+  return next;
+}
+
 /* --------------------------- placement helpers --------------------------- */
 
 /** Does this animal/sky-creature link to that creator card? */
