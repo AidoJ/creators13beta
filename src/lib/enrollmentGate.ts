@@ -68,9 +68,13 @@ export async function loadEnrollmentState(userId: string): Promise<EnrollmentSta
     (csRes.data && csRes.data.length > 0)
   );
 
+  const signupPath = (subRes.data as any)?.signup_path ?? null;
+  const isPlayerOnly = signupPath === "player";
+
   return {
     isStaff,
     isCaseStudySubject,
+    isPlayerOnly,
     hasSubscription: !!subRes.data?.tier,
     hasPractitioner: practIds.length > 0,
     practitionerIsTrainer,
@@ -85,6 +89,7 @@ export async function loadEnrollmentState(userId: string): Promise<EnrollmentSta
     hasBooking: !!bookingRes.data,
     tier: subRes.data?.tier ?? null,
     billing: subRes.data?.billing_period ?? null,
+    signupPath,
   };
 }
 
@@ -106,6 +111,8 @@ export function getRequiredEnrollmentPath(state: EnrollmentState): string | null
   };
 
   if (!state.hasSubscription) return "/enroll";
+  // Game-only players skip the entire profiling pipeline.
+  if (state.isPlayerOnly) return null;
   if (!state.hasPractitioner) return `/enroll/practitioner${qs()}`;
   if (!state.hasDetails) return `/enroll/details${qs()}`;
   // Consent is REQUIRED for everyone before photos — fail-closed.
