@@ -39,6 +39,7 @@ export default function Signup() {
 
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showVerification, setShowVerification] = useState(false);
@@ -62,6 +63,18 @@ export default function Signup() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    if (!emailOk) {
+      toast({ title: "Please enter a valid email address", variant: "destructive" });
+      return;
+    }
+    if (isPlayer) {
+      const phoneDigits = phone.replace(/[^\d]/g, "");
+      if (phoneDigits.length < 7) {
+        toast({ title: "Please enter a valid phone number", variant: "destructive" });
+        return;
+      }
+    }
     if (password !== confirmPassword) {
       toast({ title: "Passwords don't match", variant: "destructive" });
       return;
@@ -104,6 +117,11 @@ export default function Signup() {
       return;
     }
     setCreatedUserId(userId);
+
+    // Save phone to profile for player signups
+    if (isPlayer && phone.trim()) {
+      await supabase.from("profiles").update({ phone: phone.trim() }).eq("user_id", userId);
+    }
 
     // 2. Call the edge function to create all DB records (role, subscription, profile update)
     //    This works for both free and paid tiers — it handles everything server-side.
@@ -257,6 +275,12 @@ export default function Signup() {
               <Label htmlFor="email">Email *</Label>
               <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
             </div>
+            {isPlayer && (
+              <div className="space-y-1.5">
+                <Label htmlFor="phone">Phone *</Label>
+                <Input id="phone" type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+61 400 000 000" />
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label htmlFor="password">Password *</Label>
               <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 6 characters" />
