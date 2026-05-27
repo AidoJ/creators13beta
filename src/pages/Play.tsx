@@ -226,22 +226,8 @@ export default function Play() {
 
   function onPickDraw() { if (state) guarded(() => pickFromDraw(state)); }
   function onPickUsed() { if (state) guarded(() => pickFromUsed(state)); }
-  function onDrawTwo() {
-    if (!state) return;
-    try {
-      let next = state;
-      let safety = 0;
-      while (next.phase === "draw" && next.draw.length > 0 && next.drawnThisTurn < 2 && safety < 4) {
-        next = pickFromDraw(next);
-        safety++;
-      }
-      setState(next);
-      schedulePersist(next);
-      setSelectedUid(null);
-      setMode("place");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Cannot draw");
-    }
+  function onDrawOne() {
+    if (state) guarded(() => pickFromDraw(state));
   }
   function onPlace(pos: Axial, draggedUid?: string) {
     if (!state) return;
