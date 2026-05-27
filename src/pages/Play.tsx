@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { HelpCircle, Loader2, Users } from "lucide-react";
+import { HelpCircle, Loader2, Users, BookOpen, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -39,6 +39,8 @@ import { MatchOverDialog } from "@/components/game/MatchOverDialog";
 import { TutorialOverlay, resetTutorial } from "@/components/game/TutorialOverlay";
 import { MultiplayerLobby } from "@/components/game/MultiplayerLobby";
 import { HandTile } from "@/components/game/cards/HandTile";
+import { RuleBookSheet } from "@/components/game/RuleBookSheet";
+import { OpponentSheet } from "@/components/game/OpponentSheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
@@ -59,6 +61,8 @@ export default function Play() {
   const [error, setError] = useState<string | null>(null);
   const [showOpponent, setShowOpponent] = useState(false);
   const [showPiles, setShowPiles] = useState(false);
+  const [opponentSheetOpen, setOpponentSheetOpen] = useState(false);
+  const [ruleBookOpen, setRuleBookOpen] = useState(false);
   const [lobbyOpen, setLobbyOpen] = useState(false);
   const [waitingForGuest, setWaitingForGuest] = useState(false);
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
