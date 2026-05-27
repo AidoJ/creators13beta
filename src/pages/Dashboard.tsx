@@ -19,6 +19,7 @@ import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
 import DiscordLinkCard from "@/components/dashboard/DiscordLinkCard";
+import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 
@@ -52,7 +53,8 @@ interface SubData {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { ready: gateReady } = useEnrollmentGate();
+  const { ready: gateReady, state: gateState } = useEnrollmentGate();
+  const isPlayerOnly = !!gateState?.isPlayerOnly;
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [booking, setBooking] = useState<BookingData | null>(null);
   const [subscription, setSubscription] = useState<SubData | null>(null);
