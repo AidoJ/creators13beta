@@ -59,7 +59,7 @@ export default function Play() {
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("place");
   const [error, setError] = useState<string | null>(null);
-  const [_showOpponentLegacy, setShowOpponent] = useState(false);
+  
   const [showPiles, setShowPiles] = useState(false);
   const [opponentSheetOpen, setOpponentSheetOpen] = useState(false);
   const [ruleBookOpen, setRuleBookOpen] = useState(false);
