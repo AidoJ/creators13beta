@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Check, ArrowRight, Users, GraduationCap, Info } from "lucide-react";
+import { Check, ArrowRight, Users, GraduationCap, Info, Gamepad2 } from "lucide-react";
 import landscapeLeaf from "@/assets/landscape-leaf.png";
 import landscapeWater from "@/assets/landscape-water.png";
 import goldRing from "@/assets/gold-ring.png";
@@ -25,7 +25,7 @@ const birdImages: Record<TierKey, string> = {
   owl: birdOwl,
 };
 
-type SignupPath = "paying" | "case_study" | null;
+type SignupPath = "paying" | "case_study" | "player" | null;
 
 export default function PlanSelection() {
   const navigate = useNavigate();
@@ -58,6 +58,7 @@ export default function PlanSelection() {
   const caseStudyRef = useRef<HTMLDivElement>(null);
 
   const isCaseStudy = signupPath === "case_study";
+  const isPlayer = signupPath === "player";
 
   const buildEnrollmentParams = () => {
     const params = new URLSearchParams({
@@ -69,6 +70,7 @@ export default function PlanSelection() {
       params.set("practitioner_code", practitionerCode.trim());
       if (urlInviteToken) params.set("invite", urlInviteToken);
     }
+    if (isPlayer) params.set("path", "player");
     return params;
   };
 
@@ -148,6 +150,8 @@ export default function PlanSelection() {
       setTimeout(() => {
         caseStudyRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 100);
+    } else if (signupPath === "player") {
+      setSelectedTier("wren");
     }
   }, [signupPath]);
 
