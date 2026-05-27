@@ -279,7 +279,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
 function defaultDescriptor(card: DeckCard): string {
   switch (card.kind) {
     case "creator":
-      return `${card.element} Creator Card. Place all four Creator Cards (one per element) in your ecosystem. After your 4 Creators are placed, extra Creators can be played as a Disaster — they wipe matching Animals from rival ecosystems.`;
+      return `${card.displayType ?? card.element} Creator Card (${card.element} element). Place 4 Creator Cards in your ecosystem to anchor your Animals. Extra Creators can be played as a Disaster — they wipe matching Animals from rival ecosystems.`;
     case "sky_creator":
       return `Sky Creator (wildcard). Counts as any element when matching Animals. After your 4 Creators are placed, can also be played as a Disaster.`;
     case "sky_creature":
