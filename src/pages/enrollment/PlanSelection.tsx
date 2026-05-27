@@ -328,7 +328,7 @@ export default function PlanSelection() {
 
         {/* ── Path Selector ── */}
         {!urlCaseStudy && (
-          <div className="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto mb-10">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto mb-10">
             <button
               onClick={() => setSignupPath("case_study")}
               className={cn(
@@ -379,6 +379,34 @@ export default function PlanSelection() {
                 </p>
               </div>
               {signupPath === "paying" && (
+                <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center z-10">
+                  <Check className="h-4 w-4" />
+                </div>
+              )}
+            </button>
+
+            <button
+              onClick={() => setSignupPath("player")}
+              className={cn(
+                "relative flex flex-col items-center gap-3 rounded-2xl border-2 p-6 text-center transition-all duration-200 overflow-hidden",
+                signupPath === "player"
+                  ? "border-primary ring-2 ring-primary/30 shadow-lg"
+                  : "border-border hover:border-primary/40 hover:shadow-md"
+              )}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10" />
+              <div className="absolute inset-0 bg-card/40" />
+              <div className="relative w-20 h-20 flex items-center justify-center">
+                <img src={goldRing} alt="" className="absolute inset-0 w-full h-full object-contain" />
+                <Gamepad2 className="h-8 w-8" style={{ color: "#c5992a" }} />
+              </div>
+              <div className="relative">
+                <h3 className="text-base font-display font-bold text-foreground mb-1">Just Here for the Game</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Play the Creator Types Ecosystem game solo or with friends. No profiling required. <strong>Free.</strong>
+                </p>
+              </div>
+              {signupPath === "player" && (
                 <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center z-10">
                   <Check className="h-4 w-4" />
                 </div>
