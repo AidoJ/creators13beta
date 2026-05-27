@@ -250,6 +250,8 @@ export default function Play() {
     guarded(() => placeOnEcosystem(state, cardUid, pos));
   }
   function onDiscard() { if (state && selectedUid) guarded(() => discardCard(state, selectedUid)); }
+  function onSkipDraws() { if (state) guarded(() => skipDraws(state)); }
+  function onEndTurn() { if (state) guarded(() => endTurnEarly(state)); }
   function onPlacedHexClick(posKey: string) {
     if (!state || !selfPlayer) return;
     if (mode === "move") {
