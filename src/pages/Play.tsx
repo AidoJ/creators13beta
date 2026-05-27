@@ -226,22 +226,8 @@ export default function Play() {
 
   function onPickDraw() { if (state) guarded(() => pickFromDraw(state)); }
   function onPickUsed() { if (state) guarded(() => pickFromUsed(state)); }
-  function onDrawTwo() {
-    if (!state) return;
-    try {
-      let next = state;
-      let safety = 0;
-      while (next.phase === "draw" && next.draw.length > 0 && next.drawnThisTurn < 2 && safety < 4) {
-        next = pickFromDraw(next);
-        safety++;
-      }
-      setState(next);
-      schedulePersist(next);
-      setSelectedUid(null);
-      setMode("place");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Cannot draw");
-    }
+  function onDrawOne() {
+    if (state) guarded(() => pickFromDraw(state));
   }
   function onPlace(pos: Axial, draggedUid?: string) {
     if (!state) return;
@@ -362,7 +348,7 @@ export default function Play() {
   } else if (!isYourTurn) {
     phaseHint = `${opponent.name} is ${isPvp ? "thinking" : "thinking…"}`;
   } else if (state.phase === "draw") {
-    phaseHint = `Pick up ${2 - state.drawnThisTurn} card${2 - state.drawnThisTurn === 1 ? "" : "s"} (draw pile or top of used pile).`;
+    phaseHint = `Pick up ${2 - state.drawnThisTurn} card${2 - state.drawnThisTurn === 1 ? "" : "s"} — draw 1 at a time, mix and match the draw pile and the top of the used pile.`;
   } else if (mode === "steal") {
     phaseHint = `Click an animal in ${opponent.name}'s ecosystem to steal it.`;
   } else if (mode === "move") {
@@ -382,7 +368,7 @@ export default function Play() {
   const canSteal = isYourTurn && state.phase === "place" && !!selectedCard
     && selectedCard.kind === "sky_creature";
 
-  const canDrawTwo = isYourTurn && state.phase === "draw" && state.draw.length > 0;
+  const canDrawOne = isYourTurn && state.phase === "draw" && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2;
 
   const opponentBlock = (
     <Card className="p-3">
@@ -444,11 +430,11 @@ export default function Play() {
       <div className="flex flex-col gap-2">
         <Button
           size="sm"
-          disabled={!canDrawTwo}
-          onClick={onDrawTwo}
+          disabled={!canDrawOne || state.draw.length === 0}
+          onClick={onDrawOne}
           className="h-auto py-2.5 px-2 whitespace-normal text-xs leading-tight text-center font-semibold"
         >
-          Draw 2 cards ({state.draw.length} left)
+          Draw 1 from Draw Pile ({state.draw.length} left) — {2 - state.drawnThisTurn} pick{2 - state.drawnThisTurn === 1 ? "" : "s"} left
         </Button>
         <Button size="sm" variant={mode === "move" ? "default" : "secondary"}
           disabled={!isYourTurn || selfPlayer.ecosystem.placed.size === 0}
