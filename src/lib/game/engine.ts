@@ -117,6 +117,9 @@ export function pickFromDraw(state: MatchState): MatchState {
   if (state.finished) return state;
   if (state.phase !== "draw") throw new Error("Not in pick-up phase");
   if (state.draw.length === 0) throw new Error("Draw pile empty");
+  if (state.players[state.turn].hand.length >= HAND_LIMIT) {
+    throw new Error(`Hand limit reached (${HAND_LIMIT}). Play or discard cards before drawing more.`);
+  }
   const next = cloneState(state);
   const card = next.draw.shift()!;
   next.players[next.turn].hand.push(card);
@@ -131,6 +134,9 @@ export function pickFromUsed(state: MatchState): MatchState {
   if (state.finished) return state;
   if (state.phase !== "draw") throw new Error("Not in pick-up phase");
   if (state.used.length === 0) throw new Error("Used pile empty");
+  if (state.players[state.turn].hand.length >= HAND_LIMIT) {
+    throw new Error(`Hand limit reached (${HAND_LIMIT}). Play or discard cards before drawing more.`);
+  }
   const next = cloneState(state);
   const card = next.used.pop()!;
   next.players[next.turn].hand.push(card);
