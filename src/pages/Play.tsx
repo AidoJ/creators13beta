@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { HelpCircle, Loader2, Users } from "lucide-react";
+import { HelpCircle, Loader2, Users, BookOpen, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -39,6 +39,8 @@ import { MatchOverDialog } from "@/components/game/MatchOverDialog";
 import { TutorialOverlay, resetTutorial } from "@/components/game/TutorialOverlay";
 import { MultiplayerLobby } from "@/components/game/MultiplayerLobby";
 import { HandTile } from "@/components/game/cards/HandTile";
+import { RuleBookSheet } from "@/components/game/RuleBookSheet";
+import { OpponentSheet } from "@/components/game/OpponentSheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
@@ -57,8 +59,10 @@ export default function Play() {
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("place");
   const [error, setError] = useState<string | null>(null);
-  const [showOpponent, setShowOpponent] = useState(false);
+  
   const [showPiles, setShowPiles] = useState(false);
+  const [opponentSheetOpen, setOpponentSheetOpen] = useState(false);
+  const [ruleBookOpen, setRuleBookOpen] = useState(false);
   const [lobbyOpen, setLobbyOpen] = useState(false);
   const [waitingForGuest, setWaitingForGuest] = useState(false);
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
@@ -222,6 +226,23 @@ export default function Play() {
 
   function onPickDraw() { if (state) guarded(() => pickFromDraw(state)); }
   function onPickUsed() { if (state) guarded(() => pickFromUsed(state)); }
+  function onDrawTwo() {
+    if (!state) return;
+    try {
+      let next = state;
+      let safety = 0;
+      while (next.phase === "draw" && next.draw.length > 0 && next.drawnThisTurn < 2 && safety < 4) {
+        next = pickFromDraw(next);
+        safety++;
+      }
+      setState(next);
+      schedulePersist(next);
+      setSelectedUid(null);
+      setMode("place");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Cannot draw");
+    }
+  }
   function onPlace(pos: Axial, draggedUid?: string) {
     if (!state) return;
     if (mode === "move" && moveFromKey) {
@@ -361,10 +382,29 @@ export default function Play() {
   const canSteal = isYourTurn && state.phase === "place" && !!selectedCard
     && selectedCard.kind === "sky_creature";
 
+  const canDrawTwo = isYourTurn && state.phase === "draw" && state.draw.length > 0;
+
   const opponentBlock = (
     <Card className="p-3">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">{opponent.name}</div>
-      <Ecosystem eco={opponent.ecosystem} size={isMobile ? 28 : 36} minHeight={isMobile ? 140 : 180} showEmpties={false} />
+      <button
+        type="button"
+        onClick={() => setOpponentSheetOpen(true)}
+        className="w-full flex items-center justify-between gap-2 mb-2 group"
+        aria-label={`Open ${opponent.name}'s ecosystem`}
+      >
+        <span className="text-xs uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
+          {opponent.name}
+        </span>
+        <Maximize2 className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+      </button>
+      <button
+        type="button"
+        onClick={() => setOpponentSheetOpen(true)}
+        className="block w-full rounded-md hover:ring-2 hover:ring-primary/40 transition-all"
+        aria-label="Expand opponent ecosystem"
+      >
+        <Ecosystem eco={opponent.ecosystem} size={isMobile ? 28 : 36} minHeight={isMobile ? 140 : 180} showEmpties={false} />
+      </button>
     </Card>
   );
 
@@ -407,6 +447,14 @@ export default function Play() {
     <Card className="p-3">
       <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Card actions</div>
       <div className="flex flex-col gap-2">
+        <Button
+          size="sm"
+          disabled={!canDrawTwo}
+          onClick={onDrawTwo}
+          className="h-auto py-2.5 px-2 whitespace-normal text-xs leading-tight text-center font-semibold"
+        >
+          Draw 2 cards ({state.draw.length} left)
+        </Button>
         <Button size="sm" variant={mode === "move" ? "default" : "secondary"}
           disabled={!isYourTurn || selfPlayer.ecosystem.placed.size === 0}
           onClick={() => {
@@ -431,9 +479,13 @@ export default function Play() {
           {mode === "steal" ? "Cancel steal" : "Steal with Sky Creature"}
         </Button>
       </div>
-      <div className="text-[10px] text-muted-foreground mt-3 leading-relaxed break-words">
-        Move = reposition a placed card (cards can never leave your ecosystem). Creators ⇒ Disaster (after your 4 are placed). Sky Creature ⇒ Steal. Golden Hive ⇒ pick up to arm shield. Golden Body ⇒ wildcard animal.
-      </div>
+      <button
+        type="button"
+        onClick={() => setRuleBookOpen(true)}
+        className="text-[10px] text-primary hover:underline mt-3 inline-flex items-center gap-1"
+      >
+        <BookOpen className="w-3 h-3" /> Open Rule Book
+      </button>
     </Card>
   );
 
@@ -481,6 +533,9 @@ export default function Play() {
               <Users className="w-4 h-4 mr-1" /> Multiplayer
             </Button>
           )}
+          <Button size="sm" variant="ghost" onClick={() => setRuleBookOpen(true)}>
+            <BookOpen className="w-4 h-4 mr-1" /> Rule Book
+          </Button>
           <Button size="sm" variant="ghost" onClick={() => { resetTutorial(); window.location.reload(); }}>
             <HelpCircle className="w-4 h-4 mr-1" /> Help
           </Button>
@@ -490,38 +545,36 @@ export default function Play() {
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[240px_1fr_240px] gap-2 p-2 min-h-0 overflow-hidden">
-        <div className="flex flex-col gap-2 min-w-0 min-h-0 lg:contents">
-          <div className="lg:hidden flex gap-2">
-            <Collapsible open={showOpponent} onOpenChange={setShowOpponent} className="flex-1">
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full">
-                  {showOpponent ? "Hide" : "Show"} opponent
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2">{opponentBlock}</CollapsibleContent>
-            </Collapsible>
-            <Collapsible open={showPiles} onOpenChange={setShowPiles} className="flex-1">
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full">
-                  {showPiles ? "Hide" : "Show"} piles
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2 space-y-2">
-                {pilesBlock}
-                {actionsBlock}
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-
-          <div className="hidden lg:flex lg:flex-col lg:gap-2 lg:col-start-1 lg:min-h-0 lg:overflow-y-auto">
-            {opponentBlock}
-            {pilesBlock}
-            {actionsBlock}
-          </div>
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[240px_1fr_260px] gap-2 p-2 min-h-0 overflow-hidden">
+        {/* Mobile compact bar: opponent + piles toggles */}
+        <div className="lg:hidden flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={() => setOpponentSheetOpen(true)}
+          >
+            <Maximize2 className="w-3.5 h-3.5 mr-1" /> {opponent.name}
+          </Button>
+          <Collapsible open={showPiles} onOpenChange={setShowPiles} className="flex-1">
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full">
+                {showPiles ? "Hide" : "Show"} piles
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 space-y-2">
+              {pilesBlock}
+            </CollapsibleContent>
+          </Collapsible>
         </div>
 
+        {/* Left column (desktop): opponent + piles */}
+        <div className="hidden lg:flex lg:flex-col lg:gap-2 lg:col-start-1 lg:min-h-0 lg:overflow-y-auto">
+          {opponentBlock}
+          {pilesBlock}
+        </div>
 
+        {/* Centre: board */}
         <div className="flex flex-col min-w-0 min-h-0 lg:col-start-2">
           <Card className="flex-1 p-1 flex flex-col min-h-0 bg-transparent border-0 shadow-none">
             <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1">Your ecosystem</div>
@@ -542,9 +595,10 @@ export default function Play() {
           </Card>
         </div>
 
-
-        <div className="lg:col-start-3 min-w-0 min-h-0 overflow-y-auto">
+        {/* Right column: Selected (top) → Card actions with Draw 2 (below) */}
+        <div className="lg:col-start-3 min-w-0 min-h-0 overflow-y-auto flex flex-col gap-2">
           {selectedBlock}
+          {actionsBlock}
         </div>
 
       </div>
@@ -559,6 +613,8 @@ export default function Play() {
 
       <MatchOverDialog state={state} onPlayAgain={onNewGame} />
       <TutorialOverlay />
+      <RuleBookSheet open={ruleBookOpen} onOpenChange={setRuleBookOpen} />
+      <OpponentSheet open={opponentSheetOpen} onOpenChange={setOpponentSheetOpen} player={opponent} />
       <MultiplayerLobby
         open={lobbyOpen}
         onOpenChange={setLobbyOpen}
