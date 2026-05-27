@@ -368,7 +368,7 @@ export default function Play() {
   const canSteal = isYourTurn && state.phase === "place" && !!selectedCard
     && selectedCard.kind === "sky_creature";
 
-  const canDrawTwo = isYourTurn && state.phase === "draw" && state.draw.length > 0;
+  const canDrawOne = isYourTurn && state.phase === "draw" && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2;
 
   const opponentBlock = (
     <Card className="p-3">
