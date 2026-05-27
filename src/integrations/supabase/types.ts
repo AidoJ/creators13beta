@@ -998,6 +998,7 @@ export type Database = {
           id: string
           payment_method: string | null
           referral_code: string | null
+          signup_path: string | null
           status: Database["public"]["Enums"]["subscription_status"]
           stripe_customer_id: string | null
           stripe_price_id: string | null
@@ -1014,6 +1015,7 @@ export type Database = {
           id?: string
           payment_method?: string | null
           referral_code?: string | null
+          signup_path?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           stripe_customer_id?: string | null
           stripe_price_id?: string | null
@@ -1030,6 +1032,7 @@ export type Database = {
           id?: string
           payment_method?: string | null
           referral_code?: string | null
+          signup_path?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           stripe_customer_id?: string | null
           stripe_price_id?: string | null
