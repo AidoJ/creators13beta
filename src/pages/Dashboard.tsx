@@ -136,6 +136,17 @@ export default function Dashboard() {
     );
   }
 
+  if (isPlayerOnly && user) {
+    return (
+      <PlayerDashboard
+        userId={user.id}
+        email={user.email}
+        firstName={profile?.first_name ?? null}
+        onSignOut={signOut}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
       <DashboardHeader email={user?.email} onSignOut={signOut} />
