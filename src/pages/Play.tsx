@@ -382,10 +382,29 @@ export default function Play() {
   const canSteal = isYourTurn && state.phase === "place" && !!selectedCard
     && selectedCard.kind === "sky_creature";
 
+  const canDrawTwo = isYourTurn && state.phase === "draw" && state.draw.length > 0;
+
   const opponentBlock = (
     <Card className="p-3">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">{opponent.name}</div>
-      <Ecosystem eco={opponent.ecosystem} size={isMobile ? 28 : 36} minHeight={isMobile ? 140 : 180} showEmpties={false} />
+      <button
+        type="button"
+        onClick={() => setOpponentSheetOpen(true)}
+        className="w-full flex items-center justify-between gap-2 mb-2 group"
+        aria-label={`Open ${opponent.name}'s ecosystem`}
+      >
+        <span className="text-xs uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
+          {opponent.name}
+        </span>
+        <Maximize2 className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+      </button>
+      <button
+        type="button"
+        onClick={() => setOpponentSheetOpen(true)}
+        className="block w-full rounded-md hover:ring-2 hover:ring-primary/40 transition-all"
+        aria-label="Expand opponent ecosystem"
+      >
+        <Ecosystem eco={opponent.ecosystem} size={isMobile ? 28 : 36} minHeight={isMobile ? 140 : 180} showEmpties={false} />
+      </button>
     </Card>
   );
 
@@ -428,6 +447,14 @@ export default function Play() {
     <Card className="p-3">
       <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Card actions</div>
       <div className="flex flex-col gap-2">
+        <Button
+          size="sm"
+          disabled={!canDrawTwo}
+          onClick={onDrawTwo}
+          className="h-auto py-2.5 px-2 whitespace-normal text-xs leading-tight text-center font-semibold"
+        >
+          Draw 2 cards ({state.draw.length} left)
+        </Button>
         <Button size="sm" variant={mode === "move" ? "default" : "secondary"}
           disabled={!isYourTurn || selfPlayer.ecosystem.placed.size === 0}
           onClick={() => {
@@ -452,9 +479,13 @@ export default function Play() {
           {mode === "steal" ? "Cancel steal" : "Steal with Sky Creature"}
         </Button>
       </div>
-      <div className="text-[10px] text-muted-foreground mt-3 leading-relaxed break-words">
-        Move = reposition a placed card (cards can never leave your ecosystem). Creators ⇒ Disaster (after your 4 are placed). Sky Creature ⇒ Steal. Golden Hive ⇒ pick up to arm shield. Golden Body ⇒ wildcard animal.
-      </div>
+      <button
+        type="button"
+        onClick={() => setRuleBookOpen(true)}
+        className="text-[10px] text-primary hover:underline mt-3 inline-flex items-center gap-1"
+      >
+        <BookOpen className="w-3 h-3" /> Open Rule Book
+      </button>
     </Card>
   );
 
