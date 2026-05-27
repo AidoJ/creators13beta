@@ -1,11 +1,11 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Ecosystem } from "@/components/game/Ecosystem";
-import type { Player } from "@/lib/game/types";
+import type { PlayerState } from "@/lib/game/types";
 
 interface OpponentSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  player: Player | null;
+  player: PlayerState | null;
 }
 
 export function OpponentSheet({ open, onOpenChange, player }: OpponentSheetProps) {
