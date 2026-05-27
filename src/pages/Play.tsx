@@ -613,6 +613,8 @@ export default function Play() {
 
       <MatchOverDialog state={state} onPlayAgain={onNewGame} />
       <TutorialOverlay />
+      <RuleBookSheet open={ruleBookOpen} onOpenChange={setRuleBookOpen} />
+      <OpponentSheet open={opponentSheetOpen} onOpenChange={setOpponentSheetOpen} player={opponent} />
       <MultiplayerLobby
         open={lobbyOpen}
         onOpenChange={setLobbyOpen}
