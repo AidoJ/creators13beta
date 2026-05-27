@@ -30,23 +30,16 @@ function animal(source: GameCard, kind: CardKind = "animal"): DeckCard {
   };
 }
 
-// Each of the 4 elements displays under one canonical Creator Type name/glyph
-// (Earth → Soil, Fire → Fire, Air → Whirlwind, Water → Ocean) since there is
-// no Creator Type literally named "Earth", "Air" or "Water".
-const ELEMENT_DISPLAY_TYPE: Record<"Earth" | "Fire" | "Air" | "Water", string> = {
-  Earth: "Soil",
-  Fire: "Fire",
-  Air: "Whirlwind",
-  Water: "Ocean",
-};
-
-function creatorCard(element: "Earth" | "Fire" | "Air" | "Water"): DeckCard {
-  const display = ELEMENT_DISPLAY_TYPE[element];
+function creatorCardForType(displayType: CreatorTypeName): DeckCard {
+  const mapped = TYPE_TO_ELEMENT[displayType];
+  // Sky type is handled via the dedicated sky_creator wildcard.
+  const element = (mapped === "Sky" ? "Air" : mapped) as Element;
   return {
-    uid: nextUid(`creator-${display.toLowerCase()}`),
+    uid: nextUid(`creator-${displayType.toLowerCase()}`),
     kind: "creator",
-    name: `${display} Creator`,
+    name: `${displayType} Creator`,
     element,
+    displayType,
   };
 }
 
