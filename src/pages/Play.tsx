@@ -430,11 +430,11 @@ export default function Play() {
       <div className="flex flex-col gap-2">
         <Button
           size="sm"
-          disabled={!canDrawTwo}
-          onClick={onDrawTwo}
+          disabled={!canDrawOne || state.draw.length === 0}
+          onClick={onDrawOne}
           className="h-auto py-2.5 px-2 whitespace-normal text-xs leading-tight text-center font-semibold"
         >
-          Draw 2 cards ({state.draw.length} left)
+          Draw 1 from Draw Pile ({state.draw.length} left) — {2 - state.drawnThisTurn} pick{2 - state.drawnThisTurn === 1 ? "" : "s"} left
         </Button>
         <Button size="sm" variant={mode === "move" ? "default" : "secondary"}
           disabled={!isYourTurn || selfPlayer.ecosystem.placed.size === 0}
