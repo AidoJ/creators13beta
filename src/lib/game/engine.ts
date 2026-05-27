@@ -15,6 +15,7 @@
 import {
   ANIMALS_PER_CREATOR,
   CREATORS_NEEDED,
+  HAND_LIMIT,
   HAND_SIZE,
   type Axial,
   type DeckCard,
