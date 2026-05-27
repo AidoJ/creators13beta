@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 export interface EnrollmentState {
   isStaff: boolean; // practitioner/trainee/trainer/admin → bypass client gate
   isCaseStudySubject: boolean;
+  isPlayerOnly: boolean; // signed up just for the game — skips profiling pipeline
   hasSubscription: boolean;
   hasPractitioner: boolean;
   practitionerIsTrainer: boolean;
@@ -16,6 +17,7 @@ export interface EnrollmentState {
   hasBooking: boolean;
   tier: string | null;
   billing: string | null;
+  signupPath: string | null;
 }
 
 export async function loadEnrollmentState(userId: string): Promise<EnrollmentState> {
@@ -26,7 +28,7 @@ export async function loadEnrollmentState(userId: string): Promise<EnrollmentSta
       .select("first_name, date_of_birth, gender, height_cm, case_study_consent_at, email")
       .eq("user_id", userId)
       .maybeSingle(),
-    supabase.from("subscriptions").select("tier, billing_period, referral_code").eq("user_id", userId).maybeSingle(),
+    supabase.from("subscriptions").select("tier, billing_period, referral_code, signup_path").eq("user_id", userId).maybeSingle(),
     supabase
       .from("profiling_photos")
       .select("id", { count: "exact", head: true })
@@ -66,9 +68,13 @@ export async function loadEnrollmentState(userId: string): Promise<EnrollmentSta
     (csRes.data && csRes.data.length > 0)
   );
 
+  const signupPath = (subRes.data as any)?.signup_path ?? null;
+  const isPlayerOnly = signupPath === "player";
+
   return {
     isStaff,
     isCaseStudySubject,
+    isPlayerOnly,
     hasSubscription: !!subRes.data?.tier,
     hasPractitioner: practIds.length > 0,
     practitionerIsTrainer,
@@ -83,6 +89,7 @@ export async function loadEnrollmentState(userId: string): Promise<EnrollmentSta
     hasBooking: !!bookingRes.data,
     tier: subRes.data?.tier ?? null,
     billing: subRes.data?.billing_period ?? null,
+    signupPath,
   };
 }
 
@@ -104,6 +111,8 @@ export function getRequiredEnrollmentPath(state: EnrollmentState): string | null
   };
 
   if (!state.hasSubscription) return "/enroll";
+  // Game-only players skip the entire profiling pipeline.
+  if (state.isPlayerOnly) return null;
   if (!state.hasPractitioner) return `/enroll/practitioner${qs()}`;
   if (!state.hasDetails) return `/enroll/details${qs()}`;
   // Consent is REQUIRED for everyone before photos — fail-closed.

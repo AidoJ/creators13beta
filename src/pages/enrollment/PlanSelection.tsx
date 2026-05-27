@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Check, ArrowRight, Users, GraduationCap, Info } from "lucide-react";
+import { Check, ArrowRight, Users, GraduationCap, Info, Gamepad2 } from "lucide-react";
 import landscapeLeaf from "@/assets/landscape-leaf.png";
 import landscapeWater from "@/assets/landscape-water.png";
 import goldRing from "@/assets/gold-ring.png";
@@ -25,7 +25,7 @@ const birdImages: Record<TierKey, string> = {
   owl: birdOwl,
 };
 
-type SignupPath = "paying" | "case_study" | null;
+type SignupPath = "paying" | "case_study" | "player" | null;
 
 export default function PlanSelection() {
   const navigate = useNavigate();
@@ -58,6 +58,7 @@ export default function PlanSelection() {
   const caseStudyRef = useRef<HTMLDivElement>(null);
 
   const isCaseStudy = signupPath === "case_study";
+  const isPlayer = signupPath === "player";
 
   const buildEnrollmentParams = () => {
     const params = new URLSearchParams({
@@ -69,6 +70,7 @@ export default function PlanSelection() {
       params.set("practitioner_code", practitionerCode.trim());
       if (urlInviteToken) params.set("invite", urlInviteToken);
     }
+    if (isPlayer) params.set("path", "player");
     return params;
   };
 
@@ -148,6 +150,8 @@ export default function PlanSelection() {
       setTimeout(() => {
         caseStudyRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 100);
+    } else if (signupPath === "player") {
+      setSelectedTier("wren");
     }
   }, [signupPath]);
 
@@ -178,6 +182,36 @@ export default function PlanSelection() {
     if (isCaseStudy && !practitionerCode.trim()) return;
 
     const params = buildEnrollmentParams();
+
+    // Player path: no practitioner code, no payment, no profiling.
+    if (isPlayer) {
+      if (user) {
+        // Provision a free Wren subscription tagged as player and bounce to dashboard.
+        try {
+          const { data, error } = await supabase.functions.invoke("create-checkout", {
+            body: {
+              tier: "wren",
+              billing: "monthly",
+              email: user.email,
+              user_id: user.id,
+              signup_path: "player",
+            },
+          });
+          if (error || data?.error) {
+            toast.error(`Couldn't set up your player account: ${error?.message || data?.error || "unknown error"}. Please try again.`);
+            return;
+          }
+        } catch (e: any) {
+          toast.error(`Network error: ${e?.message || "please check your connection"}.`);
+          return;
+        }
+        navigate("/dashboard");
+        return;
+      }
+      // Not logged in — go straight to signup with player flag.
+      navigate(`/enroll/signup?${params.toString()}`);
+      return;
+    }
 
     // If already logged in, check if this is an upgrade
     if (user) {
@@ -257,7 +291,7 @@ export default function PlanSelection() {
     }
   };
 
-  const canContinue = signupPath && selectedTier && (!isCaseStudy || (practitionerCode.trim() && practitionerName));
+  const canContinue = signupPath && (isPlayer || (selectedTier && (!isCaseStudy || (practitionerCode.trim() && practitionerName))));
 
   return (
     <div className="min-h-screen bg-background">
@@ -294,7 +328,7 @@ export default function PlanSelection() {
 
         {/* ── Path Selector ── */}
         {!urlCaseStudy && (
-          <div className="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto mb-10">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto mb-10">
             <button
               onClick={() => setSignupPath("case_study")}
               className={cn(
@@ -345,6 +379,34 @@ export default function PlanSelection() {
                 </p>
               </div>
               {signupPath === "paying" && (
+                <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center z-10">
+                  <Check className="h-4 w-4" />
+                </div>
+              )}
+            </button>
+
+            <button
+              onClick={() => setSignupPath("player")}
+              className={cn(
+                "relative flex flex-col items-center gap-3 rounded-2xl border-2 p-6 text-center transition-all duration-200 overflow-hidden",
+                signupPath === "player"
+                  ? "border-primary ring-2 ring-primary/30 shadow-lg"
+                  : "border-border hover:border-primary/40 hover:shadow-md"
+              )}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10" />
+              <div className="absolute inset-0 bg-card/40" />
+              <div className="relative w-20 h-20 flex items-center justify-center">
+                <img src={goldRing} alt="" className="absolute inset-0 w-full h-full object-contain" />
+                <Gamepad2 className="h-8 w-8" style={{ color: "#c5992a" }} />
+              </div>
+              <div className="relative">
+                <h3 className="text-base font-display font-bold text-foreground mb-1">Just Here for the Game</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Play the Creator Types Ecosystem game solo or with friends. No profiling required. <strong>Free.</strong>
+                </p>
+              </div>
+              {signupPath === "player" && (
                 <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center z-10">
                   <Check className="h-4 w-4" />
                 </div>

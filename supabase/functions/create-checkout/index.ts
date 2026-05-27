@@ -80,11 +80,17 @@ serve(async (req) => {
     );
     if (roleError) throw new Error(`Could not create user role: ${roleError.message}`);
 
+    const signupPath: string =
+      body.signup_path === "player" ? "player"
+      : practitionerCode || body.signup_path === "case_study" ? "case_study"
+      : "paying";
+
     const subData: Record<string, any> = {
       user_id: userId,
       tier: tierValue,
       status: tierValue === "wren" ? "active" : "incomplete",
       billing_period: billing || "monthly",
+      signup_path: signupPath,
     };
     if (practitionerCode) subData.referral_code = practitionerCode;
 
