@@ -100,8 +100,10 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
               <div>
                 <h4 className="font-semibold text-sm">Golden Hive Card</h4>
                 <p className="text-muted-foreground text-xs">
-                  Provides immunity from a Disaster Card. Once used, it goes to the Used Pile and
-                  cannot be used again or picked up by another player.
+                  Arms automatically the moment it enters your hand — you'll see a 🛡 next to
+                  your name. It absorbs the next Disaster cast against you, then is consumed.
+                  You don't place it on the board; once armed you can discard the card to free
+                  up space in your hand without losing the shield.
                 </p>
               </div>
 

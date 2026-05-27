@@ -181,9 +181,9 @@ export function placeOnEcosystem(
   if (idx < 0) throw new Error("Card not in hand");
   const card = player.hand[idx];
 
-  // Hive is a passive shield — placing it just lights up the shield indicator.
+  // Hive is a passive shield — it armed automatically the moment it was picked up.
   if (card.kind === "golden_hive") {
-    throw new Error("Golden Hive activates automatically. Discard to arm it, or pick it up to keep it.");
+    throw new Error("Golden Hive is already armed (🛡 by your name). It can't be placed on the board — discard it to make room in your hand.");
   }
 
   // Only allow placement on a legal (adjacent) empty cell.

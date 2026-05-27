@@ -412,19 +412,12 @@ export default function Play() {
 
   const pilesBlock = (
     <Card className="p-3">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Piles</div>
-      <div className="flex flex-col gap-2">
-        <Button variant="outline" size="sm" className="w-full text-xs"
-          disabled={!isYourTurn || state.phase !== "draw" || state.draw.length === 0}
-          onClick={onPickDraw}>
-          Draw pile ({state.draw.length})
-        </Button>
-        <Button variant="outline" size="sm" className="w-full text-xs"
-          disabled={!isYourTurn || state.phase !== "draw" || state.used.length === 0}
-          onClick={onPickUsed}>
-          Used pile ({state.used.length})
-        </Button>
-      </div>
+      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Used pile</div>
+      <Button variant="outline" size="sm" className="w-full text-xs"
+        disabled={!isYourTurn || state.phase !== "draw" || state.used.length === 0}
+        onClick={onPickUsed}>
+        Take top card ({state.used.length})
+      </Button>
       <div className="mt-3 flex flex-col items-center gap-1">
         <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
           Top of used pile
