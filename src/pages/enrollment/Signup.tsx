@@ -270,6 +270,12 @@ export default function Signup() {
               <Label htmlFor="email">Email *</Label>
               <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
             </div>
+            {isPlayer && (
+              <div className="space-y-1.5">
+                <Label htmlFor="phone">Phone *</Label>
+                <Input id="phone" type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+61 400 000 000" />
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label htmlFor="password">Password *</Label>
               <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 6 characters" />
