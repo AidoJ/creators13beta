@@ -92,7 +92,7 @@ export function HeroSection() {
         </div>
 
         {/* CTA Buttons - matching original white rectangular style */}
-        <div className="flex flex-col sm:flex-row gap-6">
+        <div className="flex flex-col sm:flex-row gap-6 flex-wrap justify-center">
           <Link
             to="/auth"
             className="bg-white text-pink-600 font-display font-bold text-lg uppercase tracking-wider px-12 py-5 hover:bg-white/90 transition-colors shadow-xl text-center leading-tight"
@@ -105,6 +105,12 @@ export function HeroSection() {
           >
             Profile<br />Yourself
           </a>
+          <Link
+            to="/play"
+            className="bg-white text-green-700 font-display font-bold text-lg uppercase tracking-wider px-12 py-5 hover:bg-white/90 transition-colors shadow-xl text-center leading-tight"
+          >
+            Play<br />the Game
+          </Link>
         </div>
       </div>
     </section>
