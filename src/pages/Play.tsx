@@ -40,7 +40,7 @@ import { TutorialOverlay, resetTutorial } from "@/components/game/TutorialOverla
 import { MultiplayerLobby } from "@/components/game/MultiplayerLobby";
 import { HandTile } from "@/components/game/cards/HandTile";
 import { RuleBookSheet } from "@/components/game/RuleBookSheet";
-import { OpponentSheet } from "@/components/game/OpponentSheet";
+import { OpponentPanel } from "@/components/game/OpponentPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
@@ -61,7 +61,7 @@ export default function Play() {
   const [error, setError] = useState<string | null>(null);
   
   const [showPiles, setShowPiles] = useState(false);
-  const [opponentSheetOpen, setOpponentSheetOpen] = useState(false);
+  const [opponentPanelOpen, setOpponentPanelOpen] = useState(false);
   const [ruleBookOpen, setRuleBookOpen] = useState(false);
   const [lobbyOpen, setLobbyOpen] = useState(false);
   const [waitingForGuest, setWaitingForGuest] = useState(false);
@@ -388,20 +388,22 @@ export default function Play() {
     <Card className="p-3">
       <button
         type="button"
-        onClick={() => setOpponentSheetOpen(true)}
+        onClick={() => setOpponentPanelOpen(true)}
         className="w-full flex items-center justify-between gap-2 mb-2 group"
-        aria-label={`Open ${opponent.name}'s ecosystem`}
+        aria-label={`Pop out ${opponent.name}'s ecosystem`}
       >
         <span className="text-xs uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
           {opponent.name}
         </span>
-        <Maximize2 className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+        <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground group-hover:text-foreground transition-colors">
+          Pop out <Maximize2 className="w-3 h-3" />
+        </span>
       </button>
       <button
         type="button"
-        onClick={() => setOpponentSheetOpen(true)}
+        onClick={() => setOpponentPanelOpen(true)}
         className="block w-full rounded-md hover:ring-2 hover:ring-primary/40 transition-all"
-        aria-label="Expand opponent ecosystem"
+        aria-label="Pop out opponent ecosystem"
       >
         <Ecosystem eco={opponent.ecosystem} size={isMobile ? 28 : 36} minHeight={isMobile ? 140 : 180} showEmpties={false} />
       </button>
@@ -533,7 +535,11 @@ export default function Play() {
               <Users className="w-4 h-4 mr-1" /> Multiplayer
             </Button>
           )}
-          <Button size="sm" variant="ghost" onClick={() => setRuleBookOpen(true)}>
+          <Button
+            size="sm"
+            onClick={() => setRuleBookOpen(true)}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm font-semibold"
+          >
             <BookOpen className="w-4 h-4 mr-1" /> Rule Book
           </Button>
           <Button size="sm" variant="ghost" onClick={() => { resetTutorial(); window.location.reload(); }}>
@@ -552,7 +558,7 @@ export default function Play() {
             variant="outline"
             size="sm"
             className="flex-1"
-            onClick={() => setOpponentSheetOpen(true)}
+            onClick={() => setOpponentPanelOpen(true)}
           >
             <Maximize2 className="w-3.5 h-3.5 mr-1" /> {opponent.name}
           </Button>
@@ -614,7 +620,7 @@ export default function Play() {
       <MatchOverDialog state={state} onPlayAgain={onNewGame} />
       <TutorialOverlay />
       <RuleBookSheet open={ruleBookOpen} onOpenChange={setRuleBookOpen} />
-      <OpponentSheet open={opponentSheetOpen} onOpenChange={setOpponentSheetOpen} player={opponent} />
+      <OpponentPanel open={opponentPanelOpen} onClose={() => setOpponentPanelOpen(false)} player={opponent} />
       <MultiplayerLobby
         open={lobbyOpen}
         onOpenChange={setLobbyOpen}
