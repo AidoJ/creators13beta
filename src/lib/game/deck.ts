@@ -11,9 +11,10 @@
  *   -  2 Golden Hive Cards (block one disaster)
  */
 
-import type { GameCard } from "@/lib/gameCards";
+import type { GameCard, CreatorTypeName } from "@/lib/gameCards";
 import type { CardKind, DeckCard } from "./types";
-import { ELEMENTS } from "./elements";
+import { TYPE_TO_ELEMENT, type Element } from "./elements";
+import { CREATOR_TYPE_NAMES } from "@/lib/creatorTypes";
 
 let _seq = 0;
 const nextUid = (slug: string) => `${slug}#${++_seq}`;
