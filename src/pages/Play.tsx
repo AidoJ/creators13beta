@@ -20,6 +20,8 @@ import {
   botStep,
   rotateMyPlacedHex,
   moveMyPlacedHex,
+  skipDraws,
+  endTurnEarly,
 } from "@/lib/game";
 import {
   createMatchRow,
