@@ -183,6 +183,36 @@ export default function PlanSelection() {
 
     const params = buildEnrollmentParams();
 
+    // Player path: no practitioner code, no payment, no profiling.
+    if (isPlayer) {
+      if (user) {
+        // Provision a free Wren subscription tagged as player and bounce to dashboard.
+        try {
+          const { data, error } = await supabase.functions.invoke("create-checkout", {
+            body: {
+              tier: "wren",
+              billing: "monthly",
+              email: user.email,
+              user_id: user.id,
+              signup_path: "player",
+            },
+          });
+          if (error || data?.error) {
+            toast.error(`Couldn't set up your player account: ${error?.message || data?.error || "unknown error"}. Please try again.`);
+            return;
+          }
+        } catch (e: any) {
+          toast.error(`Network error: ${e?.message || "please check your connection"}.`);
+          return;
+        }
+        navigate("/dashboard");
+        return;
+      }
+      // Not logged in — go straight to signup with player flag.
+      navigate(`/enroll/signup?${params.toString()}`);
+      return;
+    }
+
     // If already logged in, check if this is an upgrade
     if (user) {
       const [{ data: profile }, { data: photos }] = await Promise.all([
@@ -261,7 +291,7 @@ export default function PlanSelection() {
     }
   };
 
-  const canContinue = signupPath && selectedTier && (!isCaseStudy || (practitionerCode.trim() && practitionerName));
+  const canContinue = signupPath && (isPlayer || (selectedTier && (!isCaseStudy || (practitionerCode.trim() && practitionerName))));
 
   return (
     <div className="min-h-screen bg-background">
