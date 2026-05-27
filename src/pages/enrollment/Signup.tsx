@@ -20,6 +20,7 @@ export default function Signup() {
   const tier = (params.get("tier") as TierKey) || "wren";
   const billing = params.get("billing") || "monthly";
   const caseStudy = params.get("case_study") === "true";
+  const isPlayer = params.get("path") === "player";
   const practitionerCode = params.get("practitioner_code") || "";
   const inviteToken = params.get("invite") || "";
   const tierInfo = TIERS[tier] || TIERS.wren;
@@ -29,9 +30,12 @@ export default function Signup() {
     authReturnParams.set("practitioner_code", practitionerCode);
     if (inviteToken) authReturnParams.set("invite", inviteToken);
   }
-  const authReturnTo = tier === "wren"
-    ? `/enroll?${authReturnParams.toString()}`
-    : `/enroll/payment?${authReturnParams.toString()}`;
+  if (isPlayer) authReturnParams.set("path", "player");
+  const authReturnTo = isPlayer
+    ? `/dashboard`
+    : tier === "wren"
+      ? `/enroll?${authReturnParams.toString()}`
+      : `/enroll/payment?${authReturnParams.toString()}`;
 
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -114,6 +118,7 @@ export default function Signup() {
         billing,
         practitioner_code: practitionerCode || null,
         invite_token: inviteToken || null,
+        signup_path: isPlayer ? "player" : caseStudy ? "case_study" : "paying",
         successUrl: `${appOrigin}/enroll/practitioner?tier=${tier}&billing=${billing}&payment=skipped`,
         cancelUrl: `${appOrigin}/enroll/payment?tier=${tier}&billing=${billing}&canceled=true`,
       },
@@ -149,6 +154,10 @@ export default function Signup() {
   };
 
   const handleContinue = () => {
+    if (isPlayer) {
+      navigate("/dashboard");
+      return;
+    }
     const nextParams = new URLSearchParams({ tier, billing });
     if (createdUserId) nextParams.set("uid", createdUserId);
     else if (user) nextParams.set("uid", user.id);
