@@ -439,7 +439,7 @@ export default function Play() {
           onClick={onDrawOne}
           className="h-auto py-2.5 px-2 whitespace-normal text-xs leading-tight text-center font-semibold"
         >
-          Draw 1 from Draw Pile ({state.draw.length} left) — {2 - state.drawnThisTurn} pick{2 - state.drawnThisTurn === 1 ? "" : "s"} left
+          Draw 1 from Draw Pile ({state.draw.length} left) — {2 - state.drawnThisTurn} pick{2 - state.drawnThisTurn === 1 ? "" : "s"} left{handAtLimit ? " — hand full (10 max)" : ""}
         </Button>
         <Button
           size="sm"
