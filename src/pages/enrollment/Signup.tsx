@@ -187,7 +187,7 @@ export default function Signup() {
             </div>
             <h1 className="text-2xl font-display font-bold text-foreground">Email Verified!</h1>
             <p className="text-muted-foreground">
-              Your email has been confirmed. Click below to continue with {tier === "wren" ? "your profile details" : "payment"}.
+              Your email has been confirmed. Click below to {isPlayer ? "start playing" : tier === "wren" ? "continue with your profile details" : "continue with payment"}.
             </p>
             <Button
               onClick={handleContinue}
@@ -220,7 +220,7 @@ export default function Signup() {
             </p>
             <div className="bg-muted/50 rounded-xl p-4 text-sm text-muted-foreground">
               <p className="font-medium text-foreground mb-1">What happens next?</p>
-              <p>Once verified, click below to continue with {tier === "wren" ? "your profile details" : "payment"}.</p>
+              <p>Once verified, click below to {isPlayer ? "jump into the game" : tier === "wren" ? "continue with your profile details" : "continue with payment"}.</p>
             </div>
             <Button
               onClick={handleContinue}
@@ -247,7 +247,7 @@ export default function Signup() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-display font-bold text-foreground mb-2">Create Your Account</h1>
           <p className="text-muted-foreground">
-            Setting up your <span className="font-semibold text-foreground">{tierInfo.name}</span> membership
+            {isPlayer ? "Set up your free player account" : <>Setting up your <span className="font-semibold text-foreground">{tierInfo.name}</span> membership</>}
           </p>
         </div>
 
@@ -273,7 +273,7 @@ export default function Signup() {
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <>
-                  {tier === "wren" ? "Create Account" : "Continue to Payment"}
+                  {isPlayer ? "Create Account & Play" : tier === "wren" ? "Create Account" : "Continue to Payment"}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </>
               )}
