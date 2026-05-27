@@ -86,6 +86,10 @@ export interface MatchState {
 }
 
 export const HAND_SIZE = 5;
+/** Maximum cards a player may hold. Pick-up is blocked once hit; disasters
+ *  may temporarily exceed this (no cards are lost), and the holder must
+ *  play / discard down before drawing again. */
+export const HAND_LIMIT = 10;
 export const ECOSYSTEM_TARGET = 16; // 4 creators + 12 animals
 export const CREATORS_NEEDED = 4;
 export const ANIMALS_PER_CREATOR = 3;
