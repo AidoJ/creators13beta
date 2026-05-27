@@ -169,9 +169,11 @@ function resolveTypeChips(card: DeckCard): { label: string; color: string; glyph
     ].filter((c) => c.label);
   }
   if (card.kind === "creator") {
-    const c = ELEMENT_COLORS[card.element!];
-    const g = ELEMENT_GLYPHS[card.element!];
-    return [{ label: card.element!, color: c, glyph: g }];
+    const dt = card.displayType;
+    const label = dt ?? card.element!;
+    const c = dt ? (CREATOR_TYPE_COLORS[dt as keyof typeof CREATOR_TYPE_COLORS] ?? ELEMENT_COLORS[card.element!]) : ELEMENT_COLORS[card.element!];
+    const g = dt ? (CREATOR_TYPE_GLYPHS[dt] ?? ELEMENT_GLYPHS[card.element!]) : ELEMENT_GLYPHS[card.element!];
+    return [{ label, color: c, glyph: g }];
   }
   if (card.kind === "sky_creator") {
     const c = ELEMENT_COLORS.Sky;
