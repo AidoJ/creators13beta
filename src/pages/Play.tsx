@@ -352,7 +352,7 @@ export default function Play() {
   } else if (!isYourTurn) {
     phaseHint = `${opponent.name} is ${isPvp ? "thinking" : "thinking…"}`;
   } else if (state.phase === "draw") {
-    phaseHint = `Pick up ${2 - state.drawnThisTurn} card${2 - state.drawnThisTurn === 1 ? "" : "s"} — draw 1 at a time, mix and match the draw pile and the top of the used pile.`;
+    phaseHint = `Pick up to ${2 - state.drawnThisTurn} card${2 - state.drawnThisTurn === 1 ? "" : "s"} (draw 1 at a time from either pile) — or skip pick-up and play straight from your hand.`;
   } else if (mode === "steal") {
     phaseHint = `Click an animal in ${opponent.name}'s ecosystem to steal it.`;
   } else if (mode === "move") {
