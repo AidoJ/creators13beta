@@ -313,9 +313,11 @@ function resolveColours(card: DeckCard): {
     return { c1, c2, chips, badge: card.kind === "sky_creature" ? "Sky" : undefined };
   }
   if (card.kind === "creator") {
-    const c = ELEMENT_COLORS[card.element!];
-    const g = ELEMENT_GLYPHS[card.element!];
-    return { c1: c, c2: c, chips: [{ label: card.element!, color: c, glyph: g }], badge: "Creator", artGlyph: g };
+    const dt = card.displayType;
+    const label = dt ?? card.element!;
+    const c = dt ? (CREATOR_TYPE_COLORS[dt as keyof typeof CREATOR_TYPE_COLORS] ?? ELEMENT_COLORS[card.element!]) : ELEMENT_COLORS[card.element!];
+    const g = dt ? (CREATOR_TYPE_GLYPHS[dt] ?? ELEMENT_GLYPHS[card.element!]) : ELEMENT_GLYPHS[card.element!];
+    return { c1: c, c2: c, chips: [{ label, color: c, glyph: g }], badge: "Creator", artGlyph: g };
   }
   if (card.kind === "sky_creator") {
     const c = ELEMENT_COLORS.Sky;
