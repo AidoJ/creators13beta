@@ -63,6 +63,18 @@ export default function Signup() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    if (!emailOk) {
+      toast({ title: "Please enter a valid email address", variant: "destructive" });
+      return;
+    }
+    if (isPlayer) {
+      const phoneDigits = phone.replace(/[^\d]/g, "");
+      if (phoneDigits.length < 7) {
+        toast({ title: "Please enter a valid phone number", variant: "destructive" });
+        return;
+      }
+    }
     if (password !== confirmPassword) {
       toast({ title: "Passwords don't match", variant: "destructive" });
       return;
