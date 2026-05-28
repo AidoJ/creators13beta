@@ -233,8 +233,9 @@ export default function Play() {
   }
   function onPlace(pos: Axial, draggedUid?: string) {
     if (!state) return;
-    if (mode === "move" && moveFromKey) {
-      const fromKey = moveFromKey;
+    const dragMoveKey = draggedUid?.startsWith("move:") ? draggedUid.slice(5) : null;
+    const fromKey = dragMoveKey ?? (mode === "move" ? moveFromKey : null);
+    if (fromKey) {
       try {
         const next = moveMyPlacedHex(state, selfSlot, fromKey, pos);
         setState(next);
@@ -357,8 +358,8 @@ export default function Play() {
     phaseHint = `Click an animal in ${opponent.name}'s ecosystem to steal it.`;
   } else if (mode === "move") {
     phaseHint = moveFromKey
-      ? "Click an empty glowing hex to drop the card (cards can't leave your ecosystem)."
-      : "Click any of your placed cards to pick it up and reposition it.";
+      ? "Drop onto a glowing hex or anywhere on your board to snap it in place — cards can't leave your ecosystem."
+      : "Drag any placed card to reposition it on your board, or click one first to move it.";
   } else if (selectedCard) {
     phaseHint = "Drag this card onto a glowing hex, click a glowing hex to snap it in, or use a card-power button.";
   } else {
@@ -595,6 +596,8 @@ export default function Play() {
                 showEmpties
                 onStealClick={undefined}
                 onRotateClick={isYourTurn ? onPlacedHexClick : undefined}
+                onMoveDragStart={isYourTurn && mode === "move" ? (posKey) => setMoveFromKey(posKey) : undefined}
+                onMoveDragEnd={isYourTurn && mode === "move" ? () => setMoveFromKey(null) : undefined}
                 minHeight={isMobile ? 220 : 360}
                 moveFromKey={mode === "move" ? moveFromKey : null}
               />

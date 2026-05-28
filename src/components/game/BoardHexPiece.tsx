@@ -7,6 +7,9 @@ interface Props {
   card: DeckCard;
   size?: number;
   onClick?: () => void;
+  onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDragEnd?: () => void;
+  draggable?: boolean;
   highlight?: "selected" | "match" | null;
   /** 0..5 — 60° clockwise rotations applied to the hex background only. */
   rotation?: number;
@@ -16,7 +19,7 @@ interface Props {
  *  Board pieces show ONLY the artwork / glyph — no name plate — since the
  *  player has already chosen the card from the deck-style hand tile.
  *  Only the coloured background rotates; the artwork stays upright. */
-export function BoardHexPiece({ card, size = 110, onClick, highlight = null, rotation = 0 }: Props) {
+export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEnd, draggable = false, highlight = null, rotation = 0 }: Props) {
   const h = size * 1.1547;
   const hexPoints = "0.5,0 1,0.25 1,0.75 0.5,1 0,0.75 0,0.25";
   const halfA = "0.5,0 1,0.25 0,0.75 0,0.25";
@@ -52,7 +55,10 @@ export function BoardHexPiece({ card, size = 110, onClick, highlight = null, rot
   return (
     <div
       onClick={onClick}
-      className={`group relative inline-block ${onClick ? "cursor-pointer transition-transform hover:scale-105" : ""}`}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      className={`group relative inline-block ${(onClick || draggable) ? "cursor-pointer transition-transform hover:scale-105" : ""} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
       style={{ width: size, height: h }}
       aria-label={card.name}
       title={card.name}
