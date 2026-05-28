@@ -69,6 +69,7 @@ export function AnimalCardTile({ card, imageSrc, size = 220 }: Props) {
           <TypeChip name={t2} color={c2} />
         </div>
       </div>
+    </div>
   );
 }
 
