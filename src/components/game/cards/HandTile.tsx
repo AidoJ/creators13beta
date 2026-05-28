@@ -108,12 +108,12 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                   style={{ fontFamily: '"Lilita One", sans-serif', fontSize: size * 0.1, textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
                 >
                   {card.name}
+                <span
+                  className="font-normal uppercase tracking-wide leading-none text-white truncate max-w-full"
+                  style={{ fontFamily: '"Lilita One", sans-serif', fontSize: size * 0.1, textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
+                >
+                  {card.name}
                 </span>
-                <div className="flex items-center gap-1 flex-wrap justify-center">
-                  {chips.map((chip, i) => (
-                    <span key={chip.label + i} className="contents">
-                      {i > 0 && <span className="text-white/50 text-[8px]">+</span>}
-                      <span className="inline-flex items-center gap-0.5 font-semibold uppercase tracking-wider text-white" style={{ fontSize: size * 0.07 }}>
                         {chip.glyph ? (
                           <img src={chip.glyph} alt="" className="object-contain" style={{ width: size * 0.1, height: size * 0.1 }} aria-hidden />
                         ) : (
@@ -207,12 +207,11 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
               <img src={chips[0].glyph} alt="" className="object-contain" style={{ width: size * 0.14, height: size * 0.14 }} />
             )}
             <div
-              className="font-bold uppercase tracking-wide leading-none truncate text-white"
+              className="font-normal uppercase tracking-wide leading-none truncate text-white"
               style={{ fontFamily: '"Lilita One", sans-serif', fontSize: size * 0.1, textShadow: "0 1px 2px rgba(0,0,0,0.4)" }}
             >
               {card.name}
             </div>
-          </div>
           <div
             className="flex-1 overflow-auto px-2 py-1.5 leading-snug"
             style={{ fontSize: size * 0.072, color: "#111" }}
@@ -275,13 +274,12 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                     />
                   </div>
                 )}
-              </div>
-              {/* Descriptor panel */}
-              <div className="md:w-[340px] flex flex-col bg-white text-black p-5 md:p-6 overflow-y-auto">
                 <div
-                  className="font-bold uppercase tracking-wide leading-none mb-3"
+                  className="font-normal uppercase tracking-wide leading-none mb-3"
                   style={{ fontFamily: '"Lilita One", sans-serif', fontSize: 28 }}
                 >
+                  {card.name}
+                </div>
                   {card.name}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap mb-4">
