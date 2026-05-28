@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Axial, Ecosystem as EcoType } from "@/lib/game/types";
 import { axialToPixel, keyOf, NEIGHBOUR_DIRS } from "@/lib/game/board";
 import { legalEcoCells } from "@/lib/game/engine";
@@ -27,6 +27,9 @@ interface Props {
    *  Empty hexes are recomputed as if this hex were removed, and the source is
    *  highlighted to show it's selected. */
   moveFromKey?: string | null;
+  /** When true, shrinks (and can grow up to `size`) so the whole board fits the
+   *  parent container as the ecosystem expands. */
+  autoFit?: boolean;
 }
 
 /** Show only the currently playable empty cells, matching the compact reference board. */
@@ -37,8 +40,11 @@ function buildScaffold(eco: EcoType, excludeKey?: string | null): Axial[] {
 export function Ecosystem({
   eco, size = 90, selectable, showEmpties = true,
   onPlace, onStealClick, onRotateClick, onMoveDragStart, onMoveDragEnd, minHeight = 300, moveFromKey = null,
+  autoFit = false,
 }: Props) {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = useState(1);
 
   const { placed, empties, legal, legalKeys, bounds, matches } = useMemo(() => {
     const placed = Array.from(eco.placed.values());
