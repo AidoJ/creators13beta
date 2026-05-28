@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.bump_player_progress(uuid,integer,text[],boolean,boolean,integer) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.bump_player_progress(uuid,integer,text[],boolean,boolean,integer) TO authenticated;
