@@ -131,18 +131,16 @@ export default function Play() {
             { id: "bot", name: "Tutorial Bot" },
           ],
         });
-        // Try to restore from localStorage if not authed.
-        if (!user) {
-          const restored = restoreLocalMatch(allCards);
-          if (restored) {
-            if (cancelled) return;
-            setState(restored);
-            return;
-          }
+        // Try to restore an in-progress solo match from localStorage.
+        const restored = restoreLocalMatch(allCards);
+        if (restored) {
+          if (cancelled) return;
+          setState(restored);
+          return;
         }
         if (cancelled) return;
         setState(fresh);
-        if (!user) persistLocalMatch(fresh);
+        persistLocalMatch(fresh);
       } catch (e: any) {
         if (!cancelled) setError(e?.message ?? String(e));
       }
@@ -220,7 +218,7 @@ export default function Play() {
         .catch((e) => {
           if (seq === saveSeqRef.current) console.error("Save failed", e);
         });
-    } else if (!user) {
+    } else {
       persistLocalMatch(next);
     }
   }
