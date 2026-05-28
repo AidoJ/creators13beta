@@ -25,7 +25,7 @@ import {
   type PlayerState,
 } from "./types";
 import { keyOf, neighbours } from "./board";
-import { TYPE_TO_ELEMENT } from "./elements";
+import { TYPE_TO_ELEMENT, type Element } from "./elements";
 import { bestRotationForPlacement, rotatePlacedHex } from "./rotation";
 
 /* --------------------------- helpers --------------------------- */
