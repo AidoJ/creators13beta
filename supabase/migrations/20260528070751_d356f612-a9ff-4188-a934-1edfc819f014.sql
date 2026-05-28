@@ -1,0 +1,1 @@
+UPDATE public.player_progress SET points = 0, elo = 1000, current_streak = 0, longest_streak = 0, perfect_ecosystems = 0;
