@@ -63,39 +63,33 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
       aria-label={card.name}
       title={card.name}
     >
-      {!(card.kind === "creator" || card.kind === "sky_creator") && (
-        <svg
-          viewBox="0 0 1 1"
-          preserveAspectRatio="none"
-          className="absolute inset-0 w-full h-full drop-shadow-lg"
-          style={{
-            transform: rotation ? `rotate(${rotation * 60}deg)` : undefined,
-            transformOrigin: "center",
-            transition: "transform 220ms ease",
-          }}
-        >
-          {card.kind === "animal" || card.kind === "sky_creature" ? (
-            <>
-              <polygon points={halfA} fill={c1} />
-              <polygon points={halfB} fill={c2} />
-            </>
-          ) : (
-            <polygon points={hexPoints} fill={c1} />
-          )}
-          <polygon points={hexPoints} fill="none" stroke={ring} strokeWidth={highlight ? 0.06 : 0.04} vectorEffect="non-scaling-stroke" />
-        </svg>
-      )}
+      <svg
+        viewBox="0 0 1 1"
+        preserveAspectRatio="none"
+        className="absolute inset-0 w-full h-full drop-shadow-lg"
+        style={{
+          transform: rotation ? `rotate(${rotation * 60}deg)` : undefined,
+          transformOrigin: "center",
+          transition: "transform 220ms ease",
+        }}
+      >
+        {card.kind === "animal" || card.kind === "sky_creature" ? (
+          <>
+            <polygon points={halfA} fill={c1} />
+            <polygon points={halfB} fill={c2} />
+          </>
+        ) : (
+          <polygon points={hexPoints} fill={c1} />
+        )}
+        <polygon points={hexPoints} fill="none" stroke={ring} strokeWidth={highlight ? 0.06 : 0.04} vectorEffect="non-scaling-stroke" />
+      </svg>
       {art && (
         <img
           src={art}
           alt={card.name}
           loading="lazy"
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 object-contain pointer-events-none drop-shadow-lg"
-          style={
-            card.kind === "creator" || card.kind === "sky_creator"
-              ? { width: "100%", height: "100%" }
-              : { width: size * 0.82, height: size * 0.82 }
-          }
+          style={{ width: size * 0.8, height: size * 0.8 }}
         />
       )}
       {/* Hover tooltip overlay */}
