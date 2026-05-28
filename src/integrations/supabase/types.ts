@@ -814,6 +814,48 @@ export type Database = {
         }
         Relationships: []
       }
+      player_progress: {
+        Row: {
+          badges: string[]
+          created_at: string
+          current_streak: number
+          elo: number
+          last_played_at: string | null
+          longest_streak: number
+          perfect_ecosystems: number
+          points: number
+          types_seen: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          badges?: string[]
+          created_at?: string
+          current_streak?: number
+          elo?: number
+          last_played_at?: string | null
+          longest_streak?: number
+          perfect_ecosystems?: number
+          points?: number
+          types_seen?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          badges?: string[]
+          created_at?: string
+          current_streak?: number
+          elo?: number
+          last_played_at?: string | null
+          longest_streak?: number
+          perfect_ecosystems?: number
+          points?: number
+          types_seen?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           active: boolean | null
@@ -1340,6 +1382,35 @@ export type Database = {
       accept_game_invite: {
         Args: { _guest_name: string; _token: string }
         Returns: string
+      }
+      bump_player_progress: {
+        Args: {
+          _elo_delta?: number
+          _perfect_eco?: boolean
+          _points_delta?: number
+          _types_seen?: string[]
+          _user_id: string
+          _won?: boolean
+        }
+        Returns: {
+          badges: string[]
+          created_at: string
+          current_streak: number
+          elo: number
+          last_played_at: string | null
+          longest_streak: number
+          perfect_ecosystems: number
+          points: number
+          types_seen: string[]
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "player_progress"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       generate_practitioner_code:
         | { Args: never; Returns: string }
