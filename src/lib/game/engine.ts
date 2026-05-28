@@ -444,11 +444,56 @@ export function ecosystemSummary(eco: Ecosystem) {
   return { creators, animals, total: eco.placed.size };
 }
 
+/** Can we assign every animal to exactly one creator it links to, such that
+ *  each creator receives exactly ANIMALS_PER_CREATOR animals?
+ *  Backtracking is fine — at most 4 creators × 12 animals. */
+function canAssignAnimalsToCreators(
+  creators: DeckCard[],
+  animals: DeckCard[],
+): boolean {
+  if (creators.length !== CREATORS_NEEDED) return false;
+  if (animals.length !== CREATORS_NEEDED * ANIMALS_PER_CREATOR) return false;
+  const counts = new Array(creators.length).fill(0) as number[];
+  const recurse = (i: number): boolean => {
+    if (i === animals.length) return counts.every((n) => n === ANIMALS_PER_CREATOR);
+    const a = animals[i];
+    for (let c = 0; c < creators.length; c++) {
+      if (counts[c] >= ANIMALS_PER_CREATOR) continue;
+      if (!animalLinksToCreator(a, creators[c])) continue;
+      counts[c] += 1;
+      if (recurse(i + 1)) return true;
+      counts[c] -= 1;
+    }
+    return false;
+  };
+  return recurse(0);
+}
+
+/** Do the 4 placed creators cover all four elements (sky_creator = wildcard)? */
+function creatorsCoverAllElements(creators: DeckCard[]): boolean {
+  if (creators.length !== CREATORS_NEEDED) return false;
+  const fixed = creators.filter((c) => c.kind === "creator").map((c) => c.element!);
+  const wildcards = creators.length - fixed.length;
+  const needed = new Set<Element>(["Earth", "Fire", "Air", "Water"]);
+  for (const e of fixed) needed.delete(e);
+  // Duplicates in fixed elements can't be covered by wildcards
+  if (new Set(fixed).size !== fixed.length) return false;
+  return needed.size <= wildcards;
+}
+
 function checkWin(state: MatchState): void {
   for (const p of state.players) {
-    const { creators, animals } = ecosystemSummary(p.ecosystem);
-    if (creators < CREATORS_NEEDED) continue;
-    if (animals < CREATORS_NEEDED * ANIMALS_PER_CREATOR) continue;
+    const placed = Array.from(p.ecosystem.placed.values()).map((pc) => pc.card);
+    const creators = placed.filter(
+      (c) => c.kind === "creator" || c.kind === "sky_creator",
+    );
+    const animals = placed.filter(
+      (c) => c.kind === "animal" || c.kind === "sky_creature" || c.kind === "golden_body",
+    );
+    if (creators.length !== CREATORS_NEEDED) continue;
+    if (animals.length !== CREATORS_NEEDED * ANIMALS_PER_CREATOR) continue;
+    if (!creatorsCoverAllElements(creators)) continue;
+    if (!canAssignAnimalsToCreators(creators, animals)) continue;
     const stillHoldingCreators = p.hand.some(
       (c) => c.kind === "creator" || c.kind === "sky_creator",
     );
