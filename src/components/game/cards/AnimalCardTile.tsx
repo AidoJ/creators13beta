@@ -56,6 +56,7 @@ export function AnimalCardTile({ card, imageSrc, size = 220 }: Props) {
         </div>
       </div>
       {/* Name plate */}
+      <div className="relative z-10 bg-white/95 backdrop-blur-sm px-3 py-2 text-center">
         <div
           className="font-normal uppercase tracking-wide leading-none truncate"
           style={{ fontFamily: '"Lilita One", sans-serif', fontSize: size * 0.085, color: "#3a2615" }}
@@ -68,7 +69,6 @@ export function AnimalCardTile({ card, imageSrc, size = 220 }: Props) {
           <TypeChip name={t2} color={c2} />
         </div>
       </div>
-    </div>
   );
 }
 
