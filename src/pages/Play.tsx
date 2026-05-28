@@ -566,24 +566,25 @@ export default function Play() {
   );
 
   const selectedBlock = mode === "steal" ? (
-    <Card className="p-3">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Click an animal to steal</div>
-      <Ecosystem eco={opponent.ecosystem} size={isMobile ? 36 : 56} showEmpties={false}
-        onStealClick={onStealHex} minHeight={isMobile ? 200 : 300} />
+    <Card className="p-2">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Click an animal to steal</div>
+      <Ecosystem eco={opponent.ecosystem} size={isMobile ? 27 : 42} showEmpties={false}
+        onStealClick={onStealHex} minHeight={isMobile ? 150 : 225} />
     </Card>
   ) : (
-    <Card className="p-3">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Selected</div>
+    <Card className="p-2">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Selected</div>
       {selectedCard ? (
-        <div className="flex flex-col items-center gap-2">
-          <HandTile card={selectedCard} size={140} selected />
-          <div className="text-[11px] text-muted-foreground text-center">Tap the ⓘ to flip the card.</div>
+        <div className="flex flex-col items-center gap-1.5">
+          <HandTile card={selectedCard} size={105} selected />
+          <div className="text-[10px] text-muted-foreground text-center">Tap the ⓘ to flip the card.</div>
         </div>
       ) : (
-        <div className="text-xs text-muted-foreground">Click a card in your hand.</div>
+        <div className="text-[11px] text-muted-foreground">Click a card in your hand.</div>
       )}
     </Card>
   );
+
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
