@@ -7,23 +7,23 @@ const STORAGE_KEY = "creators13.play.tutorial-seen.v1";
 const STEPS: { title: string; body: string }[] = [
   {
     title: "Welcome to B Creators",
-    body: "Build a honeycomb ecosystem of 16 cards — 4 Creators (one per element) + 12 matching Animals — before your opponent.",
+    body: "Build a honeycomb ecosystem of 16 cards — 4 Creators (one per element) + 12 matching Animals (3 per Creator) — before your opponent. You also need an empty hand of Creator cards to win.",
   },
   {
     title: "Step 1 — Pick up 2",
-    body: "Each turn, draw 2 cards from the draw pile or top of the used pile (any combination). Then your placement phase begins.",
+    body: "Each turn, draw up to 2 cards from the draw pile or the top of the Used/Discarded Pile (any combination). Your hand is capped at 8 — if you're full, skip the draw and go straight to placement.",
   },
   {
     title: "Step 2 — Play 2",
-    body: "Place cards on glowing hexes next to your ecosystem, discard them to the used pile, or use a card power. Drag a card from your hand, or select and click a hex.",
+    body: "Place cards on glowing hexes next to your ecosystem, or drag a card onto the Used/Discarded Pile to discard it. Drag from your hand, or select a card and click a hex. You can end your turn early after 0 or 1 plays.",
   },
   {
     title: "Special powers",
-    body: "Creators can be played as a Disaster (after your 4 are placed) to wipe matching Animals from rivals. Sky Creatures can steal an Animal. Golden Hive arms a shield. Golden Body is a wildcard Animal.",
+    body: "Any Creator in hand can be played as a Disaster — it goes to the Used/Discarded Pile and wipes every matching Animal from rivals' ecosystems straight onto your board. Sky Creatures steal an Animal. Golden Hive arms a shield that absorbs one Disaster. Golden Body is a wildcard Animal.",
   },
   {
     title: "Card tips",
-    body: "Tap the ⓘ on any card to flip it and read its descriptor. Click any placed hex to rotate its colours so neighbouring halves match.",
+    body: "Tap the ⓘ on any card to flip it and read its descriptor. Click a placed hex to rotate its colours so neighbouring halves match. You can also rearrange your own placed cards between draw and play.",
   },
 ];
 
