@@ -30,6 +30,7 @@ import {
   inviteUrl,
   type GameMatchRow,
 } from "@/lib/game/persistence";
+import { recordProgressDiff } from "@/lib/game/progress";
 import { useMatchRealtime } from "@/hooks/useMatchRealtime";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Axial, DeckCard, MatchState } from "@/lib/game/types";
