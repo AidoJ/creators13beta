@@ -16,8 +16,12 @@
 export const DISCORD_GUILD_ID = ""; // TODO: paste 13 Creators server ID here
 export const LOBBY_CHANNEL_ID = ""; // TODO: paste #card-game-lobby ID here
 
+/** Public invite to the 13CREATORS Discord server */
+export const DISCORD_INVITE_URL = "https://discord.gg/JeBtQN8Nx";
+
 export const widgetBotUrl = (channelId: string) =>
   `https://e.widgetbot.io/channels/${DISCORD_GUILD_ID}/${channelId}`;
 
 export const discordDeepLink = (channelId: string) =>
   `https://discord.com/channels/${DISCORD_GUILD_ID}/${channelId}`;
+

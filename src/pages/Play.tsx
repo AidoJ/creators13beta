@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { HelpCircle, Loader2, Users, BookOpen, Maximize2, ChevronUp, ChevronDown } from "lucide-react";
+import { HelpCircle, Loader2, Users, BookOpen, Maximize2, ChevronUp, ChevronDown, LayoutDashboard, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -33,6 +33,7 @@ import {
 import { recordProgressDiff } from "@/lib/game/progress";
 import { useMatchRealtime } from "@/hooks/useMatchRealtime";
 import { useAuth } from "@/contexts/AuthContext";
+import { DISCORD_INVITE_URL } from "@/config/discordChat";
 import type { Axial, DeckCard, MatchState } from "@/lib/game/types";
 import { Ecosystem } from "@/components/game/Ecosystem";
 import { PlayerHand } from "@/components/game/PlayerHand";
@@ -565,6 +566,22 @@ export default function Play() {
             )}
           </div>
           <div className="flex gap-2 items-center">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate("/dashboard")}
+            >
+              <LayoutDashboard className="w-4 h-4 mr-1" /> Dashboard
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              asChild
+            >
+              <a href={DISCORD_INVITE_URL} target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="w-4 h-4 mr-1" /> Discord
+              </a>
+            </Button>
             {isPvp ? (
               <Button size="sm" variant="outline" onClick={() => navigate("/play")}>
                 Solo vs Bot
