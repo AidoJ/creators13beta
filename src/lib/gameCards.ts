@@ -21,8 +21,13 @@ export interface GameCard {
 const ART_BUCKET = "game-card-art";
 
 function decorate(row: any): GameCard {
+  // Request a small, webp-encoded variant via Supabase image transforms.
+  // Board hexes render at ~110px CSS (≤220px @2x), so 320px is plenty.
+  // This typically cuts payload from MBs to ~20-60 KB per card.
   const art_url = row.art_path
-    ? supabase.storage.from(ART_BUCKET).getPublicUrl(row.art_path).data.publicUrl
+    ? supabase.storage.from(ART_BUCKET).getPublicUrl(row.art_path, {
+        transform: { width: 320, height: 320, resize: "contain", quality: 80 },
+      }).data.publicUrl
     : null;
   return {
     id: row.id,
