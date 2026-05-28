@@ -320,6 +320,7 @@ export function playDisaster(
   next.used.push(creator);
 
   let wiped = 0;
+  let placedOnBoard = 0;
   for (const victim of next.players) {
     if (victim.id === player.id) continue;
     if (victim.hiveShield) {
@@ -331,8 +332,18 @@ export function playDisaster(
     for (const [k, pc] of victim.ecosystem.placed) {
       const isAnimal = pc.card.kind === "animal" || pc.card.kind === "sky_creature" || pc.card.kind === "golden_body";
       if (isAnimal && animalLinksToCreator(pc.card, creator)) {
-        // Wiped → return to current player's hand to place later.
-        player.hand.push(pc.card);
+        // Wiped → place directly into the disaster-player's ecosystem on the
+        // first legal (empty adjacent) hex. If none, fall back to their hand.
+        const cells = legalEcoCells(player.ecosystem);
+        if (cells.length > 0) {
+          const pos = cells[0];
+          const rotation = bestRotationForPlacement(player.ecosystem, pc.card, pos);
+          player.ecosystem.placed.set(keyOf(pos), { card: pc.card, pos, rotation });
+          player.score += 1;
+          placedOnBoard += 1;
+        } else {
+          player.hand.push(pc.card);
+        }
         wiped += 1;
       } else {
         survivors.set(k, pc);
@@ -340,7 +351,15 @@ export function playDisaster(
     }
     victim.ecosystem.placed = survivors;
   }
-  if (wiped > 0) next.lastEvent = `${player.name} played a ${creator.name} Disaster — ${wiped} animal${wiped > 1 ? "s" : ""} taken`;
+  if (wiped > 0) {
+    const tail = placedOnBoard === wiped
+      ? `added to ${player.name}'s ecosystem`
+      : placedOnBoard > 0
+        ? `${placedOnBoard} added to ecosystem, ${wiped - placedOnBoard} to hand`
+        : `returned to ${player.name}'s hand`;
+    next.lastEvent = `${player.name} played a ${creator.name} Disaster — ${wiped} animal${wiped > 1 ? "s" : ""} taken (${tail})`;
+  }
+
   next.placedThisTurn += 1;
   return afterAction(next);
 }
