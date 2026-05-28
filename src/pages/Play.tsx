@@ -260,6 +260,15 @@ export default function Play() {
     guarded(() => placeOnEcosystem(state, cardUid, pos));
   }
   function onDiscard() { if (state && selectedUid) guarded(() => discardCard(state, selectedUid)); }
+  function onDiscardUid(uid: string) {
+    if (!state) return;
+    if (uid.startsWith("move:")) return; // ignore ecosystem drags
+    if (state.phase !== "place") {
+      toast.error("Pick up your 2 cards first, then drop a card on the Used pile to discard.");
+      return;
+    }
+    guarded(() => discardCard(state, uid));
+  }
   function onSkipDraws() { if (state) guarded(() => skipDraws(state)); }
   function onEndTurn() { if (state) guarded(() => endTurnEarly(state)); }
   function onPlacedHexClick(posKey: string) {
@@ -412,7 +421,21 @@ export default function Play() {
   );
 
   const pilesBlock = (
-    <Card className="p-3">
+    <Card
+      className="p-3 transition-colors data-[drop-target=true]:ring-2 data-[drop-target=true]:ring-destructive/60"
+      onDragOver={(e) => {
+        if (!isYourTurn || state.phase !== "place") return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        e.currentTarget.dataset.dropTarget = "true";
+      }}
+      onDragLeave={(e) => { delete e.currentTarget.dataset.dropTarget; }}
+      onDrop={(e) => {
+        delete e.currentTarget.dataset.dropTarget;
+        const uid = e.dataTransfer.getData("text/plain");
+        if (uid) onDiscardUid(uid);
+      }}
+    >
       <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Used pile</div>
       <Button variant="outline" size="sm" className="w-full text-xs"
         disabled={!isYourTurn || state.phase !== "draw" || state.used.length === 0}
@@ -435,6 +458,9 @@ export default function Play() {
             Empty — nothing discarded yet
           </div>
         )}
+        <div className="text-[10px] text-muted-foreground italic text-center mt-1">
+          Drag a card here to discard
+        </div>
       </div>
     </Card>
   );
