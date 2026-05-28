@@ -88,7 +88,15 @@ export default function Play() {
     let cancelled = false;
     fetchAllCards()
       .then((cards) => {
-        if (!cancelled) setAllCards(cards);
+        if (cancelled) return;
+        setAllCards(cards);
+        // Warm the browser cache so board pieces render instantly.
+        for (const c of cards) {
+          if (!c.art_url) continue;
+          const img = new Image();
+          img.decoding = "async";
+          img.src = c.art_url;
+        }
       })
       .catch((e) => setError(e.message ?? String(e)));
     return () => {
