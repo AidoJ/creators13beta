@@ -320,6 +320,7 @@ export default function Play() {
     // Default: rotate
     setState((s) => {
       if (!s) return s;
+      pushUndo(s);
       const next = rotateMyPlacedHex(s, selfSlot, posKey);
       schedulePersist(next);
       return next;
