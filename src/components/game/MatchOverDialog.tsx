@@ -23,7 +23,7 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-display text-2xl">
             <Trophy className="w-6 h-6 text-amber-500" />
-            {winner.name} wins!
+            Congratulations {winner.name} — You Win!
           </DialogTitle>
           <DialogDescription>
             Match complete in {state.turnNumber} turns. Here's the final breakdown by Creator Type.
