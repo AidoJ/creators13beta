@@ -218,7 +218,7 @@ export default function Play() {
         .catch((e) => {
           if (seq === saveSeqRef.current) console.error("Save failed", e);
         });
-    } else if (!user) {
+    } else {
       persistLocalMatch(next);
     }
   }
