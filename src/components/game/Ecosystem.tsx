@@ -104,12 +104,32 @@ export function Ecosystem({
   const offX = -bounds.minX;
   const offY = -bounds.minY;
 
+  // Auto-fit: observe parent container size and scale the board uniformly.
+  useLayoutEffect(() => {
+    if (!autoFit) { setScale(1); return; }
+    const el = wrapRef.current;
+    if (!el) return;
+    const recalc = () => {
+      const cw = el.clientWidth;
+      const ch = el.clientHeight;
+      if (cw <= 0 || ch <= 0 || bounds.width <= 0 || bounds.height <= 0) return;
+      // Tiny breathing margin so edges don't touch the container.
+      const s = Math.min(cw / bounds.width, ch / bounds.height) * 0.98;
+      setScale(Math.max(0.2, Math.min(1, s)));
+    };
+    recalc();
+    const ro = new ResizeObserver(recalc);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [autoFit, bounds.width, bounds.height]);
+
   const placeNearestLegalHex = (e: React.DragEvent<HTMLDivElement>) => {
     if (!selectable || legal.length === 0) return;
     e.preventDefault();
     const rect = e.currentTarget.getBoundingClientRect();
-    const px = e.clientX - rect.left;
-    const py = e.clientY - rect.top;
+    // rect reflects the scaled (rendered) size, so divide by scale to get unscaled coords.
+    const px = (e.clientX - rect.left) / scale;
+    const py = (e.clientY - rect.top) / scale;
     const nearest = legal.reduce((best, cell) => {
       const { x, y } = axialToPixel(cell.q, cell.r, size);
       const cx = x + offX + size / 2;
@@ -122,10 +142,19 @@ export function Ecosystem({
   };
 
   return (
-    <div className="flex items-center justify-center w-full" style={{ minHeight }}>
+    <div
+      ref={wrapRef}
+      className="flex items-center justify-center w-full h-full"
+      style={autoFit ? { minHeight: 0 } : { minHeight }}
+    >
       <div
         className="relative"
-        style={{ width: bounds.width, height: bounds.height }}
+        style={{
+          width: bounds.width,
+          height: bounds.height,
+          transform: autoFit ? `scale(${scale})` : undefined,
+          transformOrigin: "center center",
+        }}
         onDragOver={selectable ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } : undefined}
         onDrop={selectable ? placeNearestLegalHex : undefined}
       >
