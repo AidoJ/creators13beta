@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { HelpCircle, Loader2, Users, BookOpen, Maximize2 } from "lucide-react";
+import { HelpCircle, Loader2, Users, BookOpen, Maximize2, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -63,6 +63,7 @@ export default function Play() {
   const [error, setError] = useState<string | null>(null);
   
   const [showPiles, setShowPiles] = useState(false);
+  const [ribbonHidden, setRibbonHidden] = useState(false);
   const [opponentPanelOpen, setOpponentPanelOpen] = useState(false);
   const [ruleBookOpen, setRuleBookOpen] = useState(false);
   const [lobbyOpen, setLobbyOpen] = useState(false);
