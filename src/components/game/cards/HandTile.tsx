@@ -129,11 +129,12 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
           </div>
 
           {/* Name plate */}
-          <div className="relative z-10 bg-white px-1.5 py-1 text-center flex-1 flex flex-col justify-center">
             <div
-              className="font-bold uppercase tracking-wide leading-none truncate"
+              className="font-normal uppercase tracking-wide leading-none truncate"
               style={{ fontFamily: '"Lilita One", sans-serif', fontSize: size * 0.11, color: "#000" }}
             >
+              {card.name}
+            </div>
               {card.name}
             </div>
             <div className="flex items-center justify-center gap-1 mt-1 flex-wrap">
