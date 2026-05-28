@@ -73,6 +73,29 @@ export default function Play() {
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const saveSeqRef = useRef(0);
+  const undoStackRef = useRef<MatchState[]>([]);
+  const [undoCount, setUndoCount] = useState(0);
+
+  function pushUndo(snapshot: MatchState | null) {
+    if (!snapshot) return;
+    undoStackRef.current.push(snapshot);
+    if (undoStackRef.current.length > 20) undoStackRef.current.shift();
+    setUndoCount(undoStackRef.current.length);
+  }
+  function onUndo() {
+    const prev = undoStackRef.current.pop();
+    setUndoCount(undoStackRef.current.length);
+    if (!prev) return;
+    setState(prev);
+    setSelectedUid(null);
+    setMoveFromKey(null);
+    setMode("place");
+    if (matchRow && user) {
+      saveMatchState({ matchId: matchRow.id, actingUserId: user.id, state: prev }).catch(() => {});
+    } else {
+      persistLocalMatch(prev);
+    }
+  }
 
   // Derived: identity inside the match.
   const isPvp = matchRow?.mode === "pvp";
@@ -237,7 +260,9 @@ export default function Play() {
 
   const guarded = (fn: () => MatchState) => {
     try {
+      const snap = state;
       const next = fn();
+      pushUndo(snap);
       setState(next);
       schedulePersist(next);
       setSelectedUid(null);
@@ -258,7 +283,9 @@ export default function Play() {
     const fromKey = dragMoveKey ?? (mode === "move" ? moveFromKey : null);
     if (fromKey) {
       try {
+        const snap = state;
         const next = moveMyPlacedHex(state, selfSlot, fromKey, pos);
+        pushUndo(snap);
         setState(next);
         schedulePersist(next);
         setMoveFromKey(null);
@@ -293,6 +320,7 @@ export default function Play() {
     // Default: rotate
     setState((s) => {
       if (!s) return s;
+      pushUndo(s);
       const next = rotateMyPlacedHex(s, selfSlot, posKey);
       schedulePersist(next);
       return next;
@@ -478,9 +506,18 @@ export default function Play() {
   );
 
   const actionsBlock = (
-    <Card className="p-3">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Card actions</div>
-      <div className="flex flex-col gap-2">
+    <Card className="p-2">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Card actions</div>
+      <div className="flex flex-col gap-1.5">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={undoCount === 0}
+          onClick={onUndo}
+          className="h-auto py-1.5 px-2 text-[11px] leading-tight"
+        >
+          ↶ Undo last move {undoCount > 0 ? `(${undoCount})` : ""}
+        </Button>
         <Button
           size="sm"
           disabled={!canDrawOne || state.draw.length === 0}
@@ -529,24 +566,25 @@ export default function Play() {
   );
 
   const selectedBlock = mode === "steal" ? (
-    <Card className="p-3">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Click an animal to steal</div>
-      <Ecosystem eco={opponent.ecosystem} size={isMobile ? 36 : 56} showEmpties={false}
-        onStealClick={onStealHex} minHeight={isMobile ? 200 : 300} />
+    <Card className="p-2">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Click an animal to steal</div>
+      <Ecosystem eco={opponent.ecosystem} size={isMobile ? 27 : 42} showEmpties={false}
+        onStealClick={onStealHex} minHeight={isMobile ? 150 : 225} />
     </Card>
   ) : (
-    <Card className="p-3">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Selected</div>
+    <Card className="p-2">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Selected</div>
       {selectedCard ? (
-        <div className="flex flex-col items-center gap-2">
-          <HandTile card={selectedCard} size={140} selected />
-          <div className="text-[11px] text-muted-foreground text-center">Tap the ⓘ to flip the card.</div>
+        <div className="flex flex-col items-center gap-1.5">
+          <HandTile card={selectedCard} size={105} selected />
+          <div className="text-[10px] text-muted-foreground text-center">Tap the ⓘ to flip the card.</div>
         </div>
       ) : (
-        <div className="text-xs text-muted-foreground">Click a card in your hand.</div>
+        <div className="text-[11px] text-muted-foreground">Click a card in your hand.</div>
       )}
     </Card>
   );
+
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
@@ -618,7 +656,7 @@ export default function Play() {
       </button>
 
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[240px_1fr_260px] gap-2 p-2 min-h-0 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[240px_1fr_195px] gap-2 p-2 min-h-0 overflow-hidden">
         {/* Mobile compact bar: opponent + piles toggles */}
         <div className="lg:hidden flex gap-2">
           <Button
@@ -684,7 +722,7 @@ export default function Play() {
         selectedUid={selectedUid}
         onSelect={(uid) => setSelectedUid(uid)}
         disabled={!isYourTurn || state.phase !== "place"}
-        size={isMobile ? 86 : 126}
+        size={isMobile ? 65 : 95}
       />
 
       <MatchOverDialog state={state} onPlayAgain={onNewGame} />
