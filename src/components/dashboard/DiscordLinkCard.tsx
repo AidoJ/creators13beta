@@ -7,7 +7,7 @@ import { toast } from "sonner";
 const DISCORD_APP_ID = "1506460224859672596";
 const DISCORD_GUILD_ID = "1506458550208172082";
 const DISCORD_GENERAL_CHANNEL_ID = "1506458551017799754";
-const DISCORD_INVITE_URL = "https://discord.gg/JeBtQN8Nx";
+import { DISCORD_INVITE_URL } from "@/config/discordChat";
 const DISCORD_GENERAL_URL = `https://discord.com/channels/${DISCORD_GUILD_ID}/${DISCORD_GENERAL_CHANNEL_ID}`;
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
