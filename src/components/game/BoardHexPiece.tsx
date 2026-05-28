@@ -99,7 +99,8 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
         <img
           src={art}
           alt={card.name}
-          loading="lazy"
+          decoding="async"
+          fetchPriority="high"
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 object-contain pointer-events-none drop-shadow-lg"
           style={{ width: size * 0.8, height: size * 0.8 }}
         />
