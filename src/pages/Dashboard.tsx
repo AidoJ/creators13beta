@@ -3,23 +3,19 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useEnrollmentGate } from "@/hooks/useEnrollmentGate";
 import type { TierKey } from "@/lib/tiers";
-import { useNavigate } from "react-router-dom";
-import { Gamepad2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import WelcomeHero from "@/components/dashboard/WelcomeHero";
 import PersonalDetailsCard from "@/components/dashboard/PersonalDetailsCard";
 import PhotoGalleryCard from "@/components/dashboard/PhotoGalleryCard";
 import ProgressCard from "@/components/dashboard/ProgressCard";
 import SessionCard from "@/components/dashboard/SessionCard";
 import CreatorProfileCard from "@/components/dashboard/CreatorProfileCard";
-import UpsellBanner from "@/components/dashboard/UpsellBanner";
 import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
 import DiscordLinkCard from "@/components/dashboard/DiscordLinkCard";
 import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
+import GameDashboardSection from "@/components/dashboard/game/GameDashboardSection";
 import { Skeleton } from "@/components/ui/skeleton";
 
 
@@ -51,7 +47,6 @@ interface SubData {
 }
 
 export default function Dashboard() {
-  const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { ready: gateReady, state: gateState } = useEnrollmentGate();
   const isPlayerOnly = !!gateState?.isPlayerOnly;
@@ -117,9 +112,6 @@ export default function Dashboard() {
   const bookingMade = step === "booking_made" || (isComplete && !!booking);
   const hasDetails = !!(profile?.first_name && profile?.date_of_birth && profile?.gender && profile?.height_cm);
 
-  const showStatusBadge = photosUploaded && !isComplete;
-  const statusLabel = "In Review";
-  const statusColor = "bg-amber-500/10 text-amber-600 border-amber-500/20";
 
   if (!gateReady || loading) {
     return (
@@ -147,131 +139,86 @@ export default function Dashboard() {
     );
   }
 
+  const tierLabel = subscription?.tier
+    ? subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1)
+    : "Wren";
+  const isPaidTier = !!subscription?.tier && subscription.tier !== "wren";
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
       <DashboardHeader email={user?.email} onSignOut={signOut} />
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl space-y-5">
-        {/* Coming Soon Banner */}
-        <div className="relative overflow-hidden rounded-2xl border border-secondary/30 bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 p-5 sm:p-6 text-center shadow-md">
-          <div className="absolute -top-10 -left-10 w-32 h-32 rounded-full bg-primary/15 blur-2xl" />
-          <div className="absolute -bottom-10 -right-10 w-32 h-32 rounded-full bg-secondary/15 blur-2xl" />
-          <div className="relative space-y-1.5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-secondary">Coming Soon…</p>
-            <h2 className="text-base sm:text-lg font-display font-bold text-foreground leading-snug">
-              Doors open in April 2026 to the Creator Types ecosystem
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-              The only place online where you can meet other Creators by their body type
-            </p>
-          </div>
-        </div>
-
-        {/* Play Game card */}
-        <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-card/90 to-secondary/10 p-5 sm:p-6 shadow-md">
-          <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-secondary/15 blur-2xl" />
-          <div className="relative flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-            <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
-              <Gamepad2 className="h-6 w-6 text-primary" />
-            </div>
-            <div className="flex-1 text-center sm:text-left space-y-1">
-              <h3 className="text-base font-display font-bold text-foreground">Creator Types Ecosystem Game</h3>
-              <p className="text-sm text-muted-foreground">
-                Build the ecosystem, match Creator Types, and outplay disasters.
-              </p>
-            </div>
-            <Button
-              size="sm"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/25"
-              onClick={() => navigate("/play")}
-            >
-              Play Now
-            </Button>
-          </div>
-        </div>
-
-        {/* Hero welcome */}
-        <WelcomeHero
-          firstName={profile?.first_name}
-          tier={subscription?.tier}
-          subscriptionStatus={subscription?.status}
-          statusLabel={statusLabel}
-          statusColor={statusColor}
-          creatorTypes={creatorTypes}
-          showStatusBadge={showStatusBadge}
-          enrollmentStep={profile?.enrollment_step}
-          country={profile?.country}
-          showBooking={hasTrainerPractitioner && !isCaseStudySubject}
-        />
-
-        {/* Upsell for lower tiers — hidden until paid tiers are available */}
-        {/* <UpsellBanner currentTier={subscription?.tier} /> */}
-
-        {/* Two-column layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Left column */}
-          <div className="space-y-5">
-            <ProgressCard
-              step={step}
-              isComplete={isComplete}
-              photosUploaded={photosUploaded}
-              bookingMade={bookingMade}
-              hasDetails={hasDetails}
-              bookingDate={booking?.scheduled_at}
-              tier={subscription?.tier}
-              isCaseStudy={isCaseStudySubject}
-              confirmedTypeCount={creatorTypes.length}
-              showBooking={hasTrainerPractitioner && !isCaseStudySubject}
-            />
-            {hasTrainerPractitioner && !isCaseStudySubject && (
-              <SessionCard
-                scheduledAt={booking?.scheduled_at || null}
-                status={booking?.status || null}
-                zoomLink={booking?.zoom_link || null}
-                photosUploaded={photosUploaded}
-                bookingMade={bookingMade}
-                hasBookingRecord={!!booking}
-                tier={subscription?.tier}
-              />
-            )}
-          </div>
-
-          {/* Right column */}
-          <div className="space-y-5">
-            <PersonalDetailsCard profile={profile} hasDetails={hasDetails} />
-            {/* Consent status */}
-            {profile?.case_study_consent_at && (
-              <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-4 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-green-600 text-sm">✓</span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">Case Study Consent Given</p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(profile.case_study_consent_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}
-                  </p>
-                </div>
-              </div>
-            )}
-            {user && (
-              <PhotoGalleryCard userId={user.id} photosUploaded={photosUploaded} />
-            )}
-          </div>
-        </div>
-
-        {/* Zoom session recordings */}
-        <ZoomRecordingsCard />
-
-        {/* Discord community linking */}
-        {user && <DiscordLinkCard userId={user.id} />}
-
-        {/* Subscription details — full width */}
-        <SubscriptionCard />
-
-        {/* Creator Profile — full width */}
+      <main className="container mx-auto px-4 py-8 max-w-5xl space-y-5">
+        {/* GAME DASHBOARD — shown for every tier */}
         {user && (
-          <CreatorProfileCard userId={user.id} />
+          <GameDashboardSection
+            userId={user.id}
+            firstName={profile?.first_name ?? null}
+            tierLabel={tierLabel}
+            isPaidTier={isPaidTier}
+          />
         )}
+
+        {/* PAID-TIER section: profile, photos, sessions, subscription, recordings */}
+        {isPaidTier && (
+          <section className="pt-6 mt-4 border-t border-dashed border-border space-y-5">
+            <p className="text-xs uppercase tracking-widest text-primary font-semibold">Your profile</p>
+
+            {/* Two-column layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-5">
+                <ProgressCard
+                  step={step}
+                  isComplete={isComplete}
+                  photosUploaded={photosUploaded}
+                  bookingMade={bookingMade}
+                  hasDetails={hasDetails}
+                  bookingDate={booking?.scheduled_at}
+                  tier={subscription?.tier}
+                  isCaseStudy={isCaseStudySubject}
+                  confirmedTypeCount={creatorTypes.length}
+                  showBooking={hasTrainerPractitioner && !isCaseStudySubject}
+                />
+                {hasTrainerPractitioner && !isCaseStudySubject && (
+                  <SessionCard
+                    scheduledAt={booking?.scheduled_at || null}
+                    status={booking?.status || null}
+                    zoomLink={booking?.zoom_link || null}
+                    photosUploaded={photosUploaded}
+                    bookingMade={bookingMade}
+                    hasBookingRecord={!!booking}
+                    tier={subscription?.tier}
+                  />
+                )}
+              </div>
+
+              <div className="space-y-5">
+                <PersonalDetailsCard profile={profile} hasDetails={hasDetails} />
+                {profile?.case_study_consent_at && (
+                  <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-4 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-green-600 text-sm">✓</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Case Study Consent Given</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(profile.case_study_consent_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {user && <PhotoGalleryCard userId={user.id} photosUploaded={photosUploaded} />}
+              </div>
+            </div>
+
+            <ZoomRecordingsCard />
+            <SubscriptionCard />
+            {user && <CreatorProfileCard userId={user.id} />}
+          </section>
+        )}
+
+        {/* Discord — all tiers */}
+        {user && <DiscordLinkCard userId={user.id} />}
 
         {/* FAQs — full width */}
         <ClientFAQSection />
