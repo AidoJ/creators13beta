@@ -264,7 +264,7 @@ export default function Play() {
     if (!state) return;
     if (uid.startsWith("move:")) return; // ignore ecosystem drags
     if (state.phase !== "place") {
-      toast.error("Pick up your 2 cards first, then drop a card on the Used pile to discard.");
+      toast.error("Pick up your 2 cards first, then drop a card on the Used/Discarded Pile to discard.");
       return;
     }
     guarded(() => discardCard(state, uid));
@@ -436,7 +436,7 @@ export default function Play() {
         if (uid) onDiscardUid(uid);
       }}
     >
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Used pile</div>
+      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Used/Discarded Pile</div>
       <Button variant="outline" size="sm" className="w-full text-xs"
         disabled={!isYourTurn || state.phase !== "draw" || state.used.length === 0}
         onClick={onPickUsed}>
