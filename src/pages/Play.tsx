@@ -436,7 +436,7 @@ export default function Play() {
         if (uid) onDiscardUid(uid);
       }}
     >
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Used pile</div>
+      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Used/Discarded Pile</div>
       <Button variant="outline" size="sm" className="w-full text-xs"
         disabled={!isYourTurn || state.phase !== "draw" || state.used.length === 0}
         onClick={onPickUsed}>
