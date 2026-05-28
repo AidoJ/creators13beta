@@ -19,6 +19,8 @@ interface Props {
   /** Click a placed hex you own to rotate its background (only animals/sky-creatures
    *  have a visible split, but the handler fires for any hex). */
   onRotateClick?: (posKey: string) => void;
+  onMoveDragStart?: (posKey: string) => void;
+  onMoveDragEnd?: () => void;
   /** Wrap content in a centered viewport. */
   minHeight?: number;
   /** When in "move" mode, the key of the placed card the player has picked up.
@@ -34,7 +36,7 @@ function buildScaffold(eco: EcoType, excludeKey?: string | null): Axial[] {
 
 export function Ecosystem({
   eco, size = 90, selectable, showEmpties = true,
-  onPlace, onStealClick, onRotateClick, minHeight = 300, moveFromKey = null,
+  onPlace, onStealClick, onRotateClick, onMoveDragStart, onMoveDragEnd, minHeight = 300, moveFromKey = null,
 }: Props) {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 
