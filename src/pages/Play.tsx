@@ -591,15 +591,15 @@ export default function Play() {
               <Ecosystem
                 eco={selfPlayer.ecosystem}
                 size={isMobile ? 52 : 88}
-                selectable={canUseBoard || (isYourTurn && mode === "move" && !!moveFromKey)}
+                selectable={isYourTurn || canUseBoard}
                 onPlace={onPlace}
                 showEmpties
                 onStealClick={undefined}
                 onRotateClick={isYourTurn ? onPlacedHexClick : undefined}
-                onMoveDragStart={isYourTurn && mode === "move" ? (posKey) => setMoveFromKey(posKey) : undefined}
-                onMoveDragEnd={isYourTurn && mode === "move" ? () => setMoveFromKey(null) : undefined}
+                onMoveDragStart={isYourTurn ? (posKey) => setMoveFromKey(posKey) : undefined}
+                onMoveDragEnd={isYourTurn ? () => setMoveFromKey(null) : undefined}
                 minHeight={isMobile ? 220 : 360}
-                moveFromKey={mode === "move" ? moveFromKey : null}
+                moveFromKey={moveFromKey}
               />
 
             </div>
