@@ -212,6 +212,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
             >
               {card.name}
             </div>
+          </div>
           <div
             className="flex-1 overflow-auto px-2 py-1.5 leading-snug"
             style={{ fontSize: size * 0.072, color: "#111" }}
@@ -265,6 +266,18 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                     <polygon points="0,0 1,0 1,1 0,1" fill={c1} />
                   )}
                 </svg>
+                {art && (
+                  <div className="absolute inset-0 flex items-center justify-center p-6">
+                    <img
+                      src={art}
+                      alt={card.name}
+                      className="max-h-full max-w-full object-contain pointer-events-none"
+                    />
+                  </div>
+                )}
+              </div>
+              {/* Descriptor panel */}
+              <div className="md:w-[340px] flex flex-col bg-white text-black p-5 md:p-6 overflow-y-auto">
                 <div
                   className="font-normal uppercase tracking-wide leading-none mb-3"
                   style={{ fontFamily: '"Lilita One", sans-serif', fontSize: 28 }}
