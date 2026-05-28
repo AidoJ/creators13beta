@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Axial, Ecosystem as EcoType } from "@/lib/game/types";
 import { axialToPixel, keyOf, NEIGHBOUR_DIRS } from "@/lib/game/board";
 import { legalEcoCells } from "@/lib/game/engine";
