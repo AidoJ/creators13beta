@@ -24,6 +24,7 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
   const hexPoints = "0.5,0 1,0.25 1,0.75 0.5,1 0,0.75 0,0.25";
   const halfA = "0.5,0 1,0.25 0,0.75 0,0.25";
   const halfB = "1,0.25 1,0.75 0.5,1 0,0.75";
+  const isCreatorLike = card.kind === "creator" || card.kind === "sky_creator";
 
   let c1 = "#444";
   let c2 = "#444";
@@ -83,7 +84,24 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
         )}
         <polygon points={hexPoints} fill="none" stroke={ring} strokeWidth={highlight ? 0.06 : 0.04} vectorEffect="non-scaling-stroke" />
       </svg>
-      {art && (
+      {art && isCreatorLike ? (
+        <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-lg">
+          <defs>
+            <clipPath id={`creator-art-${card.id}`} clipPathUnits="objectBoundingBox">
+              <polygon points={hexPoints} />
+            </clipPath>
+          </defs>
+          <image
+            href={art}
+            x="-0.15"
+            y="-0.047"
+            width="1.28"
+            height="1.077"
+            preserveAspectRatio="none"
+            clipPath={`url(#creator-art-${card.id})`}
+          />
+        </svg>
+      ) : art ? (
         <img
           src={art}
           alt={card.name}
@@ -91,7 +109,7 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 object-contain pointer-events-none drop-shadow-lg"
           style={{ width: size * 0.8, height: size * 0.8 }}
         />
-      )}
+      ) : null}
       {/* Hover tooltip overlay */}
       <div className="absolute inset-0 z-20 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none">
         <div className="bg-black/80 backdrop-blur-sm rounded-lg px-2 py-1.5 flex flex-col items-center gap-1 max-w-[90%]">
