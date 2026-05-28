@@ -283,7 +283,9 @@ export default function Play() {
     const fromKey = dragMoveKey ?? (mode === "move" ? moveFromKey : null);
     if (fromKey) {
       try {
+        const snap = state;
         const next = moveMyPlacedHex(state, selfSlot, fromKey, pos);
+        pushUndo(snap);
         setState(next);
         schedulePersist(next);
         setMoveFromKey(null);
