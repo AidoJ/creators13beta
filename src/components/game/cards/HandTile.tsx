@@ -67,28 +67,33 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
 
           {/* Art panel */}
           <div className="relative group/art" style={{ height: "72%" }}>
-            <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full" aria-hidden>
-              {card.kind === "animal" || card.kind === "sky_creature" ? (
-                <>
-                  <polygon points="0,0 1,0 0,1" fill={c1} />
-                  <polygon points="1,0 1,1 0,1" fill={c2} />
-                </>
-              ) : (
-                <polygon points="0,0 1,0 1,1 0,1" fill={c1} />
-              )}
-            </svg>
+            {!isCreatorLike && (
+              <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full" aria-hidden>
+                {card.kind === "animal" || card.kind === "sky_creature" ? (
+                  <>
+                    <polygon points="0,0 1,0 0,1" fill={c1} />
+                    <polygon points="1,0 1,1 0,1" fill={c2} />
+                  </>
+                ) : (
+                  <polygon points="0,0 1,0 1,1 0,1" fill={c1} />
+                )}
+              </svg>
+            )}
             {badge && (
               <div className="absolute top-1.5 right-1.5 z-20 text-[8px] font-bold uppercase tracking-wider bg-black/55 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm">
                 {badge}
               </div>
             )}
-            <div className="absolute inset-0 z-10 flex items-center justify-center p-2">
+            <div className={`absolute inset-0 z-10 flex items-center justify-center ${isCreatorLike ? "p-0" : "p-2"}`}>
               {art ? (
                 <img
                   src={art}
                   alt={card.name}
                   loading="lazy"
-                  className="max-h-full max-w-full object-contain pointer-events-none"
+                  className="object-contain pointer-events-none"
+                  style={isCreatorLike
+                    ? { width: "100%", height: "100%" }
+                    : { maxWidth: "100%", maxHeight: "100%" }}
                 />
               ) : (
                 <div className="text-white/80 text-[10px] font-medium uppercase tracking-wide">{card.kind}</div>
