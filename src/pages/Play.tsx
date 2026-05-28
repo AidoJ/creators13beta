@@ -33,6 +33,7 @@ import {
 import { recordProgressDiff } from "@/lib/game/progress";
 import { useMatchRealtime } from "@/hooks/useMatchRealtime";
 import { useAuth } from "@/contexts/AuthContext";
+import { DISCORD_INVITE_URL } from "@/config/discordChat";
 import type { Axial, DeckCard, MatchState } from "@/lib/game/types";
 import { Ecosystem } from "@/components/game/Ecosystem";
 import { PlayerHand } from "@/components/game/PlayerHand";
