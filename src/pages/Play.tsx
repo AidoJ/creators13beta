@@ -506,9 +506,18 @@ export default function Play() {
   );
 
   const actionsBlock = (
-    <Card className="p-3">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Card actions</div>
-      <div className="flex flex-col gap-2">
+    <Card className="p-2">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Card actions</div>
+      <div className="flex flex-col gap-1.5">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={undoCount === 0}
+          onClick={onUndo}
+          className="h-auto py-1.5 px-2 text-[11px] leading-tight"
+        >
+          ↶ Undo last move {undoCount > 0 ? `(${undoCount})` : ""}
+        </Button>
         <Button
           size="sm"
           disabled={!canDrawOne || state.draw.length === 0}
