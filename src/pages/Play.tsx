@@ -469,15 +469,6 @@ export default function Play() {
         >
           End turn early
         </Button>
-        <Button size="sm" variant={mode === "move" ? "default" : "secondary"}
-          disabled={!isYourTurn || selfPlayer.ecosystem.placed.size === 0}
-          onClick={() => {
-            setMode(mode === "move" ? "place" : "move");
-            setMoveFromKey(null);
-          }}
-          className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center">
-          {mode === "move" ? (moveFromKey ? "Click an empty hex to drop" : "Cancel move") : "Move a placed card"}
-        </Button>
         <Button size="sm" variant="secondary" disabled={!canDiscard} onClick={onDiscard}
           className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center">
           Discard selected
