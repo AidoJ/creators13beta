@@ -3,23 +3,19 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useEnrollmentGate } from "@/hooks/useEnrollmentGate";
 import type { TierKey } from "@/lib/tiers";
-import { useNavigate } from "react-router-dom";
-import { Gamepad2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import WelcomeHero from "@/components/dashboard/WelcomeHero";
 import PersonalDetailsCard from "@/components/dashboard/PersonalDetailsCard";
 import PhotoGalleryCard from "@/components/dashboard/PhotoGalleryCard";
 import ProgressCard from "@/components/dashboard/ProgressCard";
 import SessionCard from "@/components/dashboard/SessionCard";
 import CreatorProfileCard from "@/components/dashboard/CreatorProfileCard";
-import UpsellBanner from "@/components/dashboard/UpsellBanner";
 import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
 import DiscordLinkCard from "@/components/dashboard/DiscordLinkCard";
 import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
+import GameDashboardSection from "@/components/dashboard/game/GameDashboardSection";
 import { Skeleton } from "@/components/ui/skeleton";
 
 
