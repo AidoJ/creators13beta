@@ -495,10 +495,6 @@ export default function Play() {
         >
           End turn early
         </Button>
-        <Button size="sm" variant="secondary" disabled={!canDiscard} onClick={onDiscard}
-          className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center">
-          Discard selected
-        </Button>
         <Button size="sm" variant="secondary" disabled={!canDisaster} onClick={onDisaster}
           className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center">
           Play as Disaster
