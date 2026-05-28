@@ -656,7 +656,7 @@ export default function Play() {
       </button>
 
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[240px_1fr_260px] gap-2 p-2 min-h-0 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[240px_1fr_195px] gap-2 p-2 min-h-0 overflow-hidden">
         {/* Mobile compact bar: opponent + piles toggles */}
         <div className="lg:hidden flex gap-2">
           <Button
