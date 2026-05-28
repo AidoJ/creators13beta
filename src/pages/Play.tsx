@@ -193,6 +193,18 @@ export default function Play() {
   /* ----------- Persistence helpers ----------- */
 
   function schedulePersist(next: MatchState) {
+    const prev = state;
+    const alreadyFinishedBefore = !!prev?.finished;
+    if (user) {
+      // Update player_progress (points / types seen / streak / ELO) for the signed-in player.
+      recordProgressDiff({
+        userId: user.id,
+        selfSlot,
+        prev,
+        next,
+        alreadyFinishedBefore,
+      });
+    }
     if (matchRow && user) {
       const seq = ++saveSeqRef.current;
       // Compute winner user id for pvp.
