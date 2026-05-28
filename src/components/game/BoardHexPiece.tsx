@@ -86,11 +86,6 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
       </svg>
       {art && isCreatorLike ? (
         <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-lg">
-          <defs>
-            <clipPath id={`creator-art-${card.id}`} clipPathUnits="objectBoundingBox">
-              <polygon points={hexPoints} />
-            </clipPath>
-          </defs>
           <image
             href={art}
             x="-0.15"
@@ -98,7 +93,6 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
             width="1.28"
             height="1.077"
             preserveAspectRatio="none"
-            clipPath={`url(#creator-art-${card.id})`}
           />
         </svg>
       ) : art ? (
