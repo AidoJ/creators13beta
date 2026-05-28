@@ -8,8 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import type { MatchState, PlayerState } from "./types";
 import { capitaliseTypeName } from "@/lib/creatorTypes";
 
-const POINTS_PER_PLACEMENT = 5;
-const POINTS_PER_NEW_TYPE = 10;
+// Points are ONLY awarded when a game finishes. Mid-game we just track which
+// Creator Types the player has discovered so the dashboard grid lights up.
+const POINTS_PER_PLACED_CARD = 2;   // small per-card bonus at game end
+const POINTS_PER_NEW_TYPE = 10;     // bonus for each type discovered THIS game
 const POINTS_WIN = 50;
 const POINTS_FINISH = 10;
 const POINTS_PERFECT_ECO = 25;
@@ -40,46 +42,47 @@ export async function recordProgressDiff(args: {
 }): Promise<void> {
   const { userId, selfSlot, prev, next, alreadyFinishedBefore } = args;
   try {
-    const prevSelf = selfFor(prev, selfSlot);
     const nextSelf = selfFor(next, selfSlot);
     if (!nextSelf) return;
 
-    const prevPlaced = prevSelf?.ecosystem.placed.size ?? 0;
-    const newPlaced = nextSelf.ecosystem.placed.size - prevPlaced;
-
-    const prevTypes = typesOf(prevSelf);
+    const prevTypes = typesOf(selfFor(prev, selfSlot));
     const nextTypes = typesOf(nextSelf);
-    const brandNewTypes = [...nextTypes].filter((t) => !prevTypes.has(t));
+    const discoveredNewType = [...nextTypes].some((t) => !prevTypes.has(t));
 
-    let pointsDelta = 0;
-    if (newPlaced > 0) pointsDelta += newPlaced * POINTS_PER_PLACEMENT;
-    pointsDelta += brandNewTypes.length * POINTS_PER_NEW_TYPE;
+    const justFinished = next.finished && !alreadyFinishedBefore;
+
+    // Mid-game: only sync newly-discovered types into types_seen. No points.
+    if (!justFinished) {
+      if (!discoveredNewType) return;
+      await supabase.rpc("bump_player_progress", {
+        _user_id: userId,
+        _points_delta: 0,
+        _types_seen: [...nextTypes],
+        _won: null,
+        _perfect_eco: false,
+        _elo_delta: 0,
+      });
+      return;
+    }
+
+    // End-of-game: award all points at once.
+    let pointsDelta = POINTS_FINISH;
+    pointsDelta += nextSelf.ecosystem.placed.size * POINTS_PER_PLACED_CARD;
+    pointsDelta += nextTypes.size * POINTS_PER_NEW_TYPE;
 
     let won: boolean | null = null;
     let eloDelta = 0;
-    let perfectEco = false;
-    const justFinished = next.finished && !alreadyFinishedBefore;
-    if (justFinished) {
-      // winnerId is "host" / "guest" / "you" / "bot" — caller is self if winnerId === selfSlot
-      if (next.winnerId === selfSlot) {
-        won = true;
-        pointsDelta += POINTS_WIN + POINTS_FINISH;
-        eloDelta = ELO_WIN;
-      } else if (next.winnerId) {
-        won = false;
-        pointsDelta += POINTS_FINISH;
-        eloDelta = ELO_LOSS;
-      } else {
-        // tie
-        pointsDelta += POINTS_FINISH;
-      }
-      if (nextSelf.ecosystem.placed.size >= 16) {
-        perfectEco = true;
-        pointsDelta += POINTS_PERFECT_ECO;
-      }
+    if (next.winnerId === selfSlot) {
+      won = true;
+      pointsDelta += POINTS_WIN;
+      eloDelta = ELO_WIN;
+    } else if (next.winnerId) {
+      won = false;
+      eloDelta = ELO_LOSS;
     }
 
-    if (pointsDelta === 0 && brandNewTypes.length === 0 && !justFinished) return;
+    const perfectEco = nextSelf.ecosystem.placed.size >= 16;
+    if (perfectEco) pointsDelta += POINTS_PERFECT_ECO;
 
     await supabase.rpc("bump_player_progress", {
       _user_id: userId,
