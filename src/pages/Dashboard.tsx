@@ -112,9 +112,6 @@ export default function Dashboard() {
   const bookingMade = step === "booking_made" || (isComplete && !!booking);
   const hasDetails = !!(profile?.first_name && profile?.date_of_birth && profile?.gender && profile?.height_cm);
 
-  const showStatusBadge = photosUploaded && !isComplete;
-  const statusLabel = "In Review";
-  const statusColor = "bg-amber-500/10 text-amber-600 border-amber-500/20";
 
   if (!gateReady || loading) {
     return (
