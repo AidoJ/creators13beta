@@ -566,6 +566,22 @@ export default function Play() {
             )}
           </div>
           <div className="flex gap-2 items-center">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate("/dashboard")}
+            >
+              <LayoutDashboard className="w-4 h-4 mr-1" /> Dashboard
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              asChild
+            >
+              <a href={DISCORD_INVITE_URL} target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="w-4 h-4 mr-1" /> Discord
+              </a>
+            </Button>
             {isPvp ? (
               <Button size="sm" variant="outline" onClick={() => navigate("/play")}>
                 Solo vs Bot
