@@ -165,6 +165,7 @@ export function Ecosystem({
             : onRotateClick
             ? () => onRotateClick(k)
             : undefined;
+          const canDragMove = !!onMoveDragStart && !onStealClick;
           return (
             <div key={`p-${k}`} className="absolute" style={{ left: x + offX, top: y + offY }}>
               <BoardHexPiece
@@ -172,6 +173,13 @@ export function Ecosystem({
                 size={size}
                 rotation={pc.rotation ?? 0}
                 onClick={clickHandler}
+                draggable={canDragMove}
+                onDragStart={canDragMove ? (e) => {
+                  e.dataTransfer.setData("text/plain", `move:${k}`);
+                  e.dataTransfer.effectAllowed = "move";
+                  onMoveDragStart?.(k);
+                } : undefined}
+                onDragEnd={canDragMove ? () => onMoveDragEnd?.() : undefined}
                 highlight={moveFromKey === k ? "selected" : null}
               />
             </div>
