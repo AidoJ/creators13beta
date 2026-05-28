@@ -73,6 +73,29 @@ export default function Play() {
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const saveSeqRef = useRef(0);
+  const undoStackRef = useRef<MatchState[]>([]);
+  const [undoCount, setUndoCount] = useState(0);
+
+  function pushUndo(snapshot: MatchState | null) {
+    if (!snapshot) return;
+    undoStackRef.current.push(snapshot);
+    if (undoStackRef.current.length > 20) undoStackRef.current.shift();
+    setUndoCount(undoStackRef.current.length);
+  }
+  function onUndo() {
+    const prev = undoStackRef.current.pop();
+    setUndoCount(undoStackRef.current.length);
+    if (!prev) return;
+    setState(prev);
+    setSelectedUid(null);
+    setMoveFromKey(null);
+    setMode("place");
+    if (matchRow && user) {
+      saveMatchState({ matchId: matchRow.id, actingUserId: user.id, state: prev }).catch(() => {});
+    } else {
+      persistLocalMatch(prev);
+    }
+  }
 
   // Derived: identity inside the match.
   const isPvp = matchRow?.mode === "pvp";
