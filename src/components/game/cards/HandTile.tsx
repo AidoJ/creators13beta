@@ -5,6 +5,7 @@ import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType } from "@/lib/game/glyphs";
 import type { DeckCard } from "@/lib/game/types";
+import { getCardCredit } from "@/lib/cardCredits";
 
 interface Props {
   card: DeckCard;
@@ -249,6 +250,18 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                     />
                   </div>
                 )}
+                {(() => {
+                  const credit = getCardCredit(card.source?.slug);
+                  if (!credit) return null;
+                  return (
+                    <div
+                      className="absolute bottom-1.5 left-0 right-0 text-center text-[10px] leading-tight text-neutral-500/90 px-3 pointer-events-none select-none"
+                      style={{ fontFamily: '"Questrial", sans-serif' }}
+                    >
+                      with thanks to Pixabay Artist — {credit}
+                    </div>
+                  );
+                })()}
               </div>
               {/* Descriptor panel */}
               <div className="md:w-[340px] flex flex-col bg-white text-black p-5 md:p-6 overflow-y-auto">
