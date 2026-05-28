@@ -518,42 +518,56 @@ export default function Play() {
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
 
-      <ScorePanel state={state} />
+      {!ribbonHidden && <ScorePanel state={state} />}
 
-      <div className="px-3 py-2 bg-card/30 border-b border-border/40 flex items-center justify-between gap-3 flex-wrap">
-        <div className="text-sm flex-1 min-w-0">
-          {phaseHint}
-          {isYourTurn && state.phase === "place" && mode !== "steal" && (
-            <span className="ml-2 text-muted-foreground hidden md:inline">
-              · Tip: click any placed hex to rotate its colours.
-            </span>
-          )}
-        </div>
-        <div className="flex gap-2 items-center">
-          {isPvp ? (
-            <Button size="sm" variant="outline" onClick={() => navigate("/play")}>
-              Solo vs Bot
+      {!ribbonHidden && (
+        <div className="px-3 py-2 bg-card/30 border-b border-border/40 flex items-center justify-between gap-3 flex-wrap">
+          <div className="text-sm flex-1 min-w-0">
+            {phaseHint}
+            {isYourTurn && state.phase === "place" && mode !== "steal" && (
+              <span className="ml-2 text-muted-foreground hidden md:inline">
+                · Tip: click any placed hex to rotate its colours.
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2 items-center">
+            {isPvp ? (
+              <Button size="sm" variant="outline" onClick={() => navigate("/play")}>
+                Solo vs Bot
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" onClick={onOpenMultiplayer}>
+                <Users className="w-4 h-4 mr-1" /> Multiplayer
+              </Button>
+            )}
+            <Button
+              size="sm"
+              onClick={() => setRuleBookOpen(true)}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm font-semibold"
+            >
+              <BookOpen className="w-4 h-4 mr-1" /> Rule Book
             </Button>
-          ) : (
-            <Button size="sm" variant="outline" onClick={onOpenMultiplayer}>
-              <Users className="w-4 h-4 mr-1" /> Multiplayer
+            <Button size="sm" variant="ghost" onClick={() => { resetTutorial(); window.location.reload(); }}>
+              <HelpCircle className="w-4 h-4 mr-1" /> Help
             </Button>
-          )}
-          <Button
-            size="sm"
-            onClick={() => setRuleBookOpen(true)}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm font-semibold"
-          >
-            <BookOpen className="w-4 h-4 mr-1" /> Rule Book
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => { resetTutorial(); window.location.reload(); }}>
-            <HelpCircle className="w-4 h-4 mr-1" /> Help
-          </Button>
-          {(state.finished || !isPvp) && (
-            <Button size="sm" onClick={onNewGame}>New game</Button>
-          )}
+            {(state.finished || !isPvp) && (
+              <Button size="sm" onClick={onNewGame}>New game</Button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Hide/Show ribbon toggle strip */}
+      <button
+        type="button"
+        onClick={() => setRibbonHidden((v) => !v)}
+        className="w-full flex items-center justify-center gap-1 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground bg-card/40 hover:bg-card/60 border-b border-border/40 transition-colors"
+        aria-label={ribbonHidden ? "Show ribbon" : "Hide ribbon"}
+      >
+        {ribbonHidden ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
+        {ribbonHidden ? "Show ribbon" : "Hide ribbon"}
+      </button>
+
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[240px_1fr_260px] gap-2 p-2 min-h-0 overflow-hidden">
         {/* Mobile compact bar: opponent + piles toggles */}
@@ -591,7 +605,8 @@ export default function Play() {
             <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center">
               <Ecosystem
                 eco={selfPlayer.ecosystem}
-                size={isMobile ? 52 : 88}
+                size={isMobile ? 64 : 110}
+                autoFit
                 selectable={isYourTurn || canUseBoard}
                 onPlace={onPlace}
                 showEmpties
@@ -599,7 +614,7 @@ export default function Play() {
                 onRotateClick={isYourTurn ? onPlacedHexClick : undefined}
                 onMoveDragStart={isYourTurn ? (posKey) => setMoveFromKey(posKey) : undefined}
                 onMoveDragEnd={isYourTurn ? () => setMoveFromKey(null) : undefined}
-                minHeight={isMobile ? 220 : 360}
+                minHeight={0}
                 moveFromKey={moveFromKey}
               />
 
