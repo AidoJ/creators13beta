@@ -260,7 +260,9 @@ export default function Play() {
 
   const guarded = (fn: () => MatchState) => {
     try {
+      const snap = state;
       const next = fn();
+      pushUndo(snap);
       setState(next);
       schedulePersist(next);
       setSelectedUid(null);
