@@ -47,7 +47,6 @@ interface SubData {
 }
 
 export default function Dashboard() {
-  const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { ready: gateReady, state: gateState } = useEnrollmentGate();
   const isPlayerOnly = !!gateState?.isPlayerOnly;
@@ -143,65 +142,93 @@ export default function Dashboard() {
     );
   }
 
+  const tierLabel = subscription?.tier
+    ? subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1)
+    : "Wren";
+  const isPaidTier = !!subscription?.tier && subscription.tier !== "wren";
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
       <DashboardHeader email={user?.email} onSignOut={signOut} />
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl space-y-5">
-        {/* Coming Soon Banner */}
-        <div className="relative overflow-hidden rounded-2xl border border-secondary/30 bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 p-5 sm:p-6 text-center shadow-md">
-          <div className="absolute -top-10 -left-10 w-32 h-32 rounded-full bg-primary/15 blur-2xl" />
-          <div className="absolute -bottom-10 -right-10 w-32 h-32 rounded-full bg-secondary/15 blur-2xl" />
-          <div className="relative space-y-1.5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-secondary">Coming Soon…</p>
-            <h2 className="text-base sm:text-lg font-display font-bold text-foreground leading-snug">
-              Doors open in April 2026 to the Creator Types ecosystem
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-              The only place online where you can meet other Creators by their body type
-            </p>
-          </div>
-        </div>
+      <main className="container mx-auto px-4 py-8 max-w-5xl space-y-5">
+        {/* GAME DASHBOARD — shown for every tier */}
+        {user && (
+          <GameDashboardSection
+            userId={user.id}
+            firstName={profile?.first_name ?? null}
+            tierLabel={tierLabel}
+            isPaidTier={isPaidTier}
+          />
+        )}
 
-        {/* Play Game card */}
-        <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-card/90 to-secondary/10 p-5 sm:p-6 shadow-md">
-          <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-secondary/15 blur-2xl" />
-          <div className="relative flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-            <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
-              <Gamepad2 className="h-6 w-6 text-primary" />
+        {/* PAID-TIER section: profile, photos, sessions, subscription, recordings */}
+        {isPaidTier && (
+          <section className="pt-6 mt-4 border-t border-dashed border-border space-y-5">
+            <p className="text-xs uppercase tracking-widest text-primary font-semibold">Your profile</p>
+
+            {/* Two-column layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-5">
+                <ProgressCard
+                  step={step}
+                  isComplete={isComplete}
+                  photosUploaded={photosUploaded}
+                  bookingMade={bookingMade}
+                  hasDetails={hasDetails}
+                  bookingDate={booking?.scheduled_at}
+                  tier={subscription?.tier}
+                  isCaseStudy={isCaseStudySubject}
+                  confirmedTypeCount={creatorTypes.length}
+                  showBooking={hasTrainerPractitioner && !isCaseStudySubject}
+                />
+                {hasTrainerPractitioner && !isCaseStudySubject && (
+                  <SessionCard
+                    scheduledAt={booking?.scheduled_at || null}
+                    status={booking?.status || null}
+                    zoomLink={booking?.zoom_link || null}
+                    photosUploaded={photosUploaded}
+                    bookingMade={bookingMade}
+                    hasBookingRecord={!!booking}
+                    tier={subscription?.tier}
+                  />
+                )}
+              </div>
+
+              <div className="space-y-5">
+                <PersonalDetailsCard profile={profile} hasDetails={hasDetails} />
+                {profile?.case_study_consent_at && (
+                  <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-4 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-green-600 text-sm">✓</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Case Study Consent Given</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(profile.case_study_consent_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {user && <PhotoGalleryCard userId={user.id} photosUploaded={photosUploaded} />}
+              </div>
             </div>
-            <div className="flex-1 text-center sm:text-left space-y-1">
-              <h3 className="text-base font-display font-bold text-foreground">Creator Types Ecosystem Game</h3>
-              <p className="text-sm text-muted-foreground">
-                Build the ecosystem, match Creator Types, and outplay disasters.
-              </p>
-            </div>
-            <Button
-              size="sm"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/25"
-              onClick={() => navigate("/play")}
-            >
-              Play Now
-            </Button>
-          </div>
-        </div>
 
-        {/* Hero welcome */}
-        <WelcomeHero
-          firstName={profile?.first_name}
-          tier={subscription?.tier}
-          subscriptionStatus={subscription?.status}
-          statusLabel={statusLabel}
-          statusColor={statusColor}
-          creatorTypes={creatorTypes}
-          showStatusBadge={showStatusBadge}
-          enrollmentStep={profile?.enrollment_step}
-          country={profile?.country}
-          showBooking={hasTrainerPractitioner && !isCaseStudySubject}
-        />
+            <ZoomRecordingsCard />
+            <SubscriptionCard />
+            {user && <CreatorProfileCard userId={user.id} />}
+          </section>
+        )}
 
-        {/* Upsell for lower tiers — hidden until paid tiers are available */}
-        {/* <UpsellBanner currentTier={subscription?.tier} /> */}
+        {/* Discord — all tiers */}
+        {user && <DiscordLinkCard userId={user.id} />}
+
+        {/* FAQs — full width */}
+        <ClientFAQSection />
+      </main>
+    </div>
+  );
+}
 
         {/* Two-column layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
