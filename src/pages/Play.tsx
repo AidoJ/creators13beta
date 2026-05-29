@@ -848,6 +848,32 @@ export default function Play() {
       />
 
       <MatchOverDialog state={state} onPlayAgain={onNewGame} />
+
+      {/* Golden Hive prompt — shown to the targeted victim when an opponent
+          plays a Disaster while you hold an unspent Hive. */}
+      {state.pendingDisaster && state.pendingDisaster.victimId === selfSlot && (
+        <Dialog open>
+          <DialogContent className="max-w-md" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+            <DialogHeader>
+              <DialogTitle className="font-display text-xl">
+                Use your Golden Hive Card?
+              </DialogTitle>
+              <DialogDescription>
+                {state.players.find((p) => p.id === state.pendingDisaster!.attackerId)?.name ?? "Opponent"} just played a{" "}
+                <strong>{state.pendingDisaster.creator.name} Disaster</strong>. Activating your Hive blocks it from stealing any of your animals. The Hive will be placed on the used pile and cannot be picked up again.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-2 mt-2 flex-wrap">
+              <Button variant="outline" onClick={() => onResolveDisaster(false)}>
+                Save for Later
+              </Button>
+              <Button onClick={() => onResolveDisaster(true)}>
+                Activate Now
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
       <TutorialOverlay />
       <RuleBookSheet open={ruleBookOpen} onOpenChange={setRuleBookOpen} />
       <OpponentPanel open={opponentPanelOpen} onClose={() => setOpponentPanelOpen(false)} player={opponent} />
