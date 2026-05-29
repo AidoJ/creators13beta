@@ -335,10 +335,11 @@ export function discardCard(state: MatchState, cardUid: string): MatchState {
 
 /**
  * Disaster: play a Creator Card to the used pile. Wipes every Animal in
- * every OTHER ecosystem that linked to this creator's element. Wiped animals
- * go to the disaster-player's ecosystem-pending stash → for simplicity in v1
- * we add them directly back to the disaster-player's hand for re-placement.
- * Hive shields absorb the disaster on a single victim.
+ * every OTHER ecosystem that linked to this creator's element.
+ *
+ * If any victim holds an UNSPENT Golden Hive in their hand, the disaster
+ * pauses (state.pendingDisaster is set) and waits for that victim to choose
+ * Activate Now / Save for Later via `resolveDisaster`.
  */
 export function playDisaster(
   state: MatchState,
@@ -346,6 +347,7 @@ export function playDisaster(
 ): MatchState {
   if (state.finished) throw new Error("Match is over");
   if (state.phase !== "place") throw new Error("Pick up 2 cards first");
+  if (state.pendingDisaster) throw new Error("A disaster is already waiting on a Hive decision");
   const next = cloneState(state);
   const player = next.players[next.turn];
   const idx = player.hand.findIndex((c) => c.uid === creatorUid);
@@ -355,16 +357,77 @@ export function playDisaster(
     throw new Error("Only Creator Cards can be played as a Disaster");
   }
 
-  // Per rule book: any Creator Card in hand can be played as a Disaster by
-  // sending it to the Used Pile. No prerequisite on placed creators.
-
   player.hand.splice(idx, 1);
   next.used.push(creator);
 
+  // Find a victim who can intercept with a Golden Hive in hand.
+  const hiveVictim = next.players.find(
+    (p) =>
+      p.id !== player.id &&
+      p.hand.some((c) => c.kind === "golden_hive" && !c.spent),
+  );
+  if (hiveVictim) {
+    next.pendingDisaster = {
+      attackerId: player.id,
+      victimId: hiveVictim.id,
+      creator,
+    };
+    next.lastEvent = `${player.name} played a ${creator.name} Disaster — waiting on ${hiveVictim.name}'s Golden Hive…`;
+    // Disaster has been played but does not consume the placement slot until
+    // resolved — that way the attacker can't sneak in another action while
+    // the victim decides.
+    return next;
+  }
+
+  applyDisasterWipe(next, player.id, creator);
+  next.placedThisTurn += 1;
+  return afterAction(next);
+}
+
+/** Victim's response to a pending disaster prompt. */
+export function resolveDisaster(state: MatchState, useHive: boolean): MatchState {
+  if (state.finished) return state;
+  if (!state.pendingDisaster) throw new Error("No disaster pending");
+  const next = cloneState(state);
+  const pd = next.pendingDisaster!;
+  const attacker = next.players.find((p) => p.id === pd.attackerId)!;
+  const victim = next.players.find((p) => p.id === pd.victimId)!;
+
+  if (useHive) {
+    // Move the victim's Hive from hand to the used pile, flagged spent so
+    // nobody can ever pick it up again.
+    const hIdx = victim.hand.findIndex((c) => c.kind === "golden_hive" && !c.spent);
+    if (hIdx < 0) throw new Error("Hive no longer in hand");
+    const [hive] = victim.hand.splice(hIdx, 1);
+    next.used.push({ ...hive, spent: true });
+    victim.hiveShield = false;
+    next.lastEvent = `${victim.name} activated their Golden Hive — the ${pd.creator.name} Disaster was blocked!`;
+    // Other victims (if any 3+ player matches ever exist) still get hit.
+    applyDisasterWipe(next, attacker.id, pd.creator, victim.id);
+  } else {
+    next.lastEvent = `${victim.name} saved their Golden Hive for later — the Disaster hits.`;
+    applyDisasterWipe(next, attacker.id, pd.creator);
+  }
+
+  next.pendingDisaster = null;
+  next.placedThisTurn += 1;
+  return afterAction(next);
+}
+
+/** Internal: apply the wipe for every victim except `skipVictimId` (used when
+ *  one victim's hive blocks them out of the wipe). */
+function applyDisasterWipe(
+  next: MatchState,
+  attackerId: string,
+  creator: DeckCard,
+  skipVictimId?: string,
+): void {
+  const player = next.players.find((p) => p.id === attackerId)!;
   let wiped = 0;
   let placedOnBoard = 0;
   for (const victim of next.players) {
-    if (victim.id === player.id) continue;
+    if (victim.id === attackerId) continue;
+    if (skipVictimId && victim.id === skipVictimId) continue;
     if (victim.hiveShield) {
       victim.hiveShield = false;
       next.lastEvent = `Hive shield absorbed the ${creator.name} disaster!`;
@@ -372,10 +435,11 @@ export function playDisaster(
     }
     const survivors = new Map<string, PlacedCard>();
     for (const [k, pc] of victim.ecosystem.placed) {
-      const isAnimal = pc.card.kind === "animal" || pc.card.kind === "sky_creature" || pc.card.kind === "golden_body";
+      const isAnimal =
+        pc.card.kind === "animal" ||
+        pc.card.kind === "sky_creature" ||
+        pc.card.kind === "golden_body";
       if (isAnimal && animalLinksToCreator(pc.card, creator)) {
-        // Wiped → place directly into the disaster-player's ecosystem on the
-        // first legal (empty adjacent) hex. If none, fall back to their hand.
         const cells = legalEcoCells(player.ecosystem);
         if (cells.length > 0) {
           const pos = cells[0];
@@ -394,16 +458,14 @@ export function playDisaster(
     victim.ecosystem.placed = survivors;
   }
   if (wiped > 0) {
-    const tail = placedOnBoard === wiped
-      ? `added to ${player.name}'s ecosystem`
-      : placedOnBoard > 0
-        ? `${placedOnBoard} added to ecosystem, ${wiped - placedOnBoard} to hand`
-        : `returned to ${player.name}'s hand`;
+    const tail =
+      placedOnBoard === wiped
+        ? `added to ${player.name}'s ecosystem`
+        : placedOnBoard > 0
+          ? `${placedOnBoard} added to ecosystem, ${wiped - placedOnBoard} to hand`
+          : `returned to ${player.name}'s hand`;
     next.lastEvent = `${player.name} played a ${creator.name} Disaster — ${wiped} animal${wiped > 1 ? "s" : ""} taken (${tail})`;
   }
-
-  next.placedThisTurn += 1;
-  return afterAction(next);
 }
 
 /**
