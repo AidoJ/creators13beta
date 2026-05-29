@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Gamepad2, Flame, Trophy, Sparkles, Users, Copy, Loader2 } from "lucide-react";
+import { Gamepad2, Flame, Trophy, Sparkles, Copy, Loader2 } from "lucide-react";
+
 import { toast } from "sonner";
 import { CREATOR_TYPE_NAMES, getCreatorTypeColor } from "@/lib/creatorTypes";
 import { CREATOR_TYPE_GLYPHS } from "@/lib/game/glyphs";
