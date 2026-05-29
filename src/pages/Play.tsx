@@ -47,6 +47,7 @@ import { RuleBookSheet } from "@/components/game/RuleBookSheet";
 import { OpponentPanel } from "@/components/game/OpponentPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+import { fetchPlayerDisplayName } from "@/lib/playerName";
 
 type Mode = "place" | "disaster" | "steal" | "move";
 
