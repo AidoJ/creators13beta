@@ -327,6 +327,13 @@ export default function Play() {
   function onDrawOne() {
     if (state) guarded(() => pickFromDraw(state));
   }
+  function onDrawOpening() {
+    if (state) guarded(() => drawInitialFive(state));
+  }
+  function onResolveDisaster(useHive: boolean) {
+    if (!state) return;
+    guarded(() => resolveDisaster(state, useHive));
+  }
   function onPlace(pos: Axial, draggedUid?: string) {
     if (!state) return;
     const dragMoveKey = draggedUid?.startsWith("move:") ? draggedUid.slice(5) : null;
