@@ -136,6 +136,25 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
           style={{ width: size * 0.8, height: size * 0.8 }}
         />
       ) : null}
+      {isCreatorLike && (
+        <div
+          className="absolute left-1/2 -translate-x-1/2 z-20 pointer-events-none"
+          style={{ bottom: "10%" }}
+        >
+          <span
+            className="inline-block px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-wider text-white bg-black/55 backdrop-blur-sm"
+            style={{
+              fontFamily: '"Questrial", sans-serif',
+              fontSize: Math.max(8, size * 0.1),
+              textShadow: "0 1px 2px rgba(0,0,0,0.6)",
+              letterSpacing: "0.08em",
+            }}
+          >
+            {card.kind === "sky_creator" ? "SKY" : (card.element ? String(card.element).toUpperCase() : "")}
+          </span>
+        </div>
+      )}
+
       {/* Hover tooltip overlay */}
       <div className="absolute inset-0 z-20 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none">
         <div className="bg-black/80 backdrop-blur-sm rounded-lg px-2 py-1.5 flex flex-col items-center gap-1 max-w-[90%]">
