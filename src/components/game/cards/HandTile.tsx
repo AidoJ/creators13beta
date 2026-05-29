@@ -6,6 +6,7 @@ import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType } from "@/lib/game/glyphs";
 import type { DeckCard } from "@/lib/game/types";
 import { getCardCreditArtist } from "@/lib/cardCredits";
+import { TypeGlyphMark, displayCardName } from "./TypeGlyphMark";
 
 interface Props {
   card: DeckCard;
