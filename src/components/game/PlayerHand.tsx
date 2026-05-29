@@ -74,7 +74,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
             .filter((c) => phaseRef.current.has(c.uid))
             .map((c) => c.uid);
           const animIdx = animatingUids.indexOf(card.uid);
-          const stagger = animIdx >= 0 ? animIdx * 120 : 0;
+          const stagger = animIdx >= 0 ? animIdx * 140 : 0;
 
           const height = size * 1.35;
 
@@ -114,7 +114,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
               style={
                 isDropping
                   ? {
-                      animation: `handDrop 450ms cubic-bezier(0.2, 0.85, 0.35, 1.1) ${stagger}ms both`,
+                      animation: `handDrop 500ms cubic-bezier(0.2, 0.85, 0.35, 1.1) ${stagger}ms both`,
                     }
                   : undefined
               }
@@ -129,7 +129,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                     className="relative w-full h-full"
                     style={{
                       transformStyle: "preserve-3d",
-                      transition: isFlipping ? "transform 650ms cubic-bezier(0.4, 0.2, 0.2, 1)" : undefined,
+                      transition: isFlipping ? "transform 1000ms cubic-bezier(0.4, 0.2, 0.2, 1)" : undefined,
                       transform: isFlipping ? "rotateY(180deg)" : "rotateY(0deg)",
                     }}
                   >
