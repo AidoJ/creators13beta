@@ -350,7 +350,7 @@ export function playDisaster(
   if (state.finished) throw new Error("Match is over");
   if (state.phase !== "place") throw new Error("Pick up 2 cards first");
   if (state.pendingDisaster) throw new Error("Resolve the pending Golden Hive prompt first.");
-  if (state.pendingDisaster) throw new Error("A disaster is already waiting on a Hive decision");
+  
   const next = cloneState(state);
   const player = next.players[next.turn];
   const idx = player.hand.findIndex((c) => c.uid === creatorUid);
