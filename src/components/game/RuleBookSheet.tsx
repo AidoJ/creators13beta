@@ -13,7 +13,7 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
         <SheetHeader className="px-5 pt-5 pb-3 border-b border-border/60">
           <SheetTitle className="font-display text-xl">Rule Book</SheetTitle>
           <SheetDescription>
-            B Creators Card Game — Build your hue-man ecosystem.
+            BCreators Card Game — build your hue-man ecosystem.
           </SheetDescription>
         </SheetHeader>
 
@@ -21,104 +21,129 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
           <div className="px-5 py-4 space-y-6 text-sm leading-relaxed">
 
             <section>
-              <h3 className="font-display text-base mb-1">How to win</h3>
+              <h3 className="font-display text-base mb-1">Goal</h3>
               <p>
-                Be the first player to build an ecosystem of <strong>16 cards</strong>:
-                4 Creator Cards (one of each element — Earth, Air, Fire, Water) surrounded by
-                12 matching Animal Cards (3 animals per Creator).
+                Be the first to build an ecosystem of <strong>16 cards</strong>:
+                4 Creator Cards (one of each element — Earth, Fire, Air, Water) plus
+                12 matching Animal Cards (3 per Creator).
               </p>
               <p className="mt-2 text-muted-foreground text-xs">
-                Sky Creator Cards can substitute for any element. Golden Body Cards can substitute
-                for any animal. You may have excess cards beyond 16 as long as no Creator Cards
-                remain in your hand.
+                A <strong>Sky Creator</strong> substitutes for any element. A <strong>Golden Body</strong> is
+                a wildcard animal. You must also have <strong>no Creator cards left in your hand</strong> when
+                you reach 16. If both piles empty out, the highest score wins
+                (3 pts per Creator placed, 1 pt per Animal placed).
               </p>
             </section>
 
             <section>
               <h3 className="font-display text-base mb-1">Set up</h3>
               <ol className="list-decimal pl-5 space-y-1">
-                <li>Shuffle the deck and place it face-down (the New Pile).</li>
-                <li>Each player draws 5 cards into their hand, kept hidden.</li>
-                <li>Decide who goes first; play proceeds in turns.</li>
-                <li>Played cards go face-up on the Used Pile.</li>
+                <li>Shuffle the deck (Draw Pile).</li>
+                <li>Each player is dealt <strong>5 cards</strong>.</li>
+                <li>Used Pile starts empty.</li>
+                <li>First player is chosen; turn order is fixed.</li>
               </ol>
+            </section>
+
+            <section>
+              <h3 className="font-display text-base mb-1">Hand limit</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs text-muted-foreground">
+                <li>Hand cap is <strong>5 cards</strong>. You should never end your turn holding more than 5.</li>
+                <li>You must play or discard 2 cards each turn before drawing 2 new ones.</li>
+                <li>Animals gained from a Disaster go <strong>straight onto your board</strong>, never into your hand. If they don't connect to your ecosystem they still go on the board (visible, but as a removed/empty space that future cards can fill).</li>
+              </ul>
             </section>
 
             <section>
               <h3 className="font-display text-base mb-1">On your turn</h3>
               <ol className="list-decimal pl-5 space-y-1">
-                <li>Pick up <strong>2 cards</strong> from the New Pile and/or the Used Pile.</li>
-                <li>Optionally <strong>move</strong> any of your already-placed ecosystem cards
-                  to better positions (before putting your new cards down).</li>
-                <li>Put down <strong>2 cards</strong> — into your ecosystem or onto the Used Pile.</li>
+                <li><strong>Pick up 2</strong> cards — any mix from the top of the Draw Pile and the Used Pile.</li>
+                <li><strong>Play 2</strong> — each action is either placing a card on a legal hex, discarding to the Used Pile, playing a Disaster, playing a Sky Creature steal, or playing a Hive to block a Disaster.</li>
               </ol>
               <p className="mt-2 text-muted-foreground text-xs">
-                You may also: play a Disaster Card, block one with a Hive Card, or play a
-                Sky Creature Card to steal.
+                You must take both placement actions every turn — you can't end early. New cards acquired
+                any way other than the Draw Pile go directly onto your board.
               </p>
+            </section>
+
+            <section>
+              <h3 className="font-display text-base mb-1">Free actions</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs text-muted-foreground">
+                <li>Move any of your already-placed cards to another legal empty hex (still touching your ecosystem). Cards can be repositioned but never removed.</li>
+                <li>Rotate a placed hex (+60° clockwise) to colour-match neighbours.</li>
+              </ul>
+            </section>
+
+            <section>
+              <h3 className="font-display text-base mb-1">Placement rules</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs text-muted-foreground">
+                <li>The first card may be placed on the central hex.</li>
+                <li>Every other card must go on an <strong>empty hex adjacent to your ecosystem</strong> — the only exception is animals dropped on your board from a Disaster, which can land disconnected.</li>
+                <li>Animals don't have to be placed next to their matching Creator (adjacency is ideal but only verified at win-check).</li>
+              </ul>
             </section>
 
             <section className="space-y-4">
               <h3 className="font-display text-base">Card powers</h3>
 
               <div>
-                <h4 className="font-semibold text-sm">Creator Cards</h4>
+                <h4 className="font-semibold text-sm">Creator Cards (Earth / Fire / Air / Water)</h4>
                 <p className="text-muted-foreground text-xs">
-                  You need 4 Creator Cards to form the centre of your ecosystem. Once you have
-                  your 4, any additional Creator Cards can be played as Disaster Cards by
-                  placing them in the Used Pile.
+                  Form the centre of your ecosystem — you need one of each element. <strong>Once all 4 of
+                  your own Creators are on the board</strong>, any further Creator in your hand can be played
+                  as a Disaster.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-semibold text-sm">Disaster Cards</h4>
+                <h4 className="font-semibold text-sm">Disaster (Creator → Used Pile)</h4>
                 <p className="text-muted-foreground text-xs">
-                  When a Creator Card is placed in the Used Pile, it wipes out all Animal Cards
-                  linked to that Creator from other players. Those animals are given to the
-                  player who triggered the Disaster, to place in their own ecosystem.
+                  Wipes every Animal matching that Creator's element from rivals' ecosystems. Those animals
+                  go <strong>straight onto the disaster-player's board</strong>. A Golden Hive on the victim
+                  absorbs the disaster entirely (Hive is consumed to the Used Pile).
                 </p>
                 <p className="mt-1 text-[11px] italic text-muted-foreground/80">
-                  Other players can pick up your Disaster Card from the Used Pile once you play it!
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-sm">Animal Cards</h4>
-                <p className="text-muted-foreground text-xs">
-                  Match these with your Creator Cards. Each Creator needs 3 matching Animals
-                  around it.
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-sm">Golden Body Cards</h4>
-                <p className="text-muted-foreground text-xs">
-                  Wildcard — can substitute for any animal to help you complete your ecosystem.
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-sm">Golden Hive Card</h4>
-                <p className="text-muted-foreground text-xs">
-                  Arms automatically the moment it enters your hand — you'll see a 🛡 next to
-                  your name. It absorbs the next Disaster cast against you, then is consumed.
-                  You don't place it on the board; once armed you can discard the card to free
-                  up space in your hand without losing the shield.
+                  The Creator card sits on top of the Used Pile and can be picked up by other players.
                 </p>
               </div>
 
               <div>
                 <h4 className="font-semibold text-sm">Sky Creator Cards</h4>
                 <p className="text-muted-foreground text-xs">
-                  Substitute for any Creator (Earth / Air / Fire / Water) in any combination.
+                  Wildcard Creator — substitutes for a Creator of any element. When played as a Disaster
+                  it <strong>only wipes Mystical Creature cards bearing the Sky symbol</strong>.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-sm">Animal Cards</h4>
+                <p className="text-muted-foreground text-xs">
+                  Each Animal belongs to 1 or 2 Creator Types. 3 matching Animals are required per Creator.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-sm">Golden Body Card</h4>
+                <p className="text-muted-foreground text-xs">
+                  Wildcard Animal — counts as a matching Animal for any Creator.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-sm">Golden Hive Card</h4>
+                <p className="text-muted-foreground text-xs">
+                  Cannot be placed on the board. Can only be discarded when used to shield against a
+                  Disaster played against you — it absorbs the next Disaster, then is consumed to the
+                  Used Pile (and cannot be picked back up).
                 </p>
               </div>
 
               <div>
                 <h4 className="font-semibold text-sm">Sky Creature Cards</h4>
                 <p className="text-muted-foreground text-xs">
-                  Can be used as Animal Cards in your ecosystem, OR played as Stealer cards:
-                  place in the Used Pile and steal an Animal Card of your choice from any player.
+                  Place as an Animal (counts toward any matching Creator they share a type with), OR
+                  play as a Stealer: discard to the Used Pile and steal one Animal from any opponent's
+                  ecosystem into your hand. Stealer cards in the Used Pile cannot be picked up.
                 </p>
               </div>
             </section>

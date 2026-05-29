@@ -2,28 +2,28 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-const STORAGE_KEY = "creators13.play.tutorial-seen.v1";
+const STORAGE_KEY = "creators13.play.tutorial-seen.v2";
 
 const STEPS: { title: string; body: string }[] = [
   {
-    title: "Welcome to B Creators",
-    body: "Build a honeycomb ecosystem of 16 cards — 4 Creators (one per element) + 12 matching Animals (3 per Creator) — before your opponent. You also need an empty hand of Creator cards to win.",
+    title: "Welcome to BCreators",
+    body: "Build a honeycomb ecosystem of 16 cards — 4 Creators (one per element: Earth, Fire, Air, Water) + 12 matching Animals (3 per Creator). You also need an empty hand of Creator cards to win.",
   },
   {
     title: "Step 1 — Pick up 2",
-    body: "Each turn, draw up to 2 cards from the draw pile or the top of the Used/Discarded Pile (any combination). Your hand is capped at 8 — if you're full, skip the draw and go straight to placement.",
+    body: "Each turn, draw 2 cards from any mix of the Draw Pile and the top of the Used Pile. Your hand is capped at 5 — play or discard 2 cards before drawing again.",
   },
   {
     title: "Step 2 — Play 2",
-    body: "Place cards on glowing hexes next to your ecosystem, or drag a card onto the Used/Discarded Pile to discard it. Drag from your hand, or select a card and click a hex. You can end your turn early after 0 or 1 plays.",
+    body: "You must take 2 placement actions every turn: place a card on a glowing hex next to your ecosystem, or drag a card onto the Used Pile to discard it. You can't end your turn early.",
   },
   {
-    title: "Special powers",
-    body: "Any Creator in hand can be played as a Disaster — it goes to the Used/Discarded Pile and wipes every matching Animal from rivals' ecosystems straight onto your board. Sky Creatures steal an Animal. Golden Hive arms a shield that absorbs one Disaster. Golden Body is a wildcard Animal.",
+    title: "Disasters & specials",
+    body: "Once all 4 of your own Creators are on the board, any Creator in your hand can be played as a Disaster — it wipes every matching Animal from rivals straight onto your board. A Sky Creator Disaster only wipes Sky Mystical Creatures. Sky Creatures can also steal an Animal. Golden Hive shields one Disaster. Golden Body is a wildcard Animal.",
   },
   {
-    title: "Card tips",
-    body: "Tap the ⓘ on any card to flip it and read its descriptor. Click a placed hex to rotate its colours so neighbouring halves match. You can also rearrange your own placed cards between draw and play.",
+    title: "Free actions & tips",
+    body: "Tap the ⓘ on any card to flip it and read its descriptor. Click a placed hex to rotate it (+60°) so neighbouring colours match. You may also reposition any of your placed cards to another legal empty hex — cards can move, but never leave the board.",
   },
 ];
 

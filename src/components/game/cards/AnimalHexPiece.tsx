@@ -94,7 +94,7 @@ export function AnimalHexPiece({ card, imageSrc, size = 140 }: Props) {
         style={{
           bottom: "11%",
           width: "78%",
-          fontFamily: '"Lilita One", sans-serif',
+          fontFamily: '"Questrial", sans-serif',
           fontSize: size * 0.072,
           color: "#3a2615",
           lineHeight: 1,
