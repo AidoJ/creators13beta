@@ -39,6 +39,9 @@ export interface DeckCard {
   displayType?: CreatorTypeName;
   /** True if this is a mythical / golden / sky variant (for badge styling). */
   special?: boolean;
+  /** Marks a Golden Hive that has already been used to block a disaster —
+   *  it sits on the used pile but can never be picked up again. */
+  spent?: boolean;
 }
 
 export interface PlacedCard {
