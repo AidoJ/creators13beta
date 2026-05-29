@@ -65,6 +65,22 @@ export function AnimalHexPiece({ card, imageSrc, size = 140 }: Props) {
         />
       </svg>
 
+      {/* White type-glyph watermarks on each hex half */}
+      {glyphForType(t1) && (
+        <TypeGlyphMark
+          glyph={glyphForType(t1)!}
+          size={size * 0.24}
+          style={{ position: "absolute", top: "18%", left: "8%", zIndex: 5 }}
+        />
+      )}
+      {t2 !== t1 && glyphForType(t2) && (
+        <TypeGlyphMark
+          glyph={glyphForType(t2)!}
+          size={size * 0.24}
+          style={{ position: "absolute", bottom: "22%", right: "8%", zIndex: 5 }}
+        />
+      )}
+
       {/* Illustration */}
       {imageSrc && (
         <img
