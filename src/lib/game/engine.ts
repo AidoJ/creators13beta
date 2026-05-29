@@ -511,13 +511,7 @@ function checkWin(state: MatchState): void {
   }
 }
 
-      (c) => c.kind === "creator" || c.kind === "sky_creator",
-    );
-    if (stillHoldingCreators) continue;
-    finalise(state, p.id);
-    return;
-  }
-}
+
 
 function finalise(state: MatchState, winnerId?: string): void {
   state.finished = true;
