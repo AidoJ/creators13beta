@@ -50,11 +50,6 @@ export function botStep(state: MatchState): MatchState {
     if (state.used.length > 0 && !top?.spent) return pickFromUsed(state);
     return state;
   }
-    if (wantUsed && state.used.length > 0) return pickFromUsed(state);
-    if (state.draw.length > 0) return pickFromDraw(state);
-    if (state.used.length > 0) return pickFromUsed(state);
-    return state;
-  }
 
   const player = state.players[state.turn];
   const { creators } = ecosystemSummary(player.ecosystem);
