@@ -201,7 +201,6 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
             )}
           </div>
 
-          </div>
 
           {/* Artist credit intentionally NOT shown on hand tiles — it appears
               only in the zoomed-in detail popup. */}
