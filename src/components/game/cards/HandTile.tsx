@@ -396,13 +396,14 @@ function resolveColours(card: DeckCard): {
     const label = dt ?? card.element!;
     const c = dt ? (CREATOR_TYPE_COLORS[dt as keyof typeof CREATOR_TYPE_COLORS] ?? ELEMENT_COLORS[card.element!]) : ELEMENT_COLORS[card.element!];
     const g = dt ? (CREATOR_TYPE_GLYPHS[dt] ?? ELEMENT_GLYPHS[card.element!]) : ELEMENT_GLYPHS[card.element!];
-    return { c1: c, c2: c, chips: [{ label, color: c, glyph: g }], badge: "Creator", artGlyph: g };
+    return { c1: c, c2: c, chips: [{ label, color: c, glyph: g }], badge: card.element ? String(card.element).toUpperCase() : "Creator", artGlyph: g };
   }
   if (card.kind === "sky_creator") {
     const c = ELEMENT_COLORS.Sky;
     const g = CREATOR_TYPE_GLYPHS.Sky;
-    return { c1: c, c2: "#ffffff", chips: [{ label: "Sky", color: c, glyph: g }], badge: "Wild", artGlyph: g };
+    return { c1: c, c2: "#ffffff", chips: [{ label: "Sky", color: c, glyph: g }], badge: "SKY · WILD", artGlyph: g };
   }
+
   if (card.kind === "golden_body") {
     return { c1: "#f5c542", c2: "#e0a920", chips: [{ label: "Golden", color: "#e0a920" }], badge: "Wild Body" };
   }
