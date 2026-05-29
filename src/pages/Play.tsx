@@ -834,20 +834,26 @@ function persistLocalMatch(state: MatchState) {
   }
 }
 
-function restoreLocalMatch(_cards: GameCard[]): MatchState | null {
+function restoreLocalMatch(_cards: GameCard[], currentPlayerName?: string): MatchState | null {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (!raw) return null;
     const j = JSON.parse(raw);
     if (j.v !== 1) return null;
     if (j.finished) return null;
-    return {
+    const restored = {
       ...j,
       players: j.players.map((p: any) => ({
         ...p,
         ecosystem: { placed: new Map(p.ecosystem.placed) },
       })),
     } as MatchState;
+    if (currentPlayerName) {
+      restored.players = restored.players.map((p) =>
+        p.id === "you" ? { ...p, name: currentPlayerName } : p,
+      );
+    }
+    return restored;
   } catch {
     return null;
   }
