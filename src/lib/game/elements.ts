@@ -10,7 +10,7 @@ export const TYPE_TO_ELEMENT: Record<CreatorTypeName, Element | "Sky"> = {
   Sun: "Fire",
   Whirlwind: "Air",
   Lightning: "Air",
-  Snow: "Water",
+  Snow: "Air",
   Lake: "Water",
   Ocean: "Water",
   River: "Water",
