@@ -225,6 +225,24 @@ export default function Play() {
   useEffect(() => {
     if (!state || state.finished) return;
     if (isPvp) return;
+    // If a disaster is pending against the bot, auto-activate its hive
+    // (always optimal — saves placed animals at the cost of one hive).
+    if (state.pendingDisaster && state.pendingDisaster.victimId === "bot") {
+      const t = setTimeout(() => {
+        try {
+          setState((s) => {
+            if (!s) return s;
+            const next = resolveDisaster(s, true);
+            schedulePersist(next);
+            return next;
+          });
+        } catch {
+          /* skip */
+        }
+      }, 600);
+      return () => clearTimeout(t);
+    }
+    if (state.pendingDisaster) return; // waiting on human player
     if (state.players[state.turn].id !== "bot") return;
     const t = setTimeout(() => {
       try {
