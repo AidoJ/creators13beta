@@ -176,10 +176,17 @@ export function animalLinksToCreator(animal: DeckCard, creator: DeckCard): boole
   if (animal.kind === "golden_body") return true; // wildcard
   if (creator.kind === "sky_creator") return true; // wildcard
   if (creator.kind !== "creator") return false;
+  // Primary rule: animal links if its Creator Types include this Creator's type.
+  const creatorType = creator.displayType;
+  const animalTypes = (animal.types ?? []) as string[];
+  if (creatorType && animalTypes.some((t) => t?.toLowerCase() === creatorType.toLowerCase())) {
+    return true;
+  }
+  // Fallback: legacy element match (kept for sky_creatures / older data).
   const el = creator.element!;
-  // Sky creatures count for any element they share via their types
-  return (animal.types ?? []).some((t) => TYPE_TO_ELEMENT[t] === el);
+  return animalTypes.some((t) => TYPE_TO_ELEMENT[t] === el);
 }
+
 
 /** Find the creator card placed in this ecosystem that an animal would link to (if any). */
 export function findLinkedCreator(
@@ -444,41 +451,49 @@ export function ecosystemSummary(eco: Ecosystem) {
   return { creators, animals, total: eco.placed.size };
 }
 
-/** Can we assign every animal to exactly one creator it links to, such that
- *  each creator receives exactly ANIMALS_PER_CREATOR animals?
- *  Backtracking is fine — at most 4 creators × 12 animals. */
+/** Can we pick exactly ANIMALS_PER_CREATOR animals per creator from the placed
+ *  animal pool such that every chosen animal links to its assigned creator?
+ *  Extra animals on the board beyond 3 × creators are allowed and simply unused. */
+
 function canAssignAnimalsToCreators(
   creators: DeckCard[],
   animals: DeckCard[],
 ): boolean {
   if (creators.length !== CREATORS_NEEDED) return false;
-  if (animals.length !== CREATORS_NEEDED * ANIMALS_PER_CREATOR) return false;
+  if (animals.length < CREATORS_NEEDED * ANIMALS_PER_CREATOR) return false;
   const counts = new Array(creators.length).fill(0) as number[];
-  const recurse = (i: number): boolean => {
-    if (i === animals.length) return counts.every((n) => n === ANIMALS_PER_CREATOR);
-    const a = animals[i];
+  const used = new Array(animals.length).fill(false) as boolean[];
+  const totalNeeded = CREATORS_NEEDED * ANIMALS_PER_CREATOR;
+  let assigned = 0;
+  const recurse = (startIdx: number): boolean => {
+    if (assigned === totalNeeded) return counts.every((n) => n === ANIMALS_PER_CREATOR);
+    // Pick the creator slot with the fewest remaining options to prune fast.
+    let targetC = -1;
+    let bestOpts = Infinity;
     for (let c = 0; c < creators.length; c++) {
       if (counts[c] >= ANIMALS_PER_CREATOR) continue;
-      if (!animalLinksToCreator(a, creators[c])) continue;
-      counts[c] += 1;
-      if (recurse(i + 1)) return true;
-      counts[c] -= 1;
+      let opts = 0;
+      for (let a = 0; a < animals.length; a++) {
+        if (!used[a] && animalLinksToCreator(animals[a], creators[c])) opts++;
+      }
+      if (opts < bestOpts) { bestOpts = opts; targetC = c; }
+    }
+    if (targetC === -1) return false;
+    if (bestOpts === 0) return false;
+    for (let a = startIdx; a < animals.length; a++) {
+      if (used[a]) continue;
+      if (!animalLinksToCreator(animals[a], creators[targetC])) continue;
+      used[a] = true;
+      counts[targetC] += 1;
+      assigned += 1;
+      if (recurse(0)) return true;
+      used[a] = false;
+      counts[targetC] -= 1;
+      assigned -= 1;
     }
     return false;
   };
   return recurse(0);
-}
-
-/** Do the 4 placed creators cover all four elements (sky_creator = wildcard)? */
-function creatorsCoverAllElements(creators: DeckCard[]): boolean {
-  if (creators.length !== CREATORS_NEEDED) return false;
-  const fixed = creators.filter((c) => c.kind === "creator").map((c) => c.element!);
-  const wildcards = creators.length - fixed.length;
-  const needed = new Set<Element>(["Earth", "Fire", "Air", "Water"]);
-  for (const e of fixed) needed.delete(e);
-  // Duplicates in fixed elements can't be covered by wildcards
-  if (new Set(fixed).size !== fixed.length) return false;
-  return needed.size <= wildcards;
 }
 
 function checkWin(state: MatchState): void {
@@ -490,9 +505,10 @@ function checkWin(state: MatchState): void {
     const animals = placed.filter(
       (c) => c.kind === "animal" || c.kind === "sky_creature" || c.kind === "golden_body",
     );
+    // Need exactly 4 Creator cards on the board (any 4 of the 13 Creator Types).
     if (creators.length !== CREATORS_NEEDED) continue;
-    if (animals.length !== CREATORS_NEEDED * ANIMALS_PER_CREATOR) continue;
-    if (!creatorsCoverAllElements(creators)) continue;
+    // Need at least 3 animals per Creator; extras on the board are allowed.
+    if (animals.length < CREATORS_NEEDED * ANIMALS_PER_CREATOR) continue;
     if (!canAssignAnimalsToCreators(creators, animals)) continue;
     const stillHoldingCreators = p.hand.some(
       (c) => c.kind === "creator" || c.kind === "sky_creator",
@@ -502,6 +518,8 @@ function checkWin(state: MatchState): void {
     return;
   }
 }
+
+
 
 function finalise(state: MatchState, winnerId?: string): void {
   state.finished = true;
