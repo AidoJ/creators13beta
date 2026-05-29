@@ -1,4 +1,6 @@
 import { CREATOR_TYPE_COLORS, type AnimalCard } from "@/data/cards";
+import { glyphForType } from "@/lib/game/glyphs";
+import { TypeGlyphMark } from "./TypeGlyphMark";
 
 interface Props {
   card: AnimalCard;
