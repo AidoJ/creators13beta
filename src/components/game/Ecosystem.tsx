@@ -245,7 +245,7 @@ export function Ecosystem({
                 }}
               />
               <span
-                className="font-bold uppercase tracking-wider text-white leading-none"
+                className="font-normal uppercase tracking-wider text-white leading-none"
                 style={{ fontFamily: '"Questrial", sans-serif', fontSize: Math.max(9, size * 0.11) }}
               >
                 {m.label}
