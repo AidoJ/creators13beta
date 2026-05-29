@@ -12,14 +12,6 @@
 import {
   animalLinksToCreator,
   discardCard,
-  legalEcoCells,
-  pickFromDraw,
-  pickFromUsed,
-  placeOnEcosystem,
-  ecosystemSummary,
-import {
-  animalLinksToCreator,
-  discardCard,
   drawInitialFive,
   legalEcoCells,
   pickFromDraw,
