@@ -84,20 +84,21 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                 )}
               </svg>
             )}
-            {isTwoTone && chips[0]?.glyph && (
+            {isTwoTone && glyphMarkForType(chips[0]?.label) && (
               <TypeGlyphMark
-                glyph={chips[0].glyph}
+                glyph={glyphMarkForType(chips[0].label)!}
                 size={size * 0.26}
                 style={{ position: "absolute", top: size * 0.04, left: size * 0.04, zIndex: 15 }}
               />
             )}
-            {isTwoTone && chips[1]?.glyph && (
+            {isTwoTone && glyphMarkForType(chips[1]?.label) && (
               <TypeGlyphMark
-                glyph={chips[1].glyph}
+                glyph={glyphMarkForType(chips[1].label)!}
                 size={size * 0.26}
                 style={{ position: "absolute", bottom: size * 0.04, right: size * 0.04, zIndex: 15 }}
               />
             )}
+
             {badge && (
               <div className="absolute top-1.5 right-1.5 z-20 text-[8px] font-bold uppercase tracking-wider bg-black/55 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm">
                 {badge}
