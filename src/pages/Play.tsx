@@ -636,9 +636,19 @@ export default function Play() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => navigate("/dashboard")}
+              onClick={onCloseResumeLater}
+              title="Leave the board — your match is saved and you can come back to it from the dashboard."
             >
-              <LayoutDashboard className="w-4 h-4 mr-1" /> Dashboard
+              <LayoutDashboard className="w-4 h-4 mr-1" /> Close & resume later
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onCloseAbandon}
+              className="text-destructive hover:text-destructive"
+              title="Forfeit this match. It will be marked finished for both players."
+            >
+              Close & abandon
             </Button>
             <Button
               size="sm"
