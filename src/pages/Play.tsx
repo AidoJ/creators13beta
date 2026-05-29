@@ -47,6 +47,7 @@ import { RuleBookSheet } from "@/components/game/RuleBookSheet";
 import { OpponentPanel } from "@/components/game/OpponentPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+import { fetchPlayerDisplayName } from "@/lib/playerName";
 
 type Mode = "place" | "disaster" | "steal" | "move";
 
@@ -139,18 +140,45 @@ export default function Play() {
         if (routeMatchId) {
           const { row, state } = await loadMatch(routeMatchId);
           if (cancelled) return;
+
+          // Sync the live player names in the match state with the latest
+          // host_name / guest_name on the row (which the join flow updates).
+          // This means a freshly-joined guest sees their real name instead
+          // of the "Waiting…" placeholder the host first put there.
+          let patched = state;
+          let mutated = false;
+          const nextPlayers = state.players.map((p) => {
+            if (p.id === "host" && row.host_name && p.name !== row.host_name) {
+              mutated = true;
+              return { ...p, name: row.host_name };
+            }
+            if (p.id === "guest" && row.guest_name && p.name !== row.guest_name) {
+              mutated = true;
+              return { ...p, name: row.guest_name };
+            }
+            return p;
+          });
+          if (mutated) {
+            patched = { ...state, players: nextPlayers };
+            if (user) {
+              saveMatchState({ matchId: row.id, actingUserId: user.id, state: patched }).catch(() => {});
+            }
+          }
+
           setMatchRow(row);
-          setState(state);
+          setState(patched);
           setWaitingForGuest(row.mode === "pvp" && row.status === "waiting");
           return;
         }
 
         // No route id — solo vs Bot path.
+        const youName = user ? await fetchPlayerDisplayName(user) : "You";
+        if (cancelled) return;
         const deck = buildDeck(allCards);
         const fresh = createMatch({
           deck,
           players: [
-            { id: "you", name: user?.email?.split("@")[0] ?? "You" },
+            { id: "you", name: youName },
             { id: "bot", name: "Tutorial Bot" },
           ],
         });
