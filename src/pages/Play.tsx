@@ -183,7 +183,7 @@ export default function Play() {
           ],
         });
         // Try to restore an in-progress solo match from localStorage.
-        const restored = restoreLocalMatch(allCards);
+        const restored = restoreLocalMatch(allCards, youName);
         if (restored) {
           if (cancelled) return;
           setState(restored);
@@ -362,18 +362,19 @@ export default function Play() {
     guarded(() => playSkyCreatureSteal(state, selectedUid, opponent.id, posKey));
   }
 
-  function onNewGame() {
+  async function onNewGame() {
     if (!allCards) return;
     if (routeMatchId) {
       // PvP / persisted match — leaving back to a fresh solo.
       navigate("/play");
       return;
     }
+    const youName = user ? await fetchPlayerDisplayName(user) : "You";
     const deck = buildDeck(allCards);
     const fresh = createMatch({
       deck,
       players: [
-        { id: "you", name: user?.email?.split("@")[0] ?? "You" },
+        { id: "you", name: youName },
         { id: "bot", name: "Tutorial Bot" },
       ],
     });
@@ -395,7 +396,7 @@ export default function Play() {
   async function handleCreatePvp() {
     if (!user || !allCards) throw new Error("Not ready");
     const deck = buildDeck(allCards);
-    const hostName = user.email?.split("@")[0] ?? "Host";
+    const hostName = await fetchPlayerDisplayName(user);
     const initial = createMatch({
       deck,
       players: [
