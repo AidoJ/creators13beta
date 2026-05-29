@@ -6,6 +6,7 @@ import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType } from "@/lib/game/glyphs";
 import type { DeckCard } from "@/lib/game/types";
 import { getCardCreditArtist } from "@/lib/cardCredits";
+import { TypeGlyphMark, displayCardName } from "./TypeGlyphMark";
 
 interface Props {
   card: DeckCard;
@@ -24,6 +25,8 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
   const { c1, c2, chips, badge, artGlyph } = resolveColours(card);
   const art = card.source?.art_url ?? artGlyph;
   const isCreatorLike = card.kind === "creator" || card.kind === "sky_creator";
+  const isTwoTone = card.kind === "animal" || card.kind === "sky_creature";
+  const name = displayCardName(card.name);
 
   const descriptor = card.source?.descriptor?.trim() || defaultDescriptor(card);
 
@@ -80,6 +83,20 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                 )}
               </svg>
             )}
+            {isTwoTone && chips[0]?.glyph && (
+              <TypeGlyphMark
+                glyph={chips[0].glyph}
+                size={size * 0.26}
+                style={{ position: "absolute", top: size * 0.04, left: size * 0.04, zIndex: 15 }}
+              />
+            )}
+            {isTwoTone && chips[1]?.glyph && (
+              <TypeGlyphMark
+                glyph={chips[1].glyph}
+                size={size * 0.26}
+                style={{ position: "absolute", bottom: size * 0.04, right: size * 0.04, zIndex: 15 }}
+              />
+            )}
             {badge && (
               <div className="absolute top-1.5 right-1.5 z-20 text-[8px] font-bold uppercase tracking-wider bg-black/55 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm">
                 {badge}
@@ -107,7 +124,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                   className="font-normal uppercase tracking-wide leading-none text-white truncate max-w-full"
                   style={{ fontFamily: '"Questrial", sans-serif', fontSize: size * 0.1, textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
                 >
-                  {card.name}
+                  {name}
                 </span>
                 <div className="flex items-center gap-1 flex-wrap justify-center">
                   {chips.map((chip, i) => (
@@ -134,7 +151,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
               className="font-normal uppercase tracking-wide leading-none truncate"
               style={{ fontFamily: '"Questrial", sans-serif', fontSize: size * 0.11, color: "#000" }}
             >
-              {card.name}
+              {name}
             </div>
             <div className="flex items-center justify-center gap-1 mt-1 flex-wrap">
               {chips.map((chip, i) => (
@@ -210,7 +227,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
               className="font-normal uppercase tracking-wide leading-none truncate text-white"
               style={{ fontFamily: '"Questrial", sans-serif', fontSize: size * 0.1, textShadow: "0 1px 2px rgba(0,0,0,0.4)" }}
             >
-              {card.name}
+              {name}
             </div>
           </div>
           <div
@@ -266,8 +283,22 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                     <polygon points="0,0 1,0 1,1 0,1" fill={c1} />
                   )}
                 </svg>
+                {isTwoTone && chips[0]?.glyph && (
+                  <TypeGlyphMark
+                    glyph={chips[0].glyph}
+                    size={64}
+                    style={{ position: "absolute", top: 16, left: 16, zIndex: 5 }}
+                  />
+                )}
+                {isTwoTone && chips[1]?.glyph && (
+                  <TypeGlyphMark
+                    glyph={chips[1].glyph}
+                    size={64}
+                    style={{ position: "absolute", bottom: 16, right: 16, zIndex: 5 }}
+                  />
+                )}
                 {art && (
-                  <div className="absolute inset-0 flex items-center justify-center p-6">
+                  <div className="absolute inset-0 z-10 flex items-center justify-center p-6">
                     <img
                       src={art}
                       alt={card.name}
@@ -282,7 +313,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                   className="font-normal uppercase tracking-wide leading-none mb-3"
                   style={{ fontFamily: '"Questrial", sans-serif', fontSize: 28 }}
                 >
-                  {card.name}
+                  {name}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap mb-4">
                   {chips.map((chip, i) => (

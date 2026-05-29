@@ -1,4 +1,6 @@
 import { CREATOR_TYPE_COLORS, type AnimalCard } from "@/data/cards";
+import { glyphForType } from "@/lib/game/glyphs";
+import { TypeGlyphMark } from "./TypeGlyphMark";
 
 interface Props {
   card: AnimalCard;
@@ -35,6 +37,21 @@ export function AnimalCardTile({ card, imageSrc, size = 220 }: Props) {
           <polygon points="0,0 1,0 0,1" fill={c1} />
           <polygon points="1,0 1,1 0,1" fill={c2} />
         </svg>
+        {/* White type-glyph watermarks on each colour half */}
+        {glyphForType(t1) && (
+          <TypeGlyphMark
+            glyph={glyphForType(t1)!}
+            size={size * 0.26}
+            style={{ position: "absolute", top: size * 0.04, left: size * 0.04, zIndex: 5 }}
+          />
+        )}
+        {t2 !== t1 && glyphForType(t2) && (
+          <TypeGlyphMark
+            glyph={glyphForType(t2)!}
+            size={size * 0.26}
+            style={{ position: "absolute", bottom: size * 0.04, right: size * 0.04, zIndex: 5 }}
+          />
+        )}
         {/* Mythical badge */}
         {card.mythical && (
           <div className="absolute top-2 right-2 z-20 text-[10px] font-bold uppercase tracking-wider bg-black/40 text-white px-2 py-0.5 rounded-full backdrop-blur-sm">

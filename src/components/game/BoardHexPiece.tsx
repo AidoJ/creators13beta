@@ -2,6 +2,7 @@ import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType } from "@/lib/game/glyphs";
 import type { DeckCard } from "@/lib/game/types";
+import { TypeGlyphMark, displayCardName } from "./cards/TypeGlyphMark";
 
 interface Props {
   card: DeckCard;
@@ -25,14 +26,17 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
   const halfA = "0.5,0 1,0.25 0,0.75 0,0.25";
   const halfB = "1,0.25 1,0.75 0.5,1 0,0.75";
   const isCreatorLike = card.kind === "creator" || card.kind === "sky_creator";
-
   let c1 = "#444";
   let c2 = "#444";
   let artGlyph: string | undefined;
+  let halfGlyph1: string | undefined;
+  let halfGlyph2: string | undefined;
   if (card.kind === "animal" || card.kind === "sky_creature") {
     const [t1, t2] = card.types ?? [];
     c1 = CREATOR_TYPE_COLORS[t1 as keyof typeof CREATOR_TYPE_COLORS] ?? "#444";
     c2 = CREATOR_TYPE_COLORS[t2 as keyof typeof CREATOR_TYPE_COLORS] ?? c1;
+    halfGlyph1 = CREATOR_TYPE_GLYPHS[t1 as string];
+    halfGlyph2 = t2 && t2 !== t1 ? CREATOR_TYPE_GLYPHS[t2 as string] : undefined;
   } else if (card.kind === "creator") {
     const dt = card.displayType;
     c1 = c2 = dt ? (CREATOR_TYPE_COLORS[dt as keyof typeof CREATOR_TYPE_COLORS] ?? ELEMENT_COLORS[card.element!]) : ELEMENT_COLORS[card.element!];
@@ -47,6 +51,7 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
   }
 
   const art = card.source?.art_url ?? artGlyph;
+  const displayName = displayCardName(card.name);
 
   const ring =
     highlight === "selected" ? "rgba(255,255,255,0.95)"
@@ -61,8 +66,8 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
       onDragEnd={onDragEnd}
       className={`group relative inline-block ${(onClick || draggable) ? "cursor-pointer transition-transform hover:scale-105" : ""} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
       style={{ width: size, height: h }}
-      aria-label={card.name}
-      title={card.name}
+      aria-label={displayName}
+      title={displayName}
     >
       <svg
         viewBox="0 0 1 1"
@@ -84,6 +89,32 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
         )}
         <polygon points={hexPoints} fill="none" stroke={ring} strokeWidth={highlight ? 0.06 : 0.04} vectorEffect="non-scaling-stroke" />
       </svg>
+      {/* Rotating glyph layer — keeps each glyph over its colour half */}
+      {(halfGlyph1 || halfGlyph2) && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            transform: rotation ? `rotate(${rotation * 60}deg)` : undefined,
+            transformOrigin: "center",
+            transition: "transform 220ms ease",
+          }}
+        >
+          {halfGlyph1 && (
+            <TypeGlyphMark
+              glyph={halfGlyph1}
+              size={size * 0.24}
+              style={{ position: "absolute", top: "16%", left: "8%" }}
+            />
+          )}
+          {halfGlyph2 && (
+            <TypeGlyphMark
+              glyph={halfGlyph2}
+              size={size * 0.24}
+              style={{ position: "absolute", bottom: "20%", right: "8%" }}
+            />
+          )}
+        </div>
+      )}
       {art && isCreatorLike ? (
         <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-lg">
           <image
@@ -112,7 +143,7 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
             className="font-normal uppercase tracking-wide leading-none text-white truncate max-w-full"
             style={{ fontFamily: '"Questrial", sans-serif', fontSize: size * 0.1, textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
           >
-            {card.name}
+            {displayName}
           </span>
           <div className="flex items-center gap-1 flex-wrap justify-center">
             {resolveTypeChips(card).map((chip, i) => (

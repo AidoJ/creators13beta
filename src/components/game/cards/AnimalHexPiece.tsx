@@ -1,4 +1,6 @@
 import { CREATOR_TYPE_COLORS, type AnimalCard } from "@/data/cards";
+import { glyphForType } from "@/lib/game/glyphs";
+import { TypeGlyphMark } from "./TypeGlyphMark";
 
 interface Props {
   card: AnimalCard;
@@ -62,6 +64,22 @@ export function AnimalHexPiece({ card, imageSrc, size = 140 }: Props) {
           strokeWidth="0.01"
         />
       </svg>
+
+      {/* White type-glyph watermarks on each hex half */}
+      {glyphForType(t1) && (
+        <TypeGlyphMark
+          glyph={glyphForType(t1)!}
+          size={size * 0.24}
+          style={{ position: "absolute", top: "18%", left: "8%", zIndex: 5 }}
+        />
+      )}
+      {t2 !== t1 && glyphForType(t2) && (
+        <TypeGlyphMark
+          glyph={glyphForType(t2)!}
+          size={size * 0.24}
+          style={{ position: "absolute", bottom: "22%", right: "8%", zIndex: 5 }}
+        />
+      )}
 
       {/* Illustration */}
       {imageSrc && (
