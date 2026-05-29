@@ -25,13 +25,6 @@ import { CREATORS_NEEDED, HAND_LIMIT, type DeckCard, type MatchState } from "./t
 export function botStep(state: MatchState): MatchState {
   if (state.finished) return state;
 
-  // If the bot itself is the target of a pending disaster, auto-activate the
-  // Hive (always optimal — saving it has no upside vs losing animals now).
-  if (state.pendingDisaster && state.pendingDisaster.victimId === state.players[state.turn === 0 ? 1 : 0]?.id) {
-    // No-op: the attacker is the bot's turn; this branch covers when the bot
-    // is the victim of a human attack handled elsewhere.
-  }
-
   const me = state.players[state.turn];
 
   if (state.phase === "draw") {
