@@ -26,14 +26,17 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
   const halfA = "0.5,0 1,0.25 0,0.75 0,0.25";
   const halfB = "1,0.25 1,0.75 0.5,1 0,0.75";
   const isCreatorLike = card.kind === "creator" || card.kind === "sky_creator";
-
   let c1 = "#444";
   let c2 = "#444";
   let artGlyph: string | undefined;
+  let halfGlyph1: string | undefined;
+  let halfGlyph2: string | undefined;
   if (card.kind === "animal" || card.kind === "sky_creature") {
     const [t1, t2] = card.types ?? [];
     c1 = CREATOR_TYPE_COLORS[t1 as keyof typeof CREATOR_TYPE_COLORS] ?? "#444";
     c2 = CREATOR_TYPE_COLORS[t2 as keyof typeof CREATOR_TYPE_COLORS] ?? c1;
+    halfGlyph1 = CREATOR_TYPE_GLYPHS[t1 as string];
+    halfGlyph2 = t2 && t2 !== t1 ? CREATOR_TYPE_GLYPHS[t2 as string] : undefined;
   } else if (card.kind === "creator") {
     const dt = card.displayType;
     c1 = c2 = dt ? (CREATOR_TYPE_COLORS[dt as keyof typeof CREATOR_TYPE_COLORS] ?? ELEMENT_COLORS[card.element!]) : ELEMENT_COLORS[card.element!];
@@ -48,6 +51,7 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
   }
 
   const art = card.source?.art_url ?? artGlyph;
+  const displayName = displayCardName(card.name);
 
   const ring =
     highlight === "selected" ? "rgba(255,255,255,0.95)"
