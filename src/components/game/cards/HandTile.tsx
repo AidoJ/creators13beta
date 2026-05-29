@@ -25,6 +25,8 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
   const { c1, c2, chips, badge, artGlyph } = resolveColours(card);
   const art = card.source?.art_url ?? artGlyph;
   const isCreatorLike = card.kind === "creator" || card.kind === "sky_creator";
+  const isTwoTone = card.kind === "animal" || card.kind === "sky_creature";
+  const name = displayCardName(card.name);
 
   const descriptor = card.source?.descriptor?.trim() || defaultDescriptor(card);
 
