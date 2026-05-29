@@ -19,7 +19,6 @@ import {
   placeOnEcosystem,
   ecosystemSummary,
   playDisaster,
-  resolveDisaster,
 } from "./engine";
 import { CREATORS_NEEDED, HAND_LIMIT, type DeckCard, type MatchState } from "./types";
 
