@@ -82,20 +82,20 @@ export interface CreateMatchOptions {
 
 export function createMatch(opts: CreateMatchOptions): MatchState {
   const rand = opts.rand ?? Math.random;
-  let deck = shuffle(opts.deck, rand);
+  const deck = shuffle(opts.deck, rand);
 
-  const players: PlayerState[] = opts.players.map((p) => {
-    const hand = deck.slice(0, HAND_SIZE);
-    deck = deck.slice(HAND_SIZE);
-    return {
-      id: p.id,
-      name: p.name,
-      hand,
-      ecosystem: { placed: new Map() },
-      hiveShield: false,
-      score: 0,
-    };
-  });
+  // Players start with EMPTY hands. On each player's first turn they trigger
+  // the opening pick-up of 5 cards (drawInitialFive). After that the normal
+  // 2-draw-2-play cadence applies.
+  const players: PlayerState[] = opts.players.map((p) => ({
+    id: p.id,
+    name: p.name,
+    hand: [],
+    ecosystem: { placed: new Map() },
+    hiveShield: false,
+    score: 0,
+    firstPickupDone: false,
+  }));
 
   return {
     players,
@@ -108,7 +108,30 @@ export function createMatch(opts: CreateMatchOptions): MatchState {
     turnNumber: 1,
     finished: false,
     winnerId: null,
+    pendingDisaster: null,
   };
+}
+
+/** Opening pick-up: deal 5 cards in one go on a player's very first turn. */
+export function drawInitialFive(state: MatchState): MatchState {
+  if (state.finished) return state;
+  if (state.phase !== "draw") throw new Error("Not in pick-up phase");
+  const me = state.players[state.turn];
+  if (me.firstPickupDone) throw new Error("Opening pick-up already done");
+  if (state.draw.length === 0) throw new Error("Draw pile empty");
+  const next = cloneState(state);
+  const player = next.players[next.turn];
+  const dealCount = Math.min(HAND_SIZE, next.draw.length);
+  for (let i = 0; i < dealCount; i++) {
+    const card = next.draw.shift()!;
+    player.hand.push(card);
+    if (card.kind === "golden_hive" && !card.spent) player.hiveShield = true;
+  }
+  player.firstPickupDone = true;
+  next.drawnThisTurn = 2; // force advance to place phase
+  next.phase = "place";
+  next.lastEvent = `${player.name} drew their opening ${dealCount} cards`;
+  return next;
 }
 
 /* --------------------------- pick-up phase --------------------------- */
