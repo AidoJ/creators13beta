@@ -66,8 +66,8 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
       onDragEnd={onDragEnd}
       className={`group relative inline-block ${(onClick || draggable) ? "cursor-pointer transition-transform hover:scale-105" : ""} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
       style={{ width: size, height: h }}
-      aria-label={card.name}
-      title={card.name}
+      aria-label={displayName}
+      title={displayName}
     >
       <svg
         viewBox="0 0 1 1"
