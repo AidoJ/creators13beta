@@ -20,6 +20,10 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
   // Track per-card animation phase: 'dropping' | 'flipping' | undefined (done).
   const phaseRef = useRef<Map<string, "dropping" | "flipping">>(new Map());
 
+  // Per-card timers so we never cancel another card's in-flight animation
+  // when `hand` changes (e.g. drawing 2 new cards while older ones still settle).
+  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>[]>>(new Map());
+
   useEffect(() => {
     const newCards: string[] = [];
     for (const c of hand) {
@@ -32,33 +36,49 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
     for (const uid of Array.from(revealedRef.current)) {
       if (!currentUids.has(uid)) revealedRef.current.delete(uid);
     }
+    for (const uid of Array.from(phaseRef.current.keys())) {
+      if (!currentUids.has(uid)) {
+        phaseRef.current.delete(uid);
+        timersRef.current.get(uid)?.forEach(clearTimeout);
+        timersRef.current.delete(uid);
+      }
+    }
 
     if (newCards.length === 0) return;
 
-    const timers: ReturnType<typeof setTimeout>[] = [];
     newCards.forEach((uid, idx) => {
       phaseRef.current.set(uid, "dropping");
-      // Drop-in phase: ~500ms per card, staggered by 140ms
       const stagger = idx * 140;
-      timers.push(
+      const ts: ReturnType<typeof setTimeout>[] = [];
+      ts.push(
         setTimeout(() => {
           phaseRef.current.set(uid, "flipping");
           force((n) => n + 1);
         }, stagger + 500),
       );
-      timers.push(
+      ts.push(
         setTimeout(() => {
           phaseRef.current.delete(uid);
           revealedRef.current.add(uid);
+          timersRef.current.delete(uid);
           force((n) => n + 1);
         }, stagger + 500 + 1500),
       );
+      timersRef.current.set(uid, ts);
     });
     force((n) => n + 1);
-    return () => {
-      timers.forEach(clearTimeout);
-    };
+    // NOTE: intentionally no cleanup that clears timers — doing so would
+    // orphan cards mid-animation when `hand` updates (next draw).
   }, [hand]);
+
+  // Clear all timers only on unmount.
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach((ts) => ts.forEach(clearTimeout));
+      timersRef.current.clear();
+    };
+  }, []);
+
 
   return (
     <div className="border-t border-border/40 bg-card/40 backdrop-blur p-3">
