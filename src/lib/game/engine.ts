@@ -140,7 +140,11 @@ export function pickFromDraw(state: MatchState): MatchState {
   if (state.finished) return state;
   if (state.phase !== "draw") throw new Error("Not in pick-up phase");
   if (state.draw.length === 0) throw new Error("Draw pile empty");
-  if (state.players[state.turn].hand.length >= HAND_LIMIT) {
+  const me = state.players[state.turn];
+  if (!me.firstPickupDone) {
+    throw new Error("First take your 5 opening cards.");
+  }
+  if (me.hand.length >= HAND_LIMIT) {
     throw new Error(`Hand limit reached (${HAND_LIMIT}). Play or discard cards before drawing more.`);
   }
   const next = cloneState(state);
@@ -149,7 +153,7 @@ export function pickFromDraw(state: MatchState): MatchState {
   next.drawnThisTurn += 1;
   if (next.drawnThisTurn >= 2) next.phase = "place";
   next.lastEvent = `${next.players[next.turn].name} drew a card`;
-  if (card.kind === "golden_hive") next.players[next.turn].hiveShield = true;
+  if (card.kind === "golden_hive" && !card.spent) next.players[next.turn].hiveShield = true;
   return next;
 }
 
@@ -157,8 +161,16 @@ export function pickFromUsed(state: MatchState): MatchState {
   if (state.finished) return state;
   if (state.phase !== "draw") throw new Error("Not in pick-up phase");
   if (state.used.length === 0) throw new Error("Used pile empty");
-  if (state.players[state.turn].hand.length >= HAND_LIMIT) {
+  const me = state.players[state.turn];
+  if (!me.firstPickupDone) {
+    throw new Error("First take your 5 opening cards.");
+  }
+  if (me.hand.length >= HAND_LIMIT) {
     throw new Error(`Hand limit reached (${HAND_LIMIT}). Play or discard cards before drawing more.`);
+  }
+  const top = state.used[state.used.length - 1];
+  if (top.kind === "golden_hive" && top.spent) {
+    throw new Error("That Golden Hive has been spent — it can't be picked up.");
   }
   const next = cloneState(state);
   const card = next.used.pop()!;
@@ -166,7 +178,7 @@ export function pickFromUsed(state: MatchState): MatchState {
   next.drawnThisTurn += 1;
   if (next.drawnThisTurn >= 2) next.phase = "place";
   next.lastEvent = `${next.players[next.turn].name} took ${card.name} from the used pile`;
-  if (card.kind === "golden_hive") next.players[next.turn].hiveShield = true;
+  if (card.kind === "golden_hive" && !card.spent) next.players[next.turn].hiveShield = true;
   return next;
 }
 
