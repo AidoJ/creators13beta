@@ -176,10 +176,17 @@ export function animalLinksToCreator(animal: DeckCard, creator: DeckCard): boole
   if (animal.kind === "golden_body") return true; // wildcard
   if (creator.kind === "sky_creator") return true; // wildcard
   if (creator.kind !== "creator") return false;
+  // Primary rule: animal links if its Creator Types include this Creator's type.
+  const creatorType = creator.displayType;
+  const animalTypes = (animal.types ?? []) as string[];
+  if (creatorType && animalTypes.some((t) => t?.toLowerCase() === creatorType.toLowerCase())) {
+    return true;
+  }
+  // Fallback: legacy element match (kept for sky_creatures / older data).
   const el = creator.element!;
-  // Sky creatures count for any element they share via their types
-  return (animal.types ?? []).some((t) => TYPE_TO_ELEMENT[t] === el);
+  return animalTypes.some((t) => TYPE_TO_ELEMENT[t] === el);
 }
+
 
 /** Find the creator card placed in this ecosystem that an animal would link to (if any). */
 export function findLinkedCreator(
