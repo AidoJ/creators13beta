@@ -124,7 +124,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                   className="font-normal uppercase tracking-wide leading-none text-white truncate max-w-full"
                   style={{ fontFamily: '"Questrial", sans-serif', fontSize: size * 0.1, textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
                 >
-                  {card.name}
+                  {name}
                 </span>
                 <div className="flex items-center gap-1 flex-wrap justify-center">
                   {chips.map((chip, i) => (
