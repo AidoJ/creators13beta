@@ -39,6 +39,9 @@ export interface DeckCard {
   displayType?: CreatorTypeName;
   /** True if this is a mythical / golden / sky variant (for badge styling). */
   special?: boolean;
+  /** Marks a Golden Hive that has already been used to block a disaster —
+   *  it sits on the used pile but can never be picked up again. */
+  spent?: boolean;
 }
 
 export interface PlacedCard {
@@ -64,9 +67,21 @@ export interface PlayerState {
   hiveShield: boolean;
   /** Cumulative gameplay score for end-of-match display. */
   score: number;
+  /** True once the player has done their opening 5-card pick-up. Before then
+   *  the only legal pick-up action is `drawInitialFive`. */
+  firstPickupDone?: boolean;
 }
 
 export type TurnPhase = "draw" | "place";
+
+/** A disaster that is waiting for a victim's Golden Hive decision before it
+ *  resolves. While this is set the match is paused for everyone — only the
+ *  victim can act. */
+export interface PendingDisaster {
+  attackerId: string;
+  victimId: string;
+  creator: DeckCard;
+}
 
 export interface MatchState {
   players: PlayerState[];
@@ -83,6 +98,8 @@ export interface MatchState {
   winnerId: string | null;
   /** Most recent rule-relevant event, for the UI to surface. */
   lastEvent?: string;
+  /** Set while a disaster is paused waiting for a Hive decision. */
+  pendingDisaster?: PendingDisaster | null;
 }
 
 export const HAND_SIZE = 5;

@@ -27,7 +27,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
   const art = card.source?.art_url ?? artGlyph;
   const isCreatorLike = card.kind === "creator" || card.kind === "sky_creator";
   const isTwoTone = card.kind === "animal" || card.kind === "sky_creature";
-  const name = displayCardName(card.name);
+  const name = card.name;
 
   const descriptor = card.source?.descriptor?.trim() || defaultDescriptor(card);
 
@@ -184,18 +184,8 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
               ))}
             </div>
           </div>
-          {(() => {
-            const artist = getCardCreditArtist(card.source?.slug);
-            if (!artist) return null;
-            return (
-              <div
-                className="px-1 pb-1 text-center leading-tight text-neutral-500/90 truncate"
-                style={{ fontFamily: '"Questrial", sans-serif', fontSize: Math.max(7, size * 0.055) }}
-              >
-                with thanks to Pixabay Artist — {artist}
-              </div>
-            );
-          })()}
+          {/* Artist credit intentionally NOT shown on hand tiles — it appears
+              only in the zoomed-in detail popup. */}
         </div>
 
 
@@ -238,18 +228,8 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
           >
             {descriptor}
           </div>
-          {(() => {
-            const artist = getCardCreditArtist(card.source?.slug);
-            if (!artist) return null;
-            return (
-              <div
-                className="px-2 pb-2 text-center text-[10px] leading-tight text-neutral-500/90"
-                style={{ fontFamily: '"Questrial", sans-serif' }}
-              >
-                with thanks to Pixabay Artist — {artist}
-              </div>
-            );
-          })()}
+          {/* Artist credit shown only in the zoomed-in popup, not on the
+              descriptor side of the hand tile. */}
         </div>
       </div>
       {zoomed && typeof document !== "undefined" &&

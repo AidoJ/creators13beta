@@ -33,9 +33,13 @@ export function deserializeMatch(raw: SerializedMatchState): MatchState {
     ...raw,
     players: raw.players.map((p) => ({
       ...p,
+      // Older matches saved before opening-5 mechanic had hands pre-dealt;
+      // treat them as having completed their opening pick-up.
+      firstPickupDone: p.firstPickupDone ?? true,
       ecosystem: {
         placed: new Map<string, PlacedCard>(p.ecosystem.placed),
       } as Ecosystem,
     })),
+    pendingDisaster: raw.pendingDisaster ?? null,
   };
 }

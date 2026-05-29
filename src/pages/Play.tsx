@@ -11,12 +11,14 @@ import { fetchAllCards, type GameCard } from "@/lib/gameCards";
 import {
   buildDeck,
   createMatch,
+  drawInitialFive,
   pickFromDraw,
   pickFromUsed,
   placeOnEcosystem,
   discardCard,
   playDisaster,
   playSkyCreatureSteal,
+  resolveDisaster,
   botStep,
   rotateMyPlacedHex,
   moveMyPlacedHex,
@@ -223,6 +225,24 @@ export default function Play() {
   useEffect(() => {
     if (!state || state.finished) return;
     if (isPvp) return;
+    // If a disaster is pending against the bot, auto-activate its hive
+    // (always optimal — saves placed animals at the cost of one hive).
+    if (state.pendingDisaster && state.pendingDisaster.victimId === "bot") {
+      const t = setTimeout(() => {
+        try {
+          setState((s) => {
+            if (!s) return s;
+            const next = resolveDisaster(s, true);
+            schedulePersist(next);
+            return next;
+          });
+        } catch {
+          /* skip */
+        }
+      }, 600);
+      return () => clearTimeout(t);
+    }
+    if (state.pendingDisaster) return; // waiting on human player
     if (state.players[state.turn].id !== "bot") return;
     const t = setTimeout(() => {
       try {
@@ -306,6 +326,13 @@ export default function Play() {
   function onPickUsed() { if (state) guarded(() => pickFromUsed(state)); }
   function onDrawOne() {
     if (state) guarded(() => pickFromDraw(state));
+  }
+  function onDrawOpening() {
+    if (state) guarded(() => drawInitialFive(state));
+  }
+  function onResolveDisaster(useHive: boolean) {
+    if (!state) return;
+    guarded(() => resolveDisaster(state, useHive));
   }
   function onPlace(pos: Axial, draggedUid?: string) {
     if (!state) return;
@@ -505,7 +532,8 @@ export default function Play() {
     && selectedCard.kind === "sky_creature";
 
   const handAtLimit = selfPlayer.hand.length >= 10; // HAND_LIMIT
-  const canDrawOne = isYourTurn && state.phase === "draw" && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2 && !handAtLimit;
+  const needsOpeningDraw = !selfPlayer.firstPickupDone && state.phase === "draw" && isYourTurn;
+  const canDrawOne = isYourTurn && state.phase === "draw" && selfPlayer.firstPickupDone && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2 && !handAtLimit;
 
   const opponentBlock = (
     <Card className="p-3">
@@ -591,18 +619,29 @@ export default function Play() {
         >
           ↶ Undo last move {undoCount > 0 ? `(${undoCount})` : ""}
         </Button>
-        <Button
-          size="sm"
-          disabled={!canDrawOne || state.draw.length === 0}
-          onClick={onDrawOne}
-          className="h-auto py-2.5 px-2 whitespace-normal text-xs leading-tight text-center font-semibold"
-        >
-          Draw 1 from Draw Pile ({state.draw.length} left) — {2 - state.drawnThisTurn} pick{2 - state.drawnThisTurn === 1 ? "" : "s"} left{handAtLimit ? " — hand full (10 max)" : ""}
-        </Button>
+        {needsOpeningDraw ? (
+          <Button
+            size="sm"
+            disabled={state.draw.length === 0}
+            onClick={onDrawOpening}
+            className="h-auto py-2.5 px-2 whitespace-normal text-xs leading-tight text-center font-semibold"
+          >
+            Draw your 5 opening cards
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            disabled={!canDrawOne || state.draw.length === 0}
+            onClick={onDrawOne}
+            className="h-auto py-2.5 px-2 whitespace-normal text-xs leading-tight text-center font-semibold"
+          >
+            Draw 1 from Draw Pile ({state.draw.length} left) — {2 - state.drawnThisTurn} pick{2 - state.drawnThisTurn === 1 ? "" : "s"} left{handAtLimit ? " — hand full (10 max)" : ""}
+          </Button>
+        )}
         <Button
           size="sm"
           variant="secondary"
-          disabled={!isYourTurn || state.phase !== "draw"}
+          disabled={!isYourTurn || state.phase !== "draw" || needsOpeningDraw}
           onClick={onSkipDraws}
           className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center"
         >
@@ -809,6 +848,32 @@ export default function Play() {
       />
 
       <MatchOverDialog state={state} onPlayAgain={onNewGame} />
+
+      {/* Golden Hive prompt — shown to the targeted victim when an opponent
+          plays a Disaster while you hold an unspent Hive. */}
+      {state.pendingDisaster && state.pendingDisaster.victimId === selfSlot && (
+        <Dialog open>
+          <DialogContent className="max-w-md" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+            <DialogHeader>
+              <DialogTitle className="font-display text-xl">
+                Use your Golden Hive Card?
+              </DialogTitle>
+              <DialogDescription>
+                {state.players.find((p) => p.id === state.pendingDisaster!.attackerId)?.name ?? "Opponent"} just played a{" "}
+                <strong>{state.pendingDisaster.creator.name} Disaster</strong>. Activating your Hive blocks it from stealing any of your animals. The Hive will be placed on the used pile and cannot be picked up again.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-2 mt-2 flex-wrap">
+              <Button variant="outline" onClick={() => onResolveDisaster(false)}>
+                Save for Later
+              </Button>
+              <Button onClick={() => onResolveDisaster(true)}>
+                Activate Now
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
       <TutorialOverlay />
       <RuleBookSheet open={ruleBookOpen} onOpenChange={setRuleBookOpen} />
       <OpponentPanel open={opponentPanelOpen} onClose={() => setOpponentPanelOpen(false)} player={opponent} />
@@ -879,6 +944,7 @@ function persistLocalMatch(state: MatchState) {
       turnNumber: state.turnNumber,
       finished: state.finished,
       winnerId: state.winnerId,
+      pendingDisaster: state.pendingDisaster ?? null,
     };
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
   } catch {
@@ -897,8 +963,10 @@ function restoreLocalMatch(_cards: GameCard[], currentPlayerName?: string): Matc
       ...j,
       players: j.players.map((p: any) => ({
         ...p,
+        firstPickupDone: p.firstPickupDone ?? true,
         ecosystem: { placed: new Map(p.ecosystem.placed) },
       })),
+      pendingDisaster: j.pendingDisaster ?? null,
     } as MatchState;
     if (currentPlayerName) {
       restored.players = restored.players.map((p) =>
