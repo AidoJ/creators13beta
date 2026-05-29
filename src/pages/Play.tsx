@@ -963,8 +963,10 @@ function restoreLocalMatch(_cards: GameCard[], currentPlayerName?: string): Matc
       ...j,
       players: j.players.map((p: any) => ({
         ...p,
+        firstPickupDone: p.firstPickupDone ?? true,
         ecosystem: { placed: new Map(p.ecosystem.placed) },
       })),
+      pendingDisaster: j.pendingDisaster ?? null,
     } as MatchState;
     if (currentPlayerName) {
       restored.players = restored.players.map((p) =>
