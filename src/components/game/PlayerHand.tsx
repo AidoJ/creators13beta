@@ -51,7 +51,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
           phaseRef.current.delete(uid);
           revealedRef.current.add(uid);
           force((n) => n + 1);
-        }, stagger + 500 + 1000),
+        }, stagger + 500 + 1500),
       );
     });
     force((n) => n + 1);
@@ -129,7 +129,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                     className="relative w-full h-full"
                     style={{
                       transformStyle: "preserve-3d",
-                      transition: isFlipping ? "transform 1000ms cubic-bezier(0.4, 0.2, 0.2, 1)" : undefined,
+                      transition: isFlipping ? "transform 1500ms cubic-bezier(0.4, 0.2, 0.2, 1)" : undefined,
                       transform: isFlipping ? "rotateY(180deg)" : "rotateY(0deg)",
                     }}
                   >
