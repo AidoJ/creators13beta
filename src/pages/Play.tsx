@@ -641,7 +641,7 @@ export default function Play() {
         <Button
           size="sm"
           variant="secondary"
-          disabled={!isYourTurn || state.phase !== "draw"}
+          disabled={!isYourTurn || state.phase !== "draw" || needsOpeningDraw}
           onClick={onSkipDraws}
           className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center"
         >
