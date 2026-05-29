@@ -228,18 +228,8 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
           >
             {descriptor}
           </div>
-          {(() => {
-            const artist = getCardCreditArtist(card.source?.slug);
-            if (!artist) return null;
-            return (
-              <div
-                className="px-2 pb-2 text-center text-[10px] leading-tight text-neutral-500/90"
-                style={{ fontFamily: '"Questrial", sans-serif' }}
-              >
-                with thanks to Pixabay Artist — {artist}
-              </div>
-            );
-          })()}
+          {/* Artist credit shown only in the zoomed-in popup, not on the
+              descriptor side of the hand tile. */}
         </div>
       </div>
       {zoomed && typeof document !== "undefined" &&
