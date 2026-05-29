@@ -110,7 +110,7 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
         <div className="bg-black/80 backdrop-blur-sm rounded-lg px-2 py-1.5 flex flex-col items-center gap-1 max-w-[90%]">
           <span
             className="font-normal uppercase tracking-wide leading-none text-white truncate max-w-full"
-            style={{ fontFamily: '"Lilita One", sans-serif', fontSize: size * 0.1, textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
+            style={{ fontFamily: '"Questrial", sans-serif', fontSize: size * 0.1, textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
           >
             {card.name}
           </span>

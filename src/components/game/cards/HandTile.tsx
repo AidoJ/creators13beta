@@ -105,7 +105,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
               <div className="bg-black/80 backdrop-blur-sm rounded-lg px-2 py-1.5 flex flex-col items-center gap-1 max-w-[90%]">
                 <span
                   className="font-normal uppercase tracking-wide leading-none text-white truncate max-w-full"
-                  style={{ fontFamily: '"Lilita One", sans-serif', fontSize: size * 0.1, textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
+                  style={{ fontFamily: '"Questrial", sans-serif', fontSize: size * 0.1, textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
                 >
                   {card.name}
                 </span>
@@ -132,7 +132,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
           <div className="relative z-10 bg-white px-1.5 py-1 text-center flex-1 flex flex-col justify-center">
             <div
               className="font-normal uppercase tracking-wide leading-none truncate"
-              style={{ fontFamily: '"Lilita One", sans-serif', fontSize: size * 0.11, color: "#000" }}
+              style={{ fontFamily: '"Questrial", sans-serif', fontSize: size * 0.11, color: "#000" }}
             >
               {card.name}
             </div>
@@ -208,7 +208,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
             )}
             <div
               className="font-normal uppercase tracking-wide leading-none truncate text-white"
-              style={{ fontFamily: '"Lilita One", sans-serif', fontSize: size * 0.1, textShadow: "0 1px 2px rgba(0,0,0,0.4)" }}
+              style={{ fontFamily: '"Questrial", sans-serif', fontSize: size * 0.1, textShadow: "0 1px 2px rgba(0,0,0,0.4)" }}
             >
               {card.name}
             </div>
@@ -280,7 +280,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
               <div className="md:w-[340px] flex flex-col bg-white text-black p-5 md:p-6 overflow-y-auto">
                 <div
                   className="font-normal uppercase tracking-wide leading-none mb-3"
-                  style={{ fontFamily: '"Lilita One", sans-serif', fontSize: 28 }}
+                  style={{ fontFamily: '"Questrial", sans-serif', fontSize: 28 }}
                 >
                   {card.name}
                 </div>
