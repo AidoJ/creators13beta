@@ -944,6 +944,7 @@ function persistLocalMatch(state: MatchState) {
       turnNumber: state.turnNumber,
       finished: state.finished,
       winnerId: state.winnerId,
+      pendingDisaster: state.pendingDisaster ?? null,
     };
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
   } catch {
