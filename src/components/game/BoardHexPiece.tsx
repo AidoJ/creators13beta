@@ -1,6 +1,6 @@
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "@/lib/game/elements";
-import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType } from "@/lib/game/glyphs";
+import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType, glyphMarkForType } from "@/lib/game/glyphs";
 import type { DeckCard } from "@/lib/game/types";
 import { TypeGlyphMark, displayCardName } from "./cards/TypeGlyphMark";
 
@@ -35,8 +35,8 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
     const [t1, t2] = card.types ?? [];
     c1 = CREATOR_TYPE_COLORS[t1 as keyof typeof CREATOR_TYPE_COLORS] ?? "#444";
     c2 = CREATOR_TYPE_COLORS[t2 as keyof typeof CREATOR_TYPE_COLORS] ?? c1;
-    halfGlyph1 = CREATOR_TYPE_GLYPHS[t1 as string];
-    halfGlyph2 = t2 && t2 !== t1 ? CREATOR_TYPE_GLYPHS[t2 as string] : undefined;
+    halfGlyph1 = glyphMarkForType(t1 as string);
+    halfGlyph2 = t2 && t2 !== t1 ? glyphMarkForType(t2 as string) : undefined;
   } else if (card.kind === "creator") {
     const dt = card.displayType;
     c1 = c2 = dt ? (CREATOR_TYPE_COLORS[dt as keyof typeof CREATOR_TYPE_COLORS] ?? ELEMENT_COLORS[card.element!]) : ELEMENT_COLORS[card.element!];
