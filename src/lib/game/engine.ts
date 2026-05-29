@@ -444,9 +444,17 @@ export function ecosystemSummary(eco: Ecosystem) {
   let creators = 0;
   let animals = 0;
   for (const pc of eco.placed.values()) {
+    const k = pc.card.kind;
+    if (k === "creator" || k === "sky_creator") creators += 1;
+    else if (k === "animal" || k === "sky_creature" || k === "golden_body") animals += 1;
+  }
+  return { creators, animals, total: eco.placed.size };
+}
+
 /** Can we pick exactly ANIMALS_PER_CREATOR animals per creator from the placed
  *  animal pool such that every chosen animal links to its assigned creator?
  *  Extra animals on the board beyond 3 × creators are allowed and simply unused. */
+
 function canAssignAnimalsToCreators(
   creators: DeckCard[],
   animals: DeckCard[],
