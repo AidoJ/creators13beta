@@ -3,7 +3,8 @@ import { Info, X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "@/lib/game/elements";
-import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType } from "@/lib/game/glyphs";
+import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType, glyphMarkForType } from "@/lib/game/glyphs";
+
 import type { DeckCard } from "@/lib/game/types";
 import { getCardCreditArtist } from "@/lib/cardCredits";
 import { TypeGlyphMark, displayCardName } from "./TypeGlyphMark";
@@ -83,20 +84,21 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                 )}
               </svg>
             )}
-            {isTwoTone && chips[0]?.glyph && (
+            {isTwoTone && glyphMarkForType(chips[0]?.label) && (
               <TypeGlyphMark
-                glyph={chips[0].glyph}
+                glyph={glyphMarkForType(chips[0].label)!}
                 size={size * 0.26}
                 style={{ position: "absolute", top: size * 0.04, left: size * 0.04, zIndex: 15 }}
               />
             )}
-            {isTwoTone && chips[1]?.glyph && (
+            {isTwoTone && glyphMarkForType(chips[1]?.label) && (
               <TypeGlyphMark
-                glyph={chips[1].glyph}
+                glyph={glyphMarkForType(chips[1].label)!}
                 size={size * 0.26}
                 style={{ position: "absolute", bottom: size * 0.04, right: size * 0.04, zIndex: 15 }}
               />
             )}
+
             {badge && (
               <div className="absolute top-1.5 right-1.5 z-20 text-[8px] font-bold uppercase tracking-wider bg-black/55 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm">
                 {badge}
@@ -283,20 +285,21 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                     <polygon points="0,0 1,0 1,1 0,1" fill={c1} />
                   )}
                 </svg>
-                {isTwoTone && chips[0]?.glyph && (
+                {isTwoTone && glyphMarkForType(chips[0]?.label) && (
                   <TypeGlyphMark
-                    glyph={chips[0].glyph}
+                    glyph={glyphMarkForType(chips[0].label)!}
                     size={64}
                     style={{ position: "absolute", top: 16, left: 16, zIndex: 5 }}
                   />
                 )}
-                {isTwoTone && chips[1]?.glyph && (
+                {isTwoTone && glyphMarkForType(chips[1]?.label) && (
                   <TypeGlyphMark
-                    glyph={chips[1].glyph}
+                    glyph={glyphMarkForType(chips[1].label)!}
                     size={64}
                     style={{ position: "absolute", bottom: 16, right: 16, zIndex: 5 }}
                   />
                 )}
+
                 {art && (
                   <div className="absolute inset-0 z-10 flex items-center justify-center p-6">
                     <img

@@ -1,5 +1,5 @@
 import { CREATOR_TYPE_COLORS, type AnimalCard } from "@/data/cards";
-import { glyphForType } from "@/lib/game/glyphs";
+import { glyphMarkForType } from "@/lib/game/glyphs";
 import { TypeGlyphMark } from "./TypeGlyphMark";
 
 interface Props {
@@ -38,16 +38,16 @@ export function AnimalCardTile({ card, imageSrc, size = 220 }: Props) {
           <polygon points="1,0 1,1 0,1" fill={c2} />
         </svg>
         {/* White type-glyph watermarks on each colour half */}
-        {glyphForType(t1) && (
+        {glyphMarkForType(t1) && (
           <TypeGlyphMark
-            glyph={glyphForType(t1)!}
+            glyph={glyphMarkForType(t1)!}
             size={size * 0.26}
             style={{ position: "absolute", top: size * 0.04, left: size * 0.04, zIndex: 5 }}
           />
         )}
-        {t2 !== t1 && glyphForType(t2) && (
+        {t2 !== t1 && glyphMarkForType(t2) && (
           <TypeGlyphMark
-            glyph={glyphForType(t2)!}
+            glyph={glyphMarkForType(t2)!}
             size={size * 0.26}
             style={{ position: "absolute", bottom: size * 0.04, right: size * 0.04, zIndex: 5 }}
           />
