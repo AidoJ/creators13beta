@@ -313,7 +313,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                   className="font-normal uppercase tracking-wide leading-none mb-3"
                   style={{ fontFamily: '"Questrial", sans-serif', fontSize: 28 }}
                 >
-                  {card.name}
+                  {name}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap mb-4">
                   {chips.map((chip, i) => (
