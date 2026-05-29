@@ -89,6 +89,32 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
         )}
         <polygon points={hexPoints} fill="none" stroke={ring} strokeWidth={highlight ? 0.06 : 0.04} vectorEffect="non-scaling-stroke" />
       </svg>
+      {/* Rotating glyph layer — keeps each glyph over its colour half */}
+      {(halfGlyph1 || halfGlyph2) && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            transform: rotation ? `rotate(${rotation * 60}deg)` : undefined,
+            transformOrigin: "center",
+            transition: "transform 220ms ease",
+          }}
+        >
+          {halfGlyph1 && (
+            <TypeGlyphMark
+              glyph={halfGlyph1}
+              size={size * 0.24}
+              style={{ position: "absolute", top: "16%", left: "8%" }}
+            />
+          )}
+          {halfGlyph2 && (
+            <TypeGlyphMark
+              glyph={halfGlyph2}
+              size={size * 0.24}
+              style={{ position: "absolute", bottom: "20%", right: "8%" }}
+            />
+          )}
+        </div>
+      )}
       {art && isCreatorLike ? (
         <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-lg">
           <image
