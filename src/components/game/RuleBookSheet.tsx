@@ -13,7 +13,7 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
         <SheetHeader className="px-5 pt-5 pb-3 border-b border-border/60">
           <SheetTitle className="font-display text-xl">Rule Book</SheetTitle>
           <SheetDescription>
-            BCreators Card Game — build your hue-man ecosystem.
+            13 Creators Card Game — build your hue-man ecosystem.
           </SheetDescription>
         </SheetHeader>
 
