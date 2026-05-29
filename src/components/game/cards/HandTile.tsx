@@ -283,8 +283,22 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                     <polygon points="0,0 1,0 1,1 0,1" fill={c1} />
                   )}
                 </svg>
+                {isTwoTone && chips[0]?.glyph && (
+                  <TypeGlyphMark
+                    glyph={chips[0].glyph}
+                    size={64}
+                    style={{ position: "absolute", top: 16, left: 16, zIndex: 5 }}
+                  />
+                )}
+                {isTwoTone && chips[1]?.glyph && (
+                  <TypeGlyphMark
+                    glyph={chips[1].glyph}
+                    size={64}
+                    style={{ position: "absolute", bottom: 16, right: 16, zIndex: 5 }}
+                  />
+                )}
                 {art && (
-                  <div className="absolute inset-0 flex items-center justify-center p-6">
+                  <div className="absolute inset-0 z-10 flex items-center justify-center p-6">
                     <img
                       src={art}
                       alt={card.name}
