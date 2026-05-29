@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { acceptInvite } from "@/lib/game/persistence";
+import { acceptInvite, loadMatch } from "@/lib/game/persistence";
+import { fetchPlayerDisplayName } from "@/lib/playerName";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
@@ -25,11 +26,25 @@ export default function JoinMatch() {
     }
     (async () => {
       try {
-        const guestName =
-          (user.user_metadata as any)?.full_name ||
-          user.email?.split("@")[0] ||
-          "Guest";
+        const guestName = await fetchPlayerDisplayName(user);
         const matchId = await acceptInvite(token, guestName);
+
+        // Guard: did the host accidentally click their own invite link?
+        // The RPC returns the match id silently in that case. Detect it so
+        // we can tell them what to do instead of dropping them into a board
+        // that looks like a solo game.
+        try {
+          const { row } = await loadMatch(matchId);
+          if (row.host_user_id === user.id && !row.guest_user_id) {
+            setError(
+              "You're signed in as the host of this match. Open the invite link in a different browser or have your friend sign in with their own account to join.",
+            );
+            return;
+          }
+        } catch {
+          /* ignore — fall through to navigate */
+        }
+
         toast.success("Joined match");
         navigate(`/play/m/${matchId}`, { replace: true });
       } catch (e: any) {
