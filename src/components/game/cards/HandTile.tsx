@@ -3,7 +3,8 @@ import { Info, X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "@/lib/game/elements";
-import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType } from "@/lib/game/glyphs";
+import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType, glyphMarkForType } from "@/lib/game/glyphs";
+
 import type { DeckCard } from "@/lib/game/types";
 import { getCardCreditArtist } from "@/lib/cardCredits";
 import { TypeGlyphMark, displayCardName } from "./TypeGlyphMark";
