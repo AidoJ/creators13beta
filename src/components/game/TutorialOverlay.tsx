@@ -6,7 +6,7 @@ const STORAGE_KEY = "creators13.play.tutorial-seen.v2";
 
 const STEPS: { title: string; body: string }[] = [
   {
-    title: "Welcome to BCreators",
+    title: "Welcome to 13 Creators",
     body: "Build a honeycomb ecosystem of 16 cards — 4 Creators (one per element: Earth, Fire, Air, Water) + 12 matching Animals (3 per Creator). You also need an empty hand of Creator cards to win.",
   },
   {
