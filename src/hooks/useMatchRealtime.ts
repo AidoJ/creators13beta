@@ -19,8 +19,10 @@ export function useMatchRealtime(
 ) {
   useEffect(() => {
     if (!matchId) return;
+    let cancelled = false;
+
     const channel = supabase
-      .channel(`game-match-${matchId}`)
+      .channel(`game-match-${matchId}-${selfUserId ?? "anon"}-${Math.random().toString(36).slice(2, 8)}`)
       .on(
         "postgres_changes",
         {
@@ -35,12 +37,39 @@ export function useMatchRealtime(
           try {
             onRemoteUpdate(deserializeMatch(row.state), row);
           } catch (e) {
-            console.error("Failed to deserialize remote match state", e);
+            console.error("[match-realtime] deserialize failed", e);
           }
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`[match-realtime] ${matchId} status:`, status);
+      });
+
+    // Polling fallback in case realtime is blocked (corp networks, ws issues).
+    // Light: every 4s pull the row and emit if last_action_by !== self and updated_at advanced.
+    let lastUpdatedAt = "";
+    const poll = setInterval(async () => {
+      if (cancelled) return;
+      const { data, error } = await supabase
+        .from("game_matches")
+        .select("*")
+        .eq("id", matchId)
+        .maybeSingle();
+      if (error || !data) return;
+      const row = data as unknown as GameMatchRow;
+      if (row.updated_at === lastUpdatedAt) return;
+      lastUpdatedAt = row.updated_at;
+      if (row.last_action_by && row.last_action_by === selfUserId) return;
+      try {
+        onRemoteUpdate(deserializeMatch(row.state), row);
+      } catch (e) {
+        console.error("[match-realtime] poll deserialize failed", e);
+      }
+    }, 4000);
+
     return () => {
+      cancelled = true;
+      clearInterval(poll);
       supabase.removeChannel(channel);
     };
   }, [matchId, selfUserId, onRemoteUpdate]);
