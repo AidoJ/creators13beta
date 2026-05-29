@@ -8,7 +8,7 @@ const STEPS: { title: string; body: string }[] = [
   {
     title: "Welcome to 13 Creators",
     body: "Build a honeycomb ecosystem of 16 cards — 4 Creators (one per element: Earth, Fire, Air, Water) + 12 matching Animals (3 per Creator). You also need an empty hand of Creator cards to win.",
-  },
+    body: "Build a honeycomb ecosystem of 16 cards — 4 Creators (one per element: Earth, Fire, Air, Water) + 12 matching Animals (3 per Creator). To win you must ensure that you are NOT holding any Creator Cards in your hand.",
   {
     title: "Step 1 — Pick up 2",
     body: "Each turn, draw 2 cards from any mix of the Draw Pile and the top of the Used Pile. Your hand is capped at 5 — play or discard 2 cards before drawing again.",
