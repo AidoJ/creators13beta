@@ -89,8 +89,8 @@ export function buildDeck(allCards: GameCard[]): DeckCard[] {
 
   // Wildcards / specials
   for (let i = 0; i < 2; i++) deck.push(skyCreator());
-  for (let i = 0; i < 2; i++) deck.push(goldenBody());
-  for (let i = 0; i < 2; i++) deck.push(goldenHive());
+  for (let i = 0; i < 8; i++) deck.push(goldenBody());
+  for (let i = 0; i < 1; i++) deck.push(goldenHive());
 
   return deck;
 }
