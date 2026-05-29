@@ -38,20 +38,20 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
     const timers: ReturnType<typeof setTimeout>[] = [];
     newCards.forEach((uid, idx) => {
       phaseRef.current.set(uid, "dropping");
-      // Drop-in phase: ~450ms per card, staggered by 120ms
-      const stagger = idx * 120;
+      // Drop-in phase: ~500ms per card, staggered by 140ms
+      const stagger = idx * 140;
       timers.push(
         setTimeout(() => {
           phaseRef.current.set(uid, "flipping");
           force((n) => n + 1);
-        }, stagger + 450),
+        }, stagger + 500),
       );
       timers.push(
         setTimeout(() => {
           phaseRef.current.delete(uid);
           revealedRef.current.add(uid);
           force((n) => n + 1);
-        }, stagger + 450 + 650),
+        }, stagger + 500 + 1000),
       );
     });
     force((n) => n + 1);
