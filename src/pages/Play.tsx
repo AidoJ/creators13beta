@@ -362,7 +362,49 @@ export default function Play() {
     guarded(() => playSkyCreatureSteal(state, selectedUid, opponent.id, posKey));
   }
 
+  function onCloseResumeLater() {
+    // PvP rows stay 'active' in the DB — they'll show up under "Resume" on the dashboard.
+    // Solo local matches stay in localStorage and resume on next visit.
+    navigate("/dashboard");
+  }
+
+  async function onCloseAbandon() {
+    const ok = window.confirm(
+      isPvp
+        ? "Abandon this match? It will be marked finished for both players and removed from your resume list."
+        : "Abandon this match? Your current solo game will be discarded.",
+    );
+    if (!ok) return;
+
+    if (matchRow && user && isPvp && state) {
+      // Forfeit: mark finished, opponent wins.
+      const opponentSlot = selfSlot === "host" ? "guest" : "host";
+      const opponentUserId =
+        opponentSlot === "host" ? matchRow.host_user_id : matchRow.guest_user_id;
+      const finishedState: MatchState = {
+        ...state,
+        finished: true,
+        winnerId: opponentSlot,
+      };
+      try {
+        await saveMatchState({
+          matchId: matchRow.id,
+          actingUserId: user.id,
+          state: finishedState,
+          winnerUserId: opponentUserId,
+        });
+      } catch (e) {
+        console.error("[abandon] save failed", e);
+      }
+    } else {
+      // Solo — drop the local snapshot.
+      try { localStorage.removeItem(LOCAL_STORAGE_KEY); } catch {}
+    }
+    navigate("/dashboard");
+  }
+
   async function onNewGame() {
+
     if (!allCards) return;
     if (routeMatchId) {
       // PvP / persisted match — leaving back to a fresh solo.
