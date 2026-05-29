@@ -184,18 +184,8 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
               ))}
             </div>
           </div>
-          {(() => {
-            const artist = getCardCreditArtist(card.source?.slug);
-            if (!artist) return null;
-            return (
-              <div
-                className="px-1 pb-1 text-center leading-tight text-neutral-500/90 truncate"
-                style={{ fontFamily: '"Questrial", sans-serif', fontSize: Math.max(7, size * 0.055) }}
-              >
-                with thanks to Pixabay Artist — {artist}
-              </div>
-            );
-          })()}
+          {/* Artist credit intentionally NOT shown on hand tiles — it appears
+              only in the zoomed-in detail popup. */}
         </div>
 
 
