@@ -17,22 +17,47 @@ import {
   pickFromUsed,
   placeOnEcosystem,
   ecosystemSummary,
+import {
+  animalLinksToCreator,
+  discardCard,
+  drawInitialFive,
+  legalEcoCells,
+  pickFromDraw,
+  pickFromUsed,
+  placeOnEcosystem,
+  ecosystemSummary,
   playDisaster,
+  resolveDisaster,
 } from "./engine";
 import { CREATORS_NEEDED, HAND_LIMIT, type DeckCard, type MatchState } from "./types";
 
 export function botStep(state: MatchState): MatchState {
   if (state.finished) return state;
 
+  // If the bot itself is the target of a pending disaster, auto-activate the
+  // Hive (always optimal — saving it has no upside vs losing animals now).
+  if (state.pendingDisaster && state.pendingDisaster.victimId === state.players[state.turn === 0 ? 1 : 0]?.id) {
+    // No-op: the attacker is the bot's turn; this branch covers when the bot
+    // is the victim of a human attack handled elsewhere.
+  }
+
   const me = state.players[state.turn];
 
   if (state.phase === "draw") {
+    if (!me.firstPickupDone) {
+      return drawInitialFive(state);
+    }
     // Respect hand limit — if already full, skip drawing and go play.
     if (me.hand.length >= HAND_LIMIT) {
       return { ...state, phase: "place" as const, lastEvent: `${me.name} hand is full — skipping pick-up` };
     }
     const top = state.used[state.used.length - 1];
-    const wantUsed = top && (top.kind === "creator" || top.kind === "sky_creator" || top.kind === "golden_body" || top.kind === "golden_hive");
+    const wantUsed = top && !top.spent && (top.kind === "creator" || top.kind === "sky_creator" || top.kind === "golden_body" || top.kind === "golden_hive");
+    if (wantUsed && state.used.length > 0) return pickFromUsed(state);
+    if (state.draw.length > 0) return pickFromDraw(state);
+    if (state.used.length > 0 && !top?.spent) return pickFromUsed(state);
+    return state;
+  }
     if (wantUsed && state.used.length > 0) return pickFromUsed(state);
     if (state.draw.length > 0) return pickFromDraw(state);
     if (state.used.length > 0) return pickFromUsed(state);
