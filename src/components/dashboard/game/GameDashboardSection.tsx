@@ -169,22 +169,18 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
             </div>
           </div>
           <div className="flex flex-col items-start md:items-end gap-2">
-            <div className="flex gap-2">
-              <Button
-                size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/25"
-                onClick={() => navigate("/play")}
-              >
-                <Gamepad2 className="mr-2 h-5 w-5" /> Play now
-              </Button>
-              <Button variant="outline" onClick={() => navigate("/play?invite=1")}>
-                <Users className="mr-2 h-4 w-4" /> Invite a friend
-              </Button>
-            </div>
+            <Button
+              size="lg"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/25"
+              onClick={() => navigate("/play")}
+            >
+              <Gamepad2 className="mr-2 h-5 w-5" /> Play now
+            </Button>
             <p className="text-xs text-muted-foreground">
-              {activeGames.length} active game{activeGames.length === 1 ? "" : "s"} · {openInvites.length} open invite{openInvites.length === 1 ? "" : "s"}
+              Solo or multiplayer — choose once you're in. {activeGames.length} active · {openInvites.length} open invite{openInvites.length === 1 ? "" : "s"}
             </p>
           </div>
+
         </div>
       </div>
 
