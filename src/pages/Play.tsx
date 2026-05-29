@@ -532,7 +532,8 @@ export default function Play() {
     && selectedCard.kind === "sky_creature";
 
   const handAtLimit = selfPlayer.hand.length >= 10; // HAND_LIMIT
-  const canDrawOne = isYourTurn && state.phase === "draw" && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2 && !handAtLimit;
+  const needsOpeningDraw = !selfPlayer.firstPickupDone && state.phase === "draw" && isYourTurn;
+  const canDrawOne = isYourTurn && state.phase === "draw" && selfPlayer.firstPickupDone && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2 && !handAtLimit;
 
   const opponentBlock = (
     <Card className="p-3">
