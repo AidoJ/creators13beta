@@ -217,8 +217,10 @@ export default function Play() {
   function schedulePersist(next: MatchState) {
     const prev = state;
     const alreadyFinishedBefore = !!prev?.finished;
-    if (user) {
+    const isBotMatch = !matchRow || matchRow.mode === "solo";
+    if (user && !isBotMatch) {
       // Update player_progress (points / types seen / streak / ELO) for the signed-in player.
+      // Note: no points are earned when playing the Bot — encourage real-player matches.
       recordProgressDiff({
         userId: user.id,
         selfSlot,
