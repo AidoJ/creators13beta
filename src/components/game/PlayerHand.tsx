@@ -51,7 +51,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
           phaseRef.current.delete(uid);
           revealedRef.current.add(uid);
           force((n) => n + 1);
-        }, stagger + 500 + 1000),
+        }, stagger + 500 + 1500),
       );
     });
     force((n) => n + 1);
