@@ -634,15 +634,28 @@ export default function Play() {
     <Card className="p-2">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Card actions</div>
       <div className="flex flex-col gap-1.5">
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={undoCount === 0}
-          onClick={onUndo}
-          className="h-auto py-1.5 px-2 text-[11px] leading-tight"
-        >
-          ↶ Undo last move {undoCount > 0 ? `(${undoCount})` : ""}
-        </Button>
+        {(() => {
+          const quickActive = quickUndoUntil > 0 && Date.now() < quickUndoUntil;
+          const secsLeft = quickActive ? Math.max(1, Math.ceil((quickUndoUntil - Date.now()) / 1000)) : 0;
+          return (
+            <Button
+              size="sm"
+              variant={quickActive ? "default" : "outline"}
+              disabled={undoCount === 0}
+              onClick={onUndo}
+              className={
+                "h-auto py-1.5 px-2 text-[11px] leading-tight transition-all " +
+                (quickActive
+                  ? "bg-amber-400 text-black hover:bg-amber-300 ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.85)] animate-pulse"
+                  : "")
+              }
+            >
+              {quickActive
+                ? `⚡ Quick Undo (${secsLeft}s)`
+                : `↶ Undo last move${undoCount > 0 ? ` (${undoCount})` : ""}`}
+            </Button>
+          );
+        })()}
         {needsOpeningDraw ? (
           <Button
             size="sm"
