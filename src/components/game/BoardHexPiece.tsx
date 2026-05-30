@@ -3,6 +3,8 @@ import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType, glyphMarkForType } from "@/lib/game/glyphs";
 import type { DeckCard } from "@/lib/game/types";
 import { TypeGlyphMark, displayCardName } from "./cards/TypeGlyphMark";
+import goldenBodyArt from "@/assets/golden-body-card.png";
+import goldenHiveArt from "@/assets/golden-hive-card.png";
 
 interface Props {
   card: DeckCard;
