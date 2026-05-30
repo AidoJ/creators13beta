@@ -366,6 +366,7 @@ export default function Play() {
         setState(next);
         schedulePersist(next);
         setMoveFromKey(null);
+        armQuickUndo();
       } catch (e: any) {
         toast.error(e?.message ?? "Cannot move here");
       }
@@ -373,7 +374,10 @@ export default function Play() {
     }
     const cardUid = draggedUid ?? selectedUid;
     if (!cardUid) return;
+    const before = undoStackRef.current.length;
     guarded(() => placeOnEcosystem(state, cardUid, pos));
+    // If guarded succeeded it pushed an undo snapshot; arm the 5s quick-undo.
+    if (undoStackRef.current.length > before) armQuickUndo();
   }
   function onDiscard() { if (state && selectedUid) guarded(() => discardCard(state, selectedUid)); }
   function onDiscardUid(uid: string) {
