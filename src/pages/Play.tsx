@@ -78,6 +78,25 @@ export default function Play() {
   const saveSeqRef = useRef(0);
   const undoStackRef = useRef<MatchState[]>([]);
   const [undoCount, setUndoCount] = useState(0);
+  const [quickUndoUntil, setQuickUndoUntil] = useState<number>(0);
+  const [, setNowTick] = useState(0);
+
+  // Tick every 250ms while quick-undo is active so the countdown re-renders.
+  useEffect(() => {
+    if (quickUndoUntil <= 0) return;
+    const id = setInterval(() => {
+      if (Date.now() >= quickUndoUntil) {
+        setQuickUndoUntil(0);
+      } else {
+        setNowTick((n) => n + 1);
+      }
+    }, 250);
+    return () => clearInterval(id);
+  }, [quickUndoUntil]);
+
+  function armQuickUndo() {
+    setQuickUndoUntil(Date.now() + 5000);
+  }
 
   function pushUndo(snapshot: MatchState | null) {
     if (!snapshot) return;
@@ -88,6 +107,7 @@ export default function Play() {
   function onUndo() {
     const prev = undoStackRef.current.pop();
     setUndoCount(undoStackRef.current.length);
+    setQuickUndoUntil(0);
     if (!prev) return;
     setState(prev);
     setSelectedUid(null);
