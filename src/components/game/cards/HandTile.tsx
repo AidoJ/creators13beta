@@ -4,6 +4,8 @@ import { createPortal } from "react-dom";
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType, glyphMarkForType } from "@/lib/game/glyphs";
+import goldenBodyArt from "@/assets/golden-body-card.png";
+import goldenHiveArt from "@/assets/golden-hive-card.png";
 
 import type { DeckCard } from "@/lib/game/types";
 import { getCardCreditArtist } from "@/lib/cardCredits";
@@ -25,7 +27,8 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
   const height = size * 1.35;
   const { c1, c2, chips, badge, artGlyph } = resolveColours(card);
   const art = card.source?.art_url ?? artGlyph;
-  const isCreatorLike = card.kind === "creator" || card.kind === "sky_creator";
+  const isGolden = card.kind === "golden_body" || card.kind === "golden_hive";
+  const isCreatorLike = card.kind === "creator" || card.kind === "sky_creator" || isGolden;
   const isTwoTone = card.kind === "animal" || card.kind === "sky_creature";
   const name = card.name;
 
@@ -158,8 +161,14 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                   color: "#000",
                 }}
               >
-                <div>{name.replace(/\s+Creator$/i, "")}</div>
-                <div style={{ fontSize: size * 0.095, opacity: 0.85 }}>Creator</div>
+                {isGolden ? (
+                  <div>{name}</div>
+                ) : (
+                  <>
+                    <div>{name.replace(/\s+Creator$/i, "")}</div>
+                    <div style={{ fontSize: size * 0.095, opacity: 0.85 }}>Creator</div>
+                  </>
+                )}
               </div>
             ) : (
               <>
@@ -362,9 +371,9 @@ function defaultDescriptor(card: DeckCard): string {
     case "sky_creature":
       return `Mythical Sky Creature. Acts as an Animal of its two Creator Types, AND can be played as a Stealer — discard it to take any one Animal from a rival ecosystem.`;
     case "golden_body":
-      return `Golden Body wildcard — counts as an Animal of any Creator Type when filling your ecosystem.`;
+      return `A body made of gold is the alchemy of all forms, granting the skin of any species to be worn.`;
     case "golden_hive":
-      return `Golden Hive — pick up to arm a shield that absorbs the next Disaster cast against you.`;
+      return `At the heart of the ecosystem lies the pot of gold, where Immunity is granted for the good of the whole.`;
     default:
       return "Animal card.";
   }
@@ -403,10 +412,10 @@ function resolveColours(card: DeckCard): {
   }
 
   if (card.kind === "golden_body") {
-    return { c1: "#f5c542", c2: "#e0a920", chips: [{ label: "Golden", color: "#e0a920" }], badge: "Wild Body" };
+    return { c1: "#f5c542", c2: "#e0a920", chips: [{ label: "Golden", color: "#e0a920" }], badge: "Wild Body", artGlyph: goldenBodyArt };
   }
   if (card.kind === "golden_hive") {
-    return { c1: "#f5c542", c2: "#ffffff", chips: [{ label: "Hive", color: "#e0a920" }], badge: "Shield" };
+    return { c1: "#f5c542", c2: "#ffffff", chips: [{ label: "Hive", color: "#e0a920" }], badge: "Shield", artGlyph: goldenHiveArt };
   }
   return { c1: "#666", c2: "#666", chips: [] };
 }

@@ -3,6 +3,8 @@ import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType, glyphMarkForType } from "@/lib/game/glyphs";
 import type { DeckCard } from "@/lib/game/types";
 import { TypeGlyphMark, displayCardName } from "./cards/TypeGlyphMark";
+import goldenBodyArt from "@/assets/golden-body-card.png";
+import goldenHiveArt from "@/assets/golden-hive-card.png";
 
 interface Props {
   card: DeckCard;
@@ -45,9 +47,9 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
     c1 = c2 = ELEMENT_COLORS.Sky;
     artGlyph = CREATOR_TYPE_GLYPHS.Sky;
   } else if (card.kind === "golden_body") {
-    c1 = "#f5c542"; c2 = "#e0a920";
+    c1 = "#f5c542"; c2 = "#e0a920"; artGlyph = goldenBodyArt;
   } else if (card.kind === "golden_hive") {
-    c1 = "#f5c542"; c2 = "#fff";
+    c1 = "#f5c542"; c2 = "#fff"; artGlyph = goldenHiveArt;
   }
 
   const art = card.source?.art_url ?? artGlyph;
