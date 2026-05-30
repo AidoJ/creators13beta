@@ -371,9 +371,9 @@ function defaultDescriptor(card: DeckCard): string {
     case "sky_creature":
       return `Mythical Sky Creature. Acts as an Animal of its two Creator Types, AND can be played as a Stealer — discard it to take any one Animal from a rival ecosystem.`;
     case "golden_body":
-      return `Golden Body wildcard — counts as an Animal of any Creator Type when filling your ecosystem.`;
+      return `A body made of gold is the alchemy of all forms, granting the skin of any species to be worn.`;
     case "golden_hive":
-      return `Golden Hive — pick up to arm a shield that absorbs the next Disaster cast against you.`;
+      return `At the heart of the ecosystem lies the pot of gold, where Immunity is granted for the good of the whole.`;
     default:
       return "Animal card.";
   }
