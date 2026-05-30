@@ -78,6 +78,25 @@ export default function Play() {
   const saveSeqRef = useRef(0);
   const undoStackRef = useRef<MatchState[]>([]);
   const [undoCount, setUndoCount] = useState(0);
+  const [quickUndoUntil, setQuickUndoUntil] = useState<number>(0);
+  const [, setNowTick] = useState(0);
+
+  // Tick every 250ms while quick-undo is active so the countdown re-renders.
+  useEffect(() => {
+    if (quickUndoUntil <= 0) return;
+    const id = setInterval(() => {
+      if (Date.now() >= quickUndoUntil) {
+        setQuickUndoUntil(0);
+      } else {
+        setNowTick((n) => n + 1);
+      }
+    }, 250);
+    return () => clearInterval(id);
+  }, [quickUndoUntil]);
+
+  function armQuickUndo() {
+    setQuickUndoUntil(Date.now() + 5000);
+  }
 
   function pushUndo(snapshot: MatchState | null) {
     if (!snapshot) return;
@@ -88,6 +107,7 @@ export default function Play() {
   function onUndo() {
     const prev = undoStackRef.current.pop();
     setUndoCount(undoStackRef.current.length);
+    setQuickUndoUntil(0);
     if (!prev) return;
     setState(prev);
     setSelectedUid(null);
@@ -346,6 +366,7 @@ export default function Play() {
         setState(next);
         schedulePersist(next);
         setMoveFromKey(null);
+        armQuickUndo();
       } catch (e: any) {
         toast.error(e?.message ?? "Cannot move here");
       }
@@ -353,7 +374,10 @@ export default function Play() {
     }
     const cardUid = draggedUid ?? selectedUid;
     if (!cardUid) return;
+    const before = undoStackRef.current.length;
     guarded(() => placeOnEcosystem(state, cardUid, pos));
+    // If guarded succeeded it pushed an undo snapshot; arm the 5s quick-undo.
+    if (undoStackRef.current.length > before) armQuickUndo();
   }
   function onDiscard() { if (state && selectedUid) guarded(() => discardCard(state, selectedUid)); }
   function onDiscardUid(uid: string) {
@@ -610,15 +634,28 @@ export default function Play() {
     <Card className="p-2">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Card actions</div>
       <div className="flex flex-col gap-1.5">
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={undoCount === 0}
-          onClick={onUndo}
-          className="h-auto py-1.5 px-2 text-[11px] leading-tight"
-        >
-          ↶ Undo last move {undoCount > 0 ? `(${undoCount})` : ""}
-        </Button>
+        {(() => {
+          const quickActive = quickUndoUntil > 0 && Date.now() < quickUndoUntil;
+          const secsLeft = quickActive ? Math.max(1, Math.ceil((quickUndoUntil - Date.now()) / 1000)) : 0;
+          return (
+            <Button
+              size="sm"
+              variant={quickActive ? "default" : "outline"}
+              disabled={undoCount === 0}
+              onClick={onUndo}
+              className={
+                "h-auto py-1.5 px-2 text-[11px] leading-tight transition-all " +
+                (quickActive
+                  ? "bg-amber-400 text-black hover:bg-amber-300 ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.85)] animate-pulse"
+                  : "")
+              }
+            >
+              {quickActive
+                ? `⚡ Quick Undo (${secsLeft}s)`
+                : `↶ Undo last move${undoCount > 0 ? ` (${undoCount})` : ""}`}
+            </Button>
+          );
+        })()}
         {needsOpeningDraw ? (
           <Button
             size="sm"
