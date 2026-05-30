@@ -161,8 +161,14 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                   color: "#000",
                 }}
               >
-                <div>{name.replace(/\s+Creator$/i, "")}</div>
-                <div style={{ fontSize: size * 0.095, opacity: 0.85 }}>Creator</div>
+                {isGolden ? (
+                  <div>{name}</div>
+                ) : (
+                  <>
+                    <div>{name.replace(/\s+Creator$/i, "")}</div>
+                    <div style={{ fontSize: size * 0.095, opacity: 0.85 }}>Creator</div>
+                  </>
+                )}
               </div>
             ) : (
               <>
