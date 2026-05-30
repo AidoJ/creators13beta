@@ -412,10 +412,10 @@ function resolveColours(card: DeckCard): {
   }
 
   if (card.kind === "golden_body") {
-    return { c1: "#f5c542", c2: "#e0a920", chips: [{ label: "Golden", color: "#e0a920" }], badge: "Wild Body" };
+    return { c1: "#f5c542", c2: "#e0a920", chips: [{ label: "Golden", color: "#e0a920" }], badge: "Wild Body", artGlyph: goldenBodyArt };
   }
   if (card.kind === "golden_hive") {
-    return { c1: "#f5c542", c2: "#ffffff", chips: [{ label: "Hive", color: "#e0a920" }], badge: "Shield" };
+    return { c1: "#f5c542", c2: "#ffffff", chips: [{ label: "Hive", color: "#e0a920" }], badge: "Shield", artGlyph: goldenHiveArt };
   }
   return { c1: "#666", c2: "#666", chips: [] };
 }
