@@ -4,6 +4,8 @@ import { createPortal } from "react-dom";
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType, glyphMarkForType } from "@/lib/game/glyphs";
+import goldenBodyArt from "@/assets/golden-body-card.png";
+import goldenHiveArt from "@/assets/golden-hive-card.png";
 
 import type { DeckCard } from "@/lib/game/types";
 import { getCardCreditArtist } from "@/lib/cardCredits";
