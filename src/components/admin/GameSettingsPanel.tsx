@@ -4,29 +4,41 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Save, RotateCcw, Trophy, Timer, Gamepad2 } from "lucide-react";
+import { Save, RotateCcw, Trophy, Timer, Gamepad2, Bot, Eye, Library, AlertTriangle, ExternalLink } from "lucide-react";
 import { DEFAULT_GAME_SETTINGS, invalidateGameSettings, type GameSettings } from "@/lib/game/settings";
 
 type Num = keyof Pick<GameSettings,
   "points_per_win" | "elo_win" | "elo_loss" | "perfect_eco_bonus"
   | "top_score_default" | "beat_clock_match_minutes" | "beat_clock_turn_seconds"
-  | "hand_size" | "hand_limit" | "ecosystem_target" | "creators_needed" | "animals_per_creator">;
+  | "hand_size" | "hand_limit" | "ecosystem_target" | "creators_needed" | "animals_per_creator"
+  | "bot_think_ms" | "max_players_per_match">;
 
 type Bool = keyof Pick<GameSettings,
   "mode_end_of_days_enabled" | "mode_top_score_enabled" | "mode_beat_clock_enabled"
-  | "enable_disasters" | "enable_golden_hive" | "enable_sky_creator" | "enable_golden_body" | "enable_sky_creature_steal">;
+  | "enable_disasters" | "enable_golden_hive" | "enable_sky_creator" | "enable_golden_body" | "enable_sky_creature_steal"
+  | "allow_guest_play" | "allow_solo_vs_bot"
+  | "show_tutorial_overlay" | "show_discord_chat" | "show_review_boards" | "prompt_player_name" | "show_score_panel"
+  | "maintenance_banner_enabled" | "play_disabled">;
 
 export default function GameSettingsPanel() {
   const [s, setS] = useState<GameSettings>(DEFAULT_GAME_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetting, setResetting] = useState(false);
+  const [cardCount, setCardCount] = useState<number | null>(null);
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("game_settings" as any).select("*").eq("id", "global").maybeSingle();
+      const [{ data }, { count }] = await Promise.all([
+        supabase.from("game_settings" as any).select("*").eq("id", "global").maybeSingle(),
+        supabase.from("game_cards").select("id", { count: "exact", head: true }),
+      ]);
       if (data) setS({ ...DEFAULT_GAME_SETTINGS, ...(data as any) });
+      setCardCount(count ?? null);
       setLoading(false);
     })();
   }, []);
@@ -51,6 +63,25 @@ export default function GameSettingsPanel() {
   }
 
   function reset() { setS(DEFAULT_GAME_SETTINGS); }
+
+  async function resetPlayer() {
+    const email = resetEmail.trim().toLowerCase();
+    if (!email) return;
+    setResetting(true);
+    const { data: prof } = await supabase.from("profiles").select("user_id").eq("email", email).maybeSingle();
+    if (!prof?.user_id) {
+      setResetting(false);
+      toast({ title: "User not found", description: "No profile matches that email.", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.rpc("admin_reset_player_progress" as any, { _user_id: prof.user_id });
+    setResetting(false);
+    if (error) toast({ title: "Reset failed", description: error.message, variant: "destructive" });
+    else {
+      setResetEmail("");
+      toast({ title: "Progress reset", description: `Cleared game progress for ${email}.` });
+    }
+  }
 
   if (loading) return <div className="p-6 text-sm text-muted-foreground">Loading game settings…</div>;
 
@@ -139,12 +170,146 @@ export default function GameSettingsPanel() {
         </div>
       </section>
 
+      {/* Bots & Matchmaking */}
+      <section className="rounded-xl border border-border bg-card p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Bot className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold">Bots & Matchmaking</h3>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 items-end">
+          <div className="space-y-1">
+            <Label className="text-xs">Bot difficulty</Label>
+            <Select value={s.bot_difficulty} onValueChange={(v) => setS((p) => ({ ...p, bot_difficulty: v as GameSettings["bot_difficulty"] }))}>
+              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="easy">Easy</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="hard">Hard</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <NumField k="bot_think_ms" label="Bot think-time (ms)" min={0} max={5000} hint="Delay between bot actions" />
+          <NumField k="max_players_per_match" label="Max players per match" min={2} max={6} />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <BoolField k="allow_guest_play" label="Allow guest play" hint="Unauthenticated visitors can play" />
+          <BoolField k="allow_solo_vs_bot" label="Allow solo vs bot" hint="Single-player vs CPU opponents" />
+        </div>
+      </section>
+
+      {/* UI / UX */}
+      <section className="rounded-xl border border-border bg-card p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Eye className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold">UI / UX</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+          <BoolField k="show_tutorial_overlay" label="Tutorial overlay" hint="First-time onboarding tips" />
+          <BoolField k="show_discord_chat" label="Discord chat panel" hint="In-game Discord widget" />
+          <BoolField k="show_review_boards" label="Review opponents dialog" hint="End-of-match tabbed boards" />
+          <BoolField k="prompt_player_name" label="Prompt player name" hint="Ask new players for a display name" />
+          <BoolField k="show_score_panel" label="Score panel" hint="Live in-match score widget" />
+        </div>
+        <div className="space-y-1 max-w-xs">
+          <Label className="text-xs">Featured mode (optional)</Label>
+          <Select
+            value={s.featured_mode ?? "none"}
+            onValueChange={(v) => setS((p) => ({ ...p, featured_mode: v === "none" ? null : (v as GameSettings["featured_mode"]) }))}
+          >
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              <SelectItem value="end_of_days">End of Days</SelectItem>
+              <SelectItem value="first_to_50">Top Score</SelectItem>
+              <SelectItem value="beat_clock">Beat the Clock</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-[10px] text-muted-foreground">Highlighted in the mode picker.</p>
+        </div>
+      </section>
+
+      {/* Content (read-only summary + deep link) */}
+      <section className="rounded-xl border border-border bg-card p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Library className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold">Content</h3>
+        </div>
+        <div className="flex flex-wrap items-center gap-4 text-sm">
+          <div>
+            <span className="text-muted-foreground">Cards in library: </span>
+            <span className="font-semibold">{cardCount ?? "—"}</span>
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <a href="/card-preview" target="_blank" rel="noreferrer">
+              <ExternalLink className="w-3.5 h-3.5 mr-1" />Preview card library
+            </a>
+          </Button>
+        </div>
+        <p className="text-[11px] text-muted-foreground mt-2">
+          Deck composition is derived from the card library (4 creators + 12 matching animals per player). Import/edit cards via the card-management tools.
+        </p>
+      </section>
+
+      {/* Live Ops */}
+      <section className="rounded-xl border border-destructive/40 bg-destructive/5 p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <AlertTriangle className="w-4 h-4 text-destructive" />
+          <h3 className="text-sm font-semibold">Live Operations</h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+          <BoolField k="maintenance_banner_enabled" label="Show maintenance banner" hint="Sticky banner at top of /play" />
+          <BoolField k="play_disabled" label="Disable Play page" hint="Hard kill-switch — blocks all new matches" />
+        </div>
+
+        <div className="space-y-3 mb-4">
+          <div>
+            <Label className="text-xs">Maintenance banner text</Label>
+            <Textarea
+              value={s.maintenance_banner_text}
+              onChange={(e) => setS((p) => ({ ...p, maintenance_banner_text: e.target.value }))}
+              rows={2}
+              placeholder="e.g. New patch deploying at 9pm AEDT — matches may briefly disconnect."
+              className="text-sm"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Play-disabled message</Label>
+            <Textarea
+              value={s.play_disabled_message}
+              onChange={(e) => setS((p) => ({ ...p, play_disabled_message: e.target.value }))}
+              rows={2}
+              className="text-sm"
+            />
+          </div>
+        </div>
+
+        <div className="rounded-md border border-border bg-card p-3 space-y-2">
+          <Label className="text-xs font-semibold">Reset a player's game progress</Label>
+          <p className="text-[11px] text-muted-foreground">
+            Wipes points, ELO, streaks, badges, and discovered Creator Types for the given user. Cannot be undone.
+          </p>
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              placeholder="player@example.com"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+              className="h-8 text-sm"
+            />
+            <Button size="sm" variant="destructive" onClick={resetPlayer} disabled={!resetEmail || resetting}>
+              {resetting ? "Resetting…" : "Reset"}
+            </Button>
+          </div>
+        </div>
+      </section>
+
       <div className="flex items-center justify-end gap-2">
         <Button variant="outline" size="sm" onClick={reset}><RotateCcw className="w-3.5 h-3.5 mr-1" />Reset to defaults</Button>
         <Button size="sm" onClick={save} disabled={saving}><Save className="w-3.5 h-3.5 mr-1" />{saving ? "Saving…" : "Save settings"}</Button>
       </div>
       <p className="text-[11px] text-muted-foreground">
-        Note: Match Rules toggles for hand size, ecosystem target and special cards apply to newly created matches only. Active matches keep the rules they were started with.
+        Note: Match Rules and bot toggles apply to newly created matches only. Active matches keep the rules they were started with.
       </p>
     </div>
   );
