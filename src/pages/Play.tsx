@@ -1037,7 +1037,7 @@ export default function Play() {
       />
 
       <MatchOverDialog state={state} onPlayAgain={onNewGame} />
-      <NamePrompt />
+      {gameSettings.prompt_player_name && <NamePrompt />}
       {modeSelectorOpen && (
         <GameModeSelector
           open
@@ -1072,7 +1072,7 @@ export default function Play() {
           </DialogContent>
         </Dialog>
       )}
-      <TutorialOverlay />
+      {gameSettings.show_tutorial_overlay && <TutorialOverlay />}
       <RuleBookSheet open={ruleBookOpen} onOpenChange={setRuleBookOpen} />
       <OpponentPanel open={opponentPanelOpen} onClose={() => setOpponentPanelOpen(false)} player={opponent} />
       <MultiplayerLobby
