@@ -221,7 +221,8 @@ export function Ecosystem({
           );
         })}
         {matches.map((m) => {
-          const dot = Math.max(14, size * 0.22);
+          const w = Math.max(22, size * 0.36);
+          const h = w * 0.55;
           return (
             <div
               key={`m-${m.key}`}
@@ -233,33 +234,26 @@ export function Ecosystem({
               }}
               title={`Matched: ${m.label}`}
             >
-              <div
-                className="flex items-center justify-center rounded-full bg-black/80 border border-white/70 backdrop-blur-sm"
+              <svg
+                viewBox="0 0 100 50"
+                width={w}
+                height={h}
+                fill="none"
+                stroke={m.color}
+                strokeWidth={8}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
                 style={{
-                  width: dot,
-                  height: dot,
-                  boxShadow: `0 0 10px ${m.color}, 0 0 2px ${m.color}`,
+                  filter: `drop-shadow(0 0 3px rgba(0,0,0,0.85)) drop-shadow(0 0 6px ${m.color})`,
                 }}
               >
-                {/* Chain-link glyph indicating these neighbours match. */}
-                <svg
-                  viewBox="0 0 24 24"
-                  width={dot * 0.7}
-                  height={dot * 0.7}
-                  fill="none"
-                  stroke={m.color}
-                  strokeWidth={2.4}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  <path d="M10 14a4 4 0 0 1 0-5.66l2-2a4 4 0 0 1 5.66 5.66l-1.1 1.1" />
-                  <path d="M14 10a4 4 0 0 1 0 5.66l-2 2a4 4 0 0 1-5.66-5.66l1.1-1.1" />
-                </svg>
-              </div>
+                <path d="M25,25 C25,10 5,10 5,25 C5,40 25,40 25,25 C25,10 50,40 50,25 C50,10 75,40 75,25 C75,10 95,10 95,25 C95,40 75,40 75,25 C75,40 50,10 50,25 C50,40 25,10 25,25 Z" />
+              </svg>
             </div>
           );
         })}
+
       </div>
     </div>
   );
