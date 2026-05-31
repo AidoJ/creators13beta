@@ -49,7 +49,7 @@ import { RuleBookSheet } from "@/components/game/RuleBookSheet";
 import { OpponentPanel } from "@/components/game/OpponentPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
-import { fetchPlayerDisplayName, fetchPlayerShortName } from "@/lib/playerName";
+import { fetchPlayerShortName } from "@/lib/playerName";
 import { NamePrompt } from "@/components/game/NamePrompt";
 
 type Mode = "place" | "disaster" | "steal" | "move";
