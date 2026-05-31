@@ -84,6 +84,8 @@ export default function Play() {
   const [undoCount, setUndoCount] = useState(0);
   const [quickUndoUntil, setQuickUndoUntil] = useState<number>(0);
   const [, setNowTick] = useState(0);
+  const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
+  const turnStartedAtRef = useRef<number>(Date.now());
 
   // Tick every 250ms while quick-undo is active so the countdown re-renders.
   useEffect(() => {
