@@ -54,6 +54,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { fetchPlayerShortName } from "@/lib/playerName";
 import { NamePrompt } from "@/components/game/NamePrompt";
+import { useGameSettings } from "@/lib/game/settings";
 
 type Mode = "place" | "disaster" | "steal" | "move";
 
