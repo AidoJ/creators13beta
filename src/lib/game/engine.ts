@@ -17,6 +17,7 @@ import {
   CREATORS_NEEDED,
   HAND_LIMIT,
   HAND_SIZE,
+  playerTotalScore,
   type Axial,
   type DeckCard,
   type Ecosystem,
