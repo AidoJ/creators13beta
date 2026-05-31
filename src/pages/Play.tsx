@@ -202,14 +202,6 @@ export default function Play() {
         // No route id — solo vs Bot path.
         const youName = user ? await fetchPlayerShortName(user) : "You";
         if (cancelled) return;
-        const deck = buildDeck(allCards);
-        const fresh = createMatch({
-          deck,
-          players: [
-            { id: "you", name: youName },
-            { id: "bot", name: "Tutorial Bot" },
-          ],
-        });
         // Try to restore an in-progress solo match from localStorage.
         const restored = restoreLocalMatch(allCards, youName);
         if (restored) {
@@ -217,9 +209,9 @@ export default function Play() {
           setState(restored);
           return;
         }
+        // No restored match — let the player pick a Game Type.
         if (cancelled) return;
-        setState(fresh);
-        persistLocalMatch(fresh);
+        setModeSelectorOpen(true);
       } catch (e: any) {
         if (!cancelled) setError(e?.message ?? String(e));
       }
@@ -461,13 +453,18 @@ export default function Play() {
   }
 
   async function onNewGame() {
-
     if (!allCards) return;
     if (routeMatchId) {
       // PvP / persisted match — leaving back to a fresh solo.
       navigate("/play");
       return;
     }
+    // Open selector to pick the game type for the new solo match.
+    setModeSelectorOpen(true);
+  }
+
+  async function startSoloMatch(mode: GameMode, config: GameConfig) {
+    if (!allCards) return;
     const youName = user ? await fetchPlayerShortName(user) : "You";
     const deck = buildDeck(allCards);
     const fresh = createMatch({
@@ -476,11 +473,15 @@ export default function Play() {
         { id: "you", name: youName },
         { id: "bot", name: "Tutorial Bot" },
       ],
+      gameMode: mode,
+      gameConfig: config,
     });
     setState(fresh);
     setSelectedUid(null);
     setMode("place");
+    turnStartedAtRef.current = Date.now();
     if (!user) persistLocalMatch(fresh);
+    setModeSelectorOpen(false);
   }
 
   function onOpenMultiplayer() {
