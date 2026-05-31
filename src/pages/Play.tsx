@@ -314,6 +314,50 @@ export default function Play() {
     }
   }
 
+  /* ----------- Beat-the-Clock timers ----------- */
+  // Reset turn timer whenever the current turn changes.
+  useEffect(() => {
+    turnStartedAtRef.current = Date.now();
+  }, [state?.turn, state?.turnNumber]);
+
+  // Per-second tick for countdown UIs + auto-fire timeouts.
+  useEffect(() => {
+    if (!state || state.finished) return;
+    if (state.gameMode !== "beat_clock") return;
+    const id = setInterval(() => {
+      setNowTick((n) => n + 1);
+      const now = Date.now();
+      // Match timer expired → finalise on points.
+      const endsAt = state.gameConfig?.matchEndsAt ?? 0;
+      if (endsAt && now >= endsAt) {
+        try {
+          const next = finaliseByScore(state);
+          setState(next);
+          schedulePersist(next);
+        } catch {/* ignore */}
+        return;
+      }
+      // Per-turn timer expired → auto end-turn for whoever's up (only act if it's our turn,
+      // otherwise the bot driver handles its own; PvP each client polices their own clock).
+      const turnSecs = state.gameConfig?.turnSeconds ?? 0;
+      if (
+        turnSecs > 0 &&
+        state.phase === "place" &&
+        !state.pendingDisaster &&
+        state.players[state.turn].id === selfSlot &&
+        now - turnStartedAtRef.current >= turnSecs * 1000
+      ) {
+        try {
+          const next = endTurnEarly(state);
+          setState(next);
+          schedulePersist(next);
+        } catch {/* ignore */}
+      }
+    }, 1000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, selfSlot]);
+
   /* ----------- Derived view-model ----------- */
 
   const selfPlayer = state?.players.find((p) => p.id === selfSlot);
