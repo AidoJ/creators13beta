@@ -860,7 +860,7 @@ export default function Play() {
                   size="icon"
                   variant="outline"
                   onClick={onCloseAbandon}
-                  className="h-8 w-8 text-destructive hover:text-destructive"
+                  className="h-8 w-8"
                   aria-label="Close and abandon"
                 >
                   <X className="w-4 h-4" />
@@ -904,8 +904,9 @@ export default function Play() {
               <TooltipTrigger asChild>
                 <Button
                   size="icon"
+                  variant="outline"
                   onClick={() => setRuleBookOpen(true)}
-                  className="h-8 w-8 bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="h-8 w-8"
                   aria-label="Rule Book"
                 >
                   <BookOpen className="w-4 h-4" />
@@ -916,7 +917,7 @@ export default function Play() {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { resetTutorial(); window.location.reload(); }} aria-label="Help">
+                <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => { resetTutorial(); window.location.reload(); }} aria-label="Help">
                   <HelpCircle className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
@@ -926,7 +927,7 @@ export default function Play() {
             {(state.finished || !isPvp) && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button size="icon" className="h-8 w-8" onClick={onNewGame} aria-label="New game">
+                  <Button size="icon" variant="outline" className="h-8 w-8" onClick={onNewGame} aria-label="New game">
                     <Plus className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>

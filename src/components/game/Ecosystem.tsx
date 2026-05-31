@@ -238,7 +238,7 @@ export function Ecosystem({
           );
         })}
         {matches.map((m) => {
-          const w = Math.max(22, size * 0.36);
+          const w = Math.max(16, size * 0.22);
           const h = w * 0.55;
           return (
             <div
@@ -257,7 +257,7 @@ export function Ecosystem({
                 height={h}
                 fill="none"
                 stroke={m.color}
-                strokeWidth={8}
+                strokeWidth={10}
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 aria-hidden
