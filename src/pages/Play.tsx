@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { HelpCircle, Loader2, Users, BookOpen, Maximize2, ChevronUp, ChevronDown, LayoutDashboard, MessageCircle } from "lucide-react";
+import { HelpCircle, Loader2, Users, BookOpen, Maximize2, ChevronUp, ChevronDown, LayoutDashboard, MessageCircle, X, Plus, Swords, Clock } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -24,6 +25,7 @@ import {
   moveMyPlacedHex,
   skipDraws,
   endTurnEarly,
+  finaliseByScore,
 } from "@/lib/game";
 import {
   createMatchRow,
@@ -36,7 +38,7 @@ import { recordProgressDiff } from "@/lib/game/progress";
 import { useMatchRealtime } from "@/hooks/useMatchRealtime";
 import { useAuth } from "@/contexts/AuthContext";
 import { DISCORD_INVITE_URL } from "@/config/discordChat";
-import type { Axial, DeckCard, MatchState } from "@/lib/game/types";
+import type { Axial, DeckCard, GameConfig, GameMode, MatchState } from "@/lib/game/types";
 import { Ecosystem } from "@/components/game/Ecosystem";
 import { PlayerHand } from "@/components/game/PlayerHand";
 import { ScorePanel } from "@/components/game/ScorePanel";
@@ -47,6 +49,7 @@ import { MultiplayerLobby } from "@/components/game/MultiplayerLobby";
 import { HandTile } from "@/components/game/cards/HandTile";
 import { RuleBookSheet } from "@/components/game/RuleBookSheet";
 import { OpponentPanel } from "@/components/game/OpponentPanel";
+import { GameModeSelector } from "@/components/game/GameModeSelector";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { fetchPlayerShortName } from "@/lib/playerName";
