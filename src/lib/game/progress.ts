@@ -60,21 +60,23 @@ export async function recordProgressDiff(args: {
       return;
     }
 
-    // End-of-game: only the winner gets points (+3 per win). No cumulative
-    // per-card bonuses — the dashboard "points" stat is now a clean wins×3 tally.
+    // End-of-game: only the winner gets points. Values come from the
+    // admin-configurable game_settings row.
+    const settings = await fetchGameSettings();
     let pointsDelta = 0;
     let won: boolean | null = null;
     let eloDelta = 0;
     if (next.winnerId === selfSlot) {
       won = true;
-      pointsDelta = POINTS_WIN;
-      eloDelta = ELO_WIN;
+      pointsDelta = settings.points_per_win;
+      eloDelta = settings.elo_win;
     } else if (next.winnerId) {
       won = false;
-      eloDelta = ELO_LOSS;
+      eloDelta = settings.elo_loss;
     }
 
     const perfectEco = nextSelf.ecosystem.placed.size >= 16;
+    if (perfectEco && won) pointsDelta += settings.perfect_eco_bonus;
 
     await supabase.rpc("bump_player_progress", {
       _user_id: userId,
