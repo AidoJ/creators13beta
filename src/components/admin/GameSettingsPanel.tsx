@@ -228,27 +228,9 @@ export default function GameSettingsPanel() {
         </div>
       </section>
 
-      {/* Content (read-only summary + deep link) */}
-      <section className="rounded-xl border border-border bg-card p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Library className="w-4 h-4 text-primary" />
-          <h3 className="text-sm font-semibold">Content</h3>
-        </div>
-        <div className="flex flex-wrap items-center gap-4 text-sm">
-          <div>
-            <span className="text-muted-foreground">Cards in library: </span>
-            <span className="font-semibold">{cardCount ?? "—"}</span>
-          </div>
-          <Button variant="outline" size="sm" asChild>
-            <a href="/card-preview" target="_blank" rel="noreferrer">
-              <ExternalLink className="w-3.5 h-3.5 mr-1" />Preview card library
-            </a>
-          </Button>
-        </div>
-        <p className="text-[11px] text-muted-foreground mt-2">
-          Deck composition is derived from the card library (4 creators + 12 matching animals per player). Import/edit cards via the card-management tools.
-        </p>
-      </section>
+      {/* Content / Deck Composition */}
+      <DeckCompositionSection />
+
 
       {/* Live Ops */}
       <section className="rounded-xl border border-destructive/40 bg-destructive/5 p-4">
