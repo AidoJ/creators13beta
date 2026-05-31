@@ -80,6 +80,7 @@ export default function Play() {
   const [waitingForGuest, setWaitingForGuest] = useState(false);
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const { settings: gameSettings } = useGameSettings();
   const saveSeqRef = useRef(0);
   const undoStackRef = useRef<MatchState[]>([]);
   const [undoCount, setUndoCount] = useState(0);
