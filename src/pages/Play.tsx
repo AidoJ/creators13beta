@@ -49,7 +49,8 @@ import { RuleBookSheet } from "@/components/game/RuleBookSheet";
 import { OpponentPanel } from "@/components/game/OpponentPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
-import { fetchPlayerDisplayName } from "@/lib/playerName";
+import { fetchPlayerShortName } from "@/lib/playerName";
+import { NamePrompt } from "@/components/game/NamePrompt";
 
 type Mode = "place" | "disaster" | "steal" | "move";
 
@@ -194,7 +195,7 @@ export default function Play() {
         }
 
         // No route id — solo vs Bot path.
-        const youName = user ? await fetchPlayerDisplayName(user) : "You";
+        const youName = user ? await fetchPlayerShortName(user) : "You";
         if (cancelled) return;
         const deck = buildDeck(allCards);
         const fresh = createMatch({
@@ -462,7 +463,7 @@ export default function Play() {
       navigate("/play");
       return;
     }
-    const youName = user ? await fetchPlayerDisplayName(user) : "You";
+    const youName = user ? await fetchPlayerShortName(user) : "You";
     const deck = buildDeck(allCards);
     const fresh = createMatch({
       deck,
@@ -489,7 +490,7 @@ export default function Play() {
   async function handleCreatePvp() {
     if (!user || !allCards) throw new Error("Not ready");
     const deck = buildDeck(allCards);
-    const hostName = await fetchPlayerDisplayName(user);
+    const hostName = await fetchPlayerShortName(user);
     const initial = createMatch({
       deck,
       players: [
@@ -885,6 +886,8 @@ export default function Play() {
       />
 
       <MatchOverDialog state={state} onPlayAgain={onNewGame} />
+      <NamePrompt />
+
 
       {/* Golden Hive prompt — shown to the targeted victim when an opponent
           plays a Disaster while you hold an unspent Hive. */}

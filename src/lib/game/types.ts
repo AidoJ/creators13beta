@@ -74,6 +74,21 @@ export interface PlayerState {
 
 export type TurnPhase = "draw" | "place";
 
+/** Game mode controlling the end-condition. */
+export type GameMode =
+  | "end_of_days"   // classic: first to assemble full ecosystem
+  | "first_to_50"   // first player to reach a target total score wins
+  | "beat_clock";   // overall match timer + per-turn timer; high score wins on time-up
+
+export interface GameConfig {
+  /** For first_to_50: points threshold. Default 50. */
+  targetScore?: number;
+  /** For beat_clock: epoch ms when the match auto-ends. */
+  matchEndsAt?: number;
+  /** For beat_clock: seconds allowed per turn before auto-end-turn. */
+  turnSeconds?: number;
+}
+
 /** A disaster that is waiting for a victim's Golden Hive decision before it
  *  resolves. While this is set the match is paused for everyone — only the
  *  victim can act. */
@@ -89,17 +104,23 @@ export interface MatchState {
   draw: DeckCard[];
   used: DeckCard[];
   phase: TurnPhase;
-  /** How many cards picked up so far this turn (0..2). */
   drawnThisTurn: number;
-  /** How many cards placed/discarded so far this turn (0..2). */
   placedThisTurn: number;
   turnNumber: number;
   finished: boolean;
   winnerId: string | null;
-  /** Most recent rule-relevant event, for the UI to surface. */
   lastEvent?: string;
-  /** Set while a disaster is paused waiting for a Hive decision. */
   pendingDisaster?: PendingDisaster | null;
+  /** Game mode + config. Older saves omit these → treated as end_of_days. */
+  gameMode?: GameMode;
+  gameConfig?: GameConfig;
+}
+
+/** Total score used for First-to-50 / Beat-the-Clock leaderboards.
+ *  Mirrors the running pts shown in ScorePanel (ecosystem.placed.size * 2)
+ *  plus engine-tracked bonus points (disaster wipes, etc.). */
+export function playerTotalScore(player: PlayerState): number {
+  return player.ecosystem.placed.size * 2 + (player.score ?? 0);
 }
 
 export const HAND_SIZE = 5;
