@@ -886,6 +886,8 @@ export default function Play() {
       />
 
       <MatchOverDialog state={state} onPlayAgain={onNewGame} />
+      <NamePrompt />
+
 
       {/* Golden Hive prompt — shown to the targeted victim when an opponent
           plays a Disaster while you hold an unspent Hive. */}
