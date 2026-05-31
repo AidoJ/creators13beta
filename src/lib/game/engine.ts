@@ -443,10 +443,11 @@ function applyDisasterWipe(
     }
     const survivors = new Map<string, PlacedCard>();
     for (const [k, pc] of victim.ecosystem.placed) {
+      // Golden Bodies are wildcard treasures and are immune to disasters —
+      // only regular animals and sky creatures can be wiped.
       const isAnimal =
         pc.card.kind === "animal" ||
-        pc.card.kind === "sky_creature" ||
-        pc.card.kind === "golden_body";
+        pc.card.kind === "sky_creature";
       if (isAnimal && animalLinksToCreator(pc.card, creator)) {
         const cells = legalEcoCells(player.ecosystem);
         if (cells.length > 0) {
