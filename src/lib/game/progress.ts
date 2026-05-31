@@ -8,13 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import type { MatchState, PlayerState } from "./types";
 import { capitaliseTypeName } from "@/lib/creatorTypes";
 
-// Points are ONLY awarded when a game finishes. Mid-game we just track which
-// Creator Types the player has discovered so the dashboard grid lights up.
-const POINTS_PER_PLACED_CARD = 2;   // small per-card bonus at game end
-const POINTS_PER_NEW_TYPE = 10;     // bonus for each type discovered THIS game
-const POINTS_WIN = 50;
-const POINTS_FINISH = 10;
-const POINTS_PERFECT_ECO = 25;
+// Points are ONLY awarded when a game finishes, and only to the winner:
+// +3 pts per game won. Mid-game we just sync which Creator Types the player
+// has discovered so the dashboard grid lights up.
+const POINTS_WIN = 3;
 const ELO_WIN = 20;
 const ELO_LOSS = -15;
 
@@ -65,16 +62,14 @@ export async function recordProgressDiff(args: {
       return;
     }
 
-    // End-of-game: award all points at once.
-    let pointsDelta = POINTS_FINISH;
-    pointsDelta += nextSelf.ecosystem.placed.size * POINTS_PER_PLACED_CARD;
-    pointsDelta += nextTypes.size * POINTS_PER_NEW_TYPE;
-
+    // End-of-game: only the winner gets points (+3 per win). No cumulative
+    // per-card bonuses — the dashboard "points" stat is now a clean wins×3 tally.
+    let pointsDelta = 0;
     let won: boolean | null = null;
     let eloDelta = 0;
     if (next.winnerId === selfSlot) {
       won = true;
-      pointsDelta += POINTS_WIN;
+      pointsDelta = POINTS_WIN;
       eloDelta = ELO_WIN;
     } else if (next.winnerId) {
       won = false;
@@ -82,7 +77,6 @@ export async function recordProgressDiff(args: {
     }
 
     const perfectEco = nextSelf.ecosystem.placed.size >= 16;
-    if (perfectEco) pointsDelta += POINTS_PERFECT_ECO;
 
     await supabase.rpc("bump_player_progress", {
       _user_id: userId,

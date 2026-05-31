@@ -26,8 +26,8 @@ export function GameModeSelector({ open, onCancel, onChoose }: Props) {
   }> = [
     {
       id: "first_to_50",
-      title: "First to 50",
-      sub: "First player to reach the points target wins.",
+      title: "Top Score",
+      sub: "First player to reach the top score limit wins.",
       icon: <Trophy className="w-6 h-6" />,
     },
     {
@@ -89,7 +89,7 @@ export function GameModeSelector({ open, onCancel, onChoose }: Props) {
 
         {mode === "first_to_50" && (
           <div className="flex items-center gap-3 py-1">
-            <Label htmlFor="ts" className="text-sm">Points target</Label>
+            <Label htmlFor="ts" className="text-sm">Top score limit (pts)</Label>
             <Input
               id="ts"
               type="number"
@@ -99,6 +99,7 @@ export function GameModeSelector({ open, onCancel, onChoose }: Props) {
               onChange={(e) => setTargetScore(Math.max(10, Number(e.target.value) || 0))}
               className="w-28"
             />
+            <span className="text-xs text-muted-foreground">First to reach this wins.</span>
           </div>
         )}
 

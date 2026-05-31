@@ -17,12 +17,14 @@ interface Props {
 export function MatchOverDialog({ state, onPlayAgain }: Props) {
   const navigate = useNavigate();
   const [reviewOpen, setReviewOpen] = useState(false);
-  const open = state.finished;
+  const [dismissed, setDismissed] = useState(false);
+  const open = state.finished && !dismissed;
   const winner = state.players.find((p) => p.id === state.winnerId) ?? state.players[0];
 
   return (
     <>
-      <Dialog open={open && !reviewOpen}>
+      <Dialog open={open && !reviewOpen} onOpenChange={(o) => { if (!o) setDismissed(true); }}>
+
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 font-display text-2xl">
