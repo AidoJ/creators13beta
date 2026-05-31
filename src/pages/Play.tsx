@@ -195,7 +195,7 @@ export default function Play() {
         }
 
         // No route id — solo vs Bot path.
-        const youName = user ? await fetchPlayerDisplayName(user) : "You";
+        const youName = user ? await fetchPlayerShortName(user) : "You";
         if (cancelled) return;
         const deck = buildDeck(allCards);
         const fresh = createMatch({
@@ -463,7 +463,7 @@ export default function Play() {
       navigate("/play");
       return;
     }
-    const youName = user ? await fetchPlayerDisplayName(user) : "You";
+    const youName = user ? await fetchPlayerShortName(user) : "You";
     const deck = buildDeck(allCards);
     const fresh = createMatch({
       deck,
@@ -490,7 +490,7 @@ export default function Play() {
   async function handleCreatePvp() {
     if (!user || !allCards) throw new Error("Not ready");
     const deck = buildDeck(allCards);
-    const hostName = await fetchPlayerDisplayName(user);
+    const hostName = await fetchPlayerShortName(user);
     const initial = createMatch({
       deck,
       players: [
