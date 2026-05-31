@@ -21,6 +21,7 @@ import {
   playDisaster,
 } from "./engine";
 import { CREATORS_NEEDED, HAND_LIMIT, type DeckCard, type MatchState } from "./types";
+import { TYPE_TO_ELEMENT, ELEMENTS } from "./elements";
 
 export function botStep(state: MatchState): MatchState {
   if (state.finished) return state;
@@ -70,9 +71,20 @@ export function botStep(state: MatchState): MatchState {
     try { return placeOnEcosystem(state, card.uid, cell); } catch {}
   }
 
-  // 3) Play a disaster only when we still have headroom — disasters return
-  //    wiped animals to our hand and can otherwise spiral the hand size.
-  if (!handFull && creators >= CREATORS_NEEDED) {
+  // 3) Play a disaster ONLY when we (a) still have headroom, (b) have already
+  //    completed our own creator set, AND (c) that creator set spans all 4
+  //    elements (Earth/Fire/Air/Water). This mirrors the player rule — you
+  //    can't unleash a natural disaster without a balanced ecosystem.
+  const myElements = new Set<string>();
+  for (const pc of placedCreators) {
+    if (pc.card.kind === "sky_creator") {
+      ELEMENTS.forEach((e) => myElements.add(e)); // wildcard counts for all
+    } else if (pc.card.element) {
+      myElements.add(pc.card.element);
+    }
+  }
+  const hasAllElements = ELEMENTS.every((e) => myElements.has(e));
+  if (!handFull && creators >= CREATORS_NEEDED && hasAllElements) {
     const spare = player.hand.find((c) => c.kind === "creator" || c.kind === "sky_creator");
     if (spare) {
       try { return playDisaster(state, spare.uid); } catch {}

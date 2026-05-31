@@ -214,13 +214,15 @@ export function animalLinksToCreator(animal: DeckCard, creator: DeckCard): boole
   if (animal.kind === "golden_body") return true; // wildcard
   if (creator.kind === "sky_creator") return true; // wildcard
   if (creator.kind !== "creator") return false;
-  // Primary rule: animal links if its Creator Types include this Creator's type.
-  const creatorType = creator.displayType;
   const animalTypes = (animal.types ?? []) as string[];
-  if (creatorType && animalTypes.some((t) => t?.toLowerCase() === creatorType.toLowerCase())) {
-    return true;
+  // Strict rule: animal links ONLY if one of its 2 Creator Types matches this
+  // Creator's exact type. (No element-bucket fallback — that caused huge
+  // collateral wipes when a Fire Creator also pulled in Lava/Sun animals.)
+  const creatorType = creator.displayType;
+  if (creatorType) {
+    return animalTypes.some((t) => t?.toLowerCase() === creatorType.toLowerCase());
   }
-  // Fallback: legacy element match (kept for sky_creatures / older data).
+  // Truly untyped creator (shouldn't happen) — fall back to element match.
   const el = creator.element!;
   return animalTypes.some((t) => TYPE_TO_ELEMENT[t] === el);
 }
@@ -441,10 +443,11 @@ function applyDisasterWipe(
     }
     const survivors = new Map<string, PlacedCard>();
     for (const [k, pc] of victim.ecosystem.placed) {
+      // Golden Bodies are wildcard treasures and are immune to disasters —
+      // only regular animals and sky creatures can be wiped.
       const isAnimal =
         pc.card.kind === "animal" ||
-        pc.card.kind === "sky_creature" ||
-        pc.card.kind === "golden_body";
+        pc.card.kind === "sky_creature";
       if (isAnimal && animalLinksToCreator(pc.card, creator)) {
         const cells = legalEcoCells(player.ecosystem);
         if (cells.length > 0) {
