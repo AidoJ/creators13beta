@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { HelpCircle, Loader2, Users, BookOpen, Maximize2, ChevronUp, ChevronDown, LayoutDashboard, MessageCircle } from "lucide-react";
+import { HelpCircle, Loader2, Users, BookOpen, Maximize2, ChevronUp, ChevronDown, LayoutDashboard, MessageCircle, X, Plus, Swords, Clock } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -24,6 +25,7 @@ import {
   moveMyPlacedHex,
   skipDraws,
   endTurnEarly,
+  finaliseByScore,
 } from "@/lib/game";
 import {
   createMatchRow,
@@ -36,7 +38,7 @@ import { recordProgressDiff } from "@/lib/game/progress";
 import { useMatchRealtime } from "@/hooks/useMatchRealtime";
 import { useAuth } from "@/contexts/AuthContext";
 import { DISCORD_INVITE_URL } from "@/config/discordChat";
-import type { Axial, DeckCard, MatchState } from "@/lib/game/types";
+import type { Axial, DeckCard, GameConfig, GameMode, MatchState } from "@/lib/game/types";
 import { Ecosystem } from "@/components/game/Ecosystem";
 import { PlayerHand } from "@/components/game/PlayerHand";
 import { ScorePanel } from "@/components/game/ScorePanel";
@@ -47,6 +49,7 @@ import { MultiplayerLobby } from "@/components/game/MultiplayerLobby";
 import { HandTile } from "@/components/game/cards/HandTile";
 import { RuleBookSheet } from "@/components/game/RuleBookSheet";
 import { OpponentPanel } from "@/components/game/OpponentPanel";
+import { GameModeSelector } from "@/components/game/GameModeSelector";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { fetchPlayerShortName } from "@/lib/playerName";
@@ -81,6 +84,8 @@ export default function Play() {
   const [undoCount, setUndoCount] = useState(0);
   const [quickUndoUntil, setQuickUndoUntil] = useState<number>(0);
   const [, setNowTick] = useState(0);
+  const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
+  const turnStartedAtRef = useRef<number>(Date.now());
 
   // Tick every 250ms while quick-undo is active so the countdown re-renders.
   useEffect(() => {
@@ -197,14 +202,6 @@ export default function Play() {
         // No route id — solo vs Bot path.
         const youName = user ? await fetchPlayerShortName(user) : "You";
         if (cancelled) return;
-        const deck = buildDeck(allCards);
-        const fresh = createMatch({
-          deck,
-          players: [
-            { id: "you", name: youName },
-            { id: "bot", name: "Tutorial Bot" },
-          ],
-        });
         // Try to restore an in-progress solo match from localStorage.
         const restored = restoreLocalMatch(allCards, youName);
         if (restored) {
@@ -212,9 +209,9 @@ export default function Play() {
           setState(restored);
           return;
         }
+        // No restored match — let the player pick a Game Type.
         if (cancelled) return;
-        setState(fresh);
-        persistLocalMatch(fresh);
+        setModeSelectorOpen(true);
       } catch (e: any) {
         if (!cancelled) setError(e?.message ?? String(e));
       }
@@ -316,6 +313,50 @@ export default function Play() {
       persistLocalMatch(next);
     }
   }
+
+  /* ----------- Beat-the-Clock timers ----------- */
+  // Reset turn timer whenever the current turn changes.
+  useEffect(() => {
+    turnStartedAtRef.current = Date.now();
+  }, [state?.turn, state?.turnNumber]);
+
+  // Per-second tick for countdown UIs + auto-fire timeouts.
+  useEffect(() => {
+    if (!state || state.finished) return;
+    if (state.gameMode !== "beat_clock") return;
+    const id = setInterval(() => {
+      setNowTick((n) => n + 1);
+      const now = Date.now();
+      // Match timer expired → finalise on points.
+      const endsAt = state.gameConfig?.matchEndsAt ?? 0;
+      if (endsAt && now >= endsAt) {
+        try {
+          const next = finaliseByScore(state);
+          setState(next);
+          schedulePersist(next);
+        } catch {/* ignore */}
+        return;
+      }
+      // Per-turn timer expired → auto end-turn for whoever's up (only act if it's our turn,
+      // otherwise the bot driver handles its own; PvP each client polices their own clock).
+      const turnSecs = state.gameConfig?.turnSeconds ?? 0;
+      if (
+        turnSecs > 0 &&
+        state.phase === "place" &&
+        !state.pendingDisaster &&
+        state.players[state.turn].id === selfSlot &&
+        now - turnStartedAtRef.current >= turnSecs * 1000
+      ) {
+        try {
+          const next = endTurnEarly(state);
+          setState(next);
+          schedulePersist(next);
+        } catch {/* ignore */}
+      }
+    }, 1000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, selfSlot]);
 
   /* ----------- Derived view-model ----------- */
 
@@ -456,13 +497,18 @@ export default function Play() {
   }
 
   async function onNewGame() {
-
     if (!allCards) return;
     if (routeMatchId) {
       // PvP / persisted match — leaving back to a fresh solo.
       navigate("/play");
       return;
     }
+    // Open selector to pick the game type for the new solo match.
+    setModeSelectorOpen(true);
+  }
+
+  async function startSoloMatch(mode: GameMode, config: GameConfig) {
+    if (!allCards) return;
     const youName = user ? await fetchPlayerShortName(user) : "You";
     const deck = buildDeck(allCards);
     const fresh = createMatch({
@@ -471,11 +517,15 @@ export default function Play() {
         { id: "you", name: youName },
         { id: "bot", name: "Tutorial Bot" },
       ],
+      gameMode: mode,
+      gameConfig: config,
     });
     setState(fresh);
     setSelectedUid(null);
     setMode("place");
+    turnStartedAtRef.current = Date.now();
     if (!user) persistLocalMatch(fresh);
+    setModeSelectorOpen(false);
   }
 
   function onOpenMultiplayer() {
@@ -522,8 +572,15 @@ export default function Play() {
   }
   if (!state || !selfPlayer || !opponent) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        {allCards && modeSelectorOpen ? (
+          <GameModeSelector
+            open
+            onChoose={(m, c) => startSoloMatch(m, c)}
+          />
+        ) : (
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        )}
       </div>
     );
   }
@@ -736,69 +793,145 @@ export default function Play() {
   );
 
 
+  /* ----------- Beat-the-Clock countdown labels ----------- */
+  const isBeatClock = state.gameMode === "beat_clock";
+  const matchEndsAt = state.gameConfig?.matchEndsAt ?? 0;
+  const turnSecs = state.gameConfig?.turnSeconds ?? 0;
+  const matchSecondsLeft = isBeatClock && matchEndsAt
+    ? Math.max(0, Math.ceil((matchEndsAt - Date.now()) / 1000))
+    : 0;
+  const turnSecondsLeft = isBeatClock && turnSecs > 0 && isYourTurn && state.phase === "place"
+    ? Math.max(0, Math.ceil((turnStartedAtRef.current + turnSecs * 1000 - Date.now()) / 1000))
+    : 0;
+  const fmt = (s: number) => {
+    const m = Math.floor(s / 60);
+    const ss = (s % 60).toString().padStart(2, "0");
+    return `${m}:${ss}`;
+  };
+
+
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="h-[100dvh] flex flex-col bg-background overflow-hidden">
 
       {!ribbonHidden && <ScorePanel state={state} />}
 
       {!ribbonHidden && (
-        <div className="px-3 py-2 bg-card/30 border-b border-border/40 flex items-center justify-between gap-3 flex-wrap">
-          <div className="text-sm flex-1 min-w-0">
+        <div className="px-3 py-1.5 bg-card/30 border-b border-border/40 flex items-center justify-between gap-3 flex-wrap">
+          <div className="text-xs sm:text-sm flex-1 min-w-0 truncate">
             {phaseHint}
-            {isYourTurn && state.phase === "place" && mode !== "steal" && (
-              <span className="ml-2 text-muted-foreground hidden md:inline">
-                · Tip: click any placed hex to rotate its colours.
-              </span>
-            )}
           </div>
-          <div className="flex gap-2 items-center">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onCloseResumeLater}
-              title="Leave the board — your match is saved and you can come back to it from the dashboard."
-            >
-              <LayoutDashboard className="w-4 h-4 mr-1" /> Close & resume later
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onCloseAbandon}
-              className="text-destructive hover:text-destructive"
-              title="Forfeit this match. It will be marked finished for both players."
-            >
-              Close & abandon
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              asChild
-            >
-              <a href={DISCORD_INVITE_URL} target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="w-4 h-4 mr-1" /> Discord
-              </a>
-            </Button>
+
+          {/* Beat-the-Clock countdowns */}
+          {isBeatClock && (
+            <div className="flex items-center gap-3 text-xs font-mono">
+              <span className="inline-flex items-center gap-1 text-foreground/90">
+                <Clock className="w-3.5 h-3.5" /> {fmt(matchSecondsLeft)}
+              </span>
+              {turnSecondsLeft > 0 && (
+                <span className={
+                  "inline-flex items-center gap-1 px-1.5 rounded " +
+                  (turnSecondsLeft <= 5 ? "bg-destructive/20 text-destructive animate-pulse" : "text-muted-foreground")
+                }>
+                  turn {turnSecondsLeft}s
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className="flex gap-1 items-center">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  onClick={onCloseResumeLater}
+                  className="h-8 w-8"
+                  aria-label="Close and resume later"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Close &amp; resume later</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  onClick={onCloseAbandon}
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                  aria-label="Close and abandon"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Close &amp; abandon</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="icon" variant="outline" className="h-8 w-8" asChild aria-label="Discord">
+                  <a href={DISCORD_INVITE_URL} target="_blank" rel="noopener noreferrer">
+                    <MessageCircle className="w-4 h-4" />
+                  </a>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Open Discord chat</TooltipContent>
+            </Tooltip>
+
             {isPvp ? (
-              <Button size="sm" variant="outline" onClick={() => navigate("/play")}>
-                Solo vs Bot
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => navigate("/play")} aria-label="Solo vs Bot">
+                    <Swords className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Solo vs Bot</TooltipContent>
+              </Tooltip>
             ) : (
-              <Button size="sm" variant="outline" onClick={onOpenMultiplayer}>
-                <Users className="w-4 h-4 mr-1" /> Multiplayer
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="icon" variant="outline" className="h-8 w-8" onClick={onOpenMultiplayer} aria-label="Multiplayer">
+                    <Users className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Multiplayer</TooltipContent>
+              </Tooltip>
             )}
-            <Button
-              size="sm"
-              onClick={() => setRuleBookOpen(true)}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm font-semibold"
-            >
-              <BookOpen className="w-4 h-4 mr-1" /> Rule Book
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => { resetTutorial(); window.location.reload(); }}>
-              <HelpCircle className="w-4 h-4 mr-1" /> Help
-            </Button>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  onClick={() => setRuleBookOpen(true)}
+                  className="h-8 w-8 bg-primary text-primary-foreground hover:bg-primary/90"
+                  aria-label="Rule Book"
+                >
+                  <BookOpen className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Rule Book</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { resetTutorial(); window.location.reload(); }} aria-label="Help">
+                  <HelpCircle className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Replay the tutorial</TooltipContent>
+            </Tooltip>
+
             {(state.finished || !isPvp) && (
-              <Button size="sm" onClick={onNewGame}>New game</Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="icon" className="h-8 w-8" onClick={onNewGame} aria-label="New game">
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>New game</TooltipContent>
+              </Tooltip>
             )}
           </div>
         </div>
@@ -816,7 +949,7 @@ export default function Play() {
       </button>
 
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[240px_1fr_195px] gap-2 p-2 min-h-0 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[220px_1fr_200px] gap-2 p-2 min-h-0 overflow-hidden">
         {/* Mobile compact bar: opponent + piles toggles */}
         <div className="lg:hidden flex gap-2">
           <Button
@@ -887,6 +1020,13 @@ export default function Play() {
 
       <MatchOverDialog state={state} onPlayAgain={onNewGame} />
       <NamePrompt />
+      {modeSelectorOpen && (
+        <GameModeSelector
+          open
+          onCancel={() => setModeSelectorOpen(false)}
+          onChoose={(m, c) => startSoloMatch(m, c)}
+        />
+      )}
 
 
       {/* Golden Hive prompt — shown to the targeted victim when an opponent

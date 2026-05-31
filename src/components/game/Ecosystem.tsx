@@ -220,39 +220,46 @@ export function Ecosystem({
             </div>
           );
         })}
-        {matches.map((m) => (
-          <div
-            key={`m-${m.key}`}
-            className="absolute z-30 pointer-events-none animate-scale-in"
-            style={{
-              left: m.x + offX,
-              top: m.y + offY,
-              transform: "translate(-50%, -50%)",
-            }}
-            title={`Matched: ${m.label}`}
-          >
+        {matches.map((m) => {
+          const dot = Math.max(14, size * 0.22);
+          return (
             <div
-              className="flex items-center gap-1 rounded-full pl-1 pr-1.5 py-0.5 bg-black/85 border border-white/60 shadow-lg backdrop-blur-sm"
-              style={{ boxShadow: `0 0 10px ${m.color}, 0 2px 4px rgba(0,0,0,0.6)` }}
+              key={`m-${m.key}`}
+              className="absolute z-30 pointer-events-none animate-scale-in"
+              style={{
+                left: m.x + offX,
+                top: m.y + offY,
+                transform: "translate(-50%, -50%)",
+              }}
+              title={`Matched: ${m.label}`}
             >
-              <span
-                className="rounded-full shrink-0"
+              <div
+                className="flex items-center justify-center rounded-full bg-black/80 border border-white/70 backdrop-blur-sm"
                 style={{
-                  width: Math.max(8, size * 0.12),
-                  height: Math.max(8, size * 0.12),
-                  background: m.color,
-                  boxShadow: `0 0 6px ${m.color}`,
+                  width: dot,
+                  height: dot,
+                  boxShadow: `0 0 10px ${m.color}, 0 0 2px ${m.color}`,
                 }}
-              />
-              <span
-                className="font-normal uppercase tracking-wider text-white leading-none"
-                style={{ fontFamily: '"Questrial", sans-serif', fontSize: Math.max(9, size * 0.11) }}
               >
-                {m.label}
-              </span>
+                {/* Chain-link glyph indicating these neighbours match. */}
+                <svg
+                  viewBox="0 0 24 24"
+                  width={dot * 0.7}
+                  height={dot * 0.7}
+                  fill="none"
+                  stroke={m.color}
+                  strokeWidth={2.4}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <path d="M10 14a4 4 0 0 1 0-5.66l2-2a4 4 0 0 1 5.66 5.66l-1.1 1.1" />
+                  <path d="M14 10a4 4 0 0 1 0 5.66l-2 2a4 4 0 0 1-5.66-5.66l1.1-1.1" />
+                </svg>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
