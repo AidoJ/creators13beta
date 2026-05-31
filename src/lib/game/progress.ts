@@ -7,13 +7,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { MatchState, PlayerState } from "./types";
 import { capitaliseTypeName } from "@/lib/creatorTypes";
+import { fetchGameSettings } from "./settings";
 
-// Points are ONLY awarded when a game finishes, and only to the winner:
-// +3 pts per game won. Mid-game we just sync which Creator Types the player
-// has discovered so the dashboard grid lights up.
-const POINTS_WIN = 3;
-const ELO_WIN = 20;
-const ELO_LOSS = -15;
+// Points are ONLY awarded when a game finishes, and only to the winner.
+// Values are pulled from the admin-configurable game_settings row at
+// match-end time, with safe fallbacks if the table is unreachable.
 
 function selfFor(state: MatchState | null, selfSlot: string): PlayerState | undefined {
   return state?.players.find((p) => p.id === selfSlot);
@@ -62,21 +60,23 @@ export async function recordProgressDiff(args: {
       return;
     }
 
-    // End-of-game: only the winner gets points (+3 per win). No cumulative
-    // per-card bonuses — the dashboard "points" stat is now a clean wins×3 tally.
+    // End-of-game: only the winner gets points. Values come from the
+    // admin-configurable game_settings row.
+    const settings = await fetchGameSettings();
     let pointsDelta = 0;
     let won: boolean | null = null;
     let eloDelta = 0;
     if (next.winnerId === selfSlot) {
       won = true;
-      pointsDelta = POINTS_WIN;
-      eloDelta = ELO_WIN;
+      pointsDelta = settings.points_per_win;
+      eloDelta = settings.elo_win;
     } else if (next.winnerId) {
       won = false;
-      eloDelta = ELO_LOSS;
+      eloDelta = settings.elo_loss;
     }
 
     const perfectEco = nextSelf.ecosystem.placed.size >= 16;
+    if (perfectEco && won) pointsDelta += settings.perfect_eco_bonus;
 
     await supabase.rpc("bump_player_progress", {
       _user_id: userId,

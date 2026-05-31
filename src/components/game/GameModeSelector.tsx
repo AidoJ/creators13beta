@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Trophy, Timer, Infinity as InfinityIcon } from "lucide-react";
 import type { GameConfig, GameMode } from "@/lib/game/types";
+import { useGameSettings } from "@/lib/game/settings";
 
 interface Props {
   open: boolean;
@@ -13,36 +14,49 @@ interface Props {
 }
 
 export function GameModeSelector({ open, onCancel, onChoose }: Props) {
+  const { settings } = useGameSettings();
   const [mode, setMode] = useState<GameMode>("end_of_days");
   const [targetScore, setTargetScore] = useState(50);
   const [matchMinutes, setMatchMinutes] = useState(20);
   const [turnSeconds, setTurnSeconds] = useState(20);
 
-  const cards: Array<{
+  useEffect(() => {
+    setMode(settings.default_mode as GameMode);
+    setTargetScore(settings.top_score_default);
+    setMatchMinutes(settings.beat_clock_match_minutes);
+    setTurnSeconds(settings.beat_clock_turn_seconds);
+  }, [settings]);
+
+  const allCards: Array<{
     id: GameMode;
     title: string;
     sub: string;
     icon: JSX.Element;
+    enabled: boolean;
   }> = [
     {
       id: "first_to_50",
       title: "Top Score",
       sub: "First player to reach the top score limit wins.",
       icon: <Trophy className="w-6 h-6" />,
+      enabled: settings.mode_top_score_enabled,
     },
     {
       id: "beat_clock",
       title: "Beat the Clock",
       sub: "Match timer + per-turn timer. Highest score on time-up.",
       icon: <Timer className="w-6 h-6" />,
+      enabled: settings.mode_beat_clock_enabled,
     },
     {
       id: "end_of_days",
       title: "End of Days",
       sub: "Classic full game — build your complete ecosystem to win.",
       icon: <InfinityIcon className="w-6 h-6" />,
+      enabled: settings.mode_end_of_days_enabled,
     },
   ];
+  const cards = allCards.filter((c) => c.enabled);
 
   function confirm() {
     const config: GameConfig = {};
