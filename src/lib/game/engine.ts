@@ -601,6 +601,25 @@ function canAssignAnimalsToCreators(
 }
 
 function checkWin(state: MatchState): void {
+  // First-to-N points game mode wins as soon as anyone hits target.
+  if (state.gameMode === "first_to_50") {
+    const target = state.gameConfig?.targetScore ?? 50;
+    let bestId: string | null = null;
+    let bestPts = -1;
+    for (const p of state.players) {
+      const pts = playerTotalScore(p);
+      if (pts >= target && pts > bestPts) {
+        bestPts = pts;
+        bestId = p.id;
+      }
+    }
+    if (bestId) {
+      finalise(state, bestId);
+      return;
+    }
+  }
+
+  // Classic ecosystem-complete win (end_of_days, also a valid early win for first_to_50).
   for (const p of state.players) {
     const placed = Array.from(p.ecosystem.placed.values()).map((pc) => pc.card);
     const creators = placed.filter(
@@ -609,9 +628,7 @@ function checkWin(state: MatchState): void {
     const animals = placed.filter(
       (c) => c.kind === "animal" || c.kind === "sky_creature" || c.kind === "golden_body",
     );
-    // Need exactly 4 Creator cards on the board (any 4 of the 13 Creator Types).
     if (creators.length !== CREATORS_NEEDED) continue;
-    // Need at least 3 animals per Creator; extras on the board are allowed.
     if (animals.length < CREATORS_NEEDED * ANIMALS_PER_CREATOR) continue;
     if (!canAssignAnimalsToCreators(creators, animals)) continue;
     const stillHoldingCreators = p.hand.some(
@@ -623,7 +640,17 @@ function checkWin(state: MatchState): void {
   }
 }
 
-
+/** Force-finalise (e.g. Beat-the-Clock timer expiry). Highest total score wins. */
+export function finaliseByScore(state: MatchState): MatchState {
+  if (state.finished) return state;
+  const next = cloneState(state);
+  const top = next.players.reduce((a, b) =>
+    playerTotalScore(b) > playerTotalScore(a) ? b : a,
+  );
+  finalise(next, top.id);
+  next.lastEvent = `Time's up — ${top.name} wins on points!`;
+  return next;
+}
 
 function finalise(state: MatchState, winnerId?: string): void {
   state.finished = true;
