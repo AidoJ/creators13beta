@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Users, Shield, ChevronDown, ChevronUp, FileText, CheckCircle, Clock, BarChart3, Eye, EyeOff, FolderOpen, Save, HelpCircle, Briefcase, CreditCard, Mail, Send, UserPlus, ExternalLink } from "lucide-react";
+import { Search, Users, Shield, ChevronDown, ChevronUp, FileText, CheckCircle, Clock, BarChart3, Eye, EyeOff, FolderOpen, Save, HelpCircle, Briefcase, CreditCard, Mail, Send, UserPlus, ExternalLink, Gamepad2 } from "lucide-react";
+import GameSettingsPanel from "@/components/admin/GameSettingsPanel";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import ClientDetail from "@/components/practitioner/ClientDetail";
 import { toast } from "@/hooks/use-toast";
@@ -375,7 +376,12 @@ export default function AdminDashboard() {
             <TabsTrigger value="faqs"><HelpCircle className="h-3.5 w-3.5 mr-1" />FAQs</TabsTrigger>
             <TabsTrigger value="emails"><Mail className="h-3.5 w-3.5 mr-1" />Emails</TabsTrigger>
             <TabsTrigger value="invitations"><Send className="h-3.5 w-3.5 mr-1" />Invitations</TabsTrigger>
+            <TabsTrigger value="game"><Gamepad2 className="h-3.5 w-3.5 mr-1" />Game</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="game" className="space-y-4">
+            <GameSettingsPanel />
+          </TabsContent>
 
           {/* ======= PRACTITIONERS TAB ======= */}
           <TabsContent value="practitioners" className="space-y-4">
