@@ -655,6 +655,87 @@ export type Database = {
         }
         Relationships: []
       }
+      game_settings: {
+        Row: {
+          animals_per_creator: number
+          beat_clock_match_minutes: number
+          beat_clock_turn_seconds: number
+          creators_needed: number
+          default_mode: string
+          ecosystem_target: number
+          elo_loss: number
+          elo_win: number
+          enable_disasters: boolean
+          enable_golden_body: boolean
+          enable_golden_hive: boolean
+          enable_sky_creator: boolean
+          enable_sky_creature_steal: boolean
+          hand_limit: number
+          hand_size: number
+          id: string
+          mode_beat_clock_enabled: boolean
+          mode_end_of_days_enabled: boolean
+          mode_top_score_enabled: boolean
+          perfect_eco_bonus: number
+          points_per_win: number
+          top_score_default: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          animals_per_creator?: number
+          beat_clock_match_minutes?: number
+          beat_clock_turn_seconds?: number
+          creators_needed?: number
+          default_mode?: string
+          ecosystem_target?: number
+          elo_loss?: number
+          elo_win?: number
+          enable_disasters?: boolean
+          enable_golden_body?: boolean
+          enable_golden_hive?: boolean
+          enable_sky_creator?: boolean
+          enable_sky_creature_steal?: boolean
+          hand_limit?: number
+          hand_size?: number
+          id?: string
+          mode_beat_clock_enabled?: boolean
+          mode_end_of_days_enabled?: boolean
+          mode_top_score_enabled?: boolean
+          perfect_eco_bonus?: number
+          points_per_win?: number
+          top_score_default?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          animals_per_creator?: number
+          beat_clock_match_minutes?: number
+          beat_clock_turn_seconds?: number
+          creators_needed?: number
+          default_mode?: string
+          ecosystem_target?: number
+          elo_loss?: number
+          elo_win?: number
+          enable_disasters?: boolean
+          enable_golden_body?: boolean
+          enable_golden_hive?: boolean
+          enable_sky_creator?: boolean
+          enable_sky_creature_steal?: boolean
+          hand_limit?: number
+          hand_size?: number
+          id?: string
+          mode_beat_clock_enabled?: boolean
+          mode_end_of_days_enabled?: boolean
+          mode_top_score_enabled?: boolean
+          perfect_eco_bonus?: number
+          points_per_win?: number
+          top_score_default?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       lesson_progress: {
         Row: {
           completed: boolean | null
