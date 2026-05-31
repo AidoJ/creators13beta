@@ -27,6 +27,24 @@ export interface GameSettings {
   enable_sky_creator: boolean;
   enable_golden_body: boolean;
   enable_sky_creature_steal: boolean;
+  // Bots & matchmaking
+  bot_difficulty: "easy" | "medium" | "hard";
+  bot_think_ms: number;
+  allow_guest_play: boolean;
+  allow_solo_vs_bot: boolean;
+  max_players_per_match: number;
+  // UI / UX
+  show_tutorial_overlay: boolean;
+  show_discord_chat: boolean;
+  show_review_boards: boolean;
+  prompt_player_name: boolean;
+  show_score_panel: boolean;
+  featured_mode: "end_of_days" | "first_to_50" | "beat_clock" | null;
+  // Live ops
+  maintenance_banner_enabled: boolean;
+  maintenance_banner_text: string;
+  play_disabled: boolean;
+  play_disabled_message: string;
 }
 
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
@@ -51,6 +69,21 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   enable_sky_creator: true,
   enable_golden_body: true,
   enable_sky_creature_steal: true,
+  bot_difficulty: "medium",
+  bot_think_ms: 800,
+  allow_guest_play: true,
+  allow_solo_vs_bot: true,
+  max_players_per_match: 2,
+  show_tutorial_overlay: true,
+  show_discord_chat: true,
+  show_review_boards: true,
+  prompt_player_name: true,
+  show_score_panel: true,
+  featured_mode: null,
+  maintenance_banner_enabled: false,
+  maintenance_banner_text: "",
+  play_disabled: false,
+  play_disabled_message: "The game is briefly offline for maintenance. Please check back soon.",
 };
 
 let cached: GameSettings | null = null;

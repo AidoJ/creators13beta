@@ -54,6 +54,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { fetchPlayerShortName } from "@/lib/playerName";
 import { NamePrompt } from "@/components/game/NamePrompt";
+import { useGameSettings } from "@/lib/game/settings";
 
 type Mode = "place" | "disaster" | "steal" | "move";
 
@@ -79,6 +80,7 @@ export default function Play() {
   const [waitingForGuest, setWaitingForGuest] = useState(false);
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const { settings: gameSettings } = useGameSettings();
   const saveSeqRef = useRef(0);
   const undoStackRef = useRef<MatchState[]>([]);
   const [undoCount, setUndoCount] = useState(0);
@@ -813,7 +815,22 @@ export default function Play() {
   return (
     <div className="h-[100dvh] flex flex-col bg-background overflow-hidden">
 
-      {!ribbonHidden && <ScorePanel state={state} />}
+      {gameSettings.maintenance_banner_enabled && gameSettings.maintenance_banner_text && (
+        <div className="px-3 py-1.5 text-xs sm:text-sm text-center bg-amber-500/15 text-amber-200 border-b border-amber-500/30">
+          {gameSettings.maintenance_banner_text}
+        </div>
+      )}
+
+      {gameSettings.play_disabled ? (
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="max-w-md text-center space-y-3">
+            <h2 className="font-display text-2xl">Game offline</h2>
+            <p className="text-sm text-muted-foreground">{gameSettings.play_disabled_message}</p>
+          </div>
+        </div>
+      ) : (<>
+
+      {!ribbonHidden && gameSettings.show_score_panel && <ScorePanel state={state} />}
 
       {!ribbonHidden && (
         <div className="px-3 py-1.5 bg-card/30 border-b border-border/40 flex items-center justify-between gap-3 flex-wrap">
@@ -1020,7 +1037,7 @@ export default function Play() {
       />
 
       <MatchOverDialog state={state} onPlayAgain={onNewGame} />
-      <NamePrompt />
+      {gameSettings.prompt_player_name && <NamePrompt />}
       {modeSelectorOpen && (
         <GameModeSelector
           open
@@ -1055,7 +1072,7 @@ export default function Play() {
           </DialogContent>
         </Dialog>
       )}
-      <TutorialOverlay />
+      {gameSettings.show_tutorial_overlay && <TutorialOverlay />}
       <RuleBookSheet open={ruleBookOpen} onOpenChange={setRuleBookOpen} />
       <OpponentPanel open={opponentPanelOpen} onClose={() => setOpponentPanelOpen(false)} player={opponent} />
       <MultiplayerLobby
@@ -1102,6 +1119,7 @@ export default function Play() {
           </DialogContent>
         </Dialog>
       )}
+      </>)}
     </div>
   );
 }
