@@ -29,3 +29,25 @@ export async function fetchPlayerDisplayName(user: User): Promise<string> {
   if (meta.name) return String(meta.name);
   return user.email?.split("@")[0] ?? "Player";
 }
+
+/** Short label for the board: "First L." (first name + last initial). Falls back
+ *  to display name / email prefix when last name is missing. */
+export async function fetchPlayerShortName(user: User): Promise<string> {
+  try {
+    const { data } = await supabase
+      .from("profiles")
+      .select("first_name, last_name, display_name")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (data) {
+      const first = (data.first_name ?? "").trim();
+      const last = (data.last_name ?? "").trim();
+      if (first && last) return `${first} ${last[0].toUpperCase()}.`;
+      if (first) return first;
+      if (data.display_name?.trim()) return data.display_name.trim();
+    }
+  } catch {
+    /* ignore */
+  }
+  return user.email?.split("@")[0] ?? "Player";
+}
