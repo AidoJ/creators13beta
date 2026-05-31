@@ -78,15 +78,14 @@ export interface CreateMatchOptions {
   players: Array<Pick<PlayerState, "id" | "name">>;
   deck: DeckCard[];
   rand?: () => number;
+  gameMode?: import("./types").GameMode;
+  gameConfig?: import("./types").GameConfig;
 }
 
 export function createMatch(opts: CreateMatchOptions): MatchState {
   const rand = opts.rand ?? Math.random;
   const deck = shuffle(opts.deck, rand);
 
-  // Players start with EMPTY hands. On each player's first turn they trigger
-  // the opening pick-up of 5 cards (drawInitialFive). After that the normal
-  // 2-draw-2-play cadence applies.
   const players: PlayerState[] = opts.players.map((p) => ({
     id: p.id,
     name: p.name,
@@ -109,8 +108,11 @@ export function createMatch(opts: CreateMatchOptions): MatchState {
     finished: false,
     winnerId: null,
     pendingDisaster: null,
+    gameMode: opts.gameMode ?? "end_of_days",
+    gameConfig: opts.gameConfig ?? {},
   };
 }
+
 
 /** Opening pick-up: deal 5 cards in one go on a player's very first turn. */
 export function drawInitialFive(state: MatchState): MatchState {
