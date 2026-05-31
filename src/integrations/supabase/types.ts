@@ -657,9 +657,13 @@ export type Database = {
       }
       game_settings: {
         Row: {
+          allow_guest_play: boolean
+          allow_solo_vs_bot: boolean
           animals_per_creator: number
           beat_clock_match_minutes: number
           beat_clock_turn_seconds: number
+          bot_difficulty: string
+          bot_think_ms: number
           creators_needed: number
           default_mode: string
           ecosystem_target: number
@@ -670,22 +674,37 @@ export type Database = {
           enable_golden_hive: boolean
           enable_sky_creator: boolean
           enable_sky_creature_steal: boolean
+          featured_mode: string | null
           hand_limit: number
           hand_size: number
           id: string
+          maintenance_banner_enabled: boolean
+          maintenance_banner_text: string
+          max_players_per_match: number
           mode_beat_clock_enabled: boolean
           mode_end_of_days_enabled: boolean
           mode_top_score_enabled: boolean
           perfect_eco_bonus: number
+          play_disabled: boolean
+          play_disabled_message: string
           points_per_win: number
+          prompt_player_name: boolean
+          show_discord_chat: boolean
+          show_review_boards: boolean
+          show_score_panel: boolean
+          show_tutorial_overlay: boolean
           top_score_default: number
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          allow_guest_play?: boolean
+          allow_solo_vs_bot?: boolean
           animals_per_creator?: number
           beat_clock_match_minutes?: number
           beat_clock_turn_seconds?: number
+          bot_difficulty?: string
+          bot_think_ms?: number
           creators_needed?: number
           default_mode?: string
           ecosystem_target?: number
@@ -696,22 +715,37 @@ export type Database = {
           enable_golden_hive?: boolean
           enable_sky_creator?: boolean
           enable_sky_creature_steal?: boolean
+          featured_mode?: string | null
           hand_limit?: number
           hand_size?: number
           id?: string
+          maintenance_banner_enabled?: boolean
+          maintenance_banner_text?: string
+          max_players_per_match?: number
           mode_beat_clock_enabled?: boolean
           mode_end_of_days_enabled?: boolean
           mode_top_score_enabled?: boolean
           perfect_eco_bonus?: number
+          play_disabled?: boolean
+          play_disabled_message?: string
           points_per_win?: number
+          prompt_player_name?: boolean
+          show_discord_chat?: boolean
+          show_review_boards?: boolean
+          show_score_panel?: boolean
+          show_tutorial_overlay?: boolean
           top_score_default?: number
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          allow_guest_play?: boolean
+          allow_solo_vs_bot?: boolean
           animals_per_creator?: number
           beat_clock_match_minutes?: number
           beat_clock_turn_seconds?: number
+          bot_difficulty?: string
+          bot_think_ms?: number
           creators_needed?: number
           default_mode?: string
           ecosystem_target?: number
@@ -722,14 +756,25 @@ export type Database = {
           enable_golden_hive?: boolean
           enable_sky_creator?: boolean
           enable_sky_creature_steal?: boolean
+          featured_mode?: string | null
           hand_limit?: number
           hand_size?: number
           id?: string
+          maintenance_banner_enabled?: boolean
+          maintenance_banner_text?: string
+          max_players_per_match?: number
           mode_beat_clock_enabled?: boolean
           mode_end_of_days_enabled?: boolean
           mode_top_score_enabled?: boolean
           perfect_eco_bonus?: number
+          play_disabled?: boolean
+          play_disabled_message?: string
           points_per_win?: number
+          prompt_player_name?: boolean
+          show_discord_chat?: boolean
+          show_review_boards?: boolean
+          show_score_panel?: boolean
+          show_tutorial_overlay?: boolean
           top_score_default?: number
           updated_at?: string
           updated_by?: string | null
@@ -1463,6 +1508,10 @@ export type Database = {
       accept_game_invite: {
         Args: { _guest_name: string; _token: string }
         Returns: string
+      }
+      admin_reset_player_progress: {
+        Args: { _user_id: string }
+        Returns: undefined
       }
       bump_player_progress: {
         Args: {
