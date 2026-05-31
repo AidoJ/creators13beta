@@ -809,33 +809,6 @@ export default function Play() {
     return `${m}:${ss}`;
   };
 
-  // Icon-only ribbon button helper with hover tooltip.
-  const RibbonBtn = ({
-    label, onClick, icon, variant = "outline", className = "", asChild,
-  }: {
-    label: string;
-    onClick?: () => void;
-    icon: JSX.Element;
-    variant?: "outline" | "ghost" | "default" | "destructive";
-    className?: string;
-    asChild?: boolean;
-    children?: React.ReactNode;
-  }) => (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          size="icon"
-          variant={variant}
-          onClick={onClick}
-          className={"h-8 w-8 " + className}
-          aria-label={label}
-        >
-          {icon}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  );
 
   return (
     <div className="h-[100dvh] flex flex-col bg-background overflow-hidden">
