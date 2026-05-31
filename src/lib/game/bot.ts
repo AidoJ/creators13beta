@@ -21,6 +21,7 @@ import {
   playDisaster,
 } from "./engine";
 import { CREATORS_NEEDED, HAND_LIMIT, type DeckCard, type MatchState } from "./types";
+import { TYPE_TO_ELEMENT, ELEMENTS } from "./elements";
 
 export function botStep(state: MatchState): MatchState {
   if (state.finished) return state;
