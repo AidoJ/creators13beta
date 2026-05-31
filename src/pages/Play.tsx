@@ -1119,6 +1119,7 @@ export default function Play() {
           </DialogContent>
         </Dialog>
       )}
+      </>)}
     </div>
   );
 }
