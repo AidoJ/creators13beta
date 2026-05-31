@@ -572,8 +572,15 @@ export default function Play() {
   }
   if (!state || !selfPlayer || !opponent) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        {allCards && modeSelectorOpen ? (
+          <GameModeSelector
+            open
+            onChoose={(m, c) => startSoloMatch(m, c)}
+          />
+        ) : (
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        )}
       </div>
     );
   }
