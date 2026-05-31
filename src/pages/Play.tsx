@@ -1047,6 +1047,13 @@ export default function Play() {
 
       <MatchOverDialog state={state} onPlayAgain={onNewGame} />
       <NamePrompt />
+      {modeSelectorOpen && (
+        <GameModeSelector
+          open
+          onCancel={() => setModeSelectorOpen(false)}
+          onChoose={(m, c) => startSoloMatch(m, c)}
+        />
+      )}
 
 
       {/* Golden Hive prompt — shown to the targeted victim when an opponent
