@@ -14,6 +14,8 @@ export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -37,14 +39,31 @@ export default function Auth() {
         navigate(returnTo);
       }
     } else {
-      const { error } = await supabase.auth.signUp({
+      const first = firstName.trim();
+      const last = lastName.trim();
+      if (!first || !last) {
+        toast({ title: "Name required", description: "Please enter both your first and last name.", variant: "destructive" });
+        setLoading(false);
+        return;
+      }
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: window.location.origin },
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: { first_name: first, last_name: last },
+        },
       });
       if (error) {
         toast({ title: "Signup failed", description: error.message, variant: "destructive" });
       } else {
+        // Best-effort write to profiles so name shows up immediately.
+        if (data.user?.id) {
+          await supabase
+            .from("profiles")
+            .update({ first_name: first, last_name: last })
+            .eq("user_id", data.user.id);
+        }
         toast({
           title: "Check your email",
           description: "We've sent you a verification link. Please confirm your email to continue.",
@@ -71,6 +90,34 @@ export default function Auth() {
 
         <div className="bg-card rounded-2xl border border-border p-8 shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-5">
+            {!isLogin && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First name</Label>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    placeholder="Jane"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                    maxLength={60}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last name</Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    placeholder="Smith"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    maxLength={60}
+                  />
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
