@@ -4,6 +4,7 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 import DiscordLinkCard from "@/components/dashboard/DiscordLinkCard";
 import GameDashboardSection from "@/components/dashboard/game/GameDashboardSection";
+import PlayerProfileDiscountCTA from "@/components/dashboard/PlayerProfileDiscountCTA";
 
 interface Props {
   userId: string;
@@ -40,6 +41,7 @@ export default function PlayerDashboard({ userId, email, firstName, onSignOut }:
         <DiscordLinkCard userId={userId} />
         <ClientFAQSection />
       </main>
+      <PlayerProfileDiscountCTA userId={userId} />
     </div>
   );
 }
