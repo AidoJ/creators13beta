@@ -65,9 +65,14 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                setZoomed(true);
+                if (isCreatorLike && !isGolden) {
+                  setInfoOpen(true);
+                } else {
+                  setZoomed(true);
+                }
               }}
               className="absolute top-1.5 left-1.5 z-30 bg-black/55 hover:bg-black/75 text-white rounded-full p-1 backdrop-blur-sm"
+              aria-label="Show descriptor"
               aria-label="Show descriptor"
             >
               <Info className="w-3 h-3" />
