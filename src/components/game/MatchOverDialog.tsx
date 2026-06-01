@@ -66,29 +66,32 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
     <>
       <Dialog open={open && !reviewOpen} onOpenChange={(o) => { if (!o) setDismissed(true); }}>
 
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 font-display text-2xl">
-              <Trophy className="w-6 h-6 text-amber-500" />
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-4 gap-2">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="flex items-center gap-2 font-display text-xl">
+              <Trophy className="w-5 h-5 text-amber-500" />
               Congratulations {winner.name} — You Win!
             </DialogTitle>
-            <DialogDescription>
-              Match complete in {state.turnNumber} turns. Here's the final breakdown by Creator Type.
+            <DialogDescription className="text-xs leading-snug">
+              <span className="font-semibold text-foreground">{buildWinReason(state, winner).headline}.</span>{" "}
+              {buildWinReason(state, winner).detail}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid sm:grid-cols-2 gap-4 mt-2">
-            {state.players.map((p) => (
-              <PlayerBreakdown key={p.id} player={p} winner={p.id === state.winnerId} />
-            ))}
+          <div className="flex-1 overflow-y-auto -mx-1 px-1">
+            <div className="grid sm:grid-cols-2 gap-2">
+              {state.players.map((p) => (
+                <PlayerBreakdown key={p.id} player={p} winner={p.id === state.winnerId} />
+              ))}
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2 justify-end mt-4">
-            <Button variant="outline" onClick={() => navigate("/dashboard")}>Back to dashboard</Button>
-            <Button variant="outline" onClick={() => setReviewOpen(true)}>
+          <div className="flex flex-col sm:flex-row gap-2 justify-end pt-2 border-t border-border/40">
+            <Button size="sm" variant="outline" onClick={() => navigate("/dashboard")}>Back to dashboard</Button>
+            <Button size="sm" variant="outline" onClick={() => setReviewOpen(true)}>
               <Eye className="w-4 h-4 mr-1.5" /> Review boards
             </Button>
-            <Button onClick={onPlayAgain}>Play again</Button>
+            <Button size="sm" onClick={onPlayAgain}>Play again</Button>
           </div>
         </DialogContent>
       </Dialog>
