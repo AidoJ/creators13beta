@@ -147,7 +147,6 @@ export default function Play() {
       .then((cards) => {
         if (cancelled) return;
         setAllCards(cards);
-        // Warm the browser cache so board pieces render instantly.
         for (const c of cards) {
           if (!c.art_url) continue;
           const img = new Image();
@@ -156,6 +155,9 @@ export default function Play() {
         }
       })
       .catch((e) => setError(e.message ?? String(e)));
+    fetchSpecialCards()
+      .then((s) => { if (!cancelled) setSpecialCards(s); })
+      .catch(() => { /* non-fatal — fall back to generated specials */ });
     return () => {
       cancelled = true;
     };
