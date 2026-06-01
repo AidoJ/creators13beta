@@ -272,8 +272,9 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
         <Card className="p-5">
           <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">Match stats</h3>
           <div className="space-y-1.5 text-sm">
-            <Row label="Games" value={finished.length} />
+            <Row label="Games (vs humans)" value={finished.length} />
             <Row label="Wins" value={`${wins} (${winRate}%)`} />
+
             <Row label="Win streak" value={progress?.current_streak ?? 0} />
             <Row label="Perfect ecosystems" value={progress?.perfect_ecosystems ?? 0} />
             <TooltipProvider>
@@ -294,6 +295,8 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
               </Tooltip>
             </TooltipProvider>
           </div>
+          <p className="text-[10px] text-muted-foreground/70 italic mt-2">Bot games aren't counted — only matches against other players.</p>
+
           {!!progress?.badges?.length && (
             <div className="flex flex-wrap gap-1.5 mt-3">
               {progress.badges.map(b => (

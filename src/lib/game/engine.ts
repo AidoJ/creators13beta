@@ -235,6 +235,41 @@ export function animalLinksToCreator(animal: DeckCard, creator: DeckCard): boole
 }
 
 
+/** Creator-type edge labels this card can present on its borders.
+ *  Returns null for wildcards (golden body / hive) that can match any neighbour. */
+function cardEdgeTypes(card: DeckCard): Set<string> | null {
+  if (card.kind === "golden_body" || card.kind === "golden_hive") return null;
+  if (card.kind === "animal" || card.kind === "sky_creature") {
+    return new Set((card.types ?? []).map((t) => String(t).toLowerCase()));
+  }
+  if (card.kind === "creator") {
+    return new Set([String(card.displayType ?? card.element ?? "").toLowerCase()]);
+  }
+  if (card.kind === "sky_creator") return new Set(["sky"]);
+  return new Set();
+}
+
+/** Reject placements where the new card shares no Creator Type with an
+ *  already-placed neighbour — the matching halves could never touch. */
+function assertEdgeMatchOrThrow(card: DeckCard, eco: Ecosystem, pos: Axial): void {
+  const mine = cardEdgeTypes(card);
+  if (mine === null) return; // wildcards always OK
+  for (const n of neighbours(pos)) {
+    const neigh = eco.placed.get(keyOf(n));
+    if (!neigh) continue;
+    const theirs = cardEdgeTypes(neigh.card);
+    if (theirs === null) continue; // wildcard neighbour
+    let shared = false;
+    for (const t of mine) { if (theirs.has(t)) { shared = true; break; } }
+    if (!shared) {
+      throw new Error(
+        `${card.name} can't sit next to ${neigh.card.name} — they share no Creator Type, so matching halves can't touch.`,
+      );
+    }
+  }
+}
+
+
 /** Find the creator card placed in this ecosystem that an animal would link to (if any). */
 export function findLinkedCreator(
   eco: Ecosystem,
@@ -278,6 +313,10 @@ export function placeOnEcosystem(
 
   // Rules: animals must adjoin / belong to a matching Creator. We enforce a
   // soft rule — animals can be placed freely; win-check verifies linkage.
+  // Hard rule: every shared edge must be able to match by Creator Type
+  // (cards sharing no type can't sit next to each other).
+  assertEdgeMatchOrThrow(card, player.ecosystem, pos);
+
   const rotation = bestRotationForPlacement(player.ecosystem, card, pos);
   player.ecosystem.placed.set(keyOf(pos), { card, pos, rotation });
   player.hand.splice(idx, 1);
@@ -286,6 +325,7 @@ export function placeOnEcosystem(
   next.lastEvent = `${player.name} placed ${card.name}`;
   return afterAction(next);
 }
+
 
 /** Manually rotate a placed hex (+60° clockwise) in a player's ecosystem.
  *  Does not consume a turn / action — purely a presentation tweak. */
@@ -497,13 +537,16 @@ function applyDisasterWipe(
 
 /**
  * Sky Creature steal — discard a sky_creature to the used pile, steal any
- * one animal from any opponent's ecosystem into your hand.
+ * one animal from any opponent's ecosystem and place it directly onto the
+ * stealer's own ecosystem at `placeAt`. If `placeAt` is omitted (e.g. bot
+ * fallback), the stolen card goes to the stealer's hand instead.
  */
 export function playSkyCreatureSteal(
   state: MatchState,
   skyCreatureUid: string,
   victimId: string,
   victimPosKey: string,
+  placeAt?: Axial,
 ): MatchState {
   if (state.finished) throw new Error("Match is over");
   if (state.phase !== "place") throw new Error("Pick up 2 cards first");
@@ -527,11 +570,26 @@ export function playSkyCreatureSteal(
   player.hand.splice(idx, 1);
   next.used.push(sky);
   victim.ecosystem.placed.delete(victimPosKey);
-  player.hand.push(stolen.card);
+
+  if (placeAt) {
+    const legal = legalEcoCells(player.ecosystem);
+    if (!legal.some((c) => c.q === placeAt.q && c.r === placeAt.r)) {
+      throw new Error("Pick a glowing hex on your own board to place the stolen card.");
+    }
+    assertEdgeMatchOrThrow(stolen.card, player.ecosystem, placeAt);
+    const rotation = bestRotationForPlacement(player.ecosystem, stolen.card, placeAt);
+    player.ecosystem.placed.set(keyOf(placeAt), { card: stolen.card, pos: placeAt, rotation });
+    player.score += 1;
+    next.lastEvent = `${player.name} stole ${stolen.card.name} from ${victim.name} and placed it`;
+  } else {
+    player.hand.push(stolen.card);
+    next.lastEvent = `${player.name} stole ${stolen.card.name} from ${victim.name}`;
+  }
+
   next.placedThisTurn += 1;
-  next.lastEvent = `${player.name} stole ${stolen.card.name} from ${victim.name}`;
   return afterAction(next);
 }
+
 
 /* --------------------------- turn / win plumbing --------------------------- */
 

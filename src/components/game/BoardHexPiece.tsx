@@ -27,7 +27,7 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
   const hexPoints = "0.5,0 1,0.25 1,0.75 0.5,1 0,0.75 0,0.25";
   const halfA = "0.5,0 1,0.25 0,0.75 0,0.25";
   const halfB = "1,0.25 1,0.75 0.5,1 0,0.75";
-  const isCreatorLike = card.kind === "creator" || card.kind === "sky_creator";
+  const isCreatorLike = card.kind === "creator" || card.kind === "sky_creator" || card.kind === "golden_body" || card.kind === "golden_hive";
   let c1 = "#444";
   let c2 = "#444";
   let artGlyph: string | undefined;

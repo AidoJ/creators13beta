@@ -19,6 +19,8 @@ import {
   discardCard,
   playDisaster,
   playSkyCreatureSteal,
+  legalEcoCells,
+
   resolveDisaster,
   botStep,
   rotateMyPlacedHex,
@@ -463,9 +465,14 @@ export default function Play() {
   }
   function onDisaster() { if (state && selectedUid) guarded(() => playDisaster(state, selectedUid)); }
   function onStealHex(posKey: string) {
-    if (!state || !selectedUid || !opponent) return;
-    guarded(() => playSkyCreatureSteal(state, selectedUid, opponent.id, posKey));
+    if (!state || !selectedUid || !opponent || !selfPlayer) return;
+    const cells = legalEcoCells(selfPlayer.ecosystem);
+    const placeAt = cells[0] ?? { q: 0, r: 0 };
+    guarded(() => playSkyCreatureSteal(state, selectedUid, opponent.id, posKey, placeAt));
+    setMode("place");
   }
+
+
 
   function onCloseResumeLater() {
     // PvP rows stay 'active' in the DB — they'll show up under "Resume" on the dashboard.
