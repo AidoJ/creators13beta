@@ -544,7 +544,7 @@ export default function Play() {
 
   async function handleCreatePvp() {
     if (!user || !allCards) throw new Error("Not ready");
-    const deck = buildDeck(allCards);
+    const deck = buildDeck(allCards, specialCards);
     const hostName = await fetchPlayerShortName(user);
     const initial = createMatch({
       deck,
