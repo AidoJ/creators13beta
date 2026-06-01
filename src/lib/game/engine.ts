@@ -8,8 +8,9 @@
  *   3. Put down 2 cards: either onto your ecosystem, or play a special
  *      power (Disaster / Sky-Creature steal), or discard to the used pile.
  *
- * Win: first player to assemble 4 Creators + 12 matching Animals AND have
- * no Creator Cards left in their hand.
+ * Win: first player to assemble a valid ecosystem: at least 4 Creators with
+ * Earth / Fire / Air / Water covered, 12 matching Animals assigned 3-per-
+ * chosen-Creator, and no Creator Cards left in hand.
  */
 
 import {
@@ -26,7 +27,7 @@ import {
   type PlayerState,
 } from "./types";
 import { keyOf, neighbours } from "./board";
-import { TYPE_TO_ELEMENT, type Element } from "./elements";
+import { ELEMENTS, TYPE_TO_ELEMENT, type Element } from "./elements";
 import { bestRotationForPlacement, rotatePlacedHex } from "./rotation";
 
 /* --------------------------- helpers --------------------------- */
@@ -216,7 +217,9 @@ export function endTurnEarly(state: MatchState): MatchState {
 /** Does this animal/sky-creature link to that creator card? */
 export function animalLinksToCreator(animal: DeckCard, creator: DeckCard): boolean {
   if (animal.kind === "golden_body") return true; // wildcard
-  if (creator.kind === "sky_creator") return true; // wildcard
+  if (creator.kind === "sky_creator") {
+    return (animal.types ?? []).some((t) => t === "Sky");
+  }
   if (creator.kind !== "creator") return false;
   const animalTypes = (animal.types ?? []) as string[];
   // Strict rule: animal links ONLY if one of its 2 Creator Types matches this
@@ -579,49 +582,95 @@ export function ecosystemSummary(eco: Ecosystem) {
   return { creators, animals, total: eco.placed.size };
 }
 
+export interface EcosystemWinValidation {
+  valid: boolean;
+  creators: DeckCard[];
+  animals: DeckCard[];
+  selectedCreators: DeckCard[];
+  stillHoldingCreators: DeckCard[];
+  hasElementCoverage: boolean;
+}
+
+/** Full classic ecosystem validation shared by human and bot actions. */
+export function validateEcosystemWin(player: PlayerState): EcosystemWinValidation {
+  const placed = Array.from(player.ecosystem.placed.values()).map((pc) => pc.card);
+  const creators = placed.filter(
+    (c) => c.kind === "creator" || c.kind === "sky_creator",
+  );
+  const animals = placed.filter(
+    (c) => c.kind === "animal" || c.kind === "sky_creature" || c.kind === "golden_body",
+  );
+  const stillHoldingCreators = player.hand.filter(
+    (c) => c.kind === "creator" || c.kind === "sky_creator",
+  );
+
+  if (creators.length < CREATORS_NEEDED || animals.length < CREATORS_NEEDED * ANIMALS_PER_CREATOR) {
+    return { valid: false, creators, animals, selectedCreators: [], stillHoldingCreators, hasElementCoverage: false };
+  }
+
+  const quartets = enumerateElementCoveringQuartets(creators);
+  for (const quartet of quartets) {
+    if (canAssignAnimalsToCreators(quartet, animals)) {
+      return {
+        valid: stillHoldingCreators.length === 0,
+        creators,
+        animals,
+        selectedCreators: quartet,
+        stillHoldingCreators,
+        hasElementCoverage: true,
+      };
+    }
+  }
+
+  return {
+    valid: false,
+    creators,
+    animals,
+    selectedCreators: [],
+    stillHoldingCreators,
+    hasElementCoverage: quartets.length > 0,
+  };
+}
+
 /** Can we pick exactly ANIMALS_PER_CREATOR animals per creator from the placed
  *  animal pool such that every chosen animal links to its assigned creator?
  *  Extra animals on the board beyond 3 × creators are allowed and simply unused. */
-
-function canAssignAnimalsToCreators(
-  creators: DeckCard[],
-  animals: DeckCard[],
-): boolean {
+function canAssignAnimalsToCreators(creators: DeckCard[], animals: DeckCard[]): boolean {
   if (creators.length !== CREATORS_NEEDED) return false;
   if (animals.length < CREATORS_NEEDED * ANIMALS_PER_CREATOR) return false;
-  const counts = new Array(creators.length).fill(0) as number[];
-  const used = new Array(animals.length).fill(false) as boolean[];
-  const totalNeeded = CREATORS_NEEDED * ANIMALS_PER_CREATOR;
-  let assigned = 0;
-  const recurse = (startIdx: number): boolean => {
-    if (assigned === totalNeeded) return counts.every((n) => n === ANIMALS_PER_CREATOR);
-    // Pick the creator slot with the fewest remaining options to prune fast.
-    let targetC = -1;
-    let bestOpts = Infinity;
-    for (let c = 0; c < creators.length; c++) {
-      if (counts[c] >= ANIMALS_PER_CREATOR) continue;
-      let opts = 0;
-      for (let a = 0; a < animals.length; a++) {
-        if (!used[a] && animalLinksToCreator(animals[a], creators[c])) opts++;
+  const slots = creators.map((creator) => ({ creator, assigned: [] as number[] }));
+  const used = new Set<number>();
+
+  const recurse = (): boolean => {
+    if (slots.every((slot) => slot.assigned.length === ANIMALS_PER_CREATOR)) return true;
+
+    let targetIndex = -1;
+    let targetOptions: number[] = [];
+    for (let i = 0; i < slots.length; i++) {
+      const slot = slots[i];
+      if (slot.assigned.length >= ANIMALS_PER_CREATOR) continue;
+      const options = animals
+        .map((animal, idx) => ({ animal, idx }))
+        .filter(({ animal, idx }) => !used.has(idx) && animalLinksToCreator(animal, slot.creator))
+        .map(({ idx }) => idx);
+      if (targetIndex === -1 || options.length < targetOptions.length) {
+        targetIndex = i;
+        targetOptions = options;
       }
-      if (opts < bestOpts) { bestOpts = opts; targetC = c; }
     }
-    if (targetC === -1) return false;
-    if (bestOpts === 0) return false;
-    for (let a = startIdx; a < animals.length; a++) {
-      if (used[a]) continue;
-      if (!animalLinksToCreator(animals[a], creators[targetC])) continue;
-      used[a] = true;
-      counts[targetC] += 1;
-      assigned += 1;
-      if (recurse(0)) return true;
-      used[a] = false;
-      counts[targetC] -= 1;
-      assigned -= 1;
+
+    if (targetIndex === -1 || targetOptions.length === 0) return false;
+    for (const animalIndex of targetOptions) {
+      used.add(animalIndex);
+      slots[targetIndex].assigned.push(animalIndex);
+      if (recurse()) return true;
+      slots[targetIndex].assigned.pop();
+      used.delete(animalIndex);
     }
     return false;
   };
-  return recurse(0);
+
+  return recurse();
 }
 
 function checkWin(state: MatchState): void {
@@ -632,7 +681,7 @@ function checkWin(state: MatchState): void {
     let bestPts = -1;
     for (const p of state.players) {
       const pts = playerTotalScore(p);
-      if (pts >= target && pts > bestPts) {
+      if (pts >= target && pts > bestPts && validateEcosystemWin(p).valid) {
         bestPts = pts;
         bestId = p.id;
       }
@@ -650,25 +699,7 @@ function checkWin(state: MatchState): void {
   // chosen Creators matching its Creator Type. Extra Creators / animals on the
   // board beyond that selection are allowed.
   for (const p of state.players) {
-    const placed = Array.from(p.ecosystem.placed.values()).map((pc) => pc.card);
-    const creators = placed.filter(
-      (c) => c.kind === "creator" || c.kind === "sky_creator",
-    );
-    const animals = placed.filter(
-      (c) => c.kind === "animal" || c.kind === "sky_creature" || c.kind === "golden_body",
-    );
-    if (creators.length < CREATORS_NEEDED) continue;
-    if (animals.length < CREATORS_NEEDED * ANIMALS_PER_CREATOR) continue;
-    const quartets = enumerateElementCoveringQuartets(creators);
-    let satisfied = false;
-    for (const quartet of quartets) {
-      if (canAssignAnimalsToCreators(quartet, animals)) { satisfied = true; break; }
-    }
-    if (!satisfied) continue;
-    const stillHoldingCreators = p.hand.some(
-      (c) => c.kind === "creator" || c.kind === "sky_creator",
-    );
-    if (stillHoldingCreators) continue;
+    if (!validateEcosystemWin(p).valid) continue;
     finalise(state, p.id);
     return;
   }
@@ -678,20 +709,19 @@ function checkWin(state: MatchState): void {
  *  (earth / fire / air / water) is covered by exactly one creator in the subset.
  *  Sky Creators act as wildcards (can fill any element slot). */
 function enumerateElementCoveringQuartets(creators: DeckCard[]): DeckCard[][] {
-  const elements: Element[] = ["Earth", "Fire", "Air", "Water"];
   const out: DeckCard[][] = [];
   const seen = new Set<string>();
   const used = new Set<number>();
   const picked: DeckCard[] = [];
   const elementsOf = (c: DeckCard): Element[] =>
-    c.kind === "sky_creator" ? elements : c.element ? [c.element] : [];
+    c.kind === "sky_creator" ? ELEMENTS : c.element ? [c.element] : [];
   const recurse = (eIdx: number) => {
-    if (eIdx === elements.length) {
+    if (eIdx === ELEMENTS.length) {
       const key = [...used].sort((a, b) => a - b).join(",");
       if (!seen.has(key)) { seen.add(key); out.push(picked.slice()); }
       return;
     }
-    const el = elements[eIdx];
+    const el = ELEMENTS[eIdx];
     for (let i = 0; i < creators.length; i++) {
       if (used.has(i)) continue;
       if (!elementsOf(creators[i]).includes(el)) continue;
