@@ -280,9 +280,7 @@ export function placeOnEcosystem(
 
   // Rules: animals must adjoin / belong to a matching Creator. We enforce a
   // soft rule — animals can be placed freely; win-check verifies linkage.
-  // Hard rule: every shared edge must be able to match by Creator Type
-  // (cards sharing no type can't sit next to each other).
-  assertEdgeMatchOrThrow(card, player.ecosystem, pos);
+
 
   const rotation = bestRotationForPlacement(player.ecosystem, card, pos);
   player.ecosystem.placed.set(keyOf(pos), { card, pos, rotation });
