@@ -56,10 +56,6 @@ export default function PlayerProfileDiscountCTA({ userId }: Props) {
 
       for (const tier of tiers) {
         if (pts >= tier.t) {
-          // Per-device dismissal guard so we don't reopen on every navigation
-          const dismissKey = `profile_discount_dismissed_${userId}_${tier.t}`;
-          if (typeof window !== "undefined" && window.sessionStorage.getItem(dismissKey)) return;
-
           let codeRow = existingMap.get(tier.t);
           if (!codeRow) {
             // Issue a new code
@@ -90,9 +86,6 @@ export default function PlayerProfileDiscountCTA({ userId }: Props) {
   }, [userId, settings]);
 
   function close() {
-    if (typeof window !== "undefined" && activeThreshold) {
-      window.sessionStorage.setItem(`profile_discount_dismissed_${userId}_${activeThreshold}`, "1");
-    }
     setOpen(false);
   }
 
