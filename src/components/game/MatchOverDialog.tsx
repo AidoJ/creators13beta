@@ -7,9 +7,12 @@ import { Trophy, Eye } from "lucide-react";
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { glyphForType } from "@/lib/game/glyphs";
 import { Ecosystem } from "@/components/game/Ecosystem";
-import type { MatchState, PlayerState } from "@/lib/game/types";
+import type { MatchState, PlayerState, PlacedCard } from "@/lib/game/types";
 import { playerTotalScore } from "@/lib/game/types";
 import { validateEcosystemWin } from "@/lib/game/engine";
+import { TYPE_TO_ELEMENT } from "@/lib/game/elements";
+import { keyOf, neighbours } from "@/lib/game/board";
+
 
 function buildWinReason(state: MatchState, winner: PlayerState): { headline: string; detail: string } {
   const eco = validateEcosystemWin(winner);
@@ -125,34 +128,161 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
   );
 }
 
+const CANONICAL_ORDER = ["Lava","Fire","Whirlwind","Snow","Lightning","Sun","Lake","Ocean","Tree","Mountain","Soil","River","Sky"] as const;
+
+type CreatorSlot = {
+  placed: PlacedCard;
+  isSky: boolean;
+  /** Type label for this slot (creator's displayType, or for Sky the type it subs for). */
+  slotType: string;
+  /** Element this slot covers (Earth/Fire/Air/Water/Sky). */
+  element: string;
+  /** Animals assigned to this slot, counted by Creator Type. */
+  animalsByType: Map<string, number>;
+  animalCount: number;
+};
+
+function TypeChip({
+  type,
+  role,
+  n,
+  subbed = false,
+}: {
+  type: string;
+  role: "Creator" | "Animal";
+  n: number;
+  subbed?: boolean;
+}) {
+  const color = CREATOR_TYPE_COLORS[type as keyof typeof CREATOR_TYPE_COLORS] ?? "#888";
+  const glyph = glyphForType(type);
+  return (
+    <div
+      className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-white"
+      style={{ background: color }}
+      title={`${role} · ${type}: ${n}${subbed ? " (Sky subbed)" : ""}`}
+    >
+      {glyph && <img src={glyph} alt="" className="w-3 h-3 object-contain" />}
+      <span className="opacity-80">{role}</span>
+      <span>{type}</span>
+      <span className="opacity-80">×{n}</span>
+    </div>
+  );
+}
+
 function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: boolean }) {
-  const CANONICAL_ORDER = ["Lava","Fire","Whirlwind","Snow","Lightning","Sun","Lake","Ocean","Tree","Mountain","Soil","River","Sky"];
-  const counts = useMemo(() => {
-    const creatorByType = new Map<string, number>();
-    const animalByType = new Map<string, number>();
-    let creators = 0;
-    let animals = 0;
-    for (const pc of player.ecosystem.placed.values()) {
+  const data = useMemo(() => {
+    const placedList = Array.from(player.ecosystem.placed.values());
+    const creators: PlacedCard[] = [];
+    const animals: PlacedCard[] = [];
+    for (const pc of placedList) {
       const k = pc.card.kind;
-      const isCreator = k === "creator" || k === "sky_creator";
-      if (isCreator) creators += 1; else animals += 1;
-      const types = pc.card.types ?? [];
-      // Sky Creator has no concrete type — bucket under "Sky"
-      const effective = isCreator && k === "sky_creator" && types.length === 0 ? ["Sky"] : types;
-      for (const t of effective) {
-        const bucket = isCreator ? creatorByType : animalByType;
-        bucket.set(t, (bucket.get(t) ?? 0) + 1);
+      if (k === "creator" || k === "sky_creator") creators.push(pc);
+      else animals.push(pc);
+    }
+
+    // Build slots from each placed creator
+    const slots: CreatorSlot[] = creators.map((pc) => ({
+      placed: pc,
+      isSky: pc.card.kind === "sky_creator",
+      slotType: pc.card.displayType ?? (pc.card.kind === "sky_creator" ? "Sky" : "Sky"),
+      element: pc.card.element
+        ? String(pc.card.element)
+        : pc.card.displayType
+        ? String(TYPE_TO_ELEMENT[pc.card.displayType] ?? "Sky")
+        : "Sky",
+      animalsByType: new Map(),
+      animalCount: 0,
+    }));
+
+    const slotByKey = new Map<string, CreatorSlot>();
+    for (const s of slots) slotByKey.set(keyOf(s.placed.pos), s);
+
+    // Assign each animal to one creator slot.
+    const unassigned: PlacedCard[] = [];
+    for (const an of animals) {
+      const animalTypes = (an.card.types ?? []) as string[];
+      // 1) prefer ADJACENT typed creator matching one of the animal's types
+      let chosen: CreatorSlot | null = null;
+      for (const n of neighbours(an.pos)) {
+        const s = slotByKey.get(keyOf(n));
+        if (!s) continue;
+        if (!s.isSky && animalTypes.some((t) => t.toLowerCase() === s.slotType.toLowerCase())) {
+          chosen = s;
+          break;
+        }
+      }
+      // 2) else any adjacent Sky creator slot
+      if (!chosen) {
+        for (const n of neighbours(an.pos)) {
+          const s = slotByKey.get(keyOf(n));
+          if (s && s.isSky) {
+            chosen = s;
+            break;
+          }
+        }
+      }
+      // 3) else any non-adjacent typed creator matching
+      if (!chosen) {
+        chosen =
+          slots.find(
+            (s) =>
+              !s.isSky &&
+              animalTypes.some((t) => t.toLowerCase() === s.slotType.toLowerCase()),
+          ) ?? null;
+      }
+      // 4) else first Sky creator slot
+      if (!chosen) chosen = slots.find((s) => s.isSky) ?? null;
+
+      if (!chosen) {
+        unassigned.push(an);
+        continue;
+      }
+      // Bucket this animal under its primary matching type
+      const primary =
+        animalTypes.find((t) => t.toLowerCase() === chosen!.slotType.toLowerCase()) ??
+        animalTypes[0] ??
+        "Sky";
+      chosen.animalsByType.set(primary, (chosen.animalsByType.get(primary) ?? 0) + 1);
+      chosen.animalCount += 1;
+    }
+
+    // For Sky slots without a displayType, infer the "subbed for" type from
+    // its most-common assigned animal type.
+    for (const s of slots) {
+      if (s.isSky && (!s.placed.card.displayType) && s.animalsByType.size > 0) {
+        let bestType = s.slotType;
+        let best = -1;
+        for (const [t, n] of s.animalsByType) {
+          if (n > best && t !== "Sky") {
+            best = n;
+            bestType = t;
+          }
+        }
+        s.slotType = bestType;
+        s.element = String(TYPE_TO_ELEMENT[bestType] ?? "Sky");
       }
     }
-    type Row = { type: string; role: "Creator" | "Animal"; n: number };
-    const rows: Row[] = [];
-    for (const t of CANONICAL_ORDER) {
-      const c = creatorByType.get(t) ?? 0;
-      const a = animalByType.get(t) ?? 0;
-      if (c > 0) rows.push({ type: t, role: "Creator", n: c });
-      if (a > 0) rows.push({ type: t, role: "Animal", n: a });
+
+    // Sort slots by canonical order of their slotType (Sky last)
+    slots.sort((a, b) => {
+      const ia = CANONICAL_ORDER.indexOf(a.slotType as typeof CANONICAL_ORDER[number]);
+      const ib = CANONICAL_ORDER.indexOf(b.slotType as typeof CANONICAL_ORDER[number]);
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    });
+
+    // Unassigned animals grouped by primary type
+    const unassignedByType = new Map<string, number>();
+    for (const an of unassigned) {
+      const t = ((an.card.types ?? [])[0] as string) ?? "Sky";
+      unassignedByType.set(t, (unassignedByType.get(t) ?? 0) + 1);
     }
-    return { rows, creators, animals };
+
+    return {
+      slots,
+      unassignedByType,
+      creatorsCount: creators.length,
+      animalsCount: animals.length,
+    };
   }, [player]);
 
   return (
@@ -164,33 +294,59 @@ function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: bool
       <div className="flex items-baseline justify-between mb-2">
         <div className="font-semibold">{player.name}</div>
         <div className="text-xs text-muted-foreground">
-          {counts.creators}/4 creators · {counts.animals}/12 animals · {playerTotalScore(player)} pts
+          {data.creatorsCount}/4 creators · {data.animalsCount}/12 animals · {playerTotalScore(player)} pts
         </div>
       </div>
-      {counts.rows.length === 0 ? (
+
+      {data.slots.length === 0 && data.unassignedByType.size === 0 ? (
         <div className="text-xs text-muted-foreground italic">No cards placed.</div>
       ) : (
-        <div className="flex flex-wrap gap-1.5">
-          {counts.rows.map(({ type, role, n }) => {
-            const color = CREATOR_TYPE_COLORS[type as keyof typeof CREATOR_TYPE_COLORS] ?? "#888";
-            const glyph = glyphForType(type);
-            return (
-              <div
-                key={`${role}-${type}`}
-                className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-white"
-                style={{ background: color }}
-                title={`${role} · ${type}: ${n}`}
-              >
-                {glyph && <img src={glyph} alt="" className="w-3 h-3 object-contain" />}
-                <span className="opacity-80">{role}</span>
-                <span>{type}</span>
-                <span className="opacity-80">×{n}</span>
-              </div>
-            );
-          })}
+        <div className="space-y-2">
+          {data.slots.map((s, i) => (
+            <div key={i} className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mr-1">
+                {s.slotType} ({s.element}){s.isSky ? " — Sky subbed" : ""}
+              </span>
+              <TypeChip
+                type={s.slotType}
+                role="Creator"
+                n={1}
+                subbed={s.isSky}
+              />
+              {Array.from(s.animalsByType.entries())
+                .sort((a, b) => {
+                  const ia = CANONICAL_ORDER.indexOf(a[0] as typeof CANONICAL_ORDER[number]);
+                  const ib = CANONICAL_ORDER.indexOf(b[0] as typeof CANONICAL_ORDER[number]);
+                  return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+                })
+                .map(([t, n]) => (
+                  <TypeChip key={`a-${t}`} type={t} role="Animal" n={n} />
+                ))}
+              {s.animalCount === 0 && (
+                <span className="text-[11px] italic text-muted-foreground">no animals linked</span>
+              )}
+            </div>
+          ))}
+
+          {data.unassignedByType.size > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border/40">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mr-1">
+                Unassigned animals
+              </span>
+              {Array.from(data.unassignedByType.entries())
+                .sort((a, b) => {
+                  const ia = CANONICAL_ORDER.indexOf(a[0] as typeof CANONICAL_ORDER[number]);
+                  const ib = CANONICAL_ORDER.indexOf(b[0] as typeof CANONICAL_ORDER[number]);
+                  return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+                })
+                .map(([t, n]) => (
+                  <TypeChip key={`u-${t}`} type={t} role="Animal" n={n} />
+                ))}
+            </div>
+          )}
         </div>
       )}
-
     </div>
   );
 }
+
