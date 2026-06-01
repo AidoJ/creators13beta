@@ -94,6 +94,8 @@ export interface GameConfig {
   targetScore?: number;
   /** For beat_clock: epoch ms when the match auto-ends. */
   matchEndsAt?: number;
+  /** For beat_clock: total match length in minutes (for display at game-end). */
+  matchMinutes?: number;
   /** For beat_clock: seconds allowed per turn before auto-end-turn. */
   turnSeconds?: number;
 }
