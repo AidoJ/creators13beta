@@ -395,16 +395,20 @@ function DeckCompositionSection() {
 
 
 
-      <div className="flex items-center gap-3 mt-3">
+      <div className="flex items-center gap-3 mt-3 flex-wrap">
         <Button variant="outline" size="sm" asChild>
           <a href="/card-preview" target="_blank" rel="noreferrer">
             <ExternalLink className="w-3.5 h-3.5 mr-1" />Preview card library
           </a>
         </Button>
+        <Button variant="default" size="sm" onClick={() => setEditorOpen(true)}>
+          <Pencil className="w-3.5 h-3.5 mr-1" />Edit cards
+        </Button>
         <p className="text-[11px] text-muted-foreground">
           Deck includes Creator Cards, Sky Creator Cards, Animal Cards, Sky Creature Cards, Golden Body Cards and the Golden Hive Card.
         </p>
       </div>
+      <CardEditorDialog open={editorOpen} onOpenChange={setEditorOpen} />
     </section>
   );
 }
