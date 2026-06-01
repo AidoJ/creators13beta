@@ -390,36 +390,8 @@ function DeckCompositionSection() {
         ))}
       </div>
 
-      <div className="max-h-96 overflow-auto rounded-md border border-border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[45%]">Card</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-right">Qty</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((r, i) => (
-              <TableRow key={`${r.name}-${i}`}>
-                <TableCell className="font-medium">
-                  <div className="flex items-center gap-2">
-                    {r.color && (
-                      <span
-                        className="inline-block w-3 h-3 rounded-sm border border-border"
-                        style={{ backgroundColor: r.color }}
-                      />
-                    )}
-                    {r.name}
-                  </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground">{r.category}</TableCell>
-                <TableCell className="text-right font-semibold">×{r.qty}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+
+
 
       <div className="flex items-center gap-3 mt-3">
         <Button variant="outline" size="sm" asChild>
