@@ -344,6 +344,37 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
                   <Input value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
 
+                {selected.table === "game_cards" && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Creator Type A</label>
+                      <Select value={typeA} onValueChange={setTypeA}>
+                        <SelectTrigger><SelectValue placeholder="Pick a type" /></SelectTrigger>
+                        <SelectContent>
+                          {CREATOR_TYPE_NAMES.map((t) => (
+                            <SelectItem key={t} value={t}>{t}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Creator Type B</label>
+                      <Select value={typeB} onValueChange={setTypeB}>
+                        <SelectTrigger><SelectValue placeholder="Pick a type" /></SelectTrigger>
+                        <SelectContent>
+                          {CREATOR_TYPE_NAMES.map((t) => (
+                            <SelectItem key={t} value={t} disabled={t === typeA}>{t}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <p className="col-span-2 text-[10px] text-muted-foreground -mt-1">
+                      Changes the two Creator Types this card belongs to. Affects the split-colour hex, deck building and disaster targeting everywhere in the game.
+                    </p>
+                  </div>
+                )}
+
+
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">
                     Descriptor (reverse-side text)
