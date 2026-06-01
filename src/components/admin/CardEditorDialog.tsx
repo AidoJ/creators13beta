@@ -10,12 +10,15 @@ import { Upload, Save, Search } from "lucide-react";
 
 const ART_BUCKET = "game-card-art";
 
+type CardTable = "game_cards" | "special_cards";
+
 interface Card {
   id: string;
+  table: CardTable;
   slug: string;
   name: string;
-  type_a: string;
-  type_b: string;
+  /** "Lava / Soil" for animals; "Creator", "Sky Creator", "Golden Body", "Golden Hive" for specials */
+  category: string;
   mythical: boolean;
   descriptor: string | null;
   art_path: string | null;
