@@ -1092,7 +1092,7 @@ export default function Play() {
           plays a Disaster while you hold an unspent Hive. */}
       {state.pendingDisaster && state.pendingDisaster.victimId === selfSlot && (
         <Dialog open>
-          <DialogContent className="max-w-md" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+          <DialogContent className="max-w-md [&>button.absolute]:hidden" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle className="font-display text-xl">
                 Use your Golden Hive Card?
