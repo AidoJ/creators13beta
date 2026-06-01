@@ -17,6 +17,7 @@ import { keyOf, neighbours } from "@/lib/game/board";
 function buildWinReason(state: MatchState, winner: PlayerState): { headline: string; detail: string } {
   const eco = validateEcosystemWin(winner);
   const score = playerTotalScore(winner);
+  const moves = state.turnNumber;
   let creators = 0;
   let animals = 0;
   for (const pc of winner.ecosystem.placed.values()) {
@@ -26,27 +27,26 @@ function buildWinReason(state: MatchState, winner: PlayerState): { headline: str
   if (eco.valid) {
     return {
       headline: "Completed a valid ecosystem",
-      detail: `${winner.name} placed all 16 cards — 4 Creators covering every element (Earth, Fire, Air, Water) and 12 Animals correctly assigned (3 per Creator) — finishing on ${score} pts.`,
+      detail: `${winner.name} placed all 16 cards (4 Creators + 12 Animals) on ${score} pts in ${moves} moves.`,
     };
   }
   if (state.gameMode === "first_to_50") {
     const target = state.gameConfig?.targetScore ?? 50;
-    if (score >= target) {
-      return {
-        headline: `Reached the ${target}-point target first`,
-        detail: `${winner.name} crossed the ${target}-pt threshold with ${score} pts (${creators}/4 Creators, ${animals}/12 Animals placed) before any opponent could complete an ecosystem.`,
-      };
-    }
+    return {
+      headline: `First to ${target} points`,
+      detail: `${winner.name} was the first to ${score} points in ${moves} moves.`,
+    };
   }
   if (state.gameMode === "beat_clock") {
+    const mins = state.gameConfig?.matchMinutes;
     return {
-      headline: "Highest score when time ran out",
-      detail: `Time expired before anyone completed an ecosystem. ${winner.name} led on points with ${score} pts (${creators}/4 Creators, ${animals}/12 Animals placed).`,
+      headline: mins ? `End of ${mins} minute timer` : "End of timer",
+      detail: `${winner.name}'s score of ${score} points wins in ${moves} moves.`,
     };
   }
   return {
     headline: "Highest score at match end",
-    detail: `The deck ran out before anyone could complete an ecosystem. ${winner.name} led with ${score} pts (${creators}/4 Creators, ${animals}/12 Animals placed).`,
+    detail: `${winner.name} led with ${score} pts (${creators}/4 Creators, ${animals}/12 Animals) in ${moves} moves.`,
   };
 }
 
@@ -66,61 +66,66 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
     <>
       <Dialog open={open && !reviewOpen} onOpenChange={(o) => { if (!o) setDismissed(true); }}>
 
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 font-display text-2xl">
-              <Trophy className="w-6 h-6 text-amber-500" />
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-4 gap-2">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="flex items-center gap-2 font-display text-xl">
+              <Trophy className="w-5 h-5 text-amber-500" />
               Congratulations {winner.name} — You Win!
             </DialogTitle>
-            <DialogDescription>
-              Match complete in {state.turnNumber} turns. Here's the final breakdown by Creator Type.
+            <DialogDescription className="text-xs leading-snug">
+              <span className="font-semibold text-foreground">{buildWinReason(state, winner).headline}.</span>{" "}
+              {buildWinReason(state, winner).detail}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid sm:grid-cols-2 gap-4 mt-2">
-            {state.players.map((p) => (
-              <PlayerBreakdown key={p.id} player={p} winner={p.id === state.winnerId} />
-            ))}
+          <div className="flex-1 overflow-y-auto -mx-1 px-1">
+            <div className="grid sm:grid-cols-2 gap-2">
+              {state.players.map((p) => (
+                <PlayerBreakdown key={p.id} player={p} winner={p.id === state.winnerId} />
+              ))}
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2 justify-end mt-4">
-            <Button variant="outline" onClick={() => navigate("/dashboard")}>Back to dashboard</Button>
-            <Button variant="outline" onClick={() => setReviewOpen(true)}>
+          <div className="flex flex-col sm:flex-row gap-2 justify-end pt-2 border-t border-border/40">
+            <Button size="sm" variant="outline" onClick={() => navigate("/dashboard")}>Back to dashboard</Button>
+            <Button size="sm" variant="outline" onClick={() => setReviewOpen(true)}>
               <Eye className="w-4 h-4 mr-1.5" /> Review boards
             </Button>
-            <Button onClick={onPlayAgain}>Play again</Button>
+            <Button size="sm" onClick={onPlayAgain}>Play again</Button>
           </div>
         </DialogContent>
       </Dialog>
 
       <Dialog open={open && reviewOpen} onOpenChange={setReviewOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-4 gap-2">
           <DialogHeader>
             <DialogTitle className="font-display text-xl">Review final boards</DialogTitle>
             <DialogDescription>
               See how each player built (or didn't build) their ecosystem.
             </DialogDescription>
           </DialogHeader>
-          <Tabs defaultValue={state.players[0]?.id}>
-            <TabsList className="w-full">
+          <Tabs defaultValue={state.players[0]?.id} className="flex-1 flex flex-col min-h-0">
+            <TabsList className="w-full shrink-0">
               {state.players.map((p) => (
                 <TabsTrigger key={p.id} value={p.id} className="flex-1">
                   {p.name}{p.id === state.winnerId ? " 🏆" : ""}
                 </TabsTrigger>
               ))}
             </TabsList>
-            {state.players.map((p) => (
-              <TabsContent key={p.id} value={p.id} className="mt-4">
-                <PlayerBreakdown player={p} winner={p.id === state.winnerId} />
-                <div className="mt-3 rounded-lg border border-border/60 bg-card/40 p-2 overflow-auto">
-                  <Ecosystem eco={p.ecosystem} size={56} showEmpties={false} minHeight={320} />
-                </div>
-              </TabsContent>
-            ))}
+            <div className="flex-1 overflow-y-auto mt-2">
+              {state.players.map((p) => (
+                <TabsContent key={p.id} value={p.id} className="mt-0">
+                  <PlayerBreakdown player={p} winner={p.id === state.winnerId} />
+                  <div className="mt-3 rounded-lg border border-border/60 bg-card/40 p-2 overflow-auto">
+                    <Ecosystem eco={p.ecosystem} size={56} showEmpties={false} minHeight={320} />
+                  </div>
+                </TabsContent>
+              ))}
+            </div>
           </Tabs>
-          <div className="flex justify-end mt-4 gap-2">
-            <Button variant="outline" onClick={() => setReviewOpen(false)}>Back to results</Button>
-            <Button onClick={onPlayAgain}>Play again</Button>
+          <div className="flex justify-end gap-2 pt-2 border-t border-border/40">
+            <Button size="sm" variant="outline" onClick={() => setReviewOpen(false)}>Back to results</Button>
+            <Button size="sm" onClick={onPlayAgain}>Play again</Button>
           </div>
         </DialogContent>
       </Dialog>
