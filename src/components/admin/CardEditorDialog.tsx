@@ -124,7 +124,7 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
     if (!selected) return;
     setSaving(true);
     const { error } = await supabase
-      .from("game_cards")
+      .from(selected.table)
       .update({ name: name.trim() || selected.name, descriptor: descriptor })
       .eq("id", selected.id);
     setSaving(false);
@@ -139,7 +139,8 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
   async function handleUpload(file: File) {
     if (!selected) return;
     setUploading(true);
-    const path = selected.art_path || `cards/animal-${selected.slug}.png`;
+    const defaultPrefix = selected.table === "special_cards" ? "cards/special" : "cards/animal";
+    const path = selected.art_path || `${defaultPrefix}-${selected.slug}.png`;
     const { error: upErr } = await supabase.storage
       .from(ART_BUCKET)
       .upload(path, file, { upsert: true, contentType: file.type || "image/png", cacheControl: "3600" });
@@ -149,7 +150,7 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
       return;
     }
     if (!selected.art_path) {
-      await supabase.from("game_cards").update({ art_path: path }).eq("id", selected.id);
+      await supabase.from(selected.table).update({ art_path: path }).eq("id", selected.id);
     }
     setUploading(false);
     setBust(Date.now());
