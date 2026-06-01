@@ -132,48 +132,48 @@ export default function PlayerProfileDiscountCTA({ userId }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && close()}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
-        <div className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground p-6 text-center">
-          <Sparkles className="w-10 h-10 mx-auto mb-3" />
-          <div className="text-[11px] uppercase tracking-widest opacity-90 mb-1">
+      <DialogContent className="sm:max-w-sm p-0 overflow-hidden max-h-[85vh] flex flex-col">
+        <div className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground p-4 text-center shrink-0">
+          <Sparkles className="w-7 h-7 mx-auto mb-1.5" />
+          <div className="text-[10px] uppercase tracking-widest opacity-90">
             {activeThreshold} pts unlocked
           </div>
-          <div className="text-3xl font-display font-bold leading-tight">
+          <div className="text-2xl font-display font-bold leading-tight">
             {activePct}% off your profiling
           </div>
         </div>
-        <div className="p-6 space-y-4 text-center">
-          <h3 className="text-lg font-display font-semibold">
+        <div className="p-4 space-y-3 text-center overflow-y-auto">
+          <h3 className="text-base font-display font-semibold">
             {settings.profile_discount_cta_title}
           </h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             {settings.profile_discount_cta_body}
           </p>
 
           {/* One-time code */}
-          <div className="rounded-xl border border-dashed border-primary/40 bg-primary/5 p-3">
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+          <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-2.5">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">
               Your one-time code
             </div>
-            <div className="font-mono text-xl font-bold tracking-wider text-foreground select-all">
+            <div className="font-mono text-lg font-bold tracking-wider text-foreground select-all">
               {code || "—"}
             </div>
-            <div className="flex gap-2 justify-center mt-3">
-              <Button size="sm" variant="outline" onClick={copyCode} disabled={!code}>
-                {copied ? <Check className="w-3.5 h-3.5 mr-1" /> : <Copy className="w-3.5 h-3.5 mr-1" />}
+            <div className="flex gap-2 justify-center mt-2">
+              <Button size="sm" variant="outline" onClick={copyCode} disabled={!code} className="h-7 text-xs">
+                {copied ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
                 {copied ? "Copied" : "Copy"}
               </Button>
-              <Button size="sm" variant="outline" onClick={downloadCode} disabled={!code}>
-                <Download className="w-3.5 h-3.5 mr-1" /> Download
+              <Button size="sm" variant="outline" onClick={downloadCode} disabled={!code} className="h-7 text-xs">
+                <Download className="w-3 h-3 mr-1" /> Download
               </Button>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-2 leading-snug">
+            <p className="text-[10px] text-muted-foreground mt-1.5 leading-snug">
               Profile assessment only — <strong>not valid on subscriptions</strong>. One-time use.
             </p>
           </div>
 
-          <div className="flex flex-col gap-2 pt-1">
-            <Button onClick={goUpgrade} size="lg">
+          <div className="flex flex-col gap-1.5 pt-0.5">
+            <Button onClick={goUpgrade} size="sm">
               Use {activePct}% off now
             </Button>
             <button
