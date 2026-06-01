@@ -8,8 +8,9 @@
  *   3. Put down 2 cards: either onto your ecosystem, or play a special
  *      power (Disaster / Sky-Creature steal), or discard to the used pile.
  *
- * Win: first player to assemble 4 Creators + 12 matching Animals AND have
- * no Creator Cards left in their hand.
+ * Win: first player to assemble a valid ecosystem: at least 4 Creators with
+ * Earth / Fire / Air / Water covered, 12 matching Animals assigned 3-per-
+ * chosen-Creator, and no Creator Cards left in hand.
  */
 
 import {
@@ -26,7 +27,7 @@ import {
   type PlayerState,
 } from "./types";
 import { keyOf, neighbours } from "./board";
-import { TYPE_TO_ELEMENT, type Element } from "./elements";
+import { ELEMENTS, TYPE_TO_ELEMENT, type Element } from "./elements";
 import { bestRotationForPlacement, rotatePlacedHex } from "./rotation";
 
 /* --------------------------- helpers --------------------------- */
@@ -216,7 +217,9 @@ export function endTurnEarly(state: MatchState): MatchState {
 /** Does this animal/sky-creature link to that creator card? */
 export function animalLinksToCreator(animal: DeckCard, creator: DeckCard): boolean {
   if (animal.kind === "golden_body") return true; // wildcard
-  if (creator.kind === "sky_creator") return true; // wildcard
+  if (creator.kind === "sky_creator") {
+    return (animal.types ?? []).some((t) => t === "Sky");
+  }
   if (creator.kind !== "creator") return false;
   const animalTypes = (animal.types ?? []) as string[];
   // Strict rule: animal links ONLY if one of its 2 Creator Types matches this
