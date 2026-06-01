@@ -19,6 +19,8 @@ import {
   discardCard,
   playDisaster,
   playSkyCreatureSteal,
+  legalEcoCells,
+
   resolveDisaster,
   botStep,
   rotateMyPlacedHex,
