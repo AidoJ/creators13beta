@@ -319,41 +319,46 @@ export default function Play() {
     }
   }
 
-  /* ----------- Beat-the-Clock timers ----------- */
+  /* ----------- Beat-the-Clock timers (stable ticker via refs) ----------- */
   // Reset turn timer whenever the current turn changes.
   useEffect(() => {
     turnStartedAtRef.current = Date.now();
   }, [state?.turn, state?.turnNumber]);
 
-  // Per-second tick for countdown UIs + auto-fire timeouts.
+  // Keep latest state / selfSlot accessible to a single persistent interval
+  // so rapid state churn doesn't keep cancelling the 1s tick (the bug that
+  // caused Beat the Clock to never enforce its time limit).
+  const stateRef = useRef<MatchState | null>(null);
+  const selfSlotRef = useRef<string>(selfSlot);
+  useEffect(() => { stateRef.current = state; }, [state]);
+  useEffect(() => { selfSlotRef.current = selfSlot; }, [selfSlot]);
+
   useEffect(() => {
-    if (!state || state.finished) return;
-    if (state.gameMode !== "beat_clock") return;
     const id = setInterval(() => {
-      setNowTick((n) => n + 1);
+      setNowTick((n) => n + 1); // re-render countdown labels every second
+      const s = stateRef.current;
+      if (!s || s.finished) return;
+      if (s.gameMode !== "beat_clock") return;
       const now = Date.now();
-      // Match timer expired → finalise on points.
-      const endsAt = state.gameConfig?.matchEndsAt ?? 0;
+      const endsAt = s.gameConfig?.matchEndsAt ?? 0;
       if (endsAt && now >= endsAt) {
         try {
-          const next = finaliseByScore(state);
+          const next = finaliseByScore(s);
           setState(next);
           schedulePersist(next);
         } catch {/* ignore */}
         return;
       }
-      // Per-turn timer expired → auto end-turn for whoever's up (only act if it's our turn,
-      // otherwise the bot driver handles its own; PvP each client polices their own clock).
-      const turnSecs = state.gameConfig?.turnSeconds ?? 0;
+      const turnSecs = s.gameConfig?.turnSeconds ?? 0;
       if (
         turnSecs > 0 &&
-        state.phase === "place" &&
-        !state.pendingDisaster &&
-        state.players[state.turn].id === selfSlot &&
+        s.phase === "place" &&
+        !s.pendingDisaster &&
+        s.players[s.turn].id === selfSlotRef.current &&
         now - turnStartedAtRef.current >= turnSecs * 1000
       ) {
         try {
-          const next = endTurnEarly(state);
+          const next = endTurnEarly(s);
           setState(next);
           schedulePersist(next);
         } catch {/* ignore */}
@@ -361,7 +366,8 @@ export default function Play() {
     }, 1000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, selfSlot]);
+  }, []);
+
 
   /* ----------- Derived view-model ----------- */
 
