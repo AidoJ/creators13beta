@@ -16,7 +16,10 @@ type Num = keyof Pick<GameSettings,
   "points_per_win" | "elo_win" | "elo_loss" | "perfect_eco_bonus"
   | "top_score_default" | "beat_clock_match_minutes" | "beat_clock_turn_seconds"
   | "hand_size" | "hand_limit" | "ecosystem_target" | "creators_needed" | "animals_per_creator"
-  | "bot_think_ms" | "max_players_per_match">;
+  | "bot_think_ms" | "max_players_per_match"
+  | "profile_discount_threshold_1" | "profile_discount_percent_1"
+  | "profile_discount_threshold_2" | "profile_discount_percent_2"
+  | "profile_discount_threshold_3" | "profile_discount_percent_3">;
 
 type Bool = keyof Pick<GameSettings,
   "mode_end_of_days_enabled" | "mode_top_score_enabled" | "mode_beat_clock_enabled"
