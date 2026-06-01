@@ -97,7 +97,7 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
       </Dialog>
 
       <Dialog open={open && reviewOpen} onOpenChange={setReviewOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-4 gap-2">
           <DialogHeader>
             <DialogTitle className="font-display text-xl">Review final boards</DialogTitle>
             <DialogDescription>
