@@ -393,6 +393,7 @@ export type Database = {
       }
       creator_types: {
         Row: {
+          at_the_table: string | null
           body_markers: Json | null
           color_hex: string | null
           created_at: string
@@ -402,15 +403,21 @@ export type Database = {
           element: string
           energy_pattern: string | null
           family: string
+          famous_person_name: string | null
+          famous_person_photo_url: string | null
           icon_name: string | null
           id: string
           name: string
           natural_power: string | null
           profile_content: Json | null
+          shadow_side: string | null
+          signature: string | null
           sort_order: number | null
           team_role: string | null
+          you_might_be_if: string | null
         }
         Insert: {
+          at_the_table?: string | null
           body_markers?: Json | null
           color_hex?: string | null
           created_at?: string
@@ -420,15 +427,21 @@ export type Database = {
           element: string
           energy_pattern?: string | null
           family: string
+          famous_person_name?: string | null
+          famous_person_photo_url?: string | null
           icon_name?: string | null
           id?: string
           name: string
           natural_power?: string | null
           profile_content?: Json | null
+          shadow_side?: string | null
+          signature?: string | null
           sort_order?: number | null
           team_role?: string | null
+          you_might_be_if?: string | null
         }
         Update: {
+          at_the_table?: string | null
           body_markers?: Json | null
           color_hex?: string | null
           created_at?: string
@@ -438,13 +451,18 @@ export type Database = {
           element?: string
           energy_pattern?: string | null
           family?: string
+          famous_person_name?: string | null
+          famous_person_photo_url?: string | null
           icon_name?: string | null
           id?: string
           name?: string
           natural_power?: string | null
           profile_content?: Json | null
+          shadow_side?: string | null
+          signature?: string | null
           sort_order?: number | null
           team_role?: string | null
+          you_might_be_if?: string | null
         }
         Relationships: []
       }
@@ -688,6 +706,15 @@ export type Database = {
           play_disabled: boolean
           play_disabled_message: string
           points_per_win: number
+          profile_discount_cta_body: string
+          profile_discount_cta_title: string
+          profile_discount_enabled: boolean
+          profile_discount_percent_1: number
+          profile_discount_percent_2: number
+          profile_discount_percent_3: number
+          profile_discount_threshold_1: number
+          profile_discount_threshold_2: number
+          profile_discount_threshold_3: number
           prompt_player_name: boolean
           show_discord_chat: boolean
           show_review_boards: boolean
@@ -729,6 +756,15 @@ export type Database = {
           play_disabled?: boolean
           play_disabled_message?: string
           points_per_win?: number
+          profile_discount_cta_body?: string
+          profile_discount_cta_title?: string
+          profile_discount_enabled?: boolean
+          profile_discount_percent_1?: number
+          profile_discount_percent_2?: number
+          profile_discount_percent_3?: number
+          profile_discount_threshold_1?: number
+          profile_discount_threshold_2?: number
+          profile_discount_threshold_3?: number
           prompt_player_name?: boolean
           show_discord_chat?: boolean
           show_review_boards?: boolean
@@ -770,6 +806,15 @@ export type Database = {
           play_disabled?: boolean
           play_disabled_message?: string
           points_per_win?: number
+          profile_discount_cta_body?: string
+          profile_discount_cta_title?: string
+          profile_discount_enabled?: boolean
+          profile_discount_percent_1?: number
+          profile_discount_percent_2?: number
+          profile_discount_percent_3?: number
+          profile_discount_threshold_1?: number
+          profile_discount_threshold_2?: number
+          profile_discount_threshold_3?: number
           prompt_player_name?: boolean
           show_discord_chat?: boolean
           show_review_boards?: boolean
