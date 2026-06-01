@@ -48,6 +48,7 @@ import { TutorialOverlay, resetTutorial } from "@/components/game/TutorialOverla
 import { MultiplayerLobby } from "@/components/game/MultiplayerLobby";
 import { HandTile } from "@/components/game/cards/HandTile";
 import { RuleBookSheet } from "@/components/game/RuleBookSheet";
+import PlayerProfileDiscountCTA from "@/components/dashboard/PlayerProfileDiscountCTA";
 import { OpponentPanel } from "@/components/game/OpponentPanel";
 import { GameModeSelector } from "@/components/game/GameModeSelector";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -824,6 +825,8 @@ export default function Play() {
 
   return (
     <div className="h-[100dvh] flex flex-col bg-background overflow-hidden">
+      {user && <PlayerProfileDiscountCTA userId={user.id} />}
+
 
       {gameSettings.maintenance_banner_enabled && gameSettings.maintenance_banner_text && (
         <div className="px-3 py-1.5 text-xs sm:text-sm text-center bg-amber-500/15 text-amber-200 border-b border-amber-500/30">
