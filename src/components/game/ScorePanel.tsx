@@ -23,15 +23,24 @@ export function ScorePanel({ state }: { state: MatchState }) {
           </div>
         );
       })}
-      <div className="ml-auto text-xs text-muted-foreground">
-        Turn {state.turnNumber} · Draw {state.draw.length} · Used {state.used.length}
-        {state.phase === "draw" && !state.finished && <span className="ml-2 text-primary">Pick up {2 - state.drawnThisTurn} more</span>}
-        {state.phase === "place" && !state.finished && <span className="ml-2 text-primary">Play {2 - state.placedThisTurn} more</span>}
-        {state.finished && (
-          <span className="ml-3 font-semibold text-primary">
-            Winner: {state.players.find((p) => p.id === state.winnerId)?.name ?? "—"}
-          </span>
-        )}
+      <div className="ml-auto text-xs text-muted-foreground flex flex-col items-end gap-0.5">
+        <span className="uppercase tracking-wider text-primary/80">
+          {state.gameMode === "first_to_50"
+            ? `Top Score · target ${state.gameConfig?.targetScore ?? 50} pts`
+            : state.gameMode === "beat_clock"
+              ? "Beat the Clock"
+              : "End of Days"}
+        </span>
+        <span>
+          Turn {state.turnNumber} · Draw {state.draw.length} · Used {state.used.length}
+          {state.phase === "draw" && !state.finished && <span className="ml-2 text-primary">Pick up {2 - state.drawnThisTurn} more</span>}
+          {state.phase === "place" && !state.finished && <span className="ml-2 text-primary">Play {2 - state.placedThisTurn} more</span>}
+          {state.finished && (
+            <span className="ml-3 font-semibold text-primary">
+              Winner: {state.players.find((p) => p.id === state.winnerId)?.name ?? "—"}
+            </span>
+          )}
+        </span>
       </div>
     </div>
   );
