@@ -7,8 +7,9 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Save, RotateCcw, Trophy, Timer, Gamepad2, Bot, Eye, Library, AlertTriangle, ExternalLink } from "lucide-react";
+import { Save, RotateCcw, Trophy, Timer, Gamepad2, Bot, Eye, Library, AlertTriangle, ExternalLink, Pencil } from "lucide-react";
 import { DEFAULT_GAME_SETTINGS, invalidateGameSettings, type GameSettings } from "@/lib/game/settings";
+import CardEditorDialog from "./CardEditorDialog";
 
 type Num = keyof Pick<GameSettings,
   "points_per_win" | "elo_win" | "elo_loss" | "perfect_eco_bonus"
@@ -312,6 +313,7 @@ interface DeckRow {
 function DeckCompositionSection() {
   const [animals, setAnimals] = useState<{ name: string; mythical: boolean }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editorOpen, setEditorOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -393,16 +395,20 @@ function DeckCompositionSection() {
 
 
 
-      <div className="flex items-center gap-3 mt-3">
+      <div className="flex items-center gap-3 mt-3 flex-wrap">
         <Button variant="outline" size="sm" asChild>
           <a href="/card-preview" target="_blank" rel="noreferrer">
             <ExternalLink className="w-3.5 h-3.5 mr-1" />Preview card library
           </a>
         </Button>
+        <Button variant="default" size="sm" onClick={() => setEditorOpen(true)}>
+          <Pencil className="w-3.5 h-3.5 mr-1" />Edit cards
+        </Button>
         <p className="text-[11px] text-muted-foreground">
           Deck includes Creator Cards, Sky Creator Cards, Animal Cards, Sky Creature Cards, Golden Body Cards and the Golden Hive Card.
         </p>
       </div>
+      <CardEditorDialog open={editorOpen} onOpenChange={setEditorOpen} />
     </section>
   );
 }
