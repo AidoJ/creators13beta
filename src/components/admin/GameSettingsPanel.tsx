@@ -313,6 +313,7 @@ interface DeckRow {
 function DeckCompositionSection() {
   const [animals, setAnimals] = useState<{ name: string; mythical: boolean }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editorOpen, setEditorOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
