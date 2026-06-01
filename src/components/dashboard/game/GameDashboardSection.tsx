@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Gamepad2, Flame, Trophy, Sparkles, Copy, Loader2 } from "lucide-react";
+import { Gamepad2, Flame, Trophy, Sparkles, Copy, Loader2, Info } from "lucide-react";
 
 import { toast } from "sonner";
 import { CREATOR_TYPE_NAMES, getCreatorTypeColor } from "@/lib/creatorTypes";
@@ -164,9 +165,20 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border border-border bg-card text-muted-foreground">
                 Last played {timeAgo(progress?.last_played_at ?? null)}
               </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border border-secondary/40 bg-secondary/10 text-secondary-foreground">
-                ELO {progress?.elo ?? 1000}
-              </span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border border-secondary/40 bg-secondary/10 text-secondary-foreground cursor-help">
+                      ELO {progress?.elo ?? 1000}
+                      <Info className="h-3 w-3 opacity-60" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs text-xs">
+                    <p><strong>ELO points</strong> measure your competitive skill level.</p>
+                    <p className="mt-1">You gain more points by beating stronger opponents and lose more by losing to weaker ones. It&apos;s a classic chess-style rating that reflects how tough your competition is, not just how many games you&apos;ve played.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
           <div className="flex flex-col items-start md:items-end gap-2">
@@ -264,7 +276,23 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
             <Row label="Wins" value={`${wins} (${winRate}%)`} />
             <Row label="Win streak" value={progress?.current_streak ?? 0} />
             <Row label="Perfect ecosystems" value={progress?.perfect_ecosystems ?? 0} />
-            <Row label="ELO" value={progress?.elo ?? 1000} />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex justify-between py-1 border-b border-border last:border-0 cursor-help">
+                    <span className="text-muted-foreground inline-flex items-center gap-1">
+                      ELO
+                      <Info className="h-3 w-3 opacity-50" />
+                    </span>
+                    <strong className="text-foreground">{progress?.elo ?? 1000}</strong>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="max-w-xs text-xs">
+                  <p><strong>ELO points</strong> measure your competitive skill level.</p>
+                  <p className="mt-1">You gain more points by beating stronger opponents and lose more by losing to weaker ones. It&apos;s a classic chess-style rating that reflects how tough your competition is, not just how many games you&apos;ve played.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           {!!progress?.badges?.length && (
             <div className="flex flex-wrap gap-1.5 mt-3">
