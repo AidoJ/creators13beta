@@ -64,7 +64,7 @@ export function NamePrompt({ onComplete }: { onComplete?: (first: string, last: 
   return (
     <Dialog open={open}>
       <DialogContent
-        className="max-w-md"
+        className="max-w-md [&>button.absolute]:hidden"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
