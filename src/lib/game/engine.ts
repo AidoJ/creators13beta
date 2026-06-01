@@ -176,7 +176,11 @@ export function pickFromUsed(state: MatchState): MatchState {
     throw new Error("That Golden Hive has been spent — it can't be picked up.");
   }
   const next = cloneState(state);
-  const card = next.used.pop()!;
+  const popped = next.used.pop()!;
+  // Tag with pickedUpThisTurn so it can't be re-weaponised as a Disaster
+  // the same turn — the exploit being: pick up Creator → instantly play it
+  // back as a disaster → opponent picks it up → repeats forever.
+  const card = { ...popped, pickedUpThisTurn: true };
   next.players[next.turn].hand.push(card);
   next.drawnThisTurn += 1;
   if (next.drawnThisTurn >= 2) next.phase = "place";
@@ -364,6 +368,11 @@ export function playDisaster(
   if (creator.kind !== "creator" && creator.kind !== "sky_creator") {
     throw new Error("Only Creator Cards can be played as a Disaster");
   }
+  if (creator.pickedUpThisTurn) {
+    throw new Error(
+      "You just picked this Creator up from the used pile — you can place it on your board this turn, or use it as a Disaster on your NEXT turn.",
+    );
+  }
 
   player.hand.splice(idx, 1);
   next.used.push(creator);
@@ -525,12 +534,18 @@ function afterAction(state: MatchState): MatchState {
 }
 
 function advanceTurn(state: MatchState): void {
+  // Clear pickedUpThisTurn flags so cards picked up last turn become
+  // Disaster-eligible again from this point onward.
+  for (const p of state.players) {
+    p.hand = p.hand.map((c) => (c.pickedUpThisTurn ? { ...c, pickedUpThisTurn: false } : c));
+  }
   // Skip to next player.
   state.turn = (state.turn + 1) % state.players.length;
   state.phase = "draw";
   state.drawnThisTurn = 0;
   state.placedThisTurn = 0;
   state.turnNumber += 1;
+
 
   // If both piles are empty AND no player can finish, end the match by score.
   if (state.draw.length === 0 && state.used.length === 0) {
