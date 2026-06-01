@@ -373,9 +373,15 @@ export function playDisaster(
       "You just picked this Creator up from the used pile — you can place it on your board this turn, or use it as a Disaster on your NEXT turn.",
     );
   }
+  if (creator.disasterSpent) {
+    throw new Error(
+      `This ${creator.name} has already been played as a Disaster — each Creator can only trigger one Disaster per match. You can still place it on your board.`,
+    );
+  }
 
+  const spentCreator = { ...creator, disasterSpent: true };
   player.hand.splice(idx, 1);
-  next.used.push(creator);
+  next.used.push(spentCreator);
 
   // Find a victim who can intercept with a Golden Hive in hand.
   const hiveVictim = next.players.find(
