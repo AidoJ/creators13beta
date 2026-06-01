@@ -10,6 +10,7 @@ import PhotoGalleryCard from "@/components/dashboard/PhotoGalleryCard";
 import ProgressCard from "@/components/dashboard/ProgressCard";
 import SessionCard from "@/components/dashboard/SessionCard";
 import CreatorProfileCard from "@/components/dashboard/CreatorProfileCard";
+import AnimalMatchesCard from "@/components/dashboard/AnimalMatchesCard";
 import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
@@ -214,6 +215,7 @@ export default function Dashboard() {
             <ZoomRecordingsCard />
             <SubscriptionCard />
             {user && <CreatorProfileCard userId={user.id} />}
+            {user && <AnimalMatchesCard userId={user.id} />}
           </section>
         )}
 
