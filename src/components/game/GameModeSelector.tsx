@@ -63,6 +63,7 @@ export function GameModeSelector({ open, onCancel, onChoose }: Props) {
     if (mode === "first_to_50") config.targetScore = targetScore;
     if (mode === "beat_clock") {
       config.matchEndsAt = Date.now() + matchMinutes * 60_000;
+      config.matchMinutes = matchMinutes;
       config.turnSeconds = turnSeconds;
     }
     onChoose(mode, config);
