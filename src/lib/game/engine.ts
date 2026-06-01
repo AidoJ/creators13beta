@@ -313,6 +313,10 @@ export function placeOnEcosystem(
 
   // Rules: animals must adjoin / belong to a matching Creator. We enforce a
   // soft rule — animals can be placed freely; win-check verifies linkage.
+  // Hard rule: every shared edge must be able to match by Creator Type
+  // (cards sharing no type can't sit next to each other).
+  assertEdgeMatchOrThrow(card, player.ecosystem, pos);
+
   const rotation = bestRotationForPlacement(player.ecosystem, card, pos);
   player.ecosystem.placed.set(keyOf(pos), { card, pos, rotation });
   player.hand.splice(idx, 1);
@@ -321,6 +325,7 @@ export function placeOnEcosystem(
   next.lastEvent = `${player.name} placed ${card.name}`;
   return afterAction(next);
 }
+
 
 /** Manually rotate a placed hex (+60° clockwise) in a player's ecosystem.
  *  Does not consume a turn / action — purely a presentation tweak. */
