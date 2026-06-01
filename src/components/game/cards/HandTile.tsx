@@ -376,7 +376,37 @@ function defaultDescriptor(card: DeckCard): string {
 }
 
 function resolveColours(card: DeckCard): {
-...
+  c1: string;
+  c2: string;
+  chips: { label: string; color: string; glyph?: string }[];
+  badge?: string;
+  artGlyph?: string;
+} {
+  if (card.kind === "animal" || card.kind === "sky_creature") {
+    const [t1, t2] = card.types ?? [];
+    const c1 = CREATOR_TYPE_COLORS[t1 as keyof typeof CREATOR_TYPE_COLORS] ?? "#888";
+    const c2 = CREATOR_TYPE_COLORS[t2 as keyof typeof CREATOR_TYPE_COLORS] ?? c1;
+    const chips = [
+      { label: String(t1 ?? ""), color: c1, glyph: glyphForType(t1 as string) },
+      ...(t2 && t2 !== t1
+        ? [{ label: String(t2), color: c2, glyph: glyphForType(t2 as string) }]
+        : []),
+    ].filter((c) => c.label);
+    return { c1, c2, chips, badge: card.kind === "sky_creature" ? "Sky" : undefined };
+  }
+  if (card.kind === "creator") {
+    const dt = card.displayType;
+    const label = dt ?? card.element!;
+    const c = dt ? (CREATOR_TYPE_COLORS[dt as keyof typeof CREATOR_TYPE_COLORS] ?? ELEMENT_COLORS[card.element!]) : ELEMENT_COLORS[card.element!];
+    const g = dt ? (CREATOR_TYPE_GLYPHS[dt] ?? ELEMENT_GLYPHS[card.element!]) : ELEMENT_GLYPHS[card.element!];
+    return { c1: c, c2: c, chips: [{ label, color: c, glyph: g }], badge: card.element ? String(card.element).toUpperCase() : "Creator", artGlyph: g };
+  }
+  if (card.kind === "sky_creator") {
+    const c = ELEMENT_COLORS.Sky;
+    const g = CREATOR_TYPE_GLYPHS.Sky;
+    return { c1: c, c2: "#ffffff", chips: [{ label: "Sky", color: c, glyph: g }], badge: "SKY CREATOR", artGlyph: g };
+  }
+
   if (card.kind === "golden_body") {
     return { c1: "#f5c542", c2: "#e0a920", chips: [{ label: "Golden", color: "#e0a920" }], badge: "GOLDEN BODY", artGlyph: getSpecialCardFallbackArt("golden-body") ?? undefined };
   }
