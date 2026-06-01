@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Save, Search } from "lucide-react";
 import { CREATOR_TYPE_NAMES } from "@/lib/creatorTypes";
 import { getSpecialCardFallbackArt, getSpecialCardFallbackDescriptor } from "@/lib/game/specialCardFallbacks";
+
 
 const ART_BUCKET = "game-card-art";
 
@@ -28,8 +30,11 @@ interface Card {
   kind?: SpecialKind;
   displayType?: string | null;
   element?: string | null;
+  type_a?: string | null;
+  type_b?: string | null;
   sort_order: number;
 }
+
 
 interface Props {
   open: boolean;
@@ -60,9 +65,12 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [descriptor, setDescriptor] = useState("");
   const [name, setName] = useState("");
+  const [typeA, setTypeA] = useState<string>("");
+  const [typeB, setTypeB] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [bust, setBust] = useState(0);
+
 
   async function load() {
     setLoading(true);
@@ -120,8 +128,11 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
       mythical: r.mythical,
       descriptor: r.descriptor,
       art_path: r.art_path,
+      type_a: r.type_a,
+      type_b: r.type_b,
       sort_order: r.sort_order,
     }));
+
 
     setCards([...specials, ...animals]);
     setLoading(false);
@@ -149,7 +160,10 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
   useEffect(() => {
     setDescriptor(resolvedDescriptor(selected));
     setName(selected?.name ?? "");
+    setTypeA(selected?.type_a ?? "");
+    setTypeB(selected?.type_b ?? "");
   }, [selected?.id]);
+
 
   const filtered = useMemo(() => {
     const q = filter.trim().toLowerCase();
@@ -177,10 +191,25 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
   async function saveText() {
     if (!selected) return;
     setSaving(true);
-    const payload = {
+    const payload: Record<string, any> = {
       name: name.trim() || selected.name,
       descriptor: descriptor.trim() || null,
     };
+    // Animal & Sky Creature cards can have their two Creator Types edited.
+    if (selected.table === "game_cards") {
+      if (!typeA || !typeB) {
+        setSaving(false);
+        toast({ title: "Both Creator Types required", variant: "destructive" });
+        return;
+      }
+      if (typeA === typeB) {
+        setSaving(false);
+        toast({ title: "Type A and Type B must differ", variant: "destructive" });
+        return;
+      }
+      payload.type_a = typeA;
+      payload.type_b = typeB;
+    }
     const { error } = await supabase.from(selected.table).update(payload).eq("id", selected.id);
     setSaving(false);
     if (error) {
@@ -190,6 +219,7 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
     toast({ title: "Saved", description: `${name.trim() || selected.name} updated` });
     await load();
   }
+
 
   async function handleUpload(file: File) {
     if (!selected) return;
