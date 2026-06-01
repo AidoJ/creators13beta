@@ -17,6 +17,7 @@ import { keyOf, neighbours } from "@/lib/game/board";
 function buildWinReason(state: MatchState, winner: PlayerState): { headline: string; detail: string } {
   const eco = validateEcosystemWin(winner);
   const score = playerTotalScore(winner);
+  const moves = state.turnNumber;
   let creators = 0;
   let animals = 0;
   for (const pc of winner.ecosystem.placed.values()) {
@@ -26,27 +27,27 @@ function buildWinReason(state: MatchState, winner: PlayerState): { headline: str
   if (eco.valid) {
     return {
       headline: "Completed a valid ecosystem",
-      detail: `${winner.name} placed all 16 cards — 4 Creators covering every element (Earth, Fire, Air, Water) and 12 Animals correctly assigned (3 per Creator) — finishing on ${score} pts.`,
+      detail: `${winner.name} placed all 16 cards (4 Creators + 12 Animals) on ${score} pts in ${moves} moves.`,
     };
   }
   if (state.gameMode === "first_to_50") {
     const target = state.gameConfig?.targetScore ?? 50;
-    if (score >= target) {
-      return {
-        headline: `Reached the ${target}-point target first`,
-        detail: `${winner.name} crossed the ${target}-pt threshold with ${score} pts (${creators}/4 Creators, ${animals}/12 Animals placed) before any opponent could complete an ecosystem.`,
-      };
-    }
+    return {
+      headline: `First to ${target} points`,
+      detail: `${winner.name} was the first to ${score} points in ${moves} moves.`,
+    };
   }
   if (state.gameMode === "beat_clock") {
+    const turnS = state.gameConfig?.turnSeconds;
+    const minutesLabel = turnS ? `${Math.round((turnS * 1) )}s/turn` : "timer";
     return {
-      headline: "Highest score when time ran out",
-      detail: `Time expired before anyone completed an ecosystem. ${winner.name} led on points with ${score} pts (${creators}/4 Creators, ${animals}/12 Animals placed).`,
+      headline: `End of ${minutesLabel}`,
+      detail: `${winner.name}'s score of ${score} points wins in ${moves} moves.`,
     };
   }
   return {
     headline: "Highest score at match end",
-    detail: `The deck ran out before anyone could complete an ecosystem. ${winner.name} led with ${score} pts (${creators}/4 Creators, ${animals}/12 Animals placed).`,
+    detail: `${winner.name} led with ${score} pts (${creators}/4 Creators, ${animals}/12 Animals) in ${moves} moves.`,
   };
 }
 
