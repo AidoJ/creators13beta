@@ -36,6 +36,13 @@ export default function GameSettingsPanel() {
   const [resetting, setResetting] = useState(false);
   const [cardCount, setCardCount] = useState<number | null>(null);
 
+  // Edit player points
+  const [editEmail, setEditEmail] = useState("");
+  const [editPoints, setEditPoints] = useState<string>("");
+  const [editLoading, setEditLoading] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editUserId, setEditUserId] = useState<string | null>(null);
+
   useEffect(() => {
     (async () => {
       const [{ data }, { count }] = await Promise.all([
@@ -89,6 +96,36 @@ export default function GameSettingsPanel() {
   }
 
   if (loading) return <div className="p-6 text-sm text-muted-foreground">Loading game settings…</div>;
+
+  async function lookupPlayer() {
+    const email = editEmail.trim().toLowerCase();
+    if (!email) return;
+    setEditLoading(true);
+    const { data: prof } = await supabase.from("profiles").select("user_id").eq("email", email).maybeSingle();
+    if (!prof?.user_id) {
+      setEditLoading(false);
+      toast({ title: "User not found", description: "No profile matches that email.", variant: "destructive" });
+      return;
+    }
+    const { data: prog } = await supabase.from("player_progress").select("points").eq("user_id", prof.user_id).maybeSingle();
+    setEditUserId(prof.user_id);
+    setEditPoints(String(prog?.points ?? 0));
+    setEditLoading(false);
+  }
+
+  async function savePlayerPoints() {
+    if (!editUserId) return;
+    const points = Number(editPoints);
+    if (!Number.isFinite(points) || points < 0) {
+      toast({ title: "Invalid points", description: "Enter a non-negative number.", variant: "destructive" });
+      return;
+    }
+    setEditSaving(true);
+    const { error } = await supabase.from("player_progress").update({ points, updated_at: new Date().toISOString() }).eq("user_id", editUserId);
+    setEditSaving(false);
+    if (error) toast({ title: "Update failed", description: error.message, variant: "destructive" });
+    else toast({ title: "Points updated", description: `Player now has ${points} points.` });
+  }
 
   const NumField = ({ k, label, min, max, hint }: { k: Num; label: string; min?: number; max?: number; hint?: string }) => (
     <div className="space-y-1">
@@ -332,6 +369,40 @@ export default function GameSettingsPanel() {
               {resetting ? "Resetting…" : "Reset"}
             </Button>
           </div>
+        </div>
+
+        <div className="rounded-md border border-border bg-card p-3 space-y-2">
+          <Label className="text-xs font-semibold">Edit player points</Label>
+          <p className="text-[11px] text-muted-foreground">
+            Look up a player by email and update their points total directly.
+          </p>
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              placeholder="player@example.com"
+              value={editEmail}
+              onChange={(e) => { setEditEmail(e.target.value); setEditUserId(null); setEditPoints(""); }}
+              className="h-8 text-sm"
+            />
+            <Button size="sm" variant="secondary" onClick={lookupPlayer} disabled={!editEmail || editLoading}>
+              {editLoading ? "Looking up…" : "Lookup"}
+            </Button>
+          </div>
+          {editUserId && (
+            <div className="flex items-center gap-2 pt-1">
+              <Input
+                type="number"
+                min={0}
+                placeholder="Points"
+                value={editPoints}
+                onChange={(e) => setEditPoints(e.target.value)}
+                className="h-8 text-sm w-32"
+              />
+              <Button size="sm" onClick={savePlayerPoints} disabled={editSaving}>
+                {editSaving ? "Saving…" : "Save points"}
+              </Button>
+            </div>
+          )}
         </div>
       </section>
 
