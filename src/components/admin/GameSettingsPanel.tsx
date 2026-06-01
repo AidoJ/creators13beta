@@ -36,6 +36,13 @@ export default function GameSettingsPanel() {
   const [resetting, setResetting] = useState(false);
   const [cardCount, setCardCount] = useState<number | null>(null);
 
+  // Edit player points
+  const [editEmail, setEditEmail] = useState("");
+  const [editPoints, setEditPoints] = useState<string>("");
+  const [editLoading, setEditLoading] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editUserId, setEditUserId] = useState<string | null>(null);
+
   useEffect(() => {
     (async () => {
       const [{ data }, { count }] = await Promise.all([
