@@ -66,6 +66,7 @@ export default function Play() {
   const { user } = useAuth();
 
   const [allCards, setAllCards] = useState<GameCard[] | null>(null);
+  const [specialCards, setSpecialCards] = useState<SpecialCard[]>([]);
   const [state, setState] = useState<MatchState | null>(null);
   const [matchRow, setMatchRow] = useState<GameMatchRow | null>(null);
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
