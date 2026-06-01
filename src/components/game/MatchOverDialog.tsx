@@ -290,6 +290,7 @@ function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: bool
       unassignedByType,
       creatorsCount: creators.length,
       animalsCount: animals.length,
+      goldenBodyCount,
     };
   }, [player]);
 
@@ -302,9 +303,10 @@ function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: bool
       <div className="flex items-baseline justify-between mb-2">
         <div className="font-semibold">{player.name}</div>
         <div className="text-xs text-muted-foreground">
-          {data.creatorsCount}/4 creators · {data.animalsCount}/12 animals · {playerTotalScore(player)} pts
+          {data.creatorsCount} creators · {data.animalsCount - data.goldenBodyCount} animals{data.goldenBodyCount > 0 ? ` · ${data.goldenBodyCount} Golden Body` : ""} · {playerTotalScore(player)} pts
         </div>
       </div>
+
 
       {data.slots.length === 0 && data.unassignedByType.size === 0 ? (
         <div className="text-xs text-muted-foreground italic">No cards placed.</div>
