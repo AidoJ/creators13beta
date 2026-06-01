@@ -125,7 +125,7 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
               <div>
                 <h4 className="font-semibold text-sm">Golden Body Card</h4>
                 <p className="text-muted-foreground text-xs">
-                  Wildcard Animal — counts as a matching Animal for any Creator.
+                  Counts as a matching Animal for any Creator.
                 </p>
               </div>
 
