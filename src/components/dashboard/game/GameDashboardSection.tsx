@@ -272,8 +272,9 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
         <Card className="p-5">
           <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">Match stats</h3>
           <div className="space-y-1.5 text-sm">
-            <Row label="Games" value={finished.length} />
+            <Row label="Games (vs humans)" value={finished.length} />
             <Row label="Wins" value={`${wins} (${winRate}%)`} />
+
             <Row label="Win streak" value={progress?.current_streak ?? 0} />
             <Row label="Perfect ecosystems" value={progress?.perfect_ecosystems ?? 0} />
             <TooltipProvider>
