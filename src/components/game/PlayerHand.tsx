@@ -130,7 +130,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                 dropTarget?.click();
                 onDragEnd?.();
               }}
-              className={`cursor-grab active:cursor-grabbing ${disabled ? "pointer-events-none" : ""}`}
+              className="cursor-grab active:cursor-grabbing"
               style={
                 isDropping
                   ? {
