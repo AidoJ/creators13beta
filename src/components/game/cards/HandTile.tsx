@@ -345,18 +345,8 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                 <div className="text-[15px] leading-relaxed whitespace-pre-line" style={{ fontFamily: '"Questrial", sans-serif' }}>
                   {descriptor}
                 </div>
-                {(() => {
-                  const artist = getCardCreditArtist(card.source?.slug);
-                  if (!artist) return null;
-                  return (
-                    <div
-                      className="mt-auto pt-3 text-center text-[10px] leading-tight text-neutral-500/90 border-t border-black/10"
-                      style={{ fontFamily: '"Questrial", sans-serif' }}
-                    >
-                      with thanks to Pixabay Artist — {artist}
-                    </div>
-                  );
-                })()}
+                {/* Artist credit removed — all animal images are licensed via Shutterstock. */}
+
 
               </div>
             </div>
