@@ -1094,28 +1094,31 @@ export default function Play() {
       {/* Golden Hive prompt — shown to the targeted victim when an opponent
           plays a Disaster while you hold an unspent Hive. */}
       {state.pendingDisaster && state.pendingDisaster.victimId === selfSlot && (
-        <Dialog open>
-          <DialogContent className="max-w-md [&>button.absolute]:hidden" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
-            <DialogHeader>
-              <DialogTitle className="font-display text-xl">
-                Use your Golden Hive Card?
-              </DialogTitle>
-              <DialogDescription>
-                {state.players.find((p) => p.id === state.pendingDisaster!.attackerId)?.name ?? "Opponent"} just played a{" "}
-                <strong>{state.pendingDisaster.creator.name} Disaster</strong>. Activating your Hive blocks it from stealing any of your animals. The Hive will be placed on the used pile and cannot be picked up again.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex justify-end gap-2 mt-2 flex-wrap">
-              <Button variant="outline" onClick={() => onResolveDisaster(false)}>
-                Save for Later
-              </Button>
-              <Button onClick={() => onResolveDisaster(true)}>
-                Activate Now
-              </Button>
+        <div className="fixed inset-x-0 bottom-0 z-50 pointer-events-none flex justify-center px-3 pb-3 sm:pb-4">
+          <div className="pointer-events-auto w-full max-w-lg rounded-xl border border-amber-400/60 bg-card/95 backdrop-blur-md shadow-2xl p-3 sm:p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="font-display text-sm sm:text-base leading-tight text-amber-200">
+                  Use your Golden Hive Card?
+                </div>
+                <div className="text-[11px] sm:text-xs text-muted-foreground mt-1 leading-snug">
+                  {state.players.find((p) => p.id === state.pendingDisaster!.attackerId)?.name ?? "Opponent"} played a{" "}
+                  <strong className="text-foreground">{state.pendingDisaster.creator.name} Disaster</strong>. Review your ecosystem above, then choose. Activating the Hive blocks the steal but discards the Hive.
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5 shrink-0">
+                <Button size="sm" onClick={() => onResolveDisaster(true)}>
+                  Activate Now
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => onResolveDisaster(false)}>
+                  Save for Later
+                </Button>
+              </div>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </div>
       )}
+
       {gameSettings.show_tutorial_overlay && <TutorialOverlay />}
       <RuleBookSheet open={ruleBookOpen} onOpenChange={setRuleBookOpen} />
       <OpponentPanel open={opponentPanelOpen} onClose={() => setOpponentPanelOpen(false)} player={opponent} />
