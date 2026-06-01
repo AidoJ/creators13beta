@@ -9,6 +9,43 @@ import { glyphForType } from "@/lib/game/glyphs";
 import { Ecosystem } from "@/components/game/Ecosystem";
 import type { MatchState, PlayerState } from "@/lib/game/types";
 import { playerTotalScore } from "@/lib/game/types";
+import { validateEcosystemWin } from "@/lib/game/engine";
+
+function buildWinReason(state: MatchState, winner: PlayerState): { headline: string; detail: string } {
+  const eco = validateEcosystemWin(winner);
+  const score = playerTotalScore(winner);
+  let creators = 0;
+  let animals = 0;
+  for (const pc of winner.ecosystem.placed.values()) {
+    if (pc.card.kind === "creator" || pc.card.kind === "sky_creator") creators++;
+    else animals++;
+  }
+  if (eco.valid) {
+    return {
+      headline: "Completed a valid ecosystem",
+      detail: `${winner.name} placed all 16 cards — 4 Creators covering every element (Earth, Fire, Air, Water) and 12 Animals correctly assigned (3 per Creator) — finishing on ${score} pts.`,
+    };
+  }
+  if (state.gameMode === "first_to_50") {
+    const target = state.gameConfig?.targetScore ?? 50;
+    if (score >= target) {
+      return {
+        headline: `Reached the ${target}-point target first`,
+        detail: `${winner.name} crossed the ${target}-pt threshold with ${score} pts (${creators}/4 Creators, ${animals}/12 Animals placed) before any opponent could complete an ecosystem.`,
+      };
+    }
+  }
+  if (state.gameMode === "beat_the_clock") {
+    return {
+      headline: "Highest score when time ran out",
+      detail: `Time expired before anyone completed an ecosystem. ${winner.name} led on points with ${score} pts (${creators}/4 Creators, ${animals}/12 Animals placed).`,
+    };
+  }
+  return {
+    headline: "Highest score at match end",
+    detail: `The deck ran out before anyone could complete an ecosystem. ${winner.name} led with ${score} pts (${creators}/4 Creators, ${animals}/12 Animals placed).`,
+  };
+}
 
 interface Props {
   state: MatchState;
