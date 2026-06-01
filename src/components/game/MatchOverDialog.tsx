@@ -126,7 +126,6 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
 }
 
 function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: boolean }) {
-  const counts = useMemo(() => {
   const CANONICAL_ORDER = ["Lava","Fire","Whirlwind","Snow","Lightning","Sun","Lake","Ocean","Tree","Mountain","Soil","River","Sky"];
   const counts = useMemo(() => {
     const creatorByType = new Map<string, number>();
