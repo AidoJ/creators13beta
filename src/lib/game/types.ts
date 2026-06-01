@@ -47,6 +47,10 @@ export interface DeckCard {
    *  be placed on the board this turn or held until next turn. Cleared in
    *  advanceTurn. Prevents infinite Creator→Disaster recycling. */
   pickedUpThisTurn?: boolean;
+  /** True once this Creator copy has been played as a Disaster. It may still
+   *  be picked up from the used pile and placed on a board, but it can never
+   *  be played as a Disaster again. Persists for the rest of the match. */
+  disasterSpent?: boolean;
 }
 
 export interface PlacedCard {
