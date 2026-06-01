@@ -582,49 +582,95 @@ export function ecosystemSummary(eco: Ecosystem) {
   return { creators, animals, total: eco.placed.size };
 }
 
+export interface EcosystemWinValidation {
+  valid: boolean;
+  creators: DeckCard[];
+  animals: DeckCard[];
+  selectedCreators: DeckCard[];
+  stillHoldingCreators: DeckCard[];
+  hasElementCoverage: boolean;
+}
+
+/** Full classic ecosystem validation shared by human and bot actions. */
+export function validateEcosystemWin(player: PlayerState): EcosystemWinValidation {
+  const placed = Array.from(player.ecosystem.placed.values()).map((pc) => pc.card);
+  const creators = placed.filter(
+    (c) => c.kind === "creator" || c.kind === "sky_creator",
+  );
+  const animals = placed.filter(
+    (c) => c.kind === "animal" || c.kind === "sky_creature" || c.kind === "golden_body",
+  );
+  const stillHoldingCreators = player.hand.filter(
+    (c) => c.kind === "creator" || c.kind === "sky_creator",
+  );
+
+  if (creators.length < CREATORS_NEEDED || animals.length < CREATORS_NEEDED * ANIMALS_PER_CREATOR) {
+    return { valid: false, creators, animals, selectedCreators: [], stillHoldingCreators, hasElementCoverage: false };
+  }
+
+  const quartets = enumerateElementCoveringQuartets(creators);
+  for (const quartet of quartets) {
+    if (canAssignAnimalsToCreators(quartet, animals)) {
+      return {
+        valid: stillHoldingCreators.length === 0,
+        creators,
+        animals,
+        selectedCreators: quartet,
+        stillHoldingCreators,
+        hasElementCoverage: true,
+      };
+    }
+  }
+
+  return {
+    valid: false,
+    creators,
+    animals,
+    selectedCreators: [],
+    stillHoldingCreators,
+    hasElementCoverage: quartets.length > 0,
+  };
+}
+
 /** Can we pick exactly ANIMALS_PER_CREATOR animals per creator from the placed
  *  animal pool such that every chosen animal links to its assigned creator?
  *  Extra animals on the board beyond 3 × creators are allowed and simply unused. */
-
-function canAssignAnimalsToCreators(
-  creators: DeckCard[],
-  animals: DeckCard[],
-): boolean {
+function canAssignAnimalsToCreators(creators: DeckCard[], animals: DeckCard[]): boolean {
   if (creators.length !== CREATORS_NEEDED) return false;
   if (animals.length < CREATORS_NEEDED * ANIMALS_PER_CREATOR) return false;
-  const counts = new Array(creators.length).fill(0) as number[];
-  const used = new Array(animals.length).fill(false) as boolean[];
-  const totalNeeded = CREATORS_NEEDED * ANIMALS_PER_CREATOR;
-  let assigned = 0;
-  const recurse = (startIdx: number): boolean => {
-    if (assigned === totalNeeded) return counts.every((n) => n === ANIMALS_PER_CREATOR);
-    // Pick the creator slot with the fewest remaining options to prune fast.
-    let targetC = -1;
-    let bestOpts = Infinity;
-    for (let c = 0; c < creators.length; c++) {
-      if (counts[c] >= ANIMALS_PER_CREATOR) continue;
-      let opts = 0;
-      for (let a = 0; a < animals.length; a++) {
-        if (!used[a] && animalLinksToCreator(animals[a], creators[c])) opts++;
+  const slots = creators.map((creator) => ({ creator, assigned: [] as number[] }));
+  const used = new Set<number>();
+
+  const recurse = (): boolean => {
+    if (slots.every((slot) => slot.assigned.length === ANIMALS_PER_CREATOR)) return true;
+
+    let targetIndex = -1;
+    let targetOptions: number[] = [];
+    for (let i = 0; i < slots.length; i++) {
+      const slot = slots[i];
+      if (slot.assigned.length >= ANIMALS_PER_CREATOR) continue;
+      const options = animals
+        .map((animal, idx) => ({ animal, idx }))
+        .filter(({ animal, idx }) => !used.has(idx) && animalLinksToCreator(animal, slot.creator))
+        .map(({ idx }) => idx);
+      if (targetIndex === -1 || options.length < targetOptions.length) {
+        targetIndex = i;
+        targetOptions = options;
       }
-      if (opts < bestOpts) { bestOpts = opts; targetC = c; }
     }
-    if (targetC === -1) return false;
-    if (bestOpts === 0) return false;
-    for (let a = startIdx; a < animals.length; a++) {
-      if (used[a]) continue;
-      if (!animalLinksToCreator(animals[a], creators[targetC])) continue;
-      used[a] = true;
-      counts[targetC] += 1;
-      assigned += 1;
-      if (recurse(0)) return true;
-      used[a] = false;
-      counts[targetC] -= 1;
-      assigned -= 1;
+
+    if (targetIndex === -1 || targetOptions.length === 0) return false;
+    for (const animalIndex of targetOptions) {
+      used.add(animalIndex);
+      slots[targetIndex].assigned.push(animalIndex);
+      if (recurse()) return true;
+      slots[targetIndex].assigned.pop();
+      used.delete(animalIndex);
     }
     return false;
   };
-  return recurse(0);
+
+  return recurse();
 }
 
 function checkWin(state: MatchState): void {
