@@ -699,25 +699,7 @@ function checkWin(state: MatchState): void {
   // chosen Creators matching its Creator Type. Extra Creators / animals on the
   // board beyond that selection are allowed.
   for (const p of state.players) {
-    const placed = Array.from(p.ecosystem.placed.values()).map((pc) => pc.card);
-    const creators = placed.filter(
-      (c) => c.kind === "creator" || c.kind === "sky_creator",
-    );
-    const animals = placed.filter(
-      (c) => c.kind === "animal" || c.kind === "sky_creature" || c.kind === "golden_body",
-    );
-    if (creators.length < CREATORS_NEEDED) continue;
-    if (animals.length < CREATORS_NEEDED * ANIMALS_PER_CREATOR) continue;
-    const quartets = enumerateElementCoveringQuartets(creators);
-    let satisfied = false;
-    for (const quartet of quartets) {
-      if (canAssignAnimalsToCreators(quartet, animals)) { satisfied = true; break; }
-    }
-    if (!satisfied) continue;
-    const stillHoldingCreators = p.hand.some(
-      (c) => c.kind === "creator" || c.kind === "sky_creator",
-    );
-    if (stillHoldingCreators) continue;
+    if (!validateEcosystemWin(p).valid) continue;
     finalise(state, p.id);
     return;
   }
@@ -727,20 +709,19 @@ function checkWin(state: MatchState): void {
  *  (earth / fire / air / water) is covered by exactly one creator in the subset.
  *  Sky Creators act as wildcards (can fill any element slot). */
 function enumerateElementCoveringQuartets(creators: DeckCard[]): DeckCard[][] {
-  const elements: Element[] = ["Earth", "Fire", "Air", "Water"];
   const out: DeckCard[][] = [];
   const seen = new Set<string>();
   const used = new Set<number>();
   const picked: DeckCard[] = [];
   const elementsOf = (c: DeckCard): Element[] =>
-    c.kind === "sky_creator" ? elements : c.element ? [c.element] : [];
+    c.kind === "sky_creator" ? ELEMENTS : c.element ? [c.element] : [];
   const recurse = (eIdx: number) => {
-    if (eIdx === elements.length) {
+    if (eIdx === ELEMENTS.length) {
       const key = [...used].sort((a, b) => a - b).join(",");
       if (!seen.has(key)) { seen.add(key); out.push(picked.slice()); }
       return;
     }
-    const el = elements[eIdx];
+    const el = ELEMENTS[eIdx];
     for (let i = 0; i < creators.length; i++) {
       if (used.has(i)) continue;
       if (!elementsOf(creators[i]).includes(el)) continue;
