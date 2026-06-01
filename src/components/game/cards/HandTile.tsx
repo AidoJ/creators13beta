@@ -363,6 +363,12 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
           </div>,
           document.body,
         )}
+      {infoOpen && (
+        <CreatorCardInfoPopup
+          typeName={card.kind === "sky_creator" ? "Sky" : (card.displayType ?? card.element ?? "")}
+          onClose={() => setInfoOpen(false)}
+        />
+      )}
     </div>
   );
 }
