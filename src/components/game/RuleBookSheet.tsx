@@ -182,7 +182,7 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
             <section>
               <h3 className="font-display text-base mb-1">3. Game Type: Top Score (First-to-Target)</h3>
               <p className="text-xs italic text-muted-foreground mb-2">
-                First player to reach the configured top score wins — but only with a valid ecosystem.
+                First player to reach the configured top score wins. No ecosystem validation required.
               </p>
               <h4 className="font-semibold text-sm mb-1">How this game type ends</h4>
               <p className="text-xs">
@@ -191,7 +191,7 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
               <ul className="list-disc pl-5 mt-2 space-y-1 text-xs text-muted-foreground">
                 <li>Score = 2 pts per placed card + engine bonus points (e.g. disaster wipes).</li>
                 <li>Target score is configurable in admin (default 50).</li>
-                <li>If both piles run out before anyone hits the target with a valid ecosystem, the highest score wins.</li>
+                <li>If both piles run out before anyone hits the target, the highest score wins.</li>
               </ul>
             </section>
 

@@ -681,7 +681,7 @@ function checkWin(state: MatchState): void {
     let bestPts = -1;
     for (const p of state.players) {
       const pts = playerTotalScore(p);
-      if (pts >= target && pts > bestPts && validateEcosystemWin(p).valid) {
+      if (pts >= target && pts > bestPts) {
         bestPts = pts;
         bestId = p.id;
       }
