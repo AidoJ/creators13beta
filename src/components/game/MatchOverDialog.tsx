@@ -8,6 +8,7 @@ import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { glyphForType } from "@/lib/game/glyphs";
 import { Ecosystem } from "@/components/game/Ecosystem";
 import type { MatchState, PlayerState } from "@/lib/game/types";
+import { playerTotalScore } from "@/lib/game/types";
 
 interface Props {
   state: MatchState;
