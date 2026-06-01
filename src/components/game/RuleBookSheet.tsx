@@ -182,16 +182,20 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
             <section>
               <h3 className="font-display text-base mb-1">3. Game Type: Top Score (First-to-Target)</h3>
               <p className="text-xs italic text-muted-foreground mb-2">
-                First player to reach the configured top score wins. No ecosystem validation required.
+                First player to reach the configured top score wins — or completes a valid 16-card ecosystem first.
               </p>
               <h4 className="font-semibold text-sm mb-1">How this game type ends</h4>
               <p className="text-xs">
-                A player wins as soon as their total score reaches the target (default 50).
+                A player wins the instant either condition is met: (a) their total score reaches the target
+                (default 50), <strong>or</strong> (b) they complete a valid ecosystem (4 Creators covering all
+                four elements + 12 Animals correctly assigned, 3 per Creator) before hitting the target. For
+                example, completing the ecosystem at 45 pts in a 50-pt match still wins.
               </p>
               <ul className="list-disc pl-5 mt-2 space-y-1 text-xs text-muted-foreground">
                 <li>Score = 2 pts per placed card + engine bonus points (e.g. disaster wipes).</li>
                 <li>Target score is configurable in admin (default 50).</li>
-                <li>If both piles run out before anyone hits the target, the highest score wins.</li>
+                <li>Early ecosystem completion wins immediately, even below the target score.</li>
+                <li>If both piles run out before anyone wins, the highest score wins.</li>
               </ul>
             </section>
 
