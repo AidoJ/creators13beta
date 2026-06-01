@@ -237,6 +237,49 @@ export default function GameSettingsPanel() {
       {/* Content / Deck Composition */}
       <DeckCompositionSection />
 
+      {/* Creator card back-of-card content */}
+      <CreatorContentEditor />
+
+      {/* Profile-discount CTA on Player Dashboard */}
+      <section className="rounded-xl border border-border bg-card p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Percent className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold">Profile Discount CTA (Player Dashboard)</h3>
+        </div>
+        <p className="text-[11px] text-muted-foreground mb-3">
+          Pops up once when a player crosses a points threshold, offering a discount on getting personally profiled. Discount is applied at checkout via the URL parameter.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+          <BoolField k="profile_discount_enabled" label="Enable discount popup" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+          <div className="space-y-1">
+            <Label className="text-xs">Popup title</Label>
+            <Input
+              value={s.profile_discount_cta_title}
+              onChange={(e) => setS((p) => ({ ...p, profile_discount_cta_title: e.target.value }))}
+              className="h-8"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Popup body</Label>
+            <Textarea
+              rows={2}
+              value={s.profile_discount_cta_body}
+              onChange={(e) => setS((p) => ({ ...p, profile_discount_cta_body: e.target.value }))}
+              className="text-sm"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+          <NumField k="profile_discount_threshold_1" label="Tier 1 points" min={0} max={10000} />
+          <NumField k="profile_discount_percent_1" label="Tier 1 % off" min={0} max={100} />
+          <NumField k="profile_discount_threshold_2" label="Tier 2 points" min={0} max={10000} />
+          <NumField k="profile_discount_percent_2" label="Tier 2 % off" min={0} max={100} />
+          <NumField k="profile_discount_threshold_3" label="Tier 3 points" min={0} max={10000} />
+          <NumField k="profile_discount_percent_3" label="Tier 3 % off" min={0} max={100} />
+        </div>
+      </section>
 
       {/* Live Ops */}
       <section className="rounded-xl border border-destructive/40 bg-destructive/5 p-4">
