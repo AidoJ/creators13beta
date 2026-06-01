@@ -841,6 +841,37 @@ export default function Play() {
 
       {!ribbonHidden && gameSettings.show_score_panel && <ScorePanel state={state} />}
 
+      {/* Prominent Beat-the-Clock countdown */}
+      {isBeatClock && !state.finished && (
+        <div className={
+          "px-3 py-2 flex items-center justify-center gap-6 border-b border-border/40 " +
+          (matchSecondsLeft <= 30 ? "bg-destructive/20 animate-pulse" : "bg-amber-500/10")
+        }>
+          <div className="flex items-center gap-2">
+            <Clock className={"w-5 h-5 " + (matchSecondsLeft <= 30 ? "text-destructive" : "text-amber-300")} />
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Match</span>
+            <span className={
+              "font-mono text-2xl font-bold tabular-nums " +
+              (matchSecondsLeft <= 30 ? "text-destructive" : "text-foreground")
+            }>
+              {fmt(matchSecondsLeft)}
+            </span>
+          </div>
+          {turnSecs > 0 && isYourTurn && state.phase === "place" && (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Your turn</span>
+              <span className={
+                "font-mono text-xl font-semibold tabular-nums px-2 py-0.5 rounded " +
+                (turnSecondsLeft <= 5 ? "bg-destructive text-destructive-foreground animate-pulse" : "bg-card text-foreground")
+              }>
+                {turnSecondsLeft}s
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+
       {!ribbonHidden && (
         <div className="px-3 py-1.5 bg-card/30 border-b border-border/40 flex items-center justify-between gap-3 flex-wrap">
           <div className="text-xs sm:text-sm flex-1 min-w-0 truncate">
