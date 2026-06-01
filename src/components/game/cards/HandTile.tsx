@@ -23,6 +23,7 @@ interface Props {
 export function HandTile({ card, size = 96, selected = false, dimmed = false, forceFlipped }: Props) {
   const [zoomed, setZoomed] = useState(false);
   const [flipped, setFlipped] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const isFlipped = forceFlipped ?? flipped;
   const height = size * 1.35;
   const { c1, c2, chips, badge, artGlyph } = resolveColours(card);
