@@ -42,6 +42,11 @@ export interface DeckCard {
   /** Marks a Golden Hive that has already been used to block a disaster —
    *  it sits on the used pile but can never be picked up again. */
   spent?: boolean;
+  /** True if this card was picked up from the used pile on the CURRENT turn.
+   *  Such a card cannot be re-weaponised as a Disaster the same turn — it must
+   *  be placed on the board this turn or held until next turn. Cleared in
+   *  advanceTurn. Prevents infinite Creator→Disaster recycling. */
+  pickedUpThisTurn?: boolean;
 }
 
 export interface PlacedCard {
