@@ -1157,6 +1157,45 @@ export type Database = {
         }
         Relationships: []
       }
+      special_cards: {
+        Row: {
+          art_path: string | null
+          color_hex: string | null
+          created_at: string
+          descriptor: string | null
+          id: string
+          kind: string
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          art_path?: string | null
+          color_hex?: string | null
+          created_at?: string
+          descriptor?: string | null
+          id?: string
+          kind: string
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          art_path?: string | null
+          color_hex?: string | null
+          created_at?: string
+          descriptor?: string | null
+          id?: string
+          kind?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           billing_period: string | null
