@@ -10,7 +10,7 @@ interface CreatorTypeRow {
   at_the_table: string | null;
   shadow_side: string | null;
   you_might_be_if: string | null;
-  famous_person_name: string | null;
+  /** Repurposed: now stores the Body Image Illustration URL. */
   famous_person_photo_url: string | null;
 }
 
@@ -21,7 +21,7 @@ async function loadTypes(): Promise<Record<string, CreatorTypeRow>> {
   if (cache) return cache;
   const { data } = await supabase
     .from("creator_types")
-    .select("name, signature, at_the_table, shadow_side, you_might_be_if, famous_person_name, famous_person_photo_url");
+    .select("name, signature, at_the_table, shadow_side, you_might_be_if, famous_person_photo_url");
   cache = {};
   for (const r of (data ?? []) as CreatorTypeRow[]) cache[r.name.toLowerCase()] = r;
   return cache;
@@ -47,9 +47,9 @@ export default function CreatorCardInfoPopup({ typeName, onClose }: Props) {
   const color = getCreatorTypeColor(typeName);
 
   const aspects = useMemo(() => [
-    { label: "Signature", text: row?.signature },
+    { label: "Natural State", text: row?.signature },
     { label: "At the table", text: row?.at_the_table },
-    { label: "Shadow side", text: row?.shadow_side },
+    { label: "Disaster State", text: row?.shadow_side },
     { label: `You might be a ${typeName} if`, text: row?.you_might_be_if },
   ], [row, typeName]);
 
@@ -96,23 +96,15 @@ export default function CreatorCardInfoPopup({ typeName, onClose }: Props) {
         </div>
 
         <div className="p-5 overflow-y-auto flex flex-col gap-4 text-black">
-          {/* Famous person */}
-          {row?.famous_person_name && (
-            <div className="flex items-center gap-3">
-              {row.famous_person_photo_url && (
-                <img
-                  src={row.famous_person_photo_url}
-                  alt={row.famous_person_name}
-                  className="w-20 h-20 rounded-full object-cover border-2"
-                  style={{ borderColor: color }}
-                />
-              )}
-              <div>
-                <div className="text-[10px] uppercase tracking-wider text-neutral-500">A famous {typeName}</div>
-                <div className="text-base font-semibold" style={{ fontFamily: '"Questrial", sans-serif' }}>
-                  {row.famous_person_name}
-                </div>
-              </div>
+          {/* Body image illustration */}
+          {row?.famous_person_photo_url && (
+            <div className="flex justify-center">
+              <img
+                src={row.famous_person_photo_url}
+                alt={`${typeName} body illustration`}
+                className="max-h-48 w-auto object-contain rounded-md border-2"
+                style={{ borderColor: color }}
+              />
             </div>
           )}
 
