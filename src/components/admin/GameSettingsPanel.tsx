@@ -163,10 +163,11 @@ export default function GameSettingsPanel() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <BoolField k="enable_disasters" label="Disasters" hint="Allow Creator-as-disaster plays" />
-          <BoolField k="enable_golden_hive" label="Golden Hive" hint="Shield card that blocks one disaster" />
-          <BoolField k="enable_sky_creator" label="Sky Creator" hint="Wildcard creator (any element)" />
-          <BoolField k="enable_golden_body" label="Golden Body" hint="Wildcard animal" />
-          <BoolField k="enable_sky_creature_steal" label="Sky Creature steal" hint="Mythical animal stealer action" />
+          <BoolField k="enable_golden_hive" label="Golden Hive Card" hint="Blocks one Disaster when held by the victim" />
+          <BoolField k="enable_sky_creator" label="Sky Creator Card" hint="Substitutes for a Creator of any element" />
+          <BoolField k="enable_golden_body" label="Golden Body Card" hint="Counts as a matching Animal for any Creator" />
+          <BoolField k="enable_sky_creature_steal" label="Sky Creature steal" hint="Discard a Sky Creature to steal an opponent's Animal" />
+
         </div>
       </section>
 
