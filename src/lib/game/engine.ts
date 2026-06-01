@@ -644,6 +644,11 @@ function checkWin(state: MatchState): void {
   }
 
   // Classic ecosystem-complete win (end_of_days, also a valid early win for first_to_50).
+  // Rule: the placed ecosystem must contain AT LEAST one Creator covering each
+  // of the four elements (Earth / Fire / Air / Water — Sky Creator is a wildcard),
+  // and there must exist a way to assign 3 placed animals to each of those four
+  // chosen Creators matching its Creator Type. Extra Creators / animals on the
+  // board beyond that selection are allowed.
   for (const p of state.players) {
     const placed = Array.from(p.ecosystem.placed.values()).map((pc) => pc.card);
     const creators = placed.filter(
@@ -652,9 +657,14 @@ function checkWin(state: MatchState): void {
     const animals = placed.filter(
       (c) => c.kind === "animal" || c.kind === "sky_creature" || c.kind === "golden_body",
     );
-    if (creators.length !== CREATORS_NEEDED) continue;
+    if (creators.length < CREATORS_NEEDED) continue;
     if (animals.length < CREATORS_NEEDED * ANIMALS_PER_CREATOR) continue;
-    if (!canAssignAnimalsToCreators(creators, animals)) continue;
+    const quartets = enumerateElementCoveringQuartets(creators);
+    let satisfied = false;
+    for (const quartet of quartets) {
+      if (canAssignAnimalsToCreators(quartet, animals)) { satisfied = true; break; }
+    }
+    if (!satisfied) continue;
     const stillHoldingCreators = p.hand.some(
       (c) => c.kind === "creator" || c.kind === "sky_creator",
     );
@@ -662,6 +672,36 @@ function checkWin(state: MatchState): void {
     finalise(state, p.id);
     return;
   }
+}
+
+/** Return all 4-creator subsets of `creators` such that each of the 4 elements
+ *  (earth / fire / air / water) is covered by exactly one creator in the subset.
+ *  Sky Creators act as wildcards (can fill any element slot). */
+function enumerateElementCoveringQuartets(creators: DeckCard[]): DeckCard[][] {
+  const elements: Element[] = ["earth", "fire", "air", "water"];
+  const out: DeckCard[][] = [];
+  const seen = new Set<string>();
+  const used = new Set<number>();
+  const picked: DeckCard[] = [];
+  const elementsOf = (c: DeckCard): Element[] =>
+    c.kind === "sky_creator" ? elements : c.element ? [c.element] : [];
+  const recurse = (eIdx: number) => {
+    if (eIdx === elements.length) {
+      const key = [...used].sort((a, b) => a - b).join(",");
+      if (!seen.has(key)) { seen.add(key); out.push(picked.slice()); }
+      return;
+    }
+    const el = elements[eIdx];
+    for (let i = 0; i < creators.length; i++) {
+      if (used.has(i)) continue;
+      if (!elementsOf(creators[i]).includes(el)) continue;
+      used.add(i); picked.push(creators[i]);
+      recurse(eIdx + 1);
+      used.delete(i); picked.pop();
+    }
+  };
+  recurse(0);
+  return out;
 }
 
 /** Force-finalise (e.g. Beat-the-Clock timer expiry). Highest total score wins. */
