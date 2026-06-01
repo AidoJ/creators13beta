@@ -9,6 +9,7 @@ import { getSpecialCardFallbackArt, getSpecialCardFallbackDescriptor } from "@/l
 import type { DeckCard } from "@/lib/game/types";
 import { getCardCreditArtist } from "@/lib/cardCredits";
 import { TypeGlyphMark, displayCardName } from "./TypeGlyphMark";
+import CreatorCardInfoPopup from "./CreatorCardInfoPopup";
 
 interface Props {
   card: DeckCard;
