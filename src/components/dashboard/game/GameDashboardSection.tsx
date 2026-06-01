@@ -295,6 +295,8 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
               </Tooltip>
             </TooltipProvider>
           </div>
+          <p className="text-[10px] text-muted-foreground/70 italic mt-2">Bot games aren't counted — only matches against other players.</p>
+
           {!!progress?.badges?.length && (
             <div className="flex flex-wrap gap-1.5 mt-3">
               {progress.badges.map(b => (
