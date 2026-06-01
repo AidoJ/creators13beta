@@ -8,7 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Copy } from "lucide-react";
-import { fetchAllCards, type GameCard } from "@/lib/gameCards";
+import { fetchAllCards, fetchSpecialCards, type GameCard, type SpecialCard } from "@/lib/gameCards";
 import {
   buildDeck,
   createMatch,
@@ -66,6 +66,7 @@ export default function Play() {
   const { user } = useAuth();
 
   const [allCards, setAllCards] = useState<GameCard[] | null>(null);
+  const [specialCards, setSpecialCards] = useState<SpecialCard[]>([]);
   const [state, setState] = useState<MatchState | null>(null);
   const [matchRow, setMatchRow] = useState<GameMatchRow | null>(null);
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
@@ -146,7 +147,6 @@ export default function Play() {
       .then((cards) => {
         if (cancelled) return;
         setAllCards(cards);
-        // Warm the browser cache so board pieces render instantly.
         for (const c of cards) {
           if (!c.art_url) continue;
           const img = new Image();
@@ -155,6 +155,9 @@ export default function Play() {
         }
       })
       .catch((e) => setError(e.message ?? String(e)));
+    fetchSpecialCards()
+      .then((s) => { if (!cancelled) setSpecialCards(s); })
+      .catch(() => { /* non-fatal — fall back to generated specials */ });
     return () => {
       cancelled = true;
     };
@@ -512,7 +515,7 @@ export default function Play() {
   async function startSoloMatch(mode: GameMode, config: GameConfig) {
     if (!allCards) return;
     const youName = user ? await fetchPlayerShortName(user) : "You";
-    const deck = buildDeck(allCards);
+    const deck = buildDeck(allCards, specialCards);
     const fresh = createMatch({
       deck,
       players: [
@@ -541,7 +544,7 @@ export default function Play() {
 
   async function handleCreatePvp() {
     if (!user || !allCards) throw new Error("Not ready");
-    const deck = buildDeck(allCards);
+    const deck = buildDeck(allCards, specialCards);
     const hostName = await fetchPlayerShortName(user);
     const initial = createMatch({
       deck,

@@ -84,3 +84,46 @@ export async function updateCardDescriptor(slug: string, descriptor: string) {
     .eq("slug", slug);
   if (error) throw error;
 }
+
+/* ─── Special (non-animal) cards: Creator x12, Sky Creator, Golden Body, Golden Hive ─── */
+
+export interface SpecialCard {
+  id: string;
+  slug: string;
+  kind: "creator" | "sky_creator" | "golden_body" | "golden_hive";
+  name: string;
+  descriptor: string | null;
+  art_path: string | null;
+  art_url: string | null;
+  color_hex: string | null;
+  sort_order: number;
+}
+
+function decorateSpecial(row: any): SpecialCard {
+  const art_url = row.art_path
+    ? supabase.storage.from(ART_BUCKET).getPublicUrl(row.art_path, {
+        transform: { width: 320, height: 320, resize: "contain", quality: 80 },
+      }).data.publicUrl
+    : null;
+  return {
+    id: row.id,
+    slug: row.slug,
+    kind: row.kind,
+    name: row.name,
+    descriptor: row.descriptor,
+    art_path: row.art_path,
+    art_url,
+    color_hex: row.color_hex,
+    sort_order: row.sort_order,
+  };
+}
+
+export async function fetchSpecialCards(): Promise<SpecialCard[]> {
+  const { data, error } = await supabase
+    .from("special_cards")
+    .select("*")
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(decorateSpecial);
+}
+

@@ -10,12 +10,15 @@ import { Upload, Save, Search } from "lucide-react";
 
 const ART_BUCKET = "game-card-art";
 
+type CardTable = "game_cards" | "special_cards";
+
 interface Card {
   id: string;
+  table: CardTable;
   slug: string;
   name: string;
-  type_a: string;
-  type_b: string;
+  /** "Lava / Soil" for animals; "Creator", "Sky Creator", "Golden Body", "Golden Hive" for specials */
+  category: string;
   mythical: boolean;
   descriptor: string | null;
   art_path: string | null;
@@ -41,12 +44,52 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
 
   async function load() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("game_cards")
-      .select("id, slug, name, type_a, type_b, mythical, descriptor, art_path, sort_order")
-      .order("sort_order", { ascending: true });
-    if (error) toast({ title: "Failed to load cards", description: error.message, variant: "destructive" });
-    setCards((data as Card[]) ?? []);
+    const [animalsRes, specialsRes] = await Promise.all([
+      supabase
+        .from("game_cards")
+        .select("id, slug, name, type_a, type_b, mythical, descriptor, art_path, sort_order")
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("special_cards")
+        .select("id, slug, name, kind, descriptor, art_path, sort_order")
+        .order("sort_order", { ascending: true }),
+    ]);
+    if (animalsRes.error) toast({ title: "Failed to load animal cards", description: animalsRes.error.message, variant: "destructive" });
+    if (specialsRes.error) toast({ title: "Failed to load special cards", description: specialsRes.error.message, variant: "destructive" });
+
+    const specialKindLabel: Record<string, string> = {
+      creator: "Creator Card",
+      sky_creator: "Sky Creator Card",
+      golden_body: "Golden Body Card",
+      golden_hive: "Golden Hive Card",
+    };
+
+    const specials: Card[] = (specialsRes.data ?? []).map((r: any) => ({
+      id: r.id,
+      table: "special_cards" as const,
+      slug: r.slug,
+      name: r.name,
+      category: specialKindLabel[r.kind] ?? "Special",
+      mythical: false,
+      descriptor: r.descriptor,
+      art_path: r.art_path,
+      sort_order: r.sort_order,
+    }));
+
+    const animals: Card[] = (animalsRes.data ?? []).map((r: any) => ({
+      id: r.id,
+      table: "game_cards" as const,
+      slug: r.slug,
+      name: r.name,
+      category: `${r.type_a} / ${r.type_b}${r.mythical ? " · Sky Creature" : ""}`,
+      mythical: r.mythical,
+      descriptor: r.descriptor,
+      art_path: r.art_path,
+      sort_order: r.sort_order,
+    }));
+
+    // Specials first, then animals.
+    setCards([...specials, ...animals]);
     setLoading(false);
   }
 
@@ -65,8 +108,7 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
     return cards.filter((c) =>
       c.name.toLowerCase().includes(q) ||
       c.slug.toLowerCase().includes(q) ||
-      c.type_a.toLowerCase().includes(q) ||
-      c.type_b.toLowerCase().includes(q)
+      c.category.toLowerCase().includes(q)
     );
   }, [cards, filter]);
 
@@ -82,7 +124,7 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
     if (!selected) return;
     setSaving(true);
     const { error } = await supabase
-      .from("game_cards")
+      .from(selected.table)
       .update({ name: name.trim() || selected.name, descriptor: descriptor })
       .eq("id", selected.id);
     setSaving(false);
@@ -97,7 +139,8 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
   async function handleUpload(file: File) {
     if (!selected) return;
     setUploading(true);
-    const path = selected.art_path || `cards/animal-${selected.slug}.png`;
+    const defaultPrefix = selected.table === "special_cards" ? "cards/special" : "cards/animal";
+    const path = selected.art_path || `${defaultPrefix}-${selected.slug}.png`;
     const { error: upErr } = await supabase.storage
       .from(ART_BUCKET)
       .upload(path, file, { upsert: true, contentType: file.type || "image/png", cacheControl: "3600" });
@@ -107,7 +150,7 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
       return;
     }
     if (!selected.art_path) {
-      await supabase.from("game_cards").update({ art_path: path }).eq("id", selected.id);
+      await supabase.from(selected.table).update({ art_path: path }).eq("id", selected.id);
     }
     setUploading(false);
     setBust(Date.now());
@@ -155,9 +198,7 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{c.name}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">
-                      {c.type_a} / {c.type_b}{c.mythical ? " · Sky Creature" : ""}
-                    </p>
+                    <p className="text-[10px] text-muted-foreground truncate">{c.category}</p>
                   </div>
                 </button>
               ))}
@@ -182,8 +223,7 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
                   </div>
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline">{selected.type_a}</Badge>
-                      <Badge variant="outline">{selected.type_b}</Badge>
+                      <Badge variant="outline">{selected.category}</Badge>
                       {selected.mythical && <Badge>Sky Creature</Badge>}
                       <span className="text-xs text-muted-foreground ml-auto">slug: {selected.slug}</span>
                     </div>
