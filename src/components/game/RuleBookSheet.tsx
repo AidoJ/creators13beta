@@ -13,7 +13,7 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
         <SheetHeader className="px-5 pt-5 pb-3 border-b border-border/60">
           <SheetTitle className="font-display text-xl">Rule Book</SheetTitle>
           <SheetDescription>
-            13 Creators Card Game — build your hue-man ecosystem.
+            13 Creators Card Game — complete rules by game type.
           </SheetDescription>
         </SheetHeader>
 
@@ -21,7 +21,19 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
           <div className="px-5 py-4 space-y-6 text-sm leading-relaxed">
 
             <section>
-              <h3 className="font-display text-base mb-1">Goal</h3>
+              <p className="text-xs text-muted-foreground">
+                This is the canonical rule set used by both human players and bots inside the
+                13 Creators app. Section 1 covers the rules that apply to every match. Sections
+                2–4 cover the three available Game Types and how each one ends.
+              </p>
+            </section>
+
+            <section>
+              <h3 className="font-display text-base mb-1">1. Shared rules (all game types)</h3>
+            </section>
+
+            <section>
+              <h4 className="font-semibold text-sm mb-1">Goal</h4>
               <p>
                 Be the first to build an ecosystem of <strong>16 cards</strong>:
                 4 Creator Cards (one of each element — Earth, Fire, Air, Water) plus
@@ -36,7 +48,7 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
             </section>
 
             <section>
-              <h3 className="font-display text-base mb-1">Set up</h3>
+              <h4 className="font-semibold text-sm mb-1">Set up</h4>
               <ol className="list-decimal pl-5 space-y-1">
                 <li>Shuffle the deck (Draw Pile).</li>
                 <li>Each player is dealt <strong>5 cards</strong>.</li>
@@ -46,16 +58,16 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
             </section>
 
             <section>
-              <h3 className="font-display text-base mb-1">Hand limit</h3>
+              <h4 className="font-semibold text-sm mb-1">Hand limit</h4>
               <ul className="list-disc pl-5 space-y-1 text-xs text-muted-foreground">
-                <li>Hand cap is <strong>5 cards</strong>. You should never end your turn holding more than 5.</li>
-                <li>You must play or discard 2 cards each turn before drawing 2 new ones.</li>
+                <li>Hand cap is <strong>5 cards</strong>. You should never end your turn holding more than 10.</li>
+                <li>You must play or discard 2 cards each turn before drawing 2 new ones or play from your hand.</li>
                 <li>Animals gained from a Disaster go <strong>straight onto your board</strong>, never into your hand. If they don't connect to your ecosystem they still go on the board (visible, but as a removed/empty space that future cards can fill).</li>
               </ul>
             </section>
 
             <section>
-              <h3 className="font-display text-base mb-1">On your turn</h3>
+              <h4 className="font-semibold text-sm mb-1">On your turn</h4>
               <ol className="list-decimal pl-5 space-y-1">
                 <li><strong>Pick up 2</strong> cards — any mix from the top of the Draw Pile and the Used Pile.</li>
                 <li><strong>Play 2</strong> — each action is either placing a card on a legal hex, discarding to the Used Pile, playing a Disaster, playing a Sky Creature steal, or playing a Hive to block a Disaster.</li>
@@ -67,7 +79,7 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
             </section>
 
             <section>
-              <h3 className="font-display text-base mb-1">Free actions</h3>
+              <h4 className="font-semibold text-sm mb-1">Free actions</h4>
               <ul className="list-disc pl-5 space-y-1 text-xs text-muted-foreground">
                 <li>Move any of your already-placed cards to another legal empty hex (still touching your ecosystem). Cards can be repositioned but never removed.</li>
                 <li>Rotate a placed hex (+60° clockwise) to colour-match neighbours.</li>
@@ -75,7 +87,7 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
             </section>
 
             <section>
-              <h3 className="font-display text-base mb-1">Placement rules</h3>
+              <h4 className="font-semibold text-sm mb-1">Placement rules</h4>
               <ul className="list-disc pl-5 space-y-1 text-xs text-muted-foreground">
                 <li>The first card may be placed on the central hex.</li>
                 <li>Every other card must go on an <strong>empty hex adjacent to your ecosystem</strong> — the only exception is animals dropped on your board from a Disaster, which can land disconnected.</li>
@@ -84,10 +96,10 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
             </section>
 
             <section className="space-y-4">
-              <h3 className="font-display text-base">Card powers</h3>
+              <h4 className="font-semibold text-sm">Card powers</h4>
 
               <div>
-                <h4 className="font-semibold text-sm">Creator Cards (Earth / Fire / Air / Water)</h4>
+                <h5 className="font-semibold text-sm">Creator Cards (Earth / Fire / Air / Water)</h5>
                 <p className="text-muted-foreground text-xs">
                   Form the centre of your ecosystem — you need one of each element. <strong>Once all 4 of
                   your own Creators are on the board</strong>, any further Creator in your hand can be played
@@ -96,19 +108,17 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
               </div>
 
               <div>
-                <h4 className="font-semibold text-sm">Disaster (Creator → Used Pile)</h4>
+                <h5 className="font-semibold text-sm">Disaster (Creator → Used Pile)</h5>
                 <p className="text-muted-foreground text-xs">
                   Wipes every Animal matching that Creator's element from rivals' ecosystems. Those animals
                   go <strong>straight onto the disaster-player's board</strong>. A Golden Hive on the victim
-                  absorbs the disaster entirely (Hive is consumed to the Used Pile).
-                </p>
-                <p className="mt-1 text-[11px] italic text-muted-foreground/80">
-                  The Creator card sits on top of the Used Pile and can be picked up by other players.
+                  absorbs the disaster entirely (Hive is consumed to the Used Pile). The Creator card sits
+                  on top of the Used Pile and can be picked up by other players.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-semibold text-sm">Sky Creator Cards</h4>
+                <h5 className="font-semibold text-sm">Sky Creator Cards</h5>
                 <p className="text-muted-foreground text-xs">
                   Substitutes for a Creator of any element. When played as a Disaster
                   it <strong>only wipes Mystical Creature cards bearing the Sky symbol</strong>.
@@ -116,21 +126,21 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
               </div>
 
               <div>
-                <h4 className="font-semibold text-sm">Animal Cards</h4>
+                <h5 className="font-semibold text-sm">Animal Cards</h5>
                 <p className="text-muted-foreground text-xs">
                   Each Animal belongs to 1 or 2 Creator Types. 3 matching Animals are required per Creator.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-semibold text-sm">Golden Body Card</h4>
+                <h5 className="font-semibold text-sm">Golden Body Card</h5>
                 <p className="text-muted-foreground text-xs">
                   Counts as a matching Animal for any Creator.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-semibold text-sm">Golden Hive Card</h4>
+                <h5 className="font-semibold text-sm">Golden Hive Card</h5>
                 <p className="text-muted-foreground text-xs">
                   Cannot be placed on the board. Can only be discarded when used to shield against a
                   Disaster played against you — it absorbs the next Disaster, then is consumed to the
@@ -139,13 +149,69 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
               </div>
 
               <div>
-                <h4 className="font-semibold text-sm">Sky Creature Cards</h4>
+                <h5 className="font-semibold text-sm">Sky Creature Cards</h5>
                 <p className="text-muted-foreground text-xs">
                   Place as an Animal (counts toward any matching Creator they share a type with), OR
                   play as a Stealer: discard to the Used Pile and steal one Animal from any opponent's
                   ecosystem into your hand. Stealer cards in the Used Pile cannot be picked up.
                 </p>
               </div>
+            </section>
+
+            <section>
+              <h3 className="font-display text-base mb-1">2. Game Type: End of Days</h3>
+              <p className="text-xs italic text-muted-foreground mb-2">
+                Classic full game — build your complete ecosystem to win.
+              </p>
+              <h4 className="font-semibold text-sm mb-1">How this game type ends</h4>
+              <p className="text-xs">
+                The match ends the moment a player assembles a valid 16-card ecosystem: 4 Creators
+                covering all four elements (Earth / Fire / Air / Water — with Sky Creators acting as
+                wildcards), 12 Animals (3 per Creator, with Golden Body as a wildcard animal), AND no
+                Creator or Sky Creator cards remaining in their hand. If the Draw and Used piles both
+                empty before anyone completes the ecosystem, the highest score wins (3 pts per Creator
+                placed, 1 pt per Animal placed).
+              </p>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-xs text-muted-foreground">
+                <li>No timer. No score target. Pure ecosystem race.</li>
+                <li>All standard placement, disaster, hive and steal rules apply.</li>
+                <li>Bots are held to exactly the same win validation as human players.</li>
+              </ul>
+            </section>
+
+            <section>
+              <h3 className="font-display text-base mb-1">3. Game Type: Top Score (First-to-Target)</h3>
+              <p className="text-xs italic text-muted-foreground mb-2">
+                First player to reach the configured top score wins — but only with a valid ecosystem.
+              </p>
+              <h4 className="font-semibold text-sm mb-1">How this game type ends</h4>
+              <p className="text-xs">
+                A player wins as soon as their total score reaches the target (default 50).
+              </p>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-xs text-muted-foreground">
+                <li>Score = 2 pts per placed card + engine bonus points (e.g. disaster wipes).</li>
+                <li>Target score is configurable in admin (default 50).</li>
+                <li>If both piles run out before anyone hits the target with a valid ecosystem, the highest score wins.</li>
+              </ul>
+            </section>
+
+            <section>
+              <h3 className="font-display text-base mb-1">4. Game Type: Beat the Clock</h3>
+              <p className="text-xs italic text-muted-foreground mb-2">
+                Match timer + per-turn timer. Highest score on time-up.
+              </p>
+              <h4 className="font-semibold text-sm mb-1">How this game type ends</h4>
+              <p className="text-xs">
+                The match auto-ends when the overall match timer hits zero. Each turn is capped by a
+                per-turn timer — if it expires, the current player's turn ends automatically. When the
+                match timer runs out, the player with the highest total score wins. A player can still
+                win early by completing a valid 16-card ecosystem.
+              </p>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-xs text-muted-foreground">
+                <li>Match length and per-turn seconds are configured in admin (defaults: 20 min match, 20 sec per turn).</li>
+                <li>If the per-turn timer expires mid-turn, any required placements are forced/auto-discarded by the engine.</li>
+                <li>Tie on time-up is broken by ecosystem completeness, then card count, then most recent placement.</li>
+              </ul>
             </section>
 
             <p className="text-[11px] text-muted-foreground italic pt-2 border-t border-border/40">
