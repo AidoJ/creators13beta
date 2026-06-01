@@ -825,6 +825,8 @@ export default function Play() {
 
   return (
     <div className="h-[100dvh] flex flex-col bg-background overflow-hidden">
+      {user && <PlayerProfileDiscountCTA userId={user.id} />}
+
 
       {gameSettings.maintenance_banner_enabled && gameSettings.maintenance_banner_text && (
         <div className="px-3 py-1.5 text-xs sm:text-sm text-center bg-amber-500/15 text-amber-200 border-b border-amber-500/30">
