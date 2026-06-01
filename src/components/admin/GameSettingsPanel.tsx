@@ -370,6 +370,40 @@ export default function GameSettingsPanel() {
             </Button>
           </div>
         </div>
+
+        <div className="rounded-md border border-border bg-card p-3 space-y-2">
+          <Label className="text-xs font-semibold">Edit player points</Label>
+          <p className="text-[11px] text-muted-foreground">
+            Look up a player by email and update their points total directly.
+          </p>
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              placeholder="player@example.com"
+              value={editEmail}
+              onChange={(e) => { setEditEmail(e.target.value); setEditUserId(null); setEditPoints(""); }}
+              className="h-8 text-sm"
+            />
+            <Button size="sm" variant="secondary" onClick={lookupPlayer} disabled={!editEmail || editLoading}>
+              {editLoading ? "Looking up…" : "Lookup"}
+            </Button>
+          </div>
+          {editUserId && (
+            <div className="flex items-center gap-2 pt-1">
+              <Input
+                type="number"
+                min={0}
+                placeholder="Points"
+                value={editPoints}
+                onChange={(e) => setEditPoints(e.target.value)}
+                className="h-8 text-sm w-32"
+              />
+              <Button size="sm" onClick={savePlayerPoints} disabled={editSaving}>
+                {editSaving ? "Saving…" : "Save points"}
+              </Button>
+            </div>
+          )}
+        </div>
       </section>
 
       <div className="flex items-center justify-end gap-2">
