@@ -38,10 +38,9 @@ function buildWinReason(state: MatchState, winner: PlayerState): { headline: str
     };
   }
   if (state.gameMode === "beat_clock") {
-    const turnS = state.gameConfig?.turnSeconds;
-    const minutesLabel = turnS ? `${Math.round((turnS * 1) )}s/turn` : "timer";
+    const mins = state.gameConfig?.matchMinutes;
     return {
-      headline: `End of ${minutesLabel}`,
+      headline: mins ? `End of ${mins} minute timer` : "End of timer",
       detail: `${winner.name}'s score of ${score} points wins in ${moves} moves.`,
     };
   }
