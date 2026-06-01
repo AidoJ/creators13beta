@@ -1075,6 +1075,39 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_discount_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          percent: number
+          redeemed_at: string | null
+          scope: string
+          threshold: number
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          percent: number
+          redeemed_at?: string | null
+          scope?: string
+          threshold: number
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          percent?: number
+          redeemed_at?: string | null
+          scope?: string
+          threshold?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address_line1: string | null
