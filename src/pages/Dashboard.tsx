@@ -215,6 +215,7 @@ export default function Dashboard() {
             <ZoomRecordingsCard />
             <SubscriptionCard />
             {user && <CreatorProfileCard userId={user.id} />}
+            {user && <AnimalMatchesCard userId={user.id} />}
           </section>
         )}
 
