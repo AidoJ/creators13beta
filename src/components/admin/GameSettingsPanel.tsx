@@ -228,27 +228,9 @@ export default function GameSettingsPanel() {
         </div>
       </section>
 
-      {/* Content (read-only summary + deep link) */}
-      <section className="rounded-xl border border-border bg-card p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Library className="w-4 h-4 text-primary" />
-          <h3 className="text-sm font-semibold">Content</h3>
-        </div>
-        <div className="flex flex-wrap items-center gap-4 text-sm">
-          <div>
-            <span className="text-muted-foreground">Cards in library: </span>
-            <span className="font-semibold">{cardCount ?? "—"}</span>
-          </div>
-          <Button variant="outline" size="sm" asChild>
-            <a href="/card-preview" target="_blank" rel="noreferrer">
-              <ExternalLink className="w-3.5 h-3.5 mr-1" />Preview card library
-            </a>
-          </Button>
-        </div>
-        <p className="text-[11px] text-muted-foreground mt-2">
-          Deck composition is derived from the card library (4 creators + 12 matching animals per player). Import/edit cards via the card-management tools.
-        </p>
-      </section>
+      {/* Content / Deck Composition */}
+      <DeckCompositionSection />
+
 
       {/* Live Ops */}
       <section className="rounded-xl border border-destructive/40 bg-destructive/5 p-4">
@@ -314,3 +296,118 @@ export default function GameSettingsPanel() {
     </div>
   );
 }
+
+// ----- Deck Composition Section -----
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { CREATOR_TYPE_NAMES, getCreatorTypeColor } from "@/lib/creatorTypes";
+
+interface DeckRow {
+  name: string;
+  category: string;
+  qty: number;
+  color?: string;
+}
+
+function DeckCompositionSection() {
+  const [animals, setAnimals] = useState<{ name: string; mythical: boolean }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("game_cards")
+        .select("name, mythical")
+        .order("sort_order", { ascending: true });
+      setAnimals((data ?? []) as any);
+      setLoading(false);
+    })();
+  }, []);
+
+  const rows: DeckRow[] = [];
+  // Creators: 2 of each of 12 element-mapped types (excluding Sky)
+  for (const t of CREATOR_TYPE_NAMES) {
+    if (t === "Sky") continue;
+    rows.push({ name: `${t} Creator`, category: "Creator", qty: 2, color: getCreatorTypeColor(t) });
+  }
+  // Specials
+  rows.push({ name: "Sky Creator", category: "Wildcard", qty: 2, color: getCreatorTypeColor("Sky") });
+  rows.push({ name: "Golden Body", category: "Wildcard Animal", qty: 8 });
+  rows.push({ name: "Golden Hive", category: "Shield", qty: 1 });
+  // Animals & Sky Creatures
+  for (const a of animals) {
+    rows.push({
+      name: a.name,
+      category: a.mythical ? "Sky Creature" : "Animal",
+      qty: 1,
+    });
+  }
+
+  const total = rows.reduce((sum, r) => sum + r.qty, 0);
+  const totals = rows.reduce<Record<string, number>>((acc, r) => {
+    acc[r.category] = (acc[r.category] ?? 0) + r.qty;
+    return acc;
+  }, {});
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <Library className="w-4 h-4 text-primary" />
+        <h3 className="text-sm font-semibold">Deck Composition</h3>
+        <span className="ml-auto text-xs text-muted-foreground">
+          {loading ? "Loading…" : `${total} cards total`}
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-3 text-xs">
+        {Object.entries(totals).map(([cat, n]) => (
+          <span key={cat} className="px-2 py-1 rounded-md bg-muted text-muted-foreground">
+            {cat} <span className="font-semibold text-foreground">×{n}</span>
+          </span>
+        ))}
+      </div>
+
+      <div className="max-h-96 overflow-auto rounded-md border border-border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[45%]">Card</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead className="text-right">Qty</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((r, i) => (
+              <TableRow key={`${r.name}-${i}`}>
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-2">
+                    {r.color && (
+                      <span
+                        className="inline-block w-3 h-3 rounded-sm border border-border"
+                        style={{ backgroundColor: r.color }}
+                      />
+                    )}
+                    {r.name}
+                  </div>
+                </TableCell>
+                <TableCell className="text-muted-foreground">{r.category}</TableCell>
+                <TableCell className="text-right font-semibold">×{r.qty}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="flex items-center gap-3 mt-3">
+        <Button variant="outline" size="sm" asChild>
+          <a href="/card-preview" target="_blank" rel="noreferrer">
+            <ExternalLink className="w-3.5 h-3.5 mr-1" />Preview card library
+          </a>
+        </Button>
+        <p className="text-[11px] text-muted-foreground">
+          Deck is built from the card library plus synthesised Creator, Golden Body, Golden Hive and Sky Creator cards.
+        </p>
+      </div>
+    </section>
+  );
+}
+
