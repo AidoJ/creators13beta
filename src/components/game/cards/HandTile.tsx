@@ -408,14 +408,14 @@ function resolveColours(card: DeckCard): {
   if (card.kind === "sky_creator") {
     const c = ELEMENT_COLORS.Sky;
     const g = CREATOR_TYPE_GLYPHS.Sky;
-    return { c1: c, c2: "#ffffff", chips: [{ label: "Sky", color: c, glyph: g }], badge: "SKY · WILD", artGlyph: g };
+    return { c1: c, c2: "#ffffff", chips: [{ label: "Sky", color: c, glyph: g }], badge: "SKY CREATOR", artGlyph: g };
   }
 
   if (card.kind === "golden_body") {
-    return { c1: "#f5c542", c2: "#e0a920", chips: [{ label: "Golden", color: "#e0a920" }], badge: "Wild Body", artGlyph: goldenBodyArt };
+    return { c1: "#f5c542", c2: "#e0a920", chips: [{ label: "Golden", color: "#e0a920" }], badge: "GOLDEN BODY", artGlyph: goldenBodyArt };
   }
   if (card.kind === "golden_hive") {
-    return { c1: "#f5c542", c2: "#ffffff", chips: [{ label: "Hive", color: "#e0a920" }], badge: "Shield", artGlyph: goldenHiveArt };
+    return { c1: "#f5c542", c2: "#ffffff", chips: [{ label: "Hive", color: "#e0a920" }], badge: "GOLDEN HIVE", artGlyph: goldenHiveArt };
   }
   return { c1: "#666", c2: "#666", chips: [] };
 }

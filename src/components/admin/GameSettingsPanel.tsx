@@ -163,10 +163,11 @@ export default function GameSettingsPanel() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <BoolField k="enable_disasters" label="Disasters" hint="Allow Creator-as-disaster plays" />
-          <BoolField k="enable_golden_hive" label="Golden Hive" hint="Shield card that blocks one disaster" />
-          <BoolField k="enable_sky_creator" label="Sky Creator" hint="Wildcard creator (any element)" />
-          <BoolField k="enable_golden_body" label="Golden Body" hint="Wildcard animal" />
-          <BoolField k="enable_sky_creature_steal" label="Sky Creature steal" hint="Mythical animal stealer action" />
+          <BoolField k="enable_golden_hive" label="Golden Hive Card" hint="Blocks one Disaster when held by the victim" />
+          <BoolField k="enable_sky_creator" label="Sky Creator Card" hint="Substitutes for a Creator of any element" />
+          <BoolField k="enable_golden_body" label="Golden Body Card" hint="Counts as a matching Animal for any Creator" />
+          <BoolField k="enable_sky_creature_steal" label="Sky Creature steal" hint="Discard a Sky Creature to steal an opponent's Animal" />
+
         </div>
       </section>
 
@@ -323,24 +324,43 @@ function DeckCompositionSection() {
     })();
   }, []);
 
+  // Category order matches the rulebook.
+  const CATEGORY_ORDER = [
+    "Creator Cards",
+    "Sky Creator Cards",
+    "Animal Cards",
+    "Sky Creature Cards",
+    "Golden Body Card",
+    "Golden Hive Card",
+  ] as const;
+
   const rows: DeckRow[] = [];
-  // Creators: 2 of each of 12 element-mapped types (excluding Sky)
+  // Creator Cards: 2 of each of the 12 element-mapped types (excluding Sky).
   for (const t of CREATOR_TYPE_NAMES) {
     if (t === "Sky") continue;
-    rows.push({ name: `${t} Creator`, category: "Creator", qty: 2, color: getCreatorTypeColor(t) });
+    rows.push({ name: `${t} Creator`, category: "Creator Cards", qty: 2, color: getCreatorTypeColor(t) });
   }
-  // Specials
-  rows.push({ name: "Sky Creator", category: "Wildcard", qty: 2, color: getCreatorTypeColor("Sky") });
-  rows.push({ name: "Golden Body", category: "Wildcard Animal", qty: 8 });
-  rows.push({ name: "Golden Hive", category: "Shield", qty: 1 });
-  // Animals & Sky Creatures
+  // Sky Creator Cards
+  rows.push({ name: "Sky Creator", category: "Sky Creator Cards", qty: 2, color: getCreatorTypeColor("Sky") });
+  // Animals & Sky Creatures (one of each unique card)
   for (const a of animals) {
     rows.push({
       name: a.name,
-      category: a.mythical ? "Sky Creature" : "Animal",
+      category: a.mythical ? "Sky Creature Cards" : "Animal Cards",
       qty: 1,
     });
   }
+  // Golden specials
+  rows.push({ name: "Golden Body", category: "Golden Body Card", qty: 8 });
+  rows.push({ name: "Golden Hive", category: "Golden Hive Card", qty: 1 });
+
+  // Sort rows by category order, then by name.
+  rows.sort((a, b) => {
+    const ai = CATEGORY_ORDER.indexOf(a.category as any);
+    const bi = CATEGORY_ORDER.indexOf(b.category as any);
+    if (ai !== bi) return ai - bi;
+    return a.name.localeCompare(b.name);
+  });
 
   const total = rows.reduce((sum, r) => sum + r.qty, 0);
   const totals = rows.reduce<Record<string, number>>((acc, r) => {
@@ -358,11 +378,15 @@ function DeckCompositionSection() {
         </span>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-3 text-xs">
-        {Object.entries(totals).map(([cat, n]) => (
-          <span key={cat} className="px-2 py-1 rounded-md bg-muted text-muted-foreground">
-            {cat} <span className="font-semibold text-foreground">×{n}</span>
-          </span>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+        {CATEGORY_ORDER.map((cat) => (
+          <div
+            key={cat}
+            className="flex items-center justify-between px-3 py-2 rounded-md border border-border bg-muted/30"
+          >
+            <span className="text-xs font-medium">{cat}</span>
+            <span className="text-sm font-semibold text-primary">×{totals[cat] ?? 0}</span>
+          </div>
         ))}
       </div>
 
@@ -404,10 +428,11 @@ function DeckCompositionSection() {
           </a>
         </Button>
         <p className="text-[11px] text-muted-foreground">
-          Deck is built from the card library plus synthesised Creator, Golden Body, Golden Hive and Sky Creator cards.
+          Deck includes Creator Cards, Sky Creator Cards, Animal Cards, Sky Creature Cards, Golden Body Cards and the Golden Hive Card.
         </p>
       </div>
     </section>
   );
 }
+
 

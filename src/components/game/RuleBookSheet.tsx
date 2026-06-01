@@ -110,7 +110,7 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
               <div>
                 <h4 className="font-semibold text-sm">Sky Creator Cards</h4>
                 <p className="text-muted-foreground text-xs">
-                  Wildcard Creator — substitutes for a Creator of any element. When played as a Disaster
+                  Substitutes for a Creator of any element. When played as a Disaster
                   it <strong>only wipes Mystical Creature cards bearing the Sky symbol</strong>.
                 </p>
               </div>
@@ -125,7 +125,7 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
               <div>
                 <h4 className="font-semibold text-sm">Golden Body Card</h4>
                 <p className="text-muted-foreground text-xs">
-                  Wildcard Animal — counts as a matching Animal for any Creator.
+                  Counts as a matching Animal for any Creator.
                 </p>
               </div>
 

@@ -1,6 +1,8 @@
 import { ANIMAL_CARDS, CREATOR_TYPE_ORDER, CREATOR_TYPE_COLORS } from "@/data/cards";
 import { AnimalCardTile } from "@/components/game/cards/AnimalCardTile";
 import { AnimalHexPiece } from "@/components/game/cards/AnimalHexPiece";
+import { HandTile } from "@/components/game/cards/HandTile";
+import { TYPE_TO_ELEMENT } from "@/lib/game/elements";
 import bearImg from "@/assets/cards/animal-bear.png";
 import beeImg from "@/assets/cards/animal-bee.png";
 import cassowaryImg from "@/assets/cards/animal-cassowary.png";
@@ -216,6 +218,89 @@ export default function CardPreview() {
           ))}
         </div>
       </section>
+
+      <SpecialCardsSection />
     </div>
+  );
+}
+
+function SpecialCardsSection() {
+  const creatorTypes = CREATOR_TYPE_ORDER.filter((t) => t !== "Sky");
+
+  const creatorCards = creatorTypes.map((t) => ({
+    uid: `creator-${t}`,
+    kind: "creator" as const,
+    name: `${t} Creator`,
+    displayType: t,
+    element: TYPE_TO_ELEMENT[t] as "Earth" | "Fire" | "Air" | "Water",
+    special: false,
+  }));
+
+  const skyCreator = {
+    uid: "sky-creator",
+    kind: "sky_creator" as const,
+    name: "Sky Creator",
+    displayType: "Sky" as const,
+    special: true,
+  };
+
+  const goldenBody = {
+    uid: "golden-body",
+    kind: "golden_body" as const,
+    name: "Golden Body",
+    special: true,
+  };
+
+  const goldenHive = {
+    uid: "golden-hive",
+    kind: "golden_hive" as const,
+    name: "Golden Hive",
+    special: true,
+  };
+
+  const Group = ({ title, subtitle, cards }: { title: string; subtitle: string; cards: any[] }) => (
+    <div className="space-y-3">
+      <div>
+        <h3 className="text-lg font-semibold">{title}</h3>
+        <p className="text-xs text-muted-foreground">{subtitle}</p>
+      </div>
+      <div className="flex flex-wrap gap-4">
+        {cards.map((c, i) => (
+          <HandTile key={`${c.uid}-${i}`} card={c as any} size={150} />
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <section className="space-y-8">
+      <div>
+        <h2 className="text-xl font-semibold">Special cards</h2>
+        <p className="text-xs text-muted-foreground">
+          Creator Cards, Sky Creator Cards, Golden Body and the Golden Hive — every card variation in the deck.
+        </p>
+      </div>
+
+      <Group
+        title="Creator Cards (×2 each)"
+        subtitle="One per Creator Type (excluding Sky). 12 distinct creators × 2 copies = 24 cards in the deck."
+        cards={creatorCards}
+      />
+      <Group
+        title="Sky Creator Cards (×2)"
+        subtitle="Substitutes for a Creator of any element."
+        cards={[skyCreator, skyCreator]}
+      />
+      <Group
+        title="Golden Body Card (×8)"
+        subtitle="Counts as a matching Animal for any Creator."
+        cards={[goldenBody]}
+      />
+      <Group
+        title="Golden Hive Card (×1)"
+        subtitle="Blocks one Disaster. Cannot be placed on the board."
+        cards={[goldenHive]}
+      />
+    </section>
   );
 }
