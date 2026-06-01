@@ -463,9 +463,17 @@ export default function Play() {
   }
   function onDisaster() { if (state && selectedUid) guarded(() => playDisaster(state, selectedUid)); }
   function onStealHex(posKey: string) {
-    if (!state || !selectedUid || !opponent) return;
-    guarded(() => playSkyCreatureSteal(state, selectedUid, opponent.id, posKey));
+    if (!state || !selectedUid || !opponent || !selfPlayer) return;
+    // Place the stolen card straight onto the stealer's board (not into hand).
+    // Auto-pick the first legal empty cell adjacent to their ecosystem; if
+    // the board is empty, fall back to origin {0,0}.
+    const { legalEcoCells } = require("@/lib/game");
+    const cells = legalEcoCells(selfPlayer.ecosystem);
+    const placeAt = cells[0] ?? { q: 0, r: 0 };
+    guarded(() => playSkyCreatureSteal(state, selectedUid, opponent.id, posKey, placeAt));
+    setMode("place");
   }
+
 
   function onCloseResumeLater() {
     // PvP rows stay 'active' in the DB — they'll show up under "Resume" on the dashboard.
