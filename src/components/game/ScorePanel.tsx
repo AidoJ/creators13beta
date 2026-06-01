@@ -1,7 +1,6 @@
 import type { MatchState } from "@/lib/game/types";
+import { playerTotalScore } from "@/lib/game/types";
 import { ecosystemSummary } from "@/lib/game/engine";
-
-const POINTS_PER_PLACED_CARD = 2;
 
 export function ScorePanel({ state }: { state: MatchState }) {
   return (
@@ -9,7 +8,7 @@ export function ScorePanel({ state }: { state: MatchState }) {
       {state.players.map((p, i) => {
         const active = i === state.turn && !state.finished;
         const sum = ecosystemSummary(p.ecosystem);
-        const runningPts = p.ecosystem.placed.size * POINTS_PER_PLACED_CARD;
+        const runningPts = playerTotalScore(p);
         return (
           <div key={p.id} className={`flex flex-col ${active ? "" : "opacity-60"}`}>
             <div className="flex items-baseline gap-2">
