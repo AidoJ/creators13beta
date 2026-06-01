@@ -235,6 +235,41 @@ export function animalLinksToCreator(animal: DeckCard, creator: DeckCard): boole
 }
 
 
+/** Creator-type edge labels this card can present on its borders.
+ *  Returns null for wildcards (golden body / hive) that can match any neighbour. */
+function cardEdgeTypes(card: DeckCard): Set<string> | null {
+  if (card.kind === "golden_body" || card.kind === "golden_hive") return null;
+  if (card.kind === "animal" || card.kind === "sky_creature") {
+    return new Set((card.types ?? []).map((t) => String(t).toLowerCase()));
+  }
+  if (card.kind === "creator") {
+    return new Set([String(card.displayType ?? card.element ?? "").toLowerCase()]);
+  }
+  if (card.kind === "sky_creator") return new Set(["sky"]);
+  return new Set();
+}
+
+/** Reject placements where the new card shares no Creator Type with an
+ *  already-placed neighbour — the matching halves could never touch. */
+function assertEdgeMatchOrThrow(card: DeckCard, eco: Ecosystem, pos: Axial): void {
+  const mine = cardEdgeTypes(card);
+  if (mine === null) return; // wildcards always OK
+  for (const n of neighbours(pos)) {
+    const neigh = eco.placed.get(keyOf(n));
+    if (!neigh) continue;
+    const theirs = cardEdgeTypes(neigh.card);
+    if (theirs === null) continue; // wildcard neighbour
+    let shared = false;
+    for (const t of mine) { if (theirs.has(t)) { shared = true; break; } }
+    if (!shared) {
+      throw new Error(
+        `${card.name} can't sit next to ${neigh.card.name} — they share no Creator Type, so matching halves can't touch.`,
+      );
+    }
+  }
+}
+
+
 /** Find the creator card placed in this ecosystem that an animal would link to (if any). */
 export function findLinkedCreator(
   eco: Ecosystem,
