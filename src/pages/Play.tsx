@@ -587,6 +587,7 @@ export default function Play() {
         {allCards && modeSelectorOpen ? (
           <GameModeSelector
             open
+            onCancel={() => { setModeSelectorOpen(false); navigate("/dashboard"); }}
             onChoose={(m, c) => startSoloMatch(m, c)}
           />
         ) : (
