@@ -35,7 +35,7 @@ function buildWinReason(state: MatchState, winner: PlayerState): { headline: str
       };
     }
   }
-  if (state.gameMode === "beat_the_clock") {
+  if (state.gameMode === "beat_clock") {
     return {
       headline: "Highest score when time ran out",
       detail: `Time expired before anyone completed an ecosystem. ${winner.name} led on points with ${score} pts (${creators}/4 Creators, ${animals}/12 Animals placed).`,
