@@ -126,20 +126,33 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
 }
 
 function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: boolean }) {
+  const CANONICAL_ORDER = ["Lava","Fire","Whirlwind","Snow","Lightning","Sun","Lake","Ocean","Tree","Mountain","Soil","River","Sky"];
   const counts = useMemo(() => {
-    const byType = new Map<string, number>();
+    const creatorByType = new Map<string, number>();
+    const animalByType = new Map<string, number>();
     let creators = 0;
     let animals = 0;
     for (const pc of player.ecosystem.placed.values()) {
       const k = pc.card.kind;
-      if (k === "creator" || k === "sky_creator") creators += 1;
-      else animals += 1;
-      for (const t of pc.card.types ?? []) {
-        byType.set(t, (byType.get(t) ?? 0) + 1);
+      const isCreator = k === "creator" || k === "sky_creator";
+      if (isCreator) creators += 1; else animals += 1;
+      const types = pc.card.types ?? [];
+      // Sky Creator has no concrete type — bucket under "Sky"
+      const effective = isCreator && k === "sky_creator" && types.length === 0 ? ["Sky"] : types;
+      for (const t of effective) {
+        const bucket = isCreator ? creatorByType : animalByType;
+        bucket.set(t, (bucket.get(t) ?? 0) + 1);
       }
     }
-    const ranked = Array.from(byType.entries()).sort((a, b) => b[1] - a[1]);
-    return { byType: ranked, creators, animals };
+    type Row = { type: string; role: "Creator" | "Animal"; n: number };
+    const rows: Row[] = [];
+    for (const t of CANONICAL_ORDER) {
+      const c = creatorByType.get(t) ?? 0;
+      const a = animalByType.get(t) ?? 0;
+      if (c > 0) rows.push({ type: t, role: "Creator", n: c });
+      if (a > 0) rows.push({ type: t, role: "Animal", n: a });
+    }
+    return { rows, creators, animals };
   }, [player]);
 
   return (
@@ -154,21 +167,22 @@ function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: bool
           {counts.creators}/4 creators · {counts.animals}/12 animals · {playerTotalScore(player)} pts
         </div>
       </div>
-      {counts.byType.length === 0 ? (
+      {counts.rows.length === 0 ? (
         <div className="text-xs text-muted-foreground italic">No cards placed.</div>
       ) : (
         <div className="flex flex-wrap gap-1.5">
-          {counts.byType.map(([type, n]) => {
+          {counts.rows.map(({ type, role, n }) => {
             const color = CREATOR_TYPE_COLORS[type as keyof typeof CREATOR_TYPE_COLORS] ?? "#888";
             const glyph = glyphForType(type);
             return (
               <div
-                key={type}
+                key={`${role}-${type}`}
                 className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-white"
                 style={{ background: color }}
-                title={`${type}: ${n}`}
+                title={`${role} · ${type}: ${n}`}
               >
                 {glyph && <img src={glyph} alt="" className="w-3 h-3 object-contain" />}
+                <span className="opacity-80">{role}</span>
                 <span>{type}</span>
                 <span className="opacity-80">×{n}</span>
               </div>
@@ -176,6 +190,7 @@ function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: bool
           })}
         </div>
       )}
+
     </div>
   );
 }
