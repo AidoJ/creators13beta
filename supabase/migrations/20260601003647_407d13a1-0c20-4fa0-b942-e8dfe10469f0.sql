@@ -1,0 +1,1 @@
+UPDATE public.game_cards SET art_path = 'cards/animal-elf.png' WHERE slug = 'elf';
