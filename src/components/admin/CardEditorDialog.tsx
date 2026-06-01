@@ -44,12 +44,52 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
 
   async function load() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("game_cards")
-      .select("id, slug, name, type_a, type_b, mythical, descriptor, art_path, sort_order")
-      .order("sort_order", { ascending: true });
-    if (error) toast({ title: "Failed to load cards", description: error.message, variant: "destructive" });
-    setCards((data as Card[]) ?? []);
+    const [animalsRes, specialsRes] = await Promise.all([
+      supabase
+        .from("game_cards")
+        .select("id, slug, name, type_a, type_b, mythical, descriptor, art_path, sort_order")
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("special_cards")
+        .select("id, slug, name, kind, descriptor, art_path, sort_order")
+        .order("sort_order", { ascending: true }),
+    ]);
+    if (animalsRes.error) toast({ title: "Failed to load animal cards", description: animalsRes.error.message, variant: "destructive" });
+    if (specialsRes.error) toast({ title: "Failed to load special cards", description: specialsRes.error.message, variant: "destructive" });
+
+    const specialKindLabel: Record<string, string> = {
+      creator: "Creator Card",
+      sky_creator: "Sky Creator Card",
+      golden_body: "Golden Body Card",
+      golden_hive: "Golden Hive Card",
+    };
+
+    const specials: Card[] = (specialsRes.data ?? []).map((r: any) => ({
+      id: r.id,
+      table: "special_cards" as const,
+      slug: r.slug,
+      name: r.name,
+      category: specialKindLabel[r.kind] ?? "Special",
+      mythical: false,
+      descriptor: r.descriptor,
+      art_path: r.art_path,
+      sort_order: r.sort_order,
+    }));
+
+    const animals: Card[] = (animalsRes.data ?? []).map((r: any) => ({
+      id: r.id,
+      table: "game_cards" as const,
+      slug: r.slug,
+      name: r.name,
+      category: `${r.type_a} / ${r.type_b}${r.mythical ? " · Sky Creature" : ""}`,
+      mythical: r.mythical,
+      descriptor: r.descriptor,
+      art_path: r.art_path,
+      sort_order: r.sort_order,
+    }));
+
+    // Specials first, then animals.
+    setCards([...specials, ...animals]);
     setLoading(false);
   }
 
@@ -68,8 +108,7 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
     return cards.filter((c) =>
       c.name.toLowerCase().includes(q) ||
       c.slug.toLowerCase().includes(q) ||
-      c.type_a.toLowerCase().includes(q) ||
-      c.type_b.toLowerCase().includes(q)
+      c.category.toLowerCase().includes(q)
     );
   }, [cards, filter]);
 
