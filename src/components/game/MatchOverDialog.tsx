@@ -179,11 +179,14 @@ function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: bool
     const placedList = Array.from(player.ecosystem.placed.values());
     const creators: PlacedCard[] = [];
     const animals: PlacedCard[] = [];
+    let goldenBodyCount = 0;
     for (const pc of placedList) {
       const k = pc.card.kind;
       if (k === "creator" || k === "sky_creator") creators.push(pc);
+      else if (k === "golden_body") { goldenBodyCount++; animals.push(pc); }
       else animals.push(pc);
     }
+
 
     // Build slots from each placed creator
     const slots: CreatorSlot[] = creators.map((pc) => ({
