@@ -196,6 +196,7 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
                       <span className="text-[10px] text-muted-foreground">no art</span>
                     )}
                   </div>
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{c.name}</p>
                     <p className="text-[10px] text-muted-foreground truncate">{c.category}</p>
                   </div>
