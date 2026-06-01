@@ -45,6 +45,16 @@ export interface GameSettings {
   maintenance_banner_text: string;
   play_disabled: boolean;
   play_disabled_message: string;
+  // Profile-discount CTA shown on the Player dashboard
+  profile_discount_enabled: boolean;
+  profile_discount_cta_title: string;
+  profile_discount_cta_body: string;
+  profile_discount_threshold_1: number;
+  profile_discount_percent_1: number;
+  profile_discount_threshold_2: number;
+  profile_discount_percent_2: number;
+  profile_discount_threshold_3: number;
+  profile_discount_percent_3: number;
 }
 
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
@@ -84,6 +94,16 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   maintenance_banner_text: "",
   play_disabled: false,
   play_disabled_message: "The game is briefly offline for maintenance. Please check back soon.",
+  profile_discount_enabled: true,
+  profile_discount_cta_title: "Unlock your Creator Type",
+  profile_discount_cta_body:
+    "You've earned a discount on getting personally profiled. Find out which of the 13 Creators you really are.",
+  profile_discount_threshold_1: 50,
+  profile_discount_percent_1: 10,
+  profile_discount_threshold_2: 100,
+  profile_discount_percent_2: 25,
+  profile_discount_threshold_3: 200,
+  profile_discount_percent_3: 50,
 };
 
 let cached: GameSettings | null = null;
