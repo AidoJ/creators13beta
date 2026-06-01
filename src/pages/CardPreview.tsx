@@ -24,7 +24,7 @@ import pandaImg from "@/assets/cards/animal-panda.png";
 import sealImg from "@/assets/cards/animal-seal.png";
 import squirrelImg from "@/assets/cards/animal-squirrel.png";
 import zebraImg from "@/assets/cards/animal-zebra.png";
-import arcticHareImg from "@/assets/cards/animal-arctic-hare.png";
+
 import dolphinImg from "@/assets/cards/animal-dolphin.png";
 import dragonflyImg from "@/assets/cards/animal-dragonfly.png";
 import fairyImg from "@/assets/cards/animal-fairy.png";
@@ -41,7 +41,7 @@ import duckImg from "@/assets/cards/animal-duck.png";
 import leopardImg from "@/assets/cards/animal-leopard.png";
 import peacockImg from "@/assets/cards/animal-peacock.png";
 import penguinImg from "@/assets/cards/animal-penguin.png";
-import snowLeopardImg from "@/assets/cards/animal-snow-leopard.png";
+import lynxImg from "@/assets/cards/animal-lynx.png";
 import spiderImg from "@/assets/cards/animal-spider.png";
 import swanImg from "@/assets/cards/animal-swan.png";
 import unicornImg from "@/assets/cards/animal-unicorn.png";
@@ -72,7 +72,7 @@ import seahorseImg from "@/assets/cards/animal-seahorse.png";
 import stingrayImg from "@/assets/cards/animal-stingray.png";
 import whaleImg from "@/assets/cards/animal-whale.png";
 import goatImg from "@/assets/cards/animal-goat.png";
-import knomeImg from "@/assets/cards/animal-knome.png";
+import elfImg from "@/assets/cards/animal-elf.png";
 import slothImg from "@/assets/cards/animal-sloth.png";
 import snakeImg from "@/assets/cards/animal-snake.png";
 import bigfootImg from "@/assets/cards/animal-bigfoot.png";
@@ -88,19 +88,19 @@ const ART: Record<string, string> = {
   "octopus": octopusImg, "tiger": tigerImg, "wasp": waspImg, "wolf": wolfImg,
   "camel": camelImg, "cheetah": cheetahImg, "dragon": dragonImg, "gorilla": gorillaImg,
   "lemur": lemurImg, "mouse": mouseImg, "otter": otterImg, "panda": pandaImg,
-  "seal": sealImg, "squirrel": squirrelImg, "zebra": zebraImg, "arctic-hare": arcticHareImg,
+  "seal": sealImg, "squirrel": squirrelImg, "zebra": zebraImg,
   "dolphin": dolphinImg, "dragonfly": dragonflyImg, "fairy": fairyImg, "firefly": fireflyImg,
   "horse": horseImg, "kangaroo": kangarooImg, "ostrich": ostrichImg, "rabbit": rabbitImg,
   "shark": sharkImg, "woodpecker": woodpeckerImg, "alpaca": alpacaImg, "deer": deerImg,
   "duck": duckImg, "leopard": leopardImg, "peacock": peacockImg, "penguin": penguinImg,
-  "snow-leopard": snowLeopardImg, "spider": spiderImg, "swan": swanImg, "unicorn": unicornImg,
+  "lynx": lynxImg, "spider": spiderImg, "swan": swanImg, "unicorn": unicornImg,
   "catfish": catfishImg, "crane": craneImg, "falcon": falconImg, "flying-fox": flyingFoxImg,
   "giraffe": giraffeImg, "platypus": platypusImg, "swordfish": swordfishImg, "thunderbird": thunderbirdImg,
   "elephant": elephantImg, "kingfisher": kingfisherImg, "koala": koalaImg, "lion": lionImg,
   "rainbow-serpent": rainbowSerpentImg, "starfish": starfishImg, "turtle": turtleImg, "beaver": beaverImg,
   "bunyip": bunyipImg, "crab": crabImg, "frog": frogImg, "jellyfish": jellyfishImg,
   "wombat": wombatImg, "crocodile": crocodileImg, "merper": merperImg, "seahorse": seahorseImg,
-  "stingray": stingrayImg, "whale": whaleImg, "goat": goatImg, "knome": knomeImg,
+  "stingray": stingrayImg, "whale": whaleImg, "goat": goatImg, "elf": elfImg,
   "sloth": slothImg, "snake": snakeImg, "bigfoot": bigfootImg, "bison": bisonImg,
   "salamander": salamanderImg, "anteater": anteaterImg, "hobbit": hobbitImg, "seamonster": seamonsterImg,
 };
