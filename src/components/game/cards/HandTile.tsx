@@ -9,6 +9,7 @@ import { getSpecialCardFallbackArt, getSpecialCardFallbackDescriptor } from "@/l
 import type { DeckCard } from "@/lib/game/types";
 import { getCardCreditArtist } from "@/lib/cardCredits";
 import { TypeGlyphMark, displayCardName } from "./TypeGlyphMark";
+import CreatorCardInfoPopup from "./CreatorCardInfoPopup";
 
 interface Props {
   card: DeckCard;
@@ -22,6 +23,7 @@ interface Props {
 export function HandTile({ card, size = 96, selected = false, dimmed = false, forceFlipped }: Props) {
   const [zoomed, setZoomed] = useState(false);
   const [flipped, setFlipped] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const isFlipped = forceFlipped ?? flipped;
   const height = size * 1.35;
   const { c1, c2, chips, badge, artGlyph } = resolveColours(card);
@@ -63,7 +65,11 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                setZoomed(true);
+                if (isCreatorLike && !isGolden) {
+                  setInfoOpen(true);
+                } else {
+                  setZoomed(true);
+                }
               }}
               className="absolute top-1.5 left-1.5 z-30 bg-black/55 hover:bg-black/75 text-white rounded-full p-1 backdrop-blur-sm"
               aria-label="Show descriptor"
@@ -357,6 +363,12 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
           </div>,
           document.body,
         )}
+      {infoOpen && (
+        <CreatorCardInfoPopup
+          typeName={card.kind === "sky_creator" ? "Sky" : (card.displayType ?? card.element ?? "")}
+          onClose={() => setInfoOpen(false)}
+        />
+      )}
     </div>
   );
 }

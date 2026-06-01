@@ -7,22 +7,26 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Save, RotateCcw, Trophy, Timer, Gamepad2, Bot, Eye, Library, AlertTriangle, ExternalLink, Pencil } from "lucide-react";
+import { Save, RotateCcw, Trophy, Timer, Gamepad2, Bot, Eye, Library, AlertTriangle, ExternalLink, Pencil, Percent } from "lucide-react";
 import { DEFAULT_GAME_SETTINGS, invalidateGameSettings, type GameSettings } from "@/lib/game/settings";
 import CardEditorDialog from "./CardEditorDialog";
+import CreatorContentEditor from "./CreatorContentEditor";
 
 type Num = keyof Pick<GameSettings,
   "points_per_win" | "elo_win" | "elo_loss" | "perfect_eco_bonus"
   | "top_score_default" | "beat_clock_match_minutes" | "beat_clock_turn_seconds"
   | "hand_size" | "hand_limit" | "ecosystem_target" | "creators_needed" | "animals_per_creator"
-  | "bot_think_ms" | "max_players_per_match">;
+  | "bot_think_ms" | "max_players_per_match"
+  | "profile_discount_threshold_1" | "profile_discount_percent_1"
+  | "profile_discount_threshold_2" | "profile_discount_percent_2"
+  | "profile_discount_threshold_3" | "profile_discount_percent_3">;
 
 type Bool = keyof Pick<GameSettings,
   "mode_end_of_days_enabled" | "mode_top_score_enabled" | "mode_beat_clock_enabled"
   | "enable_disasters" | "enable_golden_hive" | "enable_sky_creator" | "enable_golden_body" | "enable_sky_creature_steal"
   | "allow_guest_play" | "allow_solo_vs_bot"
   | "show_tutorial_overlay" | "show_discord_chat" | "show_review_boards" | "prompt_player_name" | "show_score_panel"
-  | "maintenance_banner_enabled" | "play_disabled">;
+  | "maintenance_banner_enabled" | "play_disabled" | "profile_discount_enabled">;
 
 export default function GameSettingsPanel() {
   const [s, setS] = useState<GameSettings>(DEFAULT_GAME_SETTINGS);
@@ -233,6 +237,49 @@ export default function GameSettingsPanel() {
       {/* Content / Deck Composition */}
       <DeckCompositionSection />
 
+      {/* Creator card back-of-card content */}
+      <CreatorContentEditor />
+
+      {/* Profile-discount CTA on Player Dashboard */}
+      <section className="rounded-xl border border-border bg-card p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Percent className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold">Profile Discount CTA (Player Dashboard)</h3>
+        </div>
+        <p className="text-[11px] text-muted-foreground mb-3">
+          Pops up once when a player crosses a points threshold, offering a discount on getting personally profiled. Discount is applied at checkout via the URL parameter.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+          <BoolField k="profile_discount_enabled" label="Enable discount popup" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+          <div className="space-y-1">
+            <Label className="text-xs">Popup title</Label>
+            <Input
+              value={s.profile_discount_cta_title}
+              onChange={(e) => setS((p) => ({ ...p, profile_discount_cta_title: e.target.value }))}
+              className="h-8"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Popup body</Label>
+            <Textarea
+              rows={2}
+              value={s.profile_discount_cta_body}
+              onChange={(e) => setS((p) => ({ ...p, profile_discount_cta_body: e.target.value }))}
+              className="text-sm"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+          <NumField k="profile_discount_threshold_1" label="Tier 1 points" min={0} max={10000} />
+          <NumField k="profile_discount_percent_1" label="Tier 1 % off" min={0} max={100} />
+          <NumField k="profile_discount_threshold_2" label="Tier 2 points" min={0} max={10000} />
+          <NumField k="profile_discount_percent_2" label="Tier 2 % off" min={0} max={100} />
+          <NumField k="profile_discount_threshold_3" label="Tier 3 points" min={0} max={10000} />
+          <NumField k="profile_discount_percent_3" label="Tier 3 % off" min={0} max={100} />
+        </div>
+      </section>
 
       {/* Live Ops */}
       <section className="rounded-xl border border-destructive/40 bg-destructive/5 p-4">
