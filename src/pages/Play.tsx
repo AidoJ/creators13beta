@@ -515,7 +515,7 @@ export default function Play() {
   async function startSoloMatch(mode: GameMode, config: GameConfig) {
     if (!allCards) return;
     const youName = user ? await fetchPlayerShortName(user) : "You";
-    const deck = buildDeck(allCards);
+    const deck = buildDeck(allCards, specialCards);
     const fresh = createMatch({
       deck,
       players: [
