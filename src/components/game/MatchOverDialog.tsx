@@ -104,26 +104,28 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
               See how each player built (or didn't build) their ecosystem.
             </DialogDescription>
           </DialogHeader>
-          <Tabs defaultValue={state.players[0]?.id}>
-            <TabsList className="w-full">
+          <Tabs defaultValue={state.players[0]?.id} className="flex-1 flex flex-col min-h-0">
+            <TabsList className="w-full shrink-0">
               {state.players.map((p) => (
                 <TabsTrigger key={p.id} value={p.id} className="flex-1">
                   {p.name}{p.id === state.winnerId ? " 🏆" : ""}
                 </TabsTrigger>
               ))}
             </TabsList>
-            {state.players.map((p) => (
-              <TabsContent key={p.id} value={p.id} className="mt-4">
-                <PlayerBreakdown player={p} winner={p.id === state.winnerId} />
-                <div className="mt-3 rounded-lg border border-border/60 bg-card/40 p-2 overflow-auto">
-                  <Ecosystem eco={p.ecosystem} size={56} showEmpties={false} minHeight={320} />
-                </div>
-              </TabsContent>
-            ))}
+            <div className="flex-1 overflow-y-auto mt-2">
+              {state.players.map((p) => (
+                <TabsContent key={p.id} value={p.id} className="mt-0">
+                  <PlayerBreakdown player={p} winner={p.id === state.winnerId} />
+                  <div className="mt-3 rounded-lg border border-border/60 bg-card/40 p-2 overflow-auto">
+                    <Ecosystem eco={p.ecosystem} size={56} showEmpties={false} minHeight={320} />
+                  </div>
+                </TabsContent>
+              ))}
+            </div>
           </Tabs>
-          <div className="flex justify-end mt-4 gap-2">
-            <Button variant="outline" onClick={() => setReviewOpen(false)}>Back to results</Button>
-            <Button onClick={onPlayAgain}>Play again</Button>
+          <div className="flex justify-end gap-2 pt-2 border-t border-border/40">
+            <Button size="sm" variant="outline" onClick={() => setReviewOpen(false)}>Back to results</Button>
+            <Button size="sm" onClick={onPlayAgain}>Play again</Button>
           </div>
         </DialogContent>
       </Dialog>
