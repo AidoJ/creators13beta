@@ -537,13 +537,16 @@ function applyDisasterWipe(
 
 /**
  * Sky Creature steal — discard a sky_creature to the used pile, steal any
- * one animal from any opponent's ecosystem into your hand.
+ * one animal from any opponent's ecosystem and place it directly onto the
+ * stealer's own ecosystem at `placeAt`. If `placeAt` is omitted (e.g. bot
+ * fallback), the stolen card goes to the stealer's hand instead.
  */
 export function playSkyCreatureSteal(
   state: MatchState,
   skyCreatureUid: string,
   victimId: string,
   victimPosKey: string,
+  placeAt?: Axial,
 ): MatchState {
   if (state.finished) throw new Error("Match is over");
   if (state.phase !== "place") throw new Error("Pick up 2 cards first");
@@ -567,11 +570,26 @@ export function playSkyCreatureSteal(
   player.hand.splice(idx, 1);
   next.used.push(sky);
   victim.ecosystem.placed.delete(victimPosKey);
-  player.hand.push(stolen.card);
+
+  if (placeAt) {
+    const legal = legalEcoCells(player.ecosystem);
+    if (!legal.some((c) => c.q === placeAt.q && c.r === placeAt.r)) {
+      throw new Error("Pick a glowing hex on your own board to place the stolen card.");
+    }
+    assertEdgeMatchOrThrow(stolen.card, player.ecosystem, placeAt);
+    const rotation = bestRotationForPlacement(player.ecosystem, stolen.card, placeAt);
+    player.ecosystem.placed.set(keyOf(placeAt), { card: stolen.card, pos: placeAt, rotation });
+    player.score += 1;
+    next.lastEvent = `${player.name} stole ${stolen.card.name} from ${victim.name} and placed it`;
+  } else {
+    player.hand.push(stolen.card);
+    next.lastEvent = `${player.name} stole ${stolen.card.name} from ${victim.name}`;
+  }
+
   next.placedThisTurn += 1;
-  next.lastEvent = `${player.name} stole ${stolen.card.name} from ${victim.name}`;
   return afterAction(next);
 }
+
 
 /* --------------------------- turn / win plumbing --------------------------- */
 
