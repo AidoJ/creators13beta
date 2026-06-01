@@ -1,6 +1,8 @@
 import { ANIMAL_CARDS, CREATOR_TYPE_ORDER, CREATOR_TYPE_COLORS } from "@/data/cards";
 import { AnimalCardTile } from "@/components/game/cards/AnimalCardTile";
 import { AnimalHexPiece } from "@/components/game/cards/AnimalHexPiece";
+import { HandTile } from "@/components/game/cards/HandTile";
+import { TYPE_TO_ELEMENT } from "@/lib/game/elements";
 import bearImg from "@/assets/cards/animal-bear.png";
 import beeImg from "@/assets/cards/animal-bee.png";
 import cassowaryImg from "@/assets/cards/animal-cassowary.png";
