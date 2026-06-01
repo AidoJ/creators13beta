@@ -541,7 +541,7 @@ export function playSkyCreatureSteal(
     if (!legal.some((c) => c.q === placeAt.q && c.r === placeAt.r)) {
       throw new Error("Pick a glowing hex on your own board to place the stolen card.");
     }
-    assertEdgeMatchOrThrow(stolen.card, player.ecosystem, placeAt);
+    
     const rotation = bestRotationForPlacement(player.ecosystem, stolen.card, placeAt);
     player.ecosystem.placed.set(keyOf(placeAt), { card: stolen.card, pos: placeAt, rotation });
     player.score += 1;
