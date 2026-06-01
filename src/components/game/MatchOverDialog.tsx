@@ -8,6 +8,7 @@ import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { glyphForType } from "@/lib/game/glyphs";
 import { Ecosystem } from "@/components/game/Ecosystem";
 import type { MatchState, PlayerState } from "@/lib/game/types";
+import { playerTotalScore } from "@/lib/game/types";
 
 interface Props {
   state: MatchState;
@@ -113,7 +114,7 @@ function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: bool
       <div className="flex items-baseline justify-between mb-2">
         <div className="font-semibold">{player.name}</div>
         <div className="text-xs text-muted-foreground">
-          {counts.creators}/4 creators · {counts.animals}/12 animals · {player.score} pts
+          {counts.creators}/4 creators · {counts.animals}/12 animals · {playerTotalScore(player)} pts
         </div>
       </div>
       {counts.byType.length === 0 ? (
