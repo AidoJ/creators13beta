@@ -4,8 +4,7 @@ import { createPortal } from "react-dom";
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType, glyphMarkForType } from "@/lib/game/glyphs";
-import goldenBodyArt from "@/assets/golden-body-card.png";
-import goldenHiveArt from "@/assets/golden-hive-card.png";
+import { getSpecialCardFallbackArt, getSpecialCardFallbackDescriptor } from "@/lib/game/specialCardFallbacks";
 
 import type { DeckCard } from "@/lib/game/types";
 import { getCardCreditArtist } from "@/lib/cardCredits";
@@ -363,59 +362,26 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
 }
 
 function defaultDescriptor(card: DeckCard): string {
-  switch (card.kind) {
-    case "creator":
-      return `${card.displayType ?? card.element} Creator Card (${card.element} element). Place 4 Creator Cards in your ecosystem to anchor your Animals. Extra Creators can be played as a Disaster — they wipe matching Animals from rival ecosystems.`;
-    case "sky_creator":
-      return `Sky Creator (wildcard). Counts as any element when matching Animals. After your 4 Creators are placed, can also be played as a Disaster.`;
-    case "sky_creature":
-      return `Mythical Sky Creature. Acts as an Animal of its two Creator Types, AND can be played as a Stealer — discard it to take any one Animal from a rival ecosystem.`;
-    case "golden_body":
-      return `A body made of gold is the alchemy of all forms, granting the skin of any species to be worn.`;
-    case "golden_hive":
-      return `At the heart of the ecosystem lies the pot of gold, where Immunity is granted for the good of the whole.`;
-    default:
-      return "Animal card.";
+  if (card.kind === "sky_creature") {
+    return "Mythical Sky Creature. Acts as an Animal of its two Creator Types, AND can be played as a Stealer — discard it to take any one Animal from a rival ecosystem.";
   }
+
+  const shared = getSpecialCardFallbackDescriptor({
+    kind: card.kind,
+    displayType: card.displayType,
+    element: card.element,
+  });
+
+  return shared || "Animal card.";
 }
 
 function resolveColours(card: DeckCard): {
-  c1: string;
-  c2: string;
-  chips: { label: string; color: string; glyph?: string }[];
-  badge?: string;
-  artGlyph?: string;
-} {
-  if (card.kind === "animal" || card.kind === "sky_creature") {
-    const [t1, t2] = card.types ?? [];
-    const c1 = CREATOR_TYPE_COLORS[t1 as keyof typeof CREATOR_TYPE_COLORS] ?? "#888";
-    const c2 = CREATOR_TYPE_COLORS[t2 as keyof typeof CREATOR_TYPE_COLORS] ?? c1;
-    const chips = [
-      { label: String(t1 ?? ""), color: c1, glyph: glyphForType(t1 as string) },
-      ...(t2 && t2 !== t1
-        ? [{ label: String(t2), color: c2, glyph: glyphForType(t2 as string) }]
-        : []),
-    ].filter((c) => c.label);
-    return { c1, c2, chips, badge: card.kind === "sky_creature" ? "Sky" : undefined };
-  }
-  if (card.kind === "creator") {
-    const dt = card.displayType;
-    const label = dt ?? card.element!;
-    const c = dt ? (CREATOR_TYPE_COLORS[dt as keyof typeof CREATOR_TYPE_COLORS] ?? ELEMENT_COLORS[card.element!]) : ELEMENT_COLORS[card.element!];
-    const g = dt ? (CREATOR_TYPE_GLYPHS[dt] ?? ELEMENT_GLYPHS[card.element!]) : ELEMENT_GLYPHS[card.element!];
-    return { c1: c, c2: c, chips: [{ label, color: c, glyph: g }], badge: card.element ? String(card.element).toUpperCase() : "Creator", artGlyph: g };
-  }
-  if (card.kind === "sky_creator") {
-    const c = ELEMENT_COLORS.Sky;
-    const g = CREATOR_TYPE_GLYPHS.Sky;
-    return { c1: c, c2: "#ffffff", chips: [{ label: "Sky", color: c, glyph: g }], badge: "SKY CREATOR", artGlyph: g };
-  }
-
+...
   if (card.kind === "golden_body") {
-    return { c1: "#f5c542", c2: "#e0a920", chips: [{ label: "Golden", color: "#e0a920" }], badge: "GOLDEN BODY", artGlyph: goldenBodyArt };
+    return { c1: "#f5c542", c2: "#e0a920", chips: [{ label: "Golden", color: "#e0a920" }], badge: "GOLDEN BODY", artGlyph: getSpecialCardFallbackArt("golden-body") ?? undefined };
   }
   if (card.kind === "golden_hive") {
-    return { c1: "#f5c542", c2: "#ffffff", chips: [{ label: "Hive", color: "#e0a920" }], badge: "GOLDEN HIVE", artGlyph: goldenHiveArt };
+    return { c1: "#f5c542", c2: "#ffffff", chips: [{ label: "Hive", color: "#e0a920" }], badge: "GOLDEN HIVE", artGlyph: getSpecialCardFallbackArt("golden-hive") ?? undefined };
   }
   return { c1: "#666", c2: "#666", chips: [] };
 }
