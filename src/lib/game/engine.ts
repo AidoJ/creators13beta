@@ -678,7 +678,7 @@ function checkWin(state: MatchState): void {
  *  (earth / fire / air / water) is covered by exactly one creator in the subset.
  *  Sky Creators act as wildcards (can fill any element slot). */
 function enumerateElementCoveringQuartets(creators: DeckCard[]): DeckCard[][] {
-  const elements: Element[] = ["earth", "fire", "air", "water"];
+  const elements: Element[] = ["Earth", "Fire", "Air", "Water"];
   const out: DeckCard[][] = [];
   const seen = new Set<string>();
   const used = new Set<number>();
