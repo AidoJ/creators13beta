@@ -7,8 +7,9 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Save, RotateCcw, Trophy, Timer, Gamepad2, Bot, Eye, Library, AlertTriangle, ExternalLink } from "lucide-react";
+import { Save, RotateCcw, Trophy, Timer, Gamepad2, Bot, Eye, Library, AlertTriangle, ExternalLink, Pencil } from "lucide-react";
 import { DEFAULT_GAME_SETTINGS, invalidateGameSettings, type GameSettings } from "@/lib/game/settings";
+import CardEditorDialog from "./CardEditorDialog";
 
 type Num = keyof Pick<GameSettings,
   "points_per_win" | "elo_win" | "elo_loss" | "perfect_eco_bonus"
