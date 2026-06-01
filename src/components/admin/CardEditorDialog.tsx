@@ -7,21 +7,27 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Save, Search } from "lucide-react";
+import { CREATOR_TYPE_NAMES } from "@/lib/creatorTypes";
+import { getSpecialCardFallbackArt, getSpecialCardFallbackDescriptor } from "@/lib/game/specialCardFallbacks";
 
 const ART_BUCKET = "game-card-art";
 
 type CardTable = "game_cards" | "special_cards";
+type SpecialKind = "creator" | "sky_creator" | "golden_body" | "golden_hive";
 
 interface Card {
   id: string;
   table: CardTable;
   slug: string;
   name: string;
-  /** "Lava / Soil" for animals; "Creator", "Sky Creator", "Golden Body", "Golden Hive" for specials */
   category: string;
   mythical: boolean;
   descriptor: string | null;
   art_path: string | null;
+  art_fallback?: string | null;
+  kind?: SpecialKind;
+  displayType?: string | null;
+  element?: string | null;
   sort_order: number;
 }
 
@@ -29,6 +35,22 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }
+
+const TYPE_TO_ELEMENT: Record<string, string> = {
+  Lava: "Fire",
+  Fire: "Fire",
+  Whirlwind: "Air",
+  Snow: "Earth",
+  Lightning: "Air",
+  Sun: "Fire",
+  Lake: "Water",
+  Ocean: "Water",
+  Tree: "Earth",
+  Mountain: "Earth",
+  Soil: "Earth",
+  River: "Water",
+  Sky: "Sky",
+};
 
 export default function CardEditorDialog({ open, onOpenChange }: Props) {
   const { toast } = useToast();
@@ -40,7 +62,7 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [bust, setBust] = useState(0); // cache-bust art previews after upload
+  const [bust, setBust] = useState(0);
 
   async function load() {
     setLoading(true);
@@ -54,6 +76,7 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
         .select("id, slug, name, kind, descriptor, art_path, sort_order")
         .order("sort_order", { ascending: true }),
     ]);
+
     if (animalsRes.error) toast({ title: "Failed to load animal cards", description: animalsRes.error.message, variant: "destructive" });
     if (specialsRes.error) toast({ title: "Failed to load special cards", description: specialsRes.error.message, variant: "destructive" });
 
@@ -64,17 +87,29 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
       golden_hive: "Golden Hive Card",
     };
 
-    const specials: Card[] = (specialsRes.data ?? []).map((r: any) => ({
-      id: r.id,
-      table: "special_cards" as const,
-      slug: r.slug,
-      name: r.name,
-      category: specialKindLabel[r.kind] ?? "Special",
-      mythical: false,
-      descriptor: r.descriptor,
-      art_path: r.art_path,
-      sort_order: r.sort_order,
-    }));
+    const specials: Card[] = (specialsRes.data ?? []).map((r: any) => {
+      const displayType = r.kind === "creator"
+        ? CREATOR_TYPE_NAMES.find((type) => `creator-${type.toLowerCase()}` === r.slug) ?? null
+        : r.kind === "sky_creator"
+          ? "Sky"
+          : null;
+
+      return {
+        id: r.id,
+        table: "special_cards" as const,
+        slug: r.slug,
+        name: r.name,
+        category: specialKindLabel[r.kind] ?? "Special",
+        mythical: false,
+        descriptor: r.descriptor,
+        art_path: r.art_path,
+        art_fallback: getSpecialCardFallbackArt(r.slug),
+        kind: r.kind,
+        displayType,
+        element: displayType ? TYPE_TO_ELEMENT[displayType] ?? null : null,
+        sort_order: r.sort_order,
+      };
+    });
 
     const animals: Card[] = (animalsRes.data ?? []).map((r: any) => ({
       id: r.id,
@@ -88,17 +123,31 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
       sort_order: r.sort_order,
     }));
 
-    // Specials first, then animals.
     setCards([...specials, ...animals]);
     setLoading(false);
   }
 
-  useEffect(() => { if (open) load(); }, [open]);
+  useEffect(() => {
+    if (open) load();
+  }, [open]);
 
   const selected = useMemo(() => cards.find((c) => c.id === selectedId) ?? null, [cards, selectedId]);
 
+  function resolvedDescriptor(card: Card | null) {
+    if (!card) return "";
+    if (card.descriptor?.trim()) return card.descriptor;
+    if (card.table === "special_cards") {
+      return getSpecialCardFallbackDescriptor({
+        kind: card.kind,
+        displayType: card.displayType,
+        element: card.element,
+      });
+    }
+    return "";
+  }
+
   useEffect(() => {
-    setDescriptor(selected?.descriptor ?? "");
+    setDescriptor(resolvedDescriptor(selected));
     setName(selected?.name ?? "");
   }, [selected?.id]);
 
@@ -120,19 +169,25 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
     return bust ? `${url}&_=${bust}` : url;
   }
 
+  function resolvedArt(card: Card | null) {
+    if (!card) return null;
+    return artUrl(card.art_path) ?? card.art_fallback ?? null;
+  }
+
   async function saveText() {
     if (!selected) return;
     setSaving(true);
-    const { error } = await supabase
-      .from(selected.table)
-      .update({ name: name.trim() || selected.name, descriptor: descriptor })
-      .eq("id", selected.id);
+    const payload = {
+      name: name.trim() || selected.name,
+      descriptor: descriptor.trim() || null,
+    };
+    const { error } = await supabase.from(selected.table).update(payload).eq("id", selected.id);
     setSaving(false);
     if (error) {
       toast({ title: "Save failed", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Saved", description: `${selected.name} updated` });
+    toast({ title: "Saved", description: `${name.trim() || selected.name} updated` });
     await load();
   }
 
@@ -166,7 +221,6 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
         </DialogHeader>
 
         <div className="flex-1 flex min-h-0">
-          {/* Left: card list */}
           <div className="w-72 border-r border-border flex flex-col">
             <div className="p-3 border-b border-border">
               <div className="relative">
@@ -181,31 +235,33 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
             </div>
             <div className="flex-1 overflow-auto">
               {loading && <p className="text-xs text-muted-foreground p-3">Loading…</p>}
-              {filtered.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setSelectedId(c.id)}
-                  className={`w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-muted/50 border-b border-border/50 ${
-                    selectedId === c.id ? "bg-muted" : ""
-                  }`}
-                >
-                  <div className="w-10 h-10 rounded bg-muted shrink-0 overflow-hidden flex items-center justify-center">
-                    {c.art_path ? (
-                      <img src={artUrl(c.art_path)!} alt="" className="w-full h-full object-contain" />
-                    ) : (
-                      <span className="text-[10px] text-muted-foreground">no art</span>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{c.name}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">{c.category}</p>
-                  </div>
-                </button>
-              ))}
+              {filtered.map((c) => {
+                const previewArt = resolvedArt(c);
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => setSelectedId(c.id)}
+                    className={`w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-muted/50 border-b border-border/50 ${
+                      selectedId === c.id ? "bg-muted" : ""
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded bg-muted shrink-0 overflow-hidden flex items-center justify-center">
+                      {previewArt ? (
+                        <img src={previewArt} alt="" className="w-full h-full object-contain" />
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">no art</span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{c.name}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{c.category}</p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Right: editor */}
           <div className="flex-1 overflow-auto p-6">
             {!selected ? (
               <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
@@ -215,8 +271,8 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
               <div className="space-y-5 max-w-2xl">
                 <div className="flex items-start gap-4">
                   <div className="w-40 h-40 rounded-lg bg-muted overflow-hidden flex items-center justify-center border border-border">
-                    {selected.art_path ? (
-                      <img src={artUrl(selected.art_path)!} alt={selected.name} className="w-full h-full object-contain" />
+                    {resolvedArt(selected) ? (
+                      <img src={resolvedArt(selected)!} alt={selected.name} className="w-full h-full object-contain" />
                     ) : (
                       <span className="text-xs text-muted-foreground">No image</span>
                     )}
@@ -225,6 +281,9 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="outline">{selected.category}</Badge>
                       {selected.mythical && <Badge>Sky Creature</Badge>}
+                      {selected.table === "special_cards" && !selected.art_path && selected.art_fallback && (
+                        <Badge variant="secondary">Using current game art</Badge>
+                      )}
                       <span className="text-xs text-muted-foreground ml-auto">slug: {selected.slug}</span>
                     </div>
                     <label className="block">
@@ -263,7 +322,7 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
                     rows={8}
                     value={descriptor}
                     onChange={(e) => setDescriptor(e.target.value)}
-                    placeholder="Short descriptor shown on the reverse of the animal card…"
+                    placeholder="Short descriptor shown on the reverse of the card…"
                   />
                 </div>
 
@@ -281,3 +340,4 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
     </Dialog>
   );
 }
+
