@@ -223,8 +223,7 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
                   </div>
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline">{selected.type_a}</Badge>
-                      <Badge variant="outline">{selected.type_b}</Badge>
+                      <Badge variant="outline">{selected.category}</Badge>
                       {selected.mythical && <Badge>Sky Creature</Badge>}
                       <span className="text-xs text-muted-foreground ml-auto">slug: {selected.slug}</span>
                     </div>
