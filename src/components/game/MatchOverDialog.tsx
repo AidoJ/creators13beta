@@ -60,6 +60,7 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const open = state.finished && !dismissed;
+  const isDraw = state.finished && state.winnerId == null;
   const winner = state.players.find((p) => p.id === state.winnerId) ?? state.players[0];
 
   return (
@@ -70,18 +71,27 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
           <DialogHeader className="space-y-1">
             <DialogTitle className="flex items-center gap-2 font-display text-xl">
               <Trophy className="w-5 h-5 text-amber-500" />
-              Congratulations {winner.name} — You Win!
+              {isDraw ? "It's a draw!" : `Congratulations ${winner.name} — You Win!`}
             </DialogTitle>
             <DialogDescription className="text-xs leading-snug">
-              <span className="font-semibold text-foreground">{buildWinReason(state, winner).headline}.</span>{" "}
-              {buildWinReason(state, winner).detail}
+              {isDraw ? (
+                <span>
+                  <span className="font-semibold text-foreground">Both piles emptied before anyone completed a valid ecosystem.</span>{" "}
+                  Each player earns half points toward their profile.
+                </span>
+              ) : (
+                <>
+                  <span className="font-semibold text-foreground">{buildWinReason(state, winner).headline}.</span>{" "}
+                  {buildWinReason(state, winner).detail}
+                </>
+              )}
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto -mx-1 px-1">
             <div className="grid sm:grid-cols-2 gap-2">
               {state.players.map((p) => (
-                <PlayerBreakdown key={p.id} player={p} winner={p.id === state.winnerId} />
+                <PlayerBreakdown key={p.id} player={p} winner={!isDraw && p.id === state.winnerId} />
               ))}
             </div>
           </div>
