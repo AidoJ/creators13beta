@@ -42,8 +42,10 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
               <p className="mt-2 text-muted-foreground text-xs">
                 A <strong>Sky Creator</strong> substitutes for any element. A <strong>Golden Body</strong> is
                 a wildcard animal. You must also have <strong>no Creator cards left in your hand</strong> when
-                you reach 16. If both piles empty out, the highest score wins
-                (3 pts per Creator placed, 1 pt per Animal placed).
+                you reach 16, and each animal must <strong>touch</strong> the Creator it counts for. In
+                End of Days, if both piles empty before anyone completes their ecosystem the match is
+                a draw (each player earns half points). Top Score and Beat the Clock fall back to
+                highest score.
               </p>
             </section>
 
