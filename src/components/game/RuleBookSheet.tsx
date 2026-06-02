@@ -91,7 +91,7 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
               <ul className="list-disc pl-5 space-y-1 text-xs text-muted-foreground">
                 <li>The first card may be placed on the central hex.</li>
                 <li>Every other card must go on an <strong>empty hex adjacent to your ecosystem</strong> — the only exception is animals dropped on your board from a Disaster, which can land disconnected.</li>
-                <li>Animals don't have to be placed next to their matching Creator (adjacency is ideal but only verified at win-check).</li>
+                <li><strong>Animals must be touching their matching Creator to count toward the win.</strong> A scattered matching animal still sits on the board but does not satisfy the 3-per-Creator requirement until it is adjacent to that Creator's hex.</li>
               </ul>
             </section>
 
@@ -167,15 +167,16 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
               <p className="text-xs">
                 The match ends the moment a player assembles a valid 16-card ecosystem: 4 Creators
                 covering all four elements (Earth / Fire / Air / Water — with Sky Creators acting as
-                wildcards), 12 Animals (3 per Creator, with Golden Body as a wildcard animal), AND no
-                Creator or Sky Creator cards remaining in their hand. If the Draw and Used piles both
-                empty before anyone completes the ecosystem, the highest score wins (3 pts per Creator
-                placed, 1 pt per Animal placed).
+                wildcards), 12 Animals (3 per Creator, each animal <strong>touching</strong> the Creator
+                it counts for, Golden Body as a wildcard animal), AND no Creator or Sky Creator cards
+                remaining in their hand. If the Draw and Used piles both empty before anyone completes
+                the ecosystem, the match is a <strong>draw</strong> — each player earns half points
+                toward their profile. There is no "highest score wins" fallback in End of Days.
               </p>
               <ul className="list-disc pl-5 mt-2 space-y-1 text-xs text-muted-foreground">
                 <li>No timer. No score target. Pure ecosystem race.</li>
                 <li>All standard placement, disaster, hive and steal rules apply.</li>
-                <li>Bots are held to exactly the same win validation as human players.</li>
+                <li>Bots are held to exactly the same win validation as human players, including the adjacency rule.</li>
               </ul>
             </section>
 
