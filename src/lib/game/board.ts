@@ -21,6 +21,10 @@ export function neighbours(pos: Axial): Axial[] {
   return NEIGHBOUR_DIRS.map((d) => ({ q: pos.q + d.q, r: pos.r + d.r }));
 }
 
+export function isAdjacent(a: Axial, b: Axial): boolean {
+  return NEIGHBOUR_DIRS.some((d) => a.q + d.q === b.q && a.r + d.r === b.r);
+}
+
 export function axialToPixel(q: number, r: number, size: number) {
   const W = size;
   const H = size * 1.1547;

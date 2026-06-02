@@ -60,8 +60,10 @@ export async function recordProgressDiff(args: {
       return;
     }
 
-    // End-of-game: only the winner gets points. Values come from the
-    // admin-configurable game_settings row.
+    // End-of-game: winner gets full points; on a DRAW (no winnerId — e.g.
+    // End of Days where neither player completed a valid ecosystem before
+    // both piles emptied) every player gets HALF the win points and ELO is
+    // unaffected. Values come from the admin-configurable game_settings row.
     const settings = await fetchGameSettings();
     let pointsDelta = 0;
     let won: boolean | null = null;
@@ -73,6 +75,9 @@ export async function recordProgressDiff(args: {
     } else if (next.winnerId) {
       won = false;
       eloDelta = settings.elo_loss;
+    } else {
+      // Draw — every player earns half points, ELO neutral, no win/loss recorded.
+      pointsDelta = Math.floor(settings.points_per_win / 2);
     }
 
     const perfectEco = nextSelf.ecosystem.placed.size >= 16;
