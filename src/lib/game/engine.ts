@@ -581,10 +581,23 @@ function advanceTurn(state: MatchState): void {
   state.turnNumber += 1;
 
 
-  // If both piles are empty AND no player can finish, end the match by score.
+  // Both piles empty AND no player can play any more cards.
   if (state.draw.length === 0 && state.used.length === 0) {
     const anyCardsLeft = state.players.some((p) => p.hand.length > 0);
-    if (!anyCardsLeft) finalise(state);
+    if (!anyCardsLeft) {
+      // End of Days is ecosystem-only — no "highest score wins" fallback.
+      // If nobody has assembled a valid ecosystem the match is a DRAW
+      // (winnerId = null). Progress awards half points to each player.
+      // Top Score / Beat the Clock still resolve by score.
+      if ((state.gameMode ?? "end_of_days") === "end_of_days") {
+        state.finished = true;
+        state.winnerId = null;
+        state.lastEvent =
+          "Both piles are empty and no one completed a valid ecosystem — match ends in a draw. Each player earns half points.";
+      } else {
+        finalise(state);
+      }
+    }
   }
 }
 
@@ -616,15 +629,26 @@ export interface EcosystemWinValidation {
   hasElementCoverage: boolean;
 }
 
-/** Full classic ecosystem validation shared by human and bot actions. */
+/** Full classic ecosystem validation shared by human and bot actions.
+ *
+ *  Win rule: 4 Creators covering Earth/Fire/Air/Water (Sky Creator wildcard),
+ *  3 animals assigned per chosen Creator (Golden Body wildcard animal), AND
+ *  each assigned animal must be PLACED ON THE BOARD TOUCHING that Creator's
+ *  hex (axial neighbour). Animals not adjacent to any matching Creator do
+ *  not count toward the win. */
 export function validateEcosystemWin(player: PlayerState): EcosystemWinValidation {
-  const placed = Array.from(player.ecosystem.placed.values()).map((pc) => pc.card);
-  const creators = placed.filter(
-    (c) => c.kind === "creator" || c.kind === "sky_creator",
+  const placedAll = Array.from(player.ecosystem.placed.values());
+  const creatorPcs = placedAll.filter(
+    (pc) => pc.card.kind === "creator" || pc.card.kind === "sky_creator",
   );
-  const animals = placed.filter(
-    (c) => c.kind === "animal" || c.kind === "sky_creature" || c.kind === "golden_body",
+  const animalPcs = placedAll.filter(
+    (pc) =>
+      pc.card.kind === "animal" ||
+      pc.card.kind === "sky_creature" ||
+      pc.card.kind === "golden_body",
   );
+  const creators = creatorPcs.map((pc) => pc.card);
+  const animals = animalPcs.map((pc) => pc.card);
   const stillHoldingCreators = player.hand.filter(
     (c) => c.kind === "creator" || c.kind === "sky_creator",
   );
@@ -633,9 +657,15 @@ export function validateEcosystemWin(player: PlayerState): EcosystemWinValidatio
     return { valid: false, creators, animals, selectedCreators: [], stillHoldingCreators, hasElementCoverage: false };
   }
 
+  // Map card -> PlacedCard so we can recover positions after quartet enumeration.
+  const pcByUid = new Map<string, PlacedCard>();
+  for (const pc of placedAll) pcByUid.set(pc.card.uid, pc);
+
   const quartets = enumerateElementCoveringQuartets(creators);
   for (const quartet of quartets) {
-    if (canAssignAnimalsToCreators(quartet, animals)) {
+    const quartetPcs = quartet.map((c) => pcByUid.get(c.uid)!).filter(Boolean);
+    if (quartetPcs.length !== quartet.length) continue;
+    if (canAssignAdjacentAnimalsToCreators(quartetPcs, animalPcs)) {
       return {
         valid: stillHoldingCreators.length === 0,
         creators,
@@ -657,10 +687,12 @@ export function validateEcosystemWin(player: PlayerState): EcosystemWinValidatio
   };
 }
 
-/** Can we pick exactly ANIMALS_PER_CREATOR animals per creator from the placed
- *  animal pool such that every chosen animal links to its assigned creator?
- *  Extra animals on the board beyond 3 × creators are allowed and simply unused. */
-function canAssignAnimalsToCreators(creators: DeckCard[], animals: DeckCard[]): boolean {
+/** Backtracking assignment: each creator must get exactly 3 placed animals
+ *  that (a) link by Creator Type and (b) sit on an axial neighbour hex. */
+function canAssignAdjacentAnimalsToCreators(
+  creators: PlacedCard[],
+  animals: PlacedCard[],
+): boolean {
   if (creators.length !== CREATORS_NEEDED) return false;
   if (animals.length < CREATORS_NEEDED * ANIMALS_PER_CREATOR) return false;
   const slots = creators.map((creator) => ({ creator, assigned: [] as number[] }));
@@ -675,8 +707,12 @@ function canAssignAnimalsToCreators(creators: DeckCard[], animals: DeckCard[]): 
       const slot = slots[i];
       if (slot.assigned.length >= ANIMALS_PER_CREATOR) continue;
       const options = animals
-        .map((animal, idx) => ({ animal, idx }))
-        .filter(({ animal, idx }) => !used.has(idx) && animalLinksToCreator(animal, slot.creator))
+        .map((animalPc, idx) => ({ animalPc, idx }))
+        .filter(({ animalPc, idx }) =>
+          !used.has(idx) &&
+          animalLinksToCreator(animalPc.card, slot.creator.card) &&
+          isAdjacent(animalPc.pos, slot.creator.pos),
+        )
         .map(({ idx }) => idx);
       if (targetIndex === -1 || options.length < targetOptions.length) {
         targetIndex = i;
