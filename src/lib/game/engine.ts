@@ -691,7 +691,7 @@ function canAssignAnimalsToCreators(creators: DeckCard[], animals: DeckCard[]): 
       if (slot.assigned.length >= ANIMALS_PER_CREATOR) continue;
       const options = animals
         .map((animal, idx) => ({ animal, idx }))
-        .filter(({ animal, idx }) => !used.has(idx) && animalLinksToCreator(animal, slot.creator))
+        .filter(({ animal, idx }) => !used.has(idx) && animalLinksToCreatorByElement(animal, slot.creator))
         .map(({ idx }) => idx);
       if (targetIndex === -1 || options.length < targetOptions.length) {
         targetIndex = i;
