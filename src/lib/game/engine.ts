@@ -286,11 +286,31 @@ export function placeOnEcosystem(
 
   const rotation = bestRotationForPlacement(player.ecosystem, card, pos);
   player.ecosystem.placed.set(keyOf(pos), { card, pos, rotation });
+  // Re-pivot any adjacent animal/sky-creature so its colour halves now align
+  // with this new neighbour (e.g. placing a Lava Creator next to a Lava
+  // animal previously dropped on its own should auto-rotate the animal).
+  repivotNeighbours(player.ecosystem, pos);
   player.hand.splice(idx, 1);
   player.score += card.kind === "creator" || card.kind === "sky_creator" ? 3 : 1;
   next.placedThisTurn += 1;
   next.lastEvent = `${player.name} placed ${card.name}`;
   return afterAction(next);
+}
+
+/** After a card lands at `pos`, re-pivot every adjacent two-colour card
+ *  (animals / sky-creatures) so its colour halves face the freshly updated
+ *  ecosystem. Single-colour cards are left alone (rotation is irrelevant). */
+function repivotNeighbours(eco: Ecosystem, pos: Axial): void {
+  for (const n of neighbours(pos)) {
+    const nKey = keyOf(n);
+    const pc = eco.placed.get(nKey);
+    if (!pc) continue;
+    if (pc.card.kind !== "animal" && pc.card.kind !== "sky_creature") continue;
+    const newRot = bestRotationForPlacement(eco, pc.card, pc.pos);
+    if (newRot !== (pc.rotation ?? 0)) {
+      eco.placed.set(nKey, { ...pc, rotation: newRot });
+    }
+  }
 }
 
 
