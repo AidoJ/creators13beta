@@ -55,7 +55,8 @@ export function cardHalfColors(card: DeckCard): [string, string] {
     return [c1, c2];
   }
   if (card.kind === "creator") {
-    const c = ELEMENT_COLORS[card.element!];
+    const dt = card.displayType;
+    const c = (dt && (CREATOR_TYPE_COLORS[dt as keyof typeof CREATOR_TYPE_COLORS])) ?? ELEMENT_COLORS[card.element!];
     return [c, c];
   }
   if (card.kind === "sky_creator") return [ELEMENT_COLORS.Sky, ELEMENT_COLORS.Sky];
