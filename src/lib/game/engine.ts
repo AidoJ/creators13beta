@@ -28,6 +28,7 @@ import {
 } from "./types";
 import { keyOf, neighbours } from "./board";
 import { ELEMENTS, TYPE_TO_ELEMENT, type Element } from "./elements";
+import type { CreatorTypeName } from "@/lib/gameCards";
 import { bestRotationForPlacement, rotatePlacedHex } from "./rotation";
 
 /* --------------------------- helpers --------------------------- */
