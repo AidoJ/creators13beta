@@ -28,7 +28,7 @@ import {
 } from "./types";
 import { keyOf, neighbours } from "./board";
 import { ELEMENTS, TYPE_TO_ELEMENT, type Element } from "./elements";
-import type { CreatorTypeName } from "@/lib/gameCards";
+
 import { bestRotationForPlacement, rotatePlacedHex } from "./rotation";
 
 /* --------------------------- helpers --------------------------- */
@@ -235,21 +235,6 @@ export function animalLinksToCreator(animal: DeckCard, creator: DeckCard): boole
   return animalTypes.some((t) => TYPE_TO_ELEMENT[t] === el);
 }
 
-/** Looser link rule used ONLY for win validation: an animal links to a creator
- *  if it shares the creator's ELEMENT (e.g. any Fire-element animal — Lava,
- *  Fire, Sun — counts toward any Fire-element creator). Disaster wipes keep
- *  the strict per-type rule via animalLinksToCreator. */
-export function animalLinksToCreatorByElement(animal: DeckCard, creator: DeckCard): boolean {
-  if (animal.kind === "golden_body") return true;
-  if (creator.kind === "sky_creator") {
-    return (animal.types ?? []).some((t) => t === "Sky" || TYPE_TO_ELEMENT[t as CreatorTypeName] === "Sky");
-  }
-  if (creator.kind !== "creator") return false;
-  const el = creator.element;
-  if (!el) return false;
-  const animalTypes = (animal.types ?? []) as string[];
-  return animalTypes.some((t) => TYPE_TO_ELEMENT[t as CreatorTypeName] === el);
-}
 
 
 
@@ -691,7 +676,7 @@ function canAssignAnimalsToCreators(creators: DeckCard[], animals: DeckCard[]): 
       if (slot.assigned.length >= ANIMALS_PER_CREATOR) continue;
       const options = animals
         .map((animal, idx) => ({ animal, idx }))
-        .filter(({ animal, idx }) => !used.has(idx) && animalLinksToCreatorByElement(animal, slot.creator))
+        .filter(({ animal, idx }) => !used.has(idx) && animalLinksToCreator(animal, slot.creator))
         .map(({ idx }) => idx);
       if (targetIndex === -1 || options.length < targetOptions.length) {
         targetIndex = i;
