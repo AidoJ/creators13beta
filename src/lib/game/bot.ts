@@ -22,6 +22,7 @@ import {
 } from "./engine";
 import { CREATORS_NEEDED, HAND_LIMIT, type DeckCard, type MatchState } from "./types";
 import { TYPE_TO_ELEMENT, ELEMENTS } from "./elements";
+import { isAdjacent } from "./board";
 
 export function botStep(state: MatchState): MatchState {
   if (state.finished) return state;
@@ -59,6 +60,8 @@ export function botStep(state: MatchState): MatchState {
 
   // 2) Place an animal that links to a placed creator (do this BEFORE disasters
   //    when hand is full, so we don't flood ourselves with more cards).
+  //    Prefer a legal empty hex that TOUCHES the matching creator — the win
+  //    rule requires adjacency.
   const placedCreators = [...player.ecosystem.placed.values()].filter(
     (pc) => pc.card.kind === "creator" || pc.card.kind === "sky_creator",
   );
@@ -67,7 +70,9 @@ export function botStep(state: MatchState): MatchState {
     const link = placedCreators.find((pc) => animalLinksToCreator(card, pc.card));
     if (!link) continue;
     const cells = legalEcoCells(player.ecosystem);
-    const cell = cells[0];
+    const adj = cells.filter((c) => isAdjacent(c, link.pos));
+    const cell = adj[0] ?? cells[0];
+    if (!cell) continue;
     try { return placeOnEcosystem(state, card.uid, cell); } catch {}
   }
 
