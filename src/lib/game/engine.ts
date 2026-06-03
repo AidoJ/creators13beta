@@ -417,6 +417,7 @@ export function rotateMyPlacedHex(
   const player = next.players.find((p) => p.id === playerId);
   if (!player) return state;
   player.ecosystem = rotatePlacedHex(player.ecosystem, posKey);
+  checkWin(next);
   return next;
 }
 
@@ -462,6 +463,7 @@ export function moveMyPlacedHex(
   }
   repivotNeighbours(player.ecosystem, toPos, toPos);
   next.lastEvent = `${player.name} moved ${existing.card.name}`;
+  checkWin(next);
   return next;
 }
 
