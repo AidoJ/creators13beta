@@ -515,7 +515,7 @@ function applyDisasterWipe(
         const cells = legalEcoCells(player.ecosystem);
         if (cells.length > 0) {
           const pos = cells[0];
-          const rotation = bestRotationForPlacement(player.ecosystem, pc.card, pos);
+          const rotation = bestRotationForPlacement(player.ecosystem, pc.card, pos, { restrictTo: "creator-only" });
           player.ecosystem.placed.set(keyOf(pos), { card: pc.card, pos, rotation });
           player.score += 1;
           placedOnBoard += 1;
