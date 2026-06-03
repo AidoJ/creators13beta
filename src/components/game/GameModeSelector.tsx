@@ -158,6 +158,39 @@ export function GameModeSelector({ open, onCancel, onChoose }: Props) {
           </div>
         )}
 
+        {/* Bot difficulty — applies to solo vs bot only */}
+        <div className="rounded-lg border border-border bg-card/40 p-3 mt-2">
+          <div className="flex items-center gap-2 mb-2">
+            <Bot className="w-4 h-4 text-muted-foreground" />
+            <Label className="text-sm font-semibold">Bot difficulty</Label>
+            <span className="text-[11px] text-muted-foreground ml-auto">Bot games don't earn Points or affect ELO.</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {(["easy", "medium", "hard"] as const).map((d) => {
+              const enabled = d === "easy" ? settings.bot_easy_enabled : d === "medium" ? settings.bot_medium_enabled : settings.bot_hard_enabled;
+              if (!enabled) return null;
+              const active = difficulty === d;
+              const label = d === "easy" ? "Easy" : d === "medium" ? "Medium" : "Hard";
+              const sub = d === "easy" ? "Forgiving — plays sub-optimal moves." : d === "medium" ? "Standard greedy play." : "Aggressive — plays disasters early.";
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setDifficulty(d)}
+                  className={
+                    "rounded-md border p-2 text-left transition-all " +
+                    (active ? "border-primary bg-primary/10 ring-2 ring-primary/40" : "border-border hover:border-primary/50 bg-background")
+                  }
+                >
+                  <div className="font-display text-sm">{label}</div>
+                  <div className="text-[11px] text-muted-foreground leading-snug">{sub}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+
         <DialogFooter>
           {onCancel && (
             <Button variant="outline" onClick={onCancel}>Cancel</Button>
