@@ -416,13 +416,17 @@ export function moveMyPlacedHex(
   // Re-pivot the moved card to match its new neighbours, and re-pivot any
   // adjacent animals whose neighbour set just changed.
   if (existing.card.kind === "animal" || existing.card.kind === "sky_creature") {
+    const driverCreator = neighbours(toPos)
+      .map((n) => player.ecosystem.placed.get(keyOf(n)))
+      .find((nb) => nb && (nb.card.kind === "creator" || nb.card.kind === "sky_creator"));
     const newRot = bestRotationForPlacement(player.ecosystem, existing.card, toPos, {
       restrictTo: "creator-only",
       currentRotation: existing.rotation ?? 0,
+      driverPos: driverCreator?.pos,
     });
     player.ecosystem.placed.set(toKey, { ...existing, pos: toPos, rotation: newRot });
   }
-  repivotNeighbours(player.ecosystem, toPos);
+  repivotNeighbours(player.ecosystem, toPos, toPos);
   next.lastEvent = `${player.name} moved ${existing.card.name}`;
   return next;
 }
