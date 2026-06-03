@@ -36,6 +36,15 @@ interface MatchRow {
   created_at: string;
 }
 
+interface BotStatRow {
+  difficulty: "easy" | "medium" | "hard";
+  wins: number;
+  losses: number;
+  draws: number;
+  perfect_ecos: number;
+  last_played_at: string | null;
+}
+
 interface Props {
   userId: string;
   firstName: string | null;
