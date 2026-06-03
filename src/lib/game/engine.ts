@@ -215,11 +215,56 @@ export function endTurnEarly(state: MatchState): MatchState {
 
 /* --------------------------- placement helpers --------------------------- */
 
-/** Does this animal/sky-creature link to that creator card? */
-export function animalLinksToCreator(animal: DeckCard, creator: DeckCard): boolean {
+/** For a Sky Creator at `skyPos`, return its locked sub-type — the first
+ *  non-Sky Creator Type with ≥3 matching adjacent animals. Dual-type animals
+ *  count toward both tallies; Golden Bodies are wildcards assigned to
+ *  whichever type needs them to reach 3. Tie-break: highest raw count, then
+ *  canonical type order. Returns null if no type qualifies. */
+export function skyLockedSubType(eco: Ecosystem, skyPos: Axial): string | null {
+  const CANONICAL = [
+    "Lava", "Fire", "Whirlwind", "Snow", "Lightning", "Sun",
+    "Lake", "Ocean", "Tree", "Mountain", "Soil", "River",
+  ];
+  const counts: Record<string, number> = {};
+  let golden = 0;
+  for (const n of neighbours(skyPos)) {
+    const pc = eco.placed.get(keyOf(n));
+    if (!pc) continue;
+    const k = pc.card.kind;
+    if (k === "golden_body") { golden += 1; continue; }
+    if (k !== "animal" && k !== "sky_creature") continue;
+    for (const t of (pc.card.types ?? []) as string[]) {
+      if (!t || t === "Sky") continue;
+      counts[t] = (counts[t] ?? 0) + 1;
+    }
+  }
+  const candidates = CANONICAL
+    .filter((t) => (counts[t] ?? 0) > 0 && (counts[t] ?? 0) + golden >= 3)
+    .sort((a, b) => (counts[b] ?? 0) - (counts[a] ?? 0) || CANONICAL.indexOf(a) - CANONICAL.indexOf(b));
+  return candidates[0] ?? null;
+}
+
+/** Does this animal/sky-creature link to that creator card?
+ *  For Sky Creators, pass `opts.skySubType` (locked sub-type) so the check
+ *  matches animals of that sub-type. Pass `opts.optimistic` to treat a Sky
+ *  as matching any typed animal (used by the bot / link-finder — the Sky's
+ *  sub-type is only resolved at win-check time). */
+export function animalLinksToCreator(
+  animal: DeckCard,
+  creator: DeckCard,
+  opts?: { skySubType?: string | null; optimistic?: boolean },
+): boolean {
   if (animal.kind === "golden_body") return true; // wildcard
   if (creator.kind === "sky_creator") {
-    return (animal.types ?? []).some((t) => t === "Sky");
+    if (opts?.optimistic) {
+      return ((animal.types ?? []) as string[]).some((t) => !!t);
+    }
+    const sub = opts?.skySubType;
+    if (!sub) return false;
+    return ((animal.types ?? []) as string[]).some(
+      (t) => t?.toLowerCase() === sub.toLowerCase(),
+    );
+  }
   }
   if (creator.kind !== "creator") return false;
   const animalTypes = (animal.types ?? []) as string[];
