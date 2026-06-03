@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Axial, Ecosystem as EcoType } from "@/lib/game/types";
 import { axialToPixel, keyOf, NEIGHBOUR_DIRS } from "@/lib/game/board";
-import { legalEcoCells } from "@/lib/game/engine";
+import { legalEcoCells, skyLockedSubType } from "@/lib/game/engine";
 import { facingTypeLabel } from "@/lib/game/rotation";
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "@/lib/game/elements";
@@ -224,6 +224,7 @@ export function Ecosystem({
                 card={pc.card}
                 size={size}
                 rotation={pc.rotation ?? 0}
+                skySubType={pc.card.kind === "sky_creator" ? skyLockedSubType(eco, pc.pos) : null}
                 onClick={clickHandler}
                 draggable={canDragMove}
                 onDragStart={canDragMove ? (e) => {

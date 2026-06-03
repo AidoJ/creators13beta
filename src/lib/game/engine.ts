@@ -215,29 +215,65 @@ export function endTurnEarly(state: MatchState): MatchState {
 
 /* --------------------------- placement helpers --------------------------- */
 
-/** Does this animal/sky-creature link to that creator card? */
-export function animalLinksToCreator(animal: DeckCard, creator: DeckCard): boolean {
+/** For a Sky Creator at `skyPos`, return its locked sub-type — the first
+ *  non-Sky Creator Type with ≥3 matching adjacent animals. Dual-type animals
+ *  count toward both tallies; Golden Bodies are wildcards assigned to
+ *  whichever type needs them to reach 3. Tie-break: highest raw count, then
+ *  canonical type order. Returns null if no type qualifies. */
+export function skyLockedSubType(eco: Ecosystem, skyPos: Axial): string | null {
+  const CANONICAL = [
+    "Lava", "Fire", "Whirlwind", "Snow", "Lightning", "Sun",
+    "Lake", "Ocean", "Tree", "Mountain", "Soil", "River",
+  ];
+  const counts: Record<string, number> = {};
+  let golden = 0;
+  for (const n of neighbours(skyPos)) {
+    const pc = eco.placed.get(keyOf(n));
+    if (!pc) continue;
+    const k = pc.card.kind;
+    if (k === "golden_body") { golden += 1; continue; }
+    if (k !== "animal" && k !== "sky_creature") continue;
+    for (const t of (pc.card.types ?? []) as string[]) {
+      if (!t || t === "Sky") continue;
+      counts[t] = (counts[t] ?? 0) + 1;
+    }
+  }
+  const candidates = CANONICAL
+    .filter((t) => (counts[t] ?? 0) > 0 && (counts[t] ?? 0) + golden >= 3)
+    .sort((a, b) => (counts[b] ?? 0) - (counts[a] ?? 0) || CANONICAL.indexOf(a) - CANONICAL.indexOf(b));
+  return candidates[0] ?? null;
+}
+
+/** Does this animal/sky-creature link to that creator card?
+ *  For Sky Creators, pass `opts.skySubType` (locked sub-type) so the check
+ *  matches animals of that sub-type. Pass `opts.optimistic` to treat a Sky
+ *  as matching any typed animal (used by the bot / link-finder — the Sky's
+ *  sub-type is only resolved at win-check time). */
+export function animalLinksToCreator(
+  animal: DeckCard,
+  creator: DeckCard,
+  opts?: { skySubType?: string | null; optimistic?: boolean },
+): boolean {
   if (animal.kind === "golden_body") return true; // wildcard
   if (creator.kind === "sky_creator") {
-    return (animal.types ?? []).some((t) => t === "Sky");
+    if (opts?.optimistic) {
+      return ((animal.types ?? []) as string[]).some((t) => !!t);
+    }
+    const sub = opts?.skySubType;
+    if (!sub) return false;
+    return ((animal.types ?? []) as string[]).some(
+      (t) => t?.toLowerCase() === sub.toLowerCase(),
+    );
   }
   if (creator.kind !== "creator") return false;
   const animalTypes = (animal.types ?? []) as string[];
-  // Strict rule: animal links ONLY if one of its 2 Creator Types matches this
-  // Creator's exact type. (No element-bucket fallback — that caused huge
-  // collateral wipes when a Fire Creator also pulled in Lava/Sun animals.)
   const creatorType = creator.displayType;
   if (creatorType) {
     return animalTypes.some((t) => t?.toLowerCase() === creatorType.toLowerCase());
   }
-  // Truly untyped creator (shouldn't happen) — fall back to element match.
   const el = creator.element!;
   return animalTypes.some((t) => TYPE_TO_ELEMENT[t] === el);
 }
-
-
-
-
 
 /** Find the creator card placed in this ecosystem that an animal would link to (if any). */
 export function findLinkedCreator(
@@ -246,7 +282,8 @@ export function findLinkedCreator(
 ): PlacedCard | null {
   for (const pc of eco.placed.values()) {
     if (pc.card.kind === "creator" || pc.card.kind === "sky_creator") {
-      if (animalLinksToCreator(animal, pc.card)) return pc;
+      // Optimistic: Sky Creators here count as matching any typed animal.
+      if (animalLinksToCreator(animal, pc.card, { optimistic: true })) return pc;
     }
   }
   return null;
@@ -289,11 +326,23 @@ export function placeOnEcosystem(
   // their rotation stays 0; placing a Creator instead triggers repivot on any
   // adjacent animals that now have a Creator neighbour.
   const isAnimalLike = card.kind === "animal" || card.kind === "sky_creature";
+  // For an animal landing next to a Creator, pin rotation to that single
+  // Creator so the matching half deterministically faces it.
+  const driverCreator = isAnimalLike
+    ? neighbours(pos)
+        .map((n) => player.ecosystem.placed.get(keyOf(n)))
+        .find((nb) => nb && (nb.card.kind === "creator" || nb.card.kind === "sky_creator"))
+    : undefined;
   const rotation = isAnimalLike
-    ? bestRotationForPlacement(player.ecosystem, card, pos, { restrictTo: "creator-only" })
+    ? bestRotationForPlacement(player.ecosystem, card, pos, {
+        restrictTo: "creator-only",
+        driverPos: driverCreator?.pos,
+      })
     : 0;
   player.ecosystem.placed.set(keyOf(pos), { card, pos, rotation });
-  repivotNeighbours(player.ecosystem, pos);
+  // After placing, re-pivot adjacent animals — when the placed card is a
+  // Creator, drive their rotation off this new Creator only.
+  repivotNeighbours(player.ecosystem, pos, pos);
   player.hand.splice(idx, 1);
   player.score += card.kind === "creator" || card.kind === "sky_creator" ? 3 : 1;
   next.placedThisTurn += 1;
@@ -301,19 +350,20 @@ export function placeOnEcosystem(
   return afterAction(next);
 }
 
-/** After a card lands at `pos`, re-pivot every adjacent two-colour card
- *  (animals / sky-creatures) so its colour halves face the freshly updated
- *  ecosystem. Single-colour cards are left alone (rotation is irrelevant). */
-function repivotNeighbours(eco: Ecosystem, pos: Axial): void {
+/** After a card lands at `pos`, re-pivot every adjacent animal/sky-creature
+ *  so its matching half faces the freshly updated ecosystem. When `driverPos`
+ *  is provided, each animal pivots toward THAT hex only — useful when a
+ *  Creator was just placed and should be the sole driver for its neighbours. */
+function repivotNeighbours(eco: Ecosystem, pos: Axial, driverPos?: Axial): void {
   for (const n of neighbours(pos)) {
     const nKey = keyOf(n);
     const pc = eco.placed.get(nKey);
     if (!pc) continue;
     if (pc.card.kind !== "animal" && pc.card.kind !== "sky_creature") continue;
-    // Only auto-pivot when this animal actually has a Creator neighbour.
     const newRot = bestRotationForPlacement(eco, pc.card, pc.pos, {
       restrictTo: "creator-only",
       currentRotation: pc.rotation ?? 0,
+      driverPos,
     });
     if (newRot !== (pc.rotation ?? 0)) {
       eco.placed.set(nKey, { ...pc, rotation: newRot });
@@ -366,13 +416,17 @@ export function moveMyPlacedHex(
   // Re-pivot the moved card to match its new neighbours, and re-pivot any
   // adjacent animals whose neighbour set just changed.
   if (existing.card.kind === "animal" || existing.card.kind === "sky_creature") {
+    const driverCreator = neighbours(toPos)
+      .map((n) => player.ecosystem.placed.get(keyOf(n)))
+      .find((nb) => nb && (nb.card.kind === "creator" || nb.card.kind === "sky_creator"));
     const newRot = bestRotationForPlacement(player.ecosystem, existing.card, toPos, {
       restrictTo: "creator-only",
       currentRotation: existing.rotation ?? 0,
+      driverPos: driverCreator?.pos,
     });
     player.ecosystem.placed.set(toKey, { ...existing, pos: toPos, rotation: newRot });
   }
-  repivotNeighbours(player.ecosystem, toPos);
+  repivotNeighbours(player.ecosystem, toPos, toPos);
   next.lastEvent = `${player.name} moved ${existing.card.name}`;
   return next;
 }
@@ -424,6 +478,27 @@ export function playDisaster(
   if (creator.disasterSpent) {
     throw new Error(
       `This ${creator.name} has already been played as a Disaster — each Creator can only trigger one Disaster per match. You can still place it on your board.`,
+    );
+  }
+
+  // Rule book prerequisite: you may only unleash a Disaster once your own
+  // ecosystem covers all four elements (Earth/Fire/Air/Water). A Sky Creator
+  // on your board counts for the element of its locked sub-type only.
+  const myElements = new Set<Element>();
+  for (const pc of player.ecosystem.placed.values()) {
+    if (pc.card.kind === "creator" && pc.card.element) {
+      myElements.add(pc.card.element);
+    } else if (pc.card.kind === "sky_creator") {
+      const sub = skyLockedSubType(player.ecosystem, pc.pos);
+      if (sub) {
+        const el = TYPE_TO_ELEMENT[sub];
+        if (el && el !== "Sky") myElements.add(el as Element);
+      }
+    }
+  }
+  if (!ELEMENTS.every((e) => myElements.has(e))) {
+    throw new Error(
+      "You must place one Creator of each element (Earth, Fire, Air, Water) on your own board before you can unleash a Disaster.",
     );
   }
 
@@ -511,11 +586,23 @@ function applyDisasterWipe(
       const isAnimal =
         pc.card.kind === "animal" ||
         pc.card.kind === "sky_creature";
-      if (isAnimal && animalLinksToCreator(pc.card, creator)) {
+      // Sky Creator Disaster (rule book): wipes ONLY mythical creatures
+      // carrying the Sky symbol — i.e. sky_creature cards. Regular animals
+      // and Golden Bodies are untouched.
+      const wipesThis = creator.kind === "sky_creator"
+        ? pc.card.kind === "sky_creature"
+        : isAnimal && animalLinksToCreator(pc.card, creator);
+      if (wipesThis) {
         const cells = legalEcoCells(player.ecosystem);
         if (cells.length > 0) {
           const pos = cells[0];
-          const rotation = bestRotationForPlacement(player.ecosystem, pc.card, pos, { restrictTo: "creator-only" });
+          const driverCreator = neighbours(pos)
+            .map((n) => player.ecosystem.placed.get(keyOf(n)))
+            .find((nb) => nb && (nb.card.kind === "creator" || nb.card.kind === "sky_creator"));
+          const rotation = bestRotationForPlacement(player.ecosystem, pc.card, pos, {
+            restrictTo: "creator-only",
+            driverPos: driverCreator?.pos,
+          });
           player.ecosystem.placed.set(keyOf(pos), { card: pc.card, pos, rotation });
           player.score += 1;
           placedOnBoard += 1;
@@ -581,8 +668,13 @@ export function playSkyCreatureSteal(
     if (!legal.some((c) => c.q === placeAt.q && c.r === placeAt.r)) {
       throw new Error("Pick a glowing hex on your own board to place the stolen card.");
     }
-    
-    const rotation = bestRotationForPlacement(player.ecosystem, stolen.card, placeAt, { restrictTo: "creator-only" });
+    const driverCreator = neighbours(placeAt)
+      .map((n) => player.ecosystem.placed.get(keyOf(n)))
+      .find((nb) => nb && (nb.card.kind === "creator" || nb.card.kind === "sky_creator"));
+    const rotation = bestRotationForPlacement(player.ecosystem, stolen.card, placeAt, {
+      restrictTo: "creator-only",
+      driverPos: driverCreator?.pos,
+    });
     player.ecosystem.placed.set(keyOf(placeAt), { card: stolen.card, pos: placeAt, rotation });
     player.score += 1;
     next.lastEvent = `${player.name} stole ${stolen.card.name} from ${victim.name} and placed it`;
@@ -699,11 +791,27 @@ export function validateEcosystemWin(player: PlayerState): EcosystemWinValidatio
   const pcByUid = new Map<string, PlacedCard>();
   for (const pc of placedAll) pcByUid.set(pc.card.uid, pc);
 
-  const quartets = enumerateElementCoveringQuartets(creators);
+  // Pre-compute Sky Creators' locked sub-types from the board.
+  const skySubByUid = new Map<string, string | null>();
+  for (const pc of creatorPcs) {
+    if (pc.card.kind === "sky_creator") {
+      skySubByUid.set(pc.card.uid, skyLockedSubType(player.ecosystem, pc.pos));
+    }
+  }
+
+  const quartets = enumerateElementCoveringQuartets(creators, (c) => {
+    if (c.kind === "sky_creator") {
+      const sub = skySubByUid.get(c.uid) ?? null;
+      if (!sub) return [];
+      const el = TYPE_TO_ELEMENT[sub];
+      return el && el !== "Sky" ? [el as Element] : [];
+    }
+    return c.element ? [c.element] : [];
+  });
   for (const quartet of quartets) {
     const quartetPcs = quartet.map((c) => pcByUid.get(c.uid)!).filter(Boolean);
     if (quartetPcs.length !== quartet.length) continue;
-    if (canAssignAdjacentAnimalsToCreators(quartetPcs, animalPcs)) {
+    if (canAssignAdjacentAnimalsToCreators(quartetPcs, animalPcs, skySubByUid)) {
       return {
         valid: stillHoldingCreators.length === 0,
         creators,
@@ -730,11 +838,17 @@ export function validateEcosystemWin(player: PlayerState): EcosystemWinValidatio
 function canAssignAdjacentAnimalsToCreators(
   creators: PlacedCard[],
   animals: PlacedCard[],
+  skySubByUid?: Map<string, string | null>,
 ): boolean {
   if (creators.length !== CREATORS_NEEDED) return false;
   if (animals.length < CREATORS_NEEDED * ANIMALS_PER_CREATOR) return false;
   const slots = creators.map((creator) => ({ creator, assigned: [] as number[] }));
   const used = new Set<number>();
+
+  const linkOpts = (creator: DeckCard) =>
+    creator.kind === "sky_creator"
+      ? { skySubType: skySubByUid?.get(creator.uid) ?? null }
+      : undefined;
 
   const recurse = (): boolean => {
     if (slots.every((slot) => slot.assigned.length === ANIMALS_PER_CREATOR)) return true;
@@ -748,7 +862,7 @@ function canAssignAdjacentAnimalsToCreators(
         .map((animalPc, idx) => ({ animalPc, idx }))
         .filter(({ animalPc, idx }) =>
           !used.has(idx) &&
-          animalLinksToCreator(animalPc.card, slot.creator.card) &&
+          animalLinksToCreator(animalPc.card, slot.creator.card, linkOpts(slot.creator.card)) &&
           isAdjacent(animalPc.pos, slot.creator.pos),
         )
         .map(({ idx }) => idx);
@@ -807,13 +921,16 @@ function checkWin(state: MatchState): void {
 /** Return all 4-creator subsets of `creators` such that each of the 4 elements
  *  (earth / fire / air / water) is covered by exactly one creator in the subset.
  *  Sky Creators act as wildcards (can fill any element slot). */
-function enumerateElementCoveringQuartets(creators: DeckCard[]): DeckCard[][] {
+function enumerateElementCoveringQuartets(
+  creators: DeckCard[],
+  elementsOf?: (c: DeckCard) => Element[],
+): DeckCard[][] {
   const out: DeckCard[][] = [];
   const seen = new Set<string>();
   const used = new Set<number>();
   const picked: DeckCard[] = [];
-  const elementsOf = (c: DeckCard): Element[] =>
-    c.kind === "sky_creator" ? ELEMENTS : c.element ? [c.element] : [];
+  const elsOf = elementsOf ?? ((c: DeckCard): Element[] =>
+    c.kind === "sky_creator" ? ELEMENTS : c.element ? [c.element] : []);
   const recurse = (eIdx: number) => {
     if (eIdx === ELEMENTS.length) {
       const key = [...used].sort((a, b) => a - b).join(",");
@@ -823,7 +940,7 @@ function enumerateElementCoveringQuartets(creators: DeckCard[]): DeckCard[][] {
     const el = ELEMENTS[eIdx];
     for (let i = 0; i < creators.length; i++) {
       if (used.has(i)) continue;
-      if (!elementsOf(creators[i]).includes(el)) continue;
+      if (!elsOf(creators[i]).includes(el)) continue;
       used.add(i); picked.push(creators[i]);
       recurse(eIdx + 1);
       used.delete(i); picked.pop();

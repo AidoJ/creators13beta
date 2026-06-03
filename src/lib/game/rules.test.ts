@@ -114,12 +114,37 @@ describe("classic ecosystem win validation", () => {
     expect(validateEcosystemWin(p).valid).toBe(true);
   });
 
-  it("does not let Sky Creator satisfy three arbitrary non-Sky animals", () => {
+  it("allows Sky Creator to lock onto its 3 adjacent matching animals' type", () => {
+    // Per rule book: Sky locks to a sub-type once ≥3 adjacent animals share
+    // that type. Here Sky is surrounded by 3 Lightning/Snow animals → locks
+    // to Lightning (Air element). Quartet Air/Fire/Earth/Water is satisfied.
     const p = buildPlayer([
       [skyCreator(),
         animal("lightning-0", ["Lightning", "Snow"]),
         animal("lightning-1", ["Lightning", "Snow"]),
         animal("lightning-2", ["Lightning", "Snow"])],
+      [creator("Fire", "Fire"),
+        animal("fire-0", ["Fire", "Sun"]),
+        animal("fire-1", ["Fire", "Sun"]),
+        animal("fire-2", ["Fire", "Sun"])],
+      [creator("Soil", "Earth"),
+        animal("soil-0", ["Soil", "Tree"]),
+        animal("soil-1", ["Soil", "Tree"]),
+        animal("soil-2", ["Soil", "Tree"])],
+      [creator("Ocean", "Water"),
+        animal("ocean-0", ["Ocean", "River"]),
+        animal("ocean-1", ["Ocean", "River"]),
+        animal("ocean-2", ["Ocean", "River"])],
+    ]);
+
+    expect(validateEcosystemWin(p).valid).toBe(true);
+  });
+
+  it("rejects Sky Creator with no adjacent animals (no sub-type can lock)", () => {
+    // Sky placed alone; the other 3 creators have their own clusters.
+    // Sky cannot contribute any element → quartet incomplete → no win.
+    const p = buildPlayer([
+      [skyCreator()],
       [creator("Fire", "Fire"),
         animal("fire-0", ["Fire", "Sun"]),
         animal("fire-1", ["Fire", "Sun"]),

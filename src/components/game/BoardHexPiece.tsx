@@ -16,13 +16,16 @@ interface Props {
   highlight?: "selected" | "match" | null;
   /** 0..5 — 60° clockwise rotations applied to the hex background only. */
   rotation?: number;
+  /** For Sky Creator only — when set, paints half-Sky / half-this-type so
+   *  the board visually shows which sub-type the Sky has locked onto. */
+  skySubType?: string | null;
 }
 
 /** Hex piece that renders any DeckCard kind (animal, creator, special).
  *  Board pieces show ONLY the artwork / glyph — no name plate — since the
  *  player has already chosen the card from the deck-style hand tile.
  *  Only the coloured background rotates; the artwork stays upright. */
-export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEnd, draggable = false, highlight = null, rotation = 0 }: Props) {
+export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEnd, draggable = false, highlight = null, rotation = 0, skySubType = null }: Props) {
   const h = size * 1.1547;
   const hexPoints = "0.5,0 1,0.25 1,0.75 0.5,1 0,0.75 0,0.25";
   const halfA = "0.5,0 1,0.25 0,0.75 0,0.25";
@@ -33,6 +36,9 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
   let artGlyph: string | undefined;
   let halfGlyph1: string | undefined;
   let halfGlyph2: string | undefined;
+  // Sky Creator that has locked a sub-type renders as a true two-colour split,
+  // same shape as animal cards, so the board shows the locked sub-type at a glance.
+  const skySplit = card.kind === "sky_creator" && !!skySubType;
   if (card.kind === "animal" || card.kind === "sky_creature") {
     const [t1, t2] = card.types ?? [];
     c1 = CREATOR_TYPE_COLORS[t1 as keyof typeof CREATOR_TYPE_COLORS] ?? "#444";
@@ -44,7 +50,10 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
     c1 = c2 = dt ? (CREATOR_TYPE_COLORS[dt as keyof typeof CREATOR_TYPE_COLORS] ?? ELEMENT_COLORS[card.element!]) : ELEMENT_COLORS[card.element!];
     artGlyph = dt ? (CREATOR_TYPE_GLYPHS[dt] ?? ELEMENT_GLYPHS[card.element!]) : ELEMENT_GLYPHS[card.element!];
   } else if (card.kind === "sky_creator") {
-    c1 = c2 = ELEMENT_COLORS.Sky;
+    c1 = ELEMENT_COLORS.Sky;
+    c2 = skySplit
+      ? (CREATOR_TYPE_COLORS[skySubType as keyof typeof CREATOR_TYPE_COLORS] ?? ELEMENT_COLORS.Sky)
+      : ELEMENT_COLORS.Sky;
     artGlyph = CREATOR_TYPE_GLYPHS.Sky;
   } else if (card.kind === "golden_body") {
     c1 = "#f5c542"; c2 = "#e0a920"; artGlyph = goldenBodyArt;
@@ -81,7 +90,7 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
           transition: "transform 220ms ease",
         }}
       >
-        {card.kind === "animal" || card.kind === "sky_creature" ? (
+        {card.kind === "animal" || card.kind === "sky_creature" || skySplit ? (
           <>
             <polygon points={halfA} fill={c1} />
             <polygon points={halfB} fill={c2} />
