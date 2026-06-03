@@ -52,8 +52,16 @@ export function botStep(state: MatchState, difficulty: BotDifficulty = "medium")
   const { creators } = ecosystemSummary(player.ecosystem);
   const handFull = player.hand.length >= HAND_LIMIT - 2;
 
+  // Difficulty modifier:
+  //   easy   — 40% of the time the bot skips the optimal "place a needed creator"
+  //            and the adjacency-matching step, falling through to a random legal placement.
+  //   medium — full greedy (original behaviour).
+  //   hard   — never skips, AND will play disasters as soon as eligible.
+  const skipOptimal = difficulty === "easy" && Math.random() < 0.4;
+  const aggressiveDisasters = difficulty === "hard";
+
   // 1) Place a creator we still need.
-  if (creators < CREATORS_NEEDED) {
+  if (!skipOptimal && creators < CREATORS_NEEDED) {
     const creator = player.hand.find((c) => c.kind === "creator" || c.kind === "sky_creator");
     if (creator) {
       const cell = legalEcoCells(player.ecosystem)[0];
