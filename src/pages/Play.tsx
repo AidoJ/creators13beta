@@ -307,6 +307,19 @@ export default function Play() {
         alreadyFinishedBefore,
       });
     }
+    // Bot-match lifetime stats (no points / no ELO — practice only).
+    if (user && isBotMatch && next.finished && !alreadyFinishedBefore && !botStatsRecordedRef.current) {
+      botStatsRecordedRef.current = true;
+      const youSlot = "you";
+      const youPlayer = next.players.find((p) => p.id === youSlot);
+      const won = next.winnerId == null ? null : next.winnerId === youSlot;
+      const perfectEco = (youPlayer?.ecosystem.placed.size ?? 0) >= 16 && won === true;
+      supabase.rpc("bump_bot_match_stats", {
+        _difficulty: botDifficultyRef.current,
+        _won: won,
+        _perfect_eco: perfectEco,
+      }).then(({ error }) => { if (error) console.warn("bump_bot_match_stats failed", error); });
+    }
     if (matchRow && user) {
       const seq = ++saveSeqRef.current;
       // Compute winner user id for pvp.
