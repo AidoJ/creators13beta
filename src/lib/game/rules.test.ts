@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rotateMyPlacedHex, skyLockedSubType, validateEcosystemWin } from "./engine";
+import { playDisaster, rotateMyPlacedHex, skyLockedSubType, validateEcosystemWin } from "./engine";
 import type { DeckCard, MatchState, PlayerState } from "./types";
 import type { Element } from "./elements";
 import type { CreatorTypeName } from "@/lib/gameCards";
@@ -146,6 +146,74 @@ describe("classic ecosystem win validation", () => {
     ]);
 
     expect(validateEcosystemWin(p).valid).toBe(true);
+  });
+
+  it("counts Sky Creator as the matching animal type even when that type is not the currently facing half", () => {
+    const placed = new Map<string, { card: DeckCard; pos: { q: number; r: number }; rotation?: number }>();
+    const sky = skyCreator();
+    const skyPos = { q: 0, r: 0 };
+    placed.set("0,0", { card: sky, pos: skyPos });
+
+    [
+      animal("soil-side-0", ["Fire", "Soil"]),
+      animal("soil-side-1", ["Ocean", "Soil"]),
+      animal("soil-side-2", ["Snow", "Soil"]),
+    ].forEach((a, j) => {
+      const off = NEI[j];
+      const pos = { q: skyPos.q + off.q, r: skyPos.r + off.r };
+      const dirToSky = NEI.findIndex((d) => pos.q + d.q === skyPos.q && pos.r + d.r === skyPos.r);
+      // Deliberately rotate the non-Soil half toward Sky. Sky should still be
+      // allowed to substitute as Soil because these are Soil animals.
+      placed.set(`${pos.q},${pos.r}`, { card: a, pos, rotation: rotationFacing(dirToSky, "A") });
+    });
+
+    [
+      [creator("Fire", "Fire"), ...Array.from({ length: 3 }, (_, i) => animal(`fire-sky-${i}`, ["Fire", "Sun"]))],
+      [creator("Snow", "Air"), ...Array.from({ length: 3 }, (_, i) => animal(`snow-sky-${i}`, ["Snow", "Lightning"]))],
+      [creator("Ocean", "Water"), ...Array.from({ length: 3 }, (_, i) => animal(`ocean-sky-${i}`, ["Ocean", "River"]))],
+    ].forEach((group, i) => {
+      const origin = { q: (i + 1) * 10, r: 0 };
+      const [c, ...animals] = group;
+      placed.set(`${origin.q},${origin.r}`, { card: c, pos: origin });
+      animals.forEach((a, j) => {
+        const off = NEI[j];
+        const pos = { q: origin.q + off.q, r: origin.r + off.r };
+        placed.set(`${pos.q},${pos.r}`, { card: a, pos, rotation: rotationFacing((j + 3) % 6, "A") });
+      });
+    });
+
+    const p: PlayerState = {
+      id: "p1", name: "Goldie", hand: [], hiveShield: false, score: 0,
+      ecosystem: { placed },
+    };
+
+    expect(skyLockedSubType(p.ecosystem, skyPos)).toBe("Soil");
+    expect(validateEcosystemWin(p).valid).toBe(true);
+  });
+
+  it("allows a Disaster when Sky is the missing fourth element via its adjacent animal type", () => {
+    const p = buildPlayer([
+      [skyCreator(),
+        animal("soil-disaster-0", ["Fire", "Soil"]),
+        animal("soil-disaster-1", ["Ocean", "Soil"]),
+        animal("soil-disaster-2", ["Snow", "Soil"])],
+      [creator("Fire", "Fire"), animal("fire-disaster-0", ["Fire", "Sun"])],
+      [creator("Snow", "Air"), animal("snow-disaster-0", ["Snow", "Lightning"])],
+      [creator("Ocean", "Water"), animal("ocean-disaster-0", ["Ocean", "River"])],
+    ], [creator("Lake", "Water")]);
+    const skyPc = Array.from(p.ecosystem.placed.values()).find((pc) => pc.card.kind === "sky_creator")!;
+    for (const pc of Array.from(p.ecosystem.placed.values())) {
+      if (!pc.card.types?.includes("Soil")) continue;
+      const dirToSky = NEI.findIndex((d) => pc.pos.q + d.q === skyPc.pos.q && pc.pos.r + d.r === skyPc.pos.r);
+      p.ecosystem.placed.set(`${pc.pos.q},${pc.pos.r}`, { ...pc, rotation: rotationFacing(dirToSky, "A") });
+    }
+
+    const state: MatchState = {
+      players: [p, buildPlayer([])], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
+      turnNumber: 1, finished: false, winnerId: null,
+    };
+
+    expect(() => playDisaster(state, p.hand[0].uid)).not.toThrow();
   });
 
   it("accepts the screenshot-style hand: Sky subbed as Fire, Snow Air, Mountain Earth, Lake Water with Golden Body", () => {
