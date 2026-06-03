@@ -1148,7 +1148,16 @@ export default function Play() {
 
       {gameSettings.show_tutorial_overlay && <TutorialOverlay />}
       <RuleBookSheet open={ruleBookOpen} onOpenChange={setRuleBookOpen} />
-      <OpponentPanel open={opponentPanelOpen} onClose={() => setOpponentPanelOpen(false)} player={opponent} />
+      <OpponentPanel
+        open={opponentPanelOpen}
+        onClose={() => setOpponentPanelOpen(false)}
+        player={opponent}
+        opponentUserId={
+          matchRow && matchRow.mode === "pvp"
+            ? (selfSlot === "host" ? matchRow.guest_user_id : matchRow.host_user_id)
+            : null
+        }
+      />
       <MultiplayerLobby
         open={lobbyOpen}
         onOpenChange={setLobbyOpen}
