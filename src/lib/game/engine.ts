@@ -838,11 +838,17 @@ export function validateEcosystemWin(player: PlayerState): EcosystemWinValidatio
 function canAssignAdjacentAnimalsToCreators(
   creators: PlacedCard[],
   animals: PlacedCard[],
+  skySubByUid?: Map<string, string | null>,
 ): boolean {
   if (creators.length !== CREATORS_NEEDED) return false;
   if (animals.length < CREATORS_NEEDED * ANIMALS_PER_CREATOR) return false;
   const slots = creators.map((creator) => ({ creator, assigned: [] as number[] }));
   const used = new Set<number>();
+
+  const linkOpts = (creator: DeckCard) =>
+    creator.kind === "sky_creator"
+      ? { skySubType: skySubByUid?.get(creator.uid) ?? null }
+      : undefined;
 
   const recurse = (): boolean => {
     if (slots.every((slot) => slot.assigned.length === ANIMALS_PER_CREATOR)) return true;
@@ -856,7 +862,7 @@ function canAssignAdjacentAnimalsToCreators(
         .map((animalPc, idx) => ({ animalPc, idx }))
         .filter(({ animalPc, idx }) =>
           !used.has(idx) &&
-          animalLinksToCreator(animalPc.card, slot.creator.card) &&
+          animalLinksToCreator(animalPc.card, slot.creator.card, linkOpts(slot.creator.card)) &&
           isAdjacent(animalPc.pos, slot.creator.pos),
         )
         .map(({ idx }) => idx);
