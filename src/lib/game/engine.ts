@@ -216,10 +216,16 @@ export function endTurnEarly(state: MatchState): MatchState {
 /* --------------------------- placement helpers --------------------------- */
 
 /** For a Sky Creator at `skyPos`, return its locked sub-type — the first
- *  non-Sky Creator Type with ≥3 matching adjacent animals. Dual-type animals
+ *  non-Sky Creator Type with ≥3 adjacent matching animals. Dual-type animals
  *  count toward both tallies; Golden Bodies are wildcards assigned to
  *  whichever type needs them to reach 3. Tie-break: highest raw count, then
- *  canonical type order. Returns null if no type qualifies. */
+ *  canonical type order. Returns null if no type qualifies.
+ *
+ *  Important: this must inspect each adjacent animal's full Creator-Type list,
+ *  not only the half currently facing Sky. Sky's type choice is what lets the
+ *  board know which half should matter, so using facing-only checks creates a
+ *  circular failure where valid Sky-as-Soil / Sky-as-any-type groups never lock.
+ */
 export function skyLockedSubType(eco: Ecosystem, skyPos: Axial): string | null {
   const CANONICAL = [
     "Lava", "Fire", "Whirlwind", "Snow", "Lightning", "Sun",
@@ -233,9 +239,10 @@ export function skyLockedSubType(eco: Ecosystem, skyPos: Axial): string | null {
     const k = pc.card.kind;
     if (k === "golden_body") { golden += 1; continue; }
     if (k !== "animal" && k !== "sky_creature") continue;
-    const t = animalTypeFacingCreator(pc, skyPos);
-    if (!t || t === "Sky") continue;
-    counts[t] = (counts[t] ?? 0) + 1;
+    for (const t of pc.card.types ?? []) {
+      if (!t || t === "Sky") continue;
+      counts[t] = (counts[t] ?? 0) + 1;
+    }
   }
   const candidates = CANONICAL
     .filter((t) => (counts[t] ?? 0) > 0 && (counts[t] ?? 0) + golden >= 3)
@@ -269,7 +276,7 @@ function animalTouchesCreatorAs(
   if (!facing) return false;
   if (creatorPc.card.kind === "sky_creator") {
     const sub = opts?.skySubType;
-    return !!sub && facing.toLowerCase() === sub.toLowerCase();
+    return !!sub && (animalPc.card.types ?? []).some((t) => t.toLowerCase() === sub.toLowerCase());
   }
   if (creatorPc.card.kind !== "creator") return false;
   const creatorType = creatorPc.card.displayType;
