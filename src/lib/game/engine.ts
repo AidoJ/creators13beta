@@ -586,11 +586,23 @@ function applyDisasterWipe(
       const isAnimal =
         pc.card.kind === "animal" ||
         pc.card.kind === "sky_creature";
-      if (isAnimal && animalLinksToCreator(pc.card, creator)) {
+      // Sky Creator Disaster (rule book): wipes ONLY mythical creatures
+      // carrying the Sky symbol — i.e. sky_creature cards. Regular animals
+      // and Golden Bodies are untouched.
+      const wipesThis = creator.kind === "sky_creator"
+        ? pc.card.kind === "sky_creature"
+        : isAnimal && animalLinksToCreator(pc.card, creator);
+      if (wipesThis) {
         const cells = legalEcoCells(player.ecosystem);
         if (cells.length > 0) {
           const pos = cells[0];
-          const rotation = bestRotationForPlacement(player.ecosystem, pc.card, pos, { restrictTo: "creator-only" });
+          const driverCreator = neighbours(pos)
+            .map((n) => player.ecosystem.placed.get(keyOf(n)))
+            .find((nb) => nb && (nb.card.kind === "creator" || nb.card.kind === "sky_creator"));
+          const rotation = bestRotationForPlacement(player.ecosystem, pc.card, pos, {
+            restrictTo: "creator-only",
+            driverPos: driverCreator?.pos,
+          });
           player.ecosystem.placed.set(keyOf(pos), { card: pc.card, pos, rotation });
           player.score += 1;
           placedOnBoard += 1;
