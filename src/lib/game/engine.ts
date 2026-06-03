@@ -921,13 +921,16 @@ function checkWin(state: MatchState): void {
 /** Return all 4-creator subsets of `creators` such that each of the 4 elements
  *  (earth / fire / air / water) is covered by exactly one creator in the subset.
  *  Sky Creators act as wildcards (can fill any element slot). */
-function enumerateElementCoveringQuartets(creators: DeckCard[]): DeckCard[][] {
+function enumerateElementCoveringQuartets(
+  creators: DeckCard[],
+  elementsOf?: (c: DeckCard) => Element[],
+): DeckCard[][] {
   const out: DeckCard[][] = [];
   const seen = new Set<string>();
   const used = new Set<number>();
   const picked: DeckCard[] = [];
-  const elementsOf = (c: DeckCard): Element[] =>
-    c.kind === "sky_creator" ? ELEMENTS : c.element ? [c.element] : [];
+  const elsOf = elementsOf ?? ((c: DeckCard): Element[] =>
+    c.kind === "sky_creator" ? ELEMENTS : c.element ? [c.element] : []);
   const recurse = (eIdx: number) => {
     if (eIdx === ELEMENTS.length) {
       const key = [...used].sort((a, b) => a - b).join(",");
