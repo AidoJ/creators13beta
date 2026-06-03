@@ -1,8 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { validateEcosystemWin } from "./engine";
-import type { DeckCard, PlayerState } from "./types";
+import { rotateMyPlacedHex, skyLockedSubType, validateEcosystemWin } from "./engine";
+import type { DeckCard, MatchState, PlayerState } from "./types";
 import type { Element } from "./elements";
 import type { CreatorTypeName } from "@/lib/gameCards";
+
+const BASE_HALVES = ["B", "A", "A", "A", "B", "B"] as const;
+const NEI = [
+  { q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
+  { q: -1, r: 0 }, { q: -1, r: 1 }, { q: 0, r: 1 },
+];
+
+function rotationFacing(dirToCreator: number, half: "A" | "B"): number {
+  return [0, 1, 2, 3, 4, 5].find((rot) => BASE_HALVES[(dirToCreator - rot + 6) % 6] === half) ?? 0;
+}
 
 const creator = (type: CreatorTypeName, element: Element): DeckCard => ({
   uid: `creator-${type}`,
@@ -27,21 +37,19 @@ const skyCreator = (): DeckCard => ({ uid: "sky-creator", kind: "sky_creator", n
  *  adjacency rule is satisfied). `clusters` is an array of
  *  `[creator, ...animals]` groups laid out at distinct origins. */
 function buildPlayer(clusters: DeckCard[][], hand: DeckCard[] = []): PlayerState {
-  // Six axial neighbour offsets around (0,0).
-  const NEI = [
-    { q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
-    { q: -1, r: 0 }, { q: -1, r: 1 }, { q: 0, r: 1 },
-  ];
-  const placed = new Map<string, { card: DeckCard; pos: { q: number; r: number } }>();
+  const placed = new Map<string, { card: DeckCard; pos: { q: number; r: number }; rotation?: number }>();
   // Place clusters far apart so no cross-cluster adjacency leaks in.
   clusters.forEach((group, i) => {
     const origin = { q: i * 10, r: i * 10 };
     const [creator, ...animals] = group;
+      const targetType = creator.kind === "creator" ? creator.displayType : animals.find((a) => a.types?.[0])?.types?.[0];
     placed.set(`${origin.q},${origin.r}`, { card: creator, pos: origin });
     animals.forEach((a, j) => {
       const off = NEI[j];
       const pos = { q: origin.q + off.q, r: origin.r + off.r };
-      placed.set(`${pos.q},${pos.r}`, { card: a, pos });
+      const half = targetType && a.types?.[1] === targetType && a.types?.[0] !== targetType ? "B" : "A";
+      const rotation = a.kind === "golden_body" ? 0 : rotationFacing((j + 3) % 6, half);
+      placed.set(`${pos.q},${pos.r}`, { card: a, pos, rotation });
     });
   });
   return {
@@ -138,6 +146,71 @@ describe("classic ecosystem win validation", () => {
     ]);
 
     expect(validateEcosystemWin(p).valid).toBe(true);
+  });
+
+  it("accepts the screenshot-style hand: Sky subbed as Fire, Snow Air, Mountain Earth, Lake Water with Golden Body", () => {
+    const p = buildPlayer([
+      [creator("Snow", "Air"),
+        animal("duck", ["Snow", "River"]),
+        animal("spider", ["Snow", "Tree"]),
+        animal("leopard", ["Snow", "Mountain"])],
+      [skyCreator(),
+        animal("fox", ["Lava", "Fire"]),
+        animal("cheetah", ["Fire", "Lightning"]),
+        animal("gorilla", ["Fire", "Mountain"]),
+        animal("mouse", ["Fire", "Snow"])],
+      [creator("Mountain", "Earth"),
+        animal("lynx", ["Mountain", "Snow"]),
+        animal("gorilla-2", ["Fire", "Mountain"]),
+        animal("leopard-2", ["Snow", "Mountain"])],
+      [creator("Lake", "Water"),
+        animal("panda", ["Fire", "Lake"]),
+        animal("swan", ["Snow", "Lake"]),
+        goldenBody("golden-body")],
+    ]);
+    const skyPc = Array.from(p.ecosystem.placed.values()).find((pc) => pc.card.kind === "sky_creator")!;
+    const skyAnimals = Array.from(p.ecosystem.placed.values()).filter((pc) => pc.pos.q >= 10 && pc.pos.q <= 11 && pc.pos.r >= 9 && pc.pos.r <= 11 && pc.card.kind === "animal");
+    skyAnimals.forEach((pc) => {
+      const dirToSky = NEI.findIndex((d) => pc.pos.q + d.q === skyPc.pos.q && pc.pos.r + d.r === skyPc.pos.r);
+      const fireIsSecondHalf = pc.card.types?.[1] === "Fire";
+      p.ecosystem.placed.set(`${pc.pos.q},${pc.pos.r}`, { ...pc, rotation: rotationFacing(dirToSky, fireIsSecondHalf ? "B" : "A") });
+    });
+
+    expect(skyLockedSubType(p.ecosystem, skyPc.pos)).toBe("Fire");
+    expect(validateEcosystemWin(p).valid).toBe(true);
+  });
+
+  it("re-checks the win immediately when a rotation makes the touching half match", () => {
+    const p = buildPlayer([
+      [creator("Snow", "Air"),
+        animal("snow-0", ["Snow", "Lightning"]),
+        animal("snow-1", ["Snow", "Lightning"]),
+        animal("snow-2", ["Snow", "Lightning"])],
+      [creator("Fire", "Fire"),
+        animal("fire-0", ["Fire", "Sun"]),
+        animal("fire-1", ["Fire", "Sun"]),
+        animal("fire-2", ["Fire", "Sun"])],
+      [creator("Soil", "Earth"),
+        animal("soil-0", ["Soil", "Tree"]),
+        animal("soil-1", ["Soil", "Tree"]),
+        animal("soil-2", ["Soil", "Tree"])],
+      [creator("Ocean", "Water"),
+        animal("ocean-0", ["Ocean", "River"]),
+        animal("ocean-1", ["Ocean", "River"]),
+        animal("ocean-2", ["Ocean", "River"])],
+    ]);
+    const badKey = "1,0";
+    const badPc = p.ecosystem.placed.get(badKey)!;
+    p.ecosystem.placed.set(badKey, { ...badPc, rotation: 5 });
+    expect(validateEcosystemWin(p).valid).toBe(false);
+
+    const state: MatchState = {
+      players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 0, placedThisTurn: 0,
+      turnNumber: 1, finished: false, winnerId: null,
+    };
+    const next = rotateMyPlacedHex(state, "p1", badKey);
+    expect(next.finished).toBe(true);
+    expect(next.winnerId).toBe("p1");
   });
 
   it("rejects Sky Creator with no adjacent animals (no sub-type can lock)", () => {
