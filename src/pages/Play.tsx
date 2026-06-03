@@ -90,6 +90,8 @@ export default function Play() {
   const saveSeqRef = useRef(0);
   const undoStackRef = useRef<MatchState[]>([]);
   const [undoCount, setUndoCount] = useState(0);
+  const botDifficultyRef = useRef<BotDifficulty>("medium");
+  const botStatsRecordedRef = useRef(false);
   const [quickUndoUntil, setQuickUndoUntil] = useState<number>(0);
   const [, setNowTick] = useState(0);
   const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
