@@ -896,8 +896,7 @@ function canAssignAdjacentAnimalsToCreators(
         .map((animalPc, idx) => ({ animalPc, idx }))
         .filter(({ animalPc, idx }) =>
           !used.has(idx) &&
-          animalLinksToCreator(animalPc.card, slot.creator.card, linkOpts(slot.creator.card)) &&
-          isAdjacent(animalPc.pos, slot.creator.pos),
+          animalTouchesCreatorAs(animalPc, slot.creator, linkOpts(slot.creator.card)),
         )
         .map(({ idx }) => idx);
       if (targetIndex === -1 || options.length < targetOptions.length) {
