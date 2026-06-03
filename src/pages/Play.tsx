@@ -37,6 +37,8 @@ import {
   type GameMatchRow,
 } from "@/lib/game/persistence";
 import { recordProgressDiff } from "@/lib/game/progress";
+import type { BotDifficulty } from "@/lib/game/bot";
+import { supabase } from "@/integrations/supabase/client";
 import { useMatchRealtime } from "@/hooks/useMatchRealtime";
 import { useAuth } from "@/contexts/AuthContext";
 import { DISCORD_INVITE_URL } from "@/config/discordChat";
