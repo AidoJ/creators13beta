@@ -289,23 +289,6 @@ export function findLinkedCreator(
   return null;
 }
 
-
-
-
-
-/** Find the creator card placed in this ecosystem that an animal would link to (if any). */
-export function findLinkedCreator(
-  eco: Ecosystem,
-  animal: DeckCard,
-): PlacedCard | null {
-  for (const pc of eco.placed.values()) {
-    if (pc.card.kind === "creator" || pc.card.kind === "sky_creator") {
-      if (animalLinksToCreator(animal, pc.card)) return pc;
-    }
-  }
-  return null;
-}
-
 /* --------------------------- place phase --------------------------- */
 
 export function placeOnEcosystem(
