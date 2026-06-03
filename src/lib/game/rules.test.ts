@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateEcosystemWin } from "./engine";
+import { skyLockedSubType, validateEcosystemWin } from "./engine";
 import type { DeckCard, PlayerState } from "./types";
 import type { Element } from "./elements";
 import type { CreatorTypeName } from "@/lib/gameCards";
@@ -41,7 +41,7 @@ function buildPlayer(clusters: DeckCard[][], hand: DeckCard[] = []): PlayerState
     animals.forEach((a, j) => {
       const off = NEI[j];
       const pos = { q: origin.q + off.q, r: origin.r + off.r };
-      placed.set(`${pos.q},${pos.r}`, { card: a, pos });
+      placed.set(`${pos.q},${pos.r}`, { card: a, pos, rotation: 0 });
     });
   });
   return {
