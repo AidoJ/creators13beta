@@ -16,6 +16,9 @@ interface Props {
   highlight?: "selected" | "match" | null;
   /** 0..5 — 60° clockwise rotations applied to the hex background only. */
   rotation?: number;
+  /** For Sky Creator only — when set, paints half-Sky / half-this-type so
+   *  the board visually shows which sub-type the Sky has locked onto. */
+  skySubType?: string | null;
 }
 
 /** Hex piece that renders any DeckCard kind (animal, creator, special).
