@@ -76,15 +76,17 @@ export function botStep(state: MatchState, difficulty: BotDifficulty = "medium")
   const placedCreators = [...player.ecosystem.placed.values()].filter(
     (pc) => pc.card.kind === "creator" || pc.card.kind === "sky_creator",
   );
-  for (const card of player.hand) {
-    if (card.kind !== "animal" && card.kind !== "sky_creature" && card.kind !== "golden_body") continue;
-    const link = placedCreators.find((pc) => animalLinksToCreator(card, pc.card, { optimistic: true }));
-    if (!link) continue;
-    const cells = legalEcoCells(player.ecosystem);
-    const adj = cells.filter((c) => isAdjacent(c, link.pos));
-    const cell = adj[0] ?? cells[0];
-    if (!cell) continue;
-    try { return placeOnEcosystem(state, card.uid, cell); } catch {}
+  if (!skipOptimal) {
+    for (const card of player.hand) {
+      if (card.kind !== "animal" && card.kind !== "sky_creature" && card.kind !== "golden_body") continue;
+      const link = placedCreators.find((pc) => animalLinksToCreator(card, pc.card, { optimistic: true }));
+      if (!link) continue;
+      const cells = legalEcoCells(player.ecosystem);
+      const adj = cells.filter((c) => isAdjacent(c, link.pos));
+      const cell = adj[0] ?? cells[0];
+      if (!cell) continue;
+      try { return placeOnEcosystem(state, card.uid, cell); } catch {}
+    }
   }
 
   // 3) Play a disaster ONLY when we (a) still have headroom, (b) have already
