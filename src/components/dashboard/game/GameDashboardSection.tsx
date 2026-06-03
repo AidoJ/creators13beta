@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Gamepad2, Flame, Trophy, Sparkles, Copy, Loader2, Info } from "lucide-react";
+import { Gamepad2, Flame, Trophy, Sparkles, Copy, Loader2, Info, Bot } from "lucide-react";
 
 import { toast } from "sonner";
 import { CREATOR_TYPE_NAMES, getCreatorTypeColor } from "@/lib/creatorTypes";
