@@ -106,7 +106,8 @@ export function botStep(state: MatchState, difficulty: BotDifficulty = "medium")
     }
   }
   const hasAllElements = ELEMENTS.every((e) => myElements.has(e));
-  if (!handFull && creators >= CREATORS_NEEDED && hasAllElements) {
+  const disasterEligible = creators >= CREATORS_NEEDED && hasAllElements;
+  if ((aggressiveDisasters || !handFull) && disasterEligible) {
     const spare = player.hand.find((c) => c.kind === "creator" || c.kind === "sky_creator");
     if (spare) {
       try { return playDisaster(state, spare.uid); } catch {}
