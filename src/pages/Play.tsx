@@ -683,9 +683,18 @@ export default function Play() {
     </Card>
   );
 
+  const canTapDiscard = isYourTurn && state.phase === "place" && !!selectedUid;
   const pilesBlock = (
     <Card
-      className="p-3 transition-colors data-[drop-target=true]:ring-2 data-[drop-target=true]:ring-destructive/60"
+      className={
+        "p-3 transition-colors data-[drop-target=true]:ring-2 data-[drop-target=true]:ring-destructive/60 " +
+        (canTapDiscard ? "ring-2 ring-destructive/50 cursor-pointer hover:bg-destructive/5" : "")
+      }
+      role={canTapDiscard ? "button" : undefined}
+      aria-label={canTapDiscard ? "Discard selected card" : undefined}
+      onClick={() => {
+        if (canTapDiscard && selectedUid) onDiscardUid(selectedUid);
+      }}
       onDragOver={(e) => {
         if (!isYourTurn || state.phase !== "place") return;
         e.preventDefault();
@@ -702,7 +711,7 @@ export default function Play() {
       <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Used/Discarded Pile</div>
       <Button variant="outline" size="sm" className="w-full text-xs"
         disabled={!isYourTurn || state.phase !== "draw" || state.used.length === 0}
-        onClick={onPickUsed}>
+        onClick={(e) => { e.stopPropagation(); onPickUsed(); }}>
         Take top card ({state.used.length})
       </Button>
       <div className="mt-3 flex flex-col items-center gap-1">
@@ -722,7 +731,7 @@ export default function Play() {
           </div>
         )}
         <div className="text-[10px] text-muted-foreground italic text-center mt-1">
-          Drag a card here to discard
+          {canTapDiscard ? "Tap here to discard the selected card" : "Tap a card, then tap here to discard (or drag)"}
         </div>
       </div>
     </Card>
