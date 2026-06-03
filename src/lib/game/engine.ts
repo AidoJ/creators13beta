@@ -366,7 +366,10 @@ export function moveMyPlacedHex(
   // Re-pivot the moved card to match its new neighbours, and re-pivot any
   // adjacent animals whose neighbour set just changed.
   if (existing.card.kind === "animal" || existing.card.kind === "sky_creature") {
-    const newRot = bestRotationForPlacement(player.ecosystem, existing.card, toPos);
+    const newRot = bestRotationForPlacement(player.ecosystem, existing.card, toPos, {
+      restrictTo: "creator-only",
+      currentRotation: existing.rotation ?? 0,
+    });
     player.ecosystem.placed.set(toKey, { ...existing, pos: toPos, rotation: newRot });
   }
   repivotNeighbours(player.ecosystem, toPos);
