@@ -76,10 +76,11 @@ export function bestRotationForPlacement(
   eco: Ecosystem,
   card: DeckCard,
   pos: Axial,
-  opts?: { restrictTo?: "creator-only" | "any"; currentRotation?: number },
+  opts?: { restrictTo?: "creator-only" | "any"; currentRotation?: number; driverPos?: Axial },
 ): number {
   const restrict = opts?.restrictTo ?? "any";
   const current = opts?.currentRotation ?? 0;
+  const driverKey = opts?.driverPos ? keyOf(opts.driverPos) : null;
   // Single-colour cards: rotation is irrelevant.
   const [a, b] = cardHalfColors(card);
   if (a === b) return 0;
@@ -91,6 +92,7 @@ export function bestRotationForPlacement(
     const nKey = keyOf({ q: pos.q + d.q, r: pos.r + d.r });
     const neighbour = eco.placed.get(nKey);
     if (!neighbour) continue;
+    if (driverKey && nKey !== driverKey) continue;
     if (restrict === "creator-only") {
       const k = neighbour.card.kind;
       if (k !== "creator" && k !== "sky_creator") continue;
