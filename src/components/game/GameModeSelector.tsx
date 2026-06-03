@@ -20,12 +20,22 @@ export function GameModeSelector({ open, onCancel, onChoose }: Props) {
   const [targetScore, setTargetScore] = useState(50);
   const [matchMinutes, setMatchMinutes] = useState(20);
   const [turnSeconds, setTurnSeconds] = useState(20);
+  const [difficulty, setDifficulty] = useState<BotDifficulty>("medium");
 
   useEffect(() => {
     setMode(settings.default_mode as GameMode);
     setTargetScore(settings.top_score_default);
     setMatchMinutes(settings.beat_clock_match_minutes);
     setTurnSeconds(settings.beat_clock_turn_seconds);
+    // Default difficulty = admin's bot_difficulty, unless that tier is disabled.
+    const adminPref = settings.bot_difficulty;
+    const enabled = (d: BotDifficulty) =>
+      d === "easy" ? settings.bot_easy_enabled : d === "medium" ? settings.bot_medium_enabled : settings.bot_hard_enabled;
+    if (enabled(adminPref)) setDifficulty(adminPref);
+    else {
+      const fallback: BotDifficulty = enabled("medium") ? "medium" : enabled("easy") ? "easy" : "hard";
+      setDifficulty(fallback);
+    }
   }, [settings]);
 
   const allCards: Array<{
