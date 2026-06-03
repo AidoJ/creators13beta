@@ -324,6 +324,70 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
         </Card>
       </div>
 
+      {/* ROW 1b — Bot Practice (no points / no ELO) */}
+      <Card className="p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Bot className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Bot practice</h3>
+          <span className="text-[10px] text-muted-foreground/70 italic ml-auto">
+            Practice only — bot games don't earn Points or affect ELO.
+          </span>
+        </div>
+        {(() => {
+          const byDiff: Record<"easy" | "medium" | "hard", BotStatRow | undefined> = {
+            easy: botStats.find(s => s.difficulty === "easy"),
+            medium: botStats.find(s => s.difficulty === "medium"),
+            hard: botStats.find(s => s.difficulty === "hard"),
+          };
+          const totalGames = botStats.reduce((n, r) => n + r.wins + r.losses + r.draws, 0);
+          if (totalGames === 0) {
+            return (
+              <p className="text-sm text-muted-foreground italic">
+                You haven't played the bot yet. Pick a difficulty when you start a solo match to log your practice stats.
+              </p>
+            );
+          }
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {(["easy", "medium", "hard"] as const).map(d => {
+                const r = byDiff[d];
+                const w = r?.wins ?? 0;
+                const l = r?.losses ?? 0;
+                const dr = r?.draws ?? 0;
+                const total = w + l + dr;
+                const rate = total ? Math.round((w / total) * 100) : 0;
+                const label = d === "easy" ? "Easy" : d === "medium" ? "Medium" : "Hard";
+                return (
+                  <div key={d} className="rounded-lg border border-border bg-card/50 p-3">
+                    <div className="flex items-baseline justify-between">
+                      <div className="font-display text-base">{label}</div>
+                      <div className="text-xs text-muted-foreground">{total} game{total === 1 ? "" : "s"}</div>
+                    </div>
+                    <div className="mt-2 flex items-baseline gap-2">
+                      <div className="font-display text-2xl text-primary leading-none">{w}<span className="text-muted-foreground text-sm">W</span></div>
+                      <div className="font-display text-xl text-foreground/70 leading-none">{l}<span className="text-muted-foreground text-sm">L</span></div>
+                      {dr > 0 && (
+                        <div className="font-display text-base text-muted-foreground leading-none">{dr}<span className="text-muted-foreground text-sm">D</span></div>
+                      )}
+                    </div>
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      Win rate <strong className="text-foreground">{rate}%</strong>
+                      {r?.perfect_ecos ? <> · {r.perfect_ecos} perfect</> : null}
+                    </div>
+                    <div className="h-1.5 mt-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-secondary to-primary transition-all"
+                        style={{ width: `${rate}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </Card>
+
       {/* ROW 2 — Active games */}
       <Card className="p-5">
         <div className="flex items-center justify-between mb-3">
