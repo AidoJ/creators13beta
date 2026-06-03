@@ -33,6 +33,9 @@ export interface GameSettings {
   allow_guest_play: boolean;
   allow_solo_vs_bot: boolean;
   max_players_per_match: number;
+  bot_easy_enabled: boolean;
+  bot_medium_enabled: boolean;
+  bot_hard_enabled: boolean;
   // UI / UX
   show_tutorial_overlay: boolean;
   show_discord_chat: boolean;
