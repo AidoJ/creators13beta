@@ -25,7 +25,9 @@ import { CREATORS_NEEDED, HAND_LIMIT, type DeckCard, type MatchState } from "./t
 import { TYPE_TO_ELEMENT, ELEMENTS } from "./elements";
 import { isAdjacent } from "./board";
 
-export function botStep(state: MatchState): MatchState {
+export type BotDifficulty = "easy" | "medium" | "hard";
+
+export function botStep(state: MatchState, difficulty: BotDifficulty = "medium"): MatchState {
   if (state.finished) return state;
 
   const me = state.players[state.turn];
@@ -50,8 +52,16 @@ export function botStep(state: MatchState): MatchState {
   const { creators } = ecosystemSummary(player.ecosystem);
   const handFull = player.hand.length >= HAND_LIMIT - 2;
 
+  // Difficulty modifier:
+  //   easy   — 40% of the time the bot skips the optimal "place a needed creator"
+  //            and the adjacency-matching step, falling through to a random legal placement.
+  //   medium — full greedy (original behaviour).
+  //   hard   — never skips, AND will play disasters as soon as eligible.
+  const skipOptimal = difficulty === "easy" && Math.random() < 0.4;
+  const aggressiveDisasters = difficulty === "hard";
+
   // 1) Place a creator we still need.
-  if (creators < CREATORS_NEEDED) {
+  if (!skipOptimal && creators < CREATORS_NEEDED) {
     const creator = player.hand.find((c) => c.kind === "creator" || c.kind === "sky_creator");
     if (creator) {
       const cell = legalEcoCells(player.ecosystem)[0];
@@ -66,15 +76,17 @@ export function botStep(state: MatchState): MatchState {
   const placedCreators = [...player.ecosystem.placed.values()].filter(
     (pc) => pc.card.kind === "creator" || pc.card.kind === "sky_creator",
   );
-  for (const card of player.hand) {
-    if (card.kind !== "animal" && card.kind !== "sky_creature" && card.kind !== "golden_body") continue;
-    const link = placedCreators.find((pc) => animalLinksToCreator(card, pc.card, { optimistic: true }));
-    if (!link) continue;
-    const cells = legalEcoCells(player.ecosystem);
-    const adj = cells.filter((c) => isAdjacent(c, link.pos));
-    const cell = adj[0] ?? cells[0];
-    if (!cell) continue;
-    try { return placeOnEcosystem(state, card.uid, cell); } catch {}
+  if (!skipOptimal) {
+    for (const card of player.hand) {
+      if (card.kind !== "animal" && card.kind !== "sky_creature" && card.kind !== "golden_body") continue;
+      const link = placedCreators.find((pc) => animalLinksToCreator(card, pc.card, { optimistic: true }));
+      if (!link) continue;
+      const cells = legalEcoCells(player.ecosystem);
+      const adj = cells.filter((c) => isAdjacent(c, link.pos));
+      const cell = adj[0] ?? cells[0];
+      if (!cell) continue;
+      try { return placeOnEcosystem(state, card.uid, cell); } catch {}
+    }
   }
 
   // 3) Play a disaster ONLY when we (a) still have headroom, (b) have already
@@ -94,7 +106,8 @@ export function botStep(state: MatchState): MatchState {
     }
   }
   const hasAllElements = ELEMENTS.every((e) => myElements.has(e));
-  if (!handFull && creators >= CREATORS_NEEDED && hasAllElements) {
+  const disasterEligible = creators >= CREATORS_NEEDED && hasAllElements;
+  if ((aggressiveDisasters || !handFull) && disasterEligible) {
     const spare = player.hand.find((c) => c.kind === "creator" || c.kind === "sky_creator");
     if (spare) {
       try { return playDisaster(state, spare.uid); } catch {}

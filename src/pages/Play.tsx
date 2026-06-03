@@ -37,6 +37,8 @@ import {
   type GameMatchRow,
 } from "@/lib/game/persistence";
 import { recordProgressDiff } from "@/lib/game/progress";
+import type { BotDifficulty } from "@/lib/game/bot";
+import { supabase } from "@/integrations/supabase/client";
 import { useMatchRealtime } from "@/hooks/useMatchRealtime";
 import { useAuth } from "@/contexts/AuthContext";
 import { DISCORD_INVITE_URL } from "@/config/discordChat";
@@ -88,6 +90,8 @@ export default function Play() {
   const saveSeqRef = useRef(0);
   const undoStackRef = useRef<MatchState[]>([]);
   const [undoCount, setUndoCount] = useState(0);
+  const botDifficultyRef = useRef<BotDifficulty>("medium");
+  const botStatsRecordedRef = useRef(false);
   const [quickUndoUntil, setQuickUndoUntil] = useState<number>(0);
   const [, setNowTick] = useState(0);
   const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
@@ -274,7 +278,7 @@ export default function Play() {
       try {
         setState((s) => {
           if (!s) return s;
-          const next = botStep(s);
+          const next = botStep(s, botDifficultyRef.current);
           schedulePersist(next);
           return next;
         });
@@ -302,6 +306,19 @@ export default function Play() {
         next,
         alreadyFinishedBefore,
       });
+    }
+    // Bot-match lifetime stats (no points / no ELO — practice only).
+    if (user && isBotMatch && next.finished && !alreadyFinishedBefore && !botStatsRecordedRef.current) {
+      botStatsRecordedRef.current = true;
+      const youSlot = "you";
+      const youPlayer = next.players.find((p) => p.id === youSlot);
+      const won = next.winnerId == null ? null : next.winnerId === youSlot;
+      const perfectEco = (youPlayer?.ecosystem.placed.size ?? 0) >= 16 && won === true;
+      supabase.rpc("bump_bot_match_stats", {
+        _difficulty: botDifficultyRef.current,
+        _won: won,
+        _perfect_eco: perfectEco,
+      }).then(({ error }) => { if (error) console.warn("bump_bot_match_stats failed", error); });
     }
     if (matchRow && user) {
       const seq = ++saveSeqRef.current;
@@ -526,19 +543,22 @@ export default function Play() {
     setModeSelectorOpen(true);
   }
 
-  async function startSoloMatch(mode: GameMode, config: GameConfig) {
+  async function startSoloMatch(mode: GameMode, config: GameConfig, difficulty: BotDifficulty) {
     if (!allCards) return;
     const youName = user ? await fetchPlayerShortName(user) : "You";
     const deck = buildDeck(allCards, specialCards);
+    const botLabel = difficulty === "easy" ? "Bot · Easy" : difficulty === "hard" ? "Bot · Hard" : "Bot · Medium";
     const fresh = createMatch({
       deck,
       players: [
         { id: "you", name: youName },
-        { id: "bot", name: "Tutorial Bot" },
+        { id: "bot", name: botLabel },
       ],
       gameMode: mode,
       gameConfig: config,
     });
+    botDifficultyRef.current = difficulty;
+    botStatsRecordedRef.current = false;
     setState(fresh);
     setSelectedUid(null);
     setMode("place");
@@ -596,7 +616,7 @@ export default function Play() {
           <GameModeSelector
             open
             onCancel={() => { setModeSelectorOpen(false); navigate("/dashboard"); }}
-            onChoose={(m, c) => startSoloMatch(m, c)}
+            onChoose={(m, c, d) => startSoloMatch(m, c, d)}
           />
         ) : (
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -1093,7 +1113,7 @@ export default function Play() {
         <GameModeSelector
           open
           onCancel={() => setModeSelectorOpen(false)}
-          onChoose={(m, c) => startSoloMatch(m, c)}
+          onChoose={(m, c, d) => startSoloMatch(m, c, d)}
         />
       )}
 
@@ -1128,7 +1148,16 @@ export default function Play() {
 
       {gameSettings.show_tutorial_overlay && <TutorialOverlay />}
       <RuleBookSheet open={ruleBookOpen} onOpenChange={setRuleBookOpen} />
-      <OpponentPanel open={opponentPanelOpen} onClose={() => setOpponentPanelOpen(false)} player={opponent} />
+      <OpponentPanel
+        open={opponentPanelOpen}
+        onClose={() => setOpponentPanelOpen(false)}
+        player={opponent}
+        opponentUserId={
+          matchRow && matchRow.mode === "pvp"
+            ? (selfSlot === "host" ? matchRow.guest_user_id : matchRow.host_user_id)
+            : null
+        }
+      />
       <MultiplayerLobby
         open={lobbyOpen}
         onOpenChange={setLobbyOpen}

@@ -1,19 +1,40 @@
 import { useEffect, useRef, useState } from "react";
-import { GripHorizontal, X } from "lucide-react";
+import { GripHorizontal, X, Trophy, Bot } from "lucide-react";
 import { Ecosystem } from "@/components/game/Ecosystem";
 import type { PlayerState } from "@/lib/game/types";
+import { supabase } from "@/integrations/supabase/client";
 
 interface OpponentPanelProps {
   open: boolean;
   onClose: () => void;
   player: PlayerState | null;
+  /** When set (PvP only), the panel fetches public stats (ELO + bot wins) for the opponent. */
+  opponentUserId?: string | null;
+}
+
+interface PublicStats {
+  elo: number;
+  total_bot_wins: number;
 }
 
 /**
  * Floating, draggable + resizable panel for previewing another player's ecosystem.
  * Drag the header to move; drag the bottom-right grip to resize.
  */
-export function OpponentPanel({ open, onClose, player }: OpponentPanelProps) {
+export function OpponentPanel({ open, onClose, player, opponentUserId }: OpponentPanelProps) {
+  const [stats, setStats] = useState<PublicStats | null>(null);
+  useEffect(() => {
+    setStats(null);
+    if (!open || !opponentUserId) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc("get_public_player_stats", { _user_id: opponentUserId });
+      if (cancelled || error || !data?.length) return;
+      const row = data[0] as any;
+      setStats({ elo: row.elo ?? 1000, total_bot_wins: Number(row.total_bot_wins ?? 0) });
+    })();
+    return () => { cancelled = true; };
+  }, [open, opponentUserId]);
   const [pos, setPos] = useState<{ x: number; y: number }>({ x: 120, y: 100 });
   const [size, setSize] = useState<{ w: number; h: number }>({ w: 640, h: 560 });
   const dragRef = useRef<{ dx: number; dy: number } | null>(null);
@@ -78,12 +99,22 @@ export function OpponentPanel({ open, onClose, player }: OpponentPanelProps) {
         }}
         className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border bg-card/80 cursor-grab active:cursor-grabbing select-none"
       >
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 flex-wrap">
           <GripHorizontal className="w-4 h-4 text-muted-foreground shrink-0" />
           <div className="font-display text-base truncate">{player.name}</div>
           <div className="text-xs text-muted-foreground shrink-0">
             · {placed} placed · {player.hand.length} in hand
           </div>
+          {stats && (
+            <>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border border-secondary/40 bg-secondary/10 text-secondary-foreground">
+                <Trophy className="w-3 h-3" /> ELO {stats.elo}
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border border-border bg-card text-muted-foreground">
+                <Bot className="w-3 h-3" /> {stats.total_bot_wins} bot win{stats.total_bot_wins === 1 ? "" : "s"}
+              </span>
+            </>
+          )}
         </div>
         <button
           type="button"

@@ -142,6 +142,39 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_match_stats: {
+        Row: {
+          difficulty: string
+          draws: number
+          last_played_at: string | null
+          losses: number
+          perfect_ecos: number
+          updated_at: string
+          user_id: string
+          wins: number
+        }
+        Insert: {
+          difficulty: string
+          draws?: number
+          last_played_at?: string | null
+          losses?: number
+          perfect_ecos?: number
+          updated_at?: string
+          user_id: string
+          wins?: number
+        }
+        Update: {
+          difficulty?: string
+          draws?: number
+          last_played_at?: string | null
+          losses?: number
+          perfect_ecos?: number
+          updated_at?: string
+          user_id?: string
+          wins?: number
+        }
+        Relationships: []
+      }
       case_studies: {
         Row: {
           body_drawing_path: string | null
@@ -684,6 +717,9 @@ export type Database = {
           beat_clock_match_minutes: number
           beat_clock_turn_seconds: number
           bot_difficulty: string
+          bot_easy_enabled: boolean
+          bot_hard_enabled: boolean
+          bot_medium_enabled: boolean
           bot_think_ms: number
           creators_needed: number
           default_mode: string
@@ -734,6 +770,9 @@ export type Database = {
           beat_clock_match_minutes?: number
           beat_clock_turn_seconds?: number
           bot_difficulty?: string
+          bot_easy_enabled?: boolean
+          bot_hard_enabled?: boolean
+          bot_medium_enabled?: boolean
           bot_think_ms?: number
           creators_needed?: number
           default_mode?: string
@@ -784,6 +823,9 @@ export type Database = {
           beat_clock_match_minutes?: number
           beat_clock_turn_seconds?: number
           bot_difficulty?: string
+          bot_easy_enabled?: boolean
+          bot_hard_enabled?: boolean
+          bot_medium_enabled?: boolean
           bot_think_ms?: number
           creators_needed?: number
           default_mode?: string
@@ -1636,6 +1678,25 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      bump_bot_match_stats: {
+        Args: { _difficulty: string; _perfect_eco?: boolean; _won: boolean }
+        Returns: {
+          difficulty: string
+          draws: number
+          last_played_at: string | null
+          losses: number
+          perfect_ecos: number
+          updated_at: string
+          user_id: string
+          wins: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bot_match_stats"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       bump_player_progress: {
         Args: {
           _elo_delta?: number
@@ -1686,6 +1747,17 @@ export type Database = {
         Args: never
         Returns: {
           practitioner_id: string
+        }[]
+      }
+      get_public_player_stats: {
+        Args: { _user_id: string }
+        Returns: {
+          current_streak: number
+          display_name: string
+          elo: number
+          longest_streak: number
+          points: number
+          total_bot_wins: number
         }[]
       }
       has_role: {

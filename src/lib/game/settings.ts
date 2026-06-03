@@ -33,6 +33,9 @@ export interface GameSettings {
   allow_guest_play: boolean;
   allow_solo_vs_bot: boolean;
   max_players_per_match: number;
+  bot_easy_enabled: boolean;
+  bot_medium_enabled: boolean;
+  bot_hard_enabled: boolean;
   // UI / UX
   show_tutorial_overlay: boolean;
   show_discord_chat: boolean;
@@ -84,6 +87,9 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   allow_guest_play: true,
   allow_solo_vs_bot: true,
   max_players_per_match: 2,
+  bot_easy_enabled: true,
+  bot_medium_enabled: true,
+  bot_hard_enabled: true,
   show_tutorial_overlay: true,
   show_discord_chat: true,
   show_review_boards: true,
