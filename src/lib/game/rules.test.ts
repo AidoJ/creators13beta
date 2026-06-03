@@ -32,7 +32,7 @@ function buildPlayer(clusters: DeckCard[][], hand: DeckCard[] = []): PlayerState
     { q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
     { q: -1, r: 0 }, { q: -1, r: 1 }, { q: 0, r: 1 },
   ];
-  const placed = new Map<string, { card: DeckCard; pos: { q: number; r: number } }>();
+  const placed = new Map<string, { card: DeckCard; pos: { q: number; r: number }; rotation?: number }>();
   // Place clusters far apart so no cross-cluster adjacency leaks in.
   clusters.forEach((group, i) => {
     const origin = { q: i * 10, r: i * 10 };
@@ -41,7 +41,12 @@ function buildPlayer(clusters: DeckCard[][], hand: DeckCard[] = []): PlayerState
     animals.forEach((a, j) => {
       const off = NEI[j];
       const pos = { q: origin.q + off.q, r: origin.r + off.r };
-      placed.set(`${pos.q},${pos.r}`, { card: a, pos, rotation: 0 });
+      const dirToCreator = (j + 3) % 6;
+      const rotation = [0, 1, 2, 3, 4, 5].find((rot) => {
+        const base = ["B", "A", "A", "A", "B", "B"] as const;
+        return base[(dirToCreator - rot + 6) % 6] === "A";
+      }) ?? 0;
+      placed.set(`${pos.q},${pos.r}`, { card: a, pos, rotation });
     });
   });
   return {
