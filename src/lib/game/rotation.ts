@@ -76,26 +76,37 @@ export function bestRotationForPlacement(
   eco: Ecosystem,
   card: DeckCard,
   pos: Axial,
+  opts?: { restrictTo?: "creator-only" | "any"; currentRotation?: number },
 ): number {
+  const restrict = opts?.restrictTo ?? "any";
+  const current = opts?.currentRotation ?? 0;
   // Single-colour cards: rotation is irrelevant.
   const [a, b] = cardHalfColors(card);
   if (a === b) return 0;
 
-  let bestRot = 0;
+  // Collect eligible neighbours under the restriction.
+  const eligible: Array<{ dir: number; neighbour: NonNullable<ReturnType<typeof eco.placed.get>> }> = [];
+  for (let dir = 0; dir < 6; dir++) {
+    const d = NEIGHBOUR_DIRS[dir];
+    const nKey = keyOf({ q: pos.q + d.q, r: pos.r + d.r });
+    const neighbour = eco.placed.get(nKey);
+    if (!neighbour) continue;
+    if (restrict === "creator-only") {
+      const k = neighbour.card.kind;
+      if (k !== "creator" && k !== "sky_creator") continue;
+    }
+    eligible.push({ dir, neighbour });
+  }
+  // If restriction filtered out everything, don't auto-pivot — preserve current rotation.
+  if (eligible.length === 0) return current;
+
+  let bestRot = current;
   let bestScore = -1;
   for (let rot = 0; rot < 6; rot++) {
     let score = 0;
-    for (let dir = 0; dir < 6; dir++) {
-      const d = NEIGHBOUR_DIRS[dir];
-      const nKey = keyOf({ q: pos.q + d.q, r: pos.r + d.r });
-      const neighbour = eco.placed.get(nKey);
-      if (!neighbour) continue;
+    for (const { dir, neighbour } of eligible) {
       const mine = facingColor(card, rot, dir);
-      const theirs = facingColor(
-        neighbour.card,
-        neighbour.rotation ?? 0,
-        (dir + 3) % 6,
-      );
+      const theirs = facingColor(neighbour.card, neighbour.rotation ?? 0, (dir + 3) % 6);
       if (mine.toLowerCase() === theirs.toLowerCase()) score += 1;
     }
     if (score > bestScore) {

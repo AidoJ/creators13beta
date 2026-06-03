@@ -284,11 +284,15 @@ export function placeOnEcosystem(
   // soft rule — animals can be placed freely; win-check verifies linkage.
 
 
-  const rotation = bestRotationForPlacement(player.ecosystem, card, pos);
+  // Auto-pivot rules: an animal only pivots when it lands next to a matching
+  // Creator (or Sky-Creator). Creator cards have no facing colour halves, so
+  // their rotation stays 0; placing a Creator instead triggers repivot on any
+  // adjacent animals that now have a Creator neighbour.
+  const isAnimalLike = card.kind === "animal" || card.kind === "sky_creature";
+  const rotation = isAnimalLike
+    ? bestRotationForPlacement(player.ecosystem, card, pos, { restrictTo: "creator-only" })
+    : 0;
   player.ecosystem.placed.set(keyOf(pos), { card, pos, rotation });
-  // Re-pivot any adjacent animal/sky-creature so its colour halves now align
-  // with this new neighbour (e.g. placing a Lava Creator next to a Lava
-  // animal previously dropped on its own should auto-rotate the animal).
   repivotNeighbours(player.ecosystem, pos);
   player.hand.splice(idx, 1);
   player.score += card.kind === "creator" || card.kind === "sky_creator" ? 3 : 1;
@@ -306,7 +310,11 @@ function repivotNeighbours(eco: Ecosystem, pos: Axial): void {
     const pc = eco.placed.get(nKey);
     if (!pc) continue;
     if (pc.card.kind !== "animal" && pc.card.kind !== "sky_creature") continue;
-    const newRot = bestRotationForPlacement(eco, pc.card, pc.pos);
+    // Only auto-pivot when this animal actually has a Creator neighbour.
+    const newRot = bestRotationForPlacement(eco, pc.card, pc.pos, {
+      restrictTo: "creator-only",
+      currentRotation: pc.rotation ?? 0,
+    });
     if (newRot !== (pc.rotation ?? 0)) {
       eco.placed.set(nKey, { ...pc, rotation: newRot });
     }
@@ -358,7 +366,10 @@ export function moveMyPlacedHex(
   // Re-pivot the moved card to match its new neighbours, and re-pivot any
   // adjacent animals whose neighbour set just changed.
   if (existing.card.kind === "animal" || existing.card.kind === "sky_creature") {
-    const newRot = bestRotationForPlacement(player.ecosystem, existing.card, toPos);
+    const newRot = bestRotationForPlacement(player.ecosystem, existing.card, toPos, {
+      restrictTo: "creator-only",
+      currentRotation: existing.rotation ?? 0,
+    });
     player.ecosystem.placed.set(toKey, { ...existing, pos: toPos, rotation: newRot });
   }
   repivotNeighbours(player.ecosystem, toPos);
@@ -504,7 +515,7 @@ function applyDisasterWipe(
         const cells = legalEcoCells(player.ecosystem);
         if (cells.length > 0) {
           const pos = cells[0];
-          const rotation = bestRotationForPlacement(player.ecosystem, pc.card, pos);
+          const rotation = bestRotationForPlacement(player.ecosystem, pc.card, pos, { restrictTo: "creator-only" });
           player.ecosystem.placed.set(keyOf(pos), { card: pc.card, pos, rotation });
           player.score += 1;
           placedOnBoard += 1;
@@ -571,7 +582,7 @@ export function playSkyCreatureSteal(
       throw new Error("Pick a glowing hex on your own board to place the stolen card.");
     }
     
-    const rotation = bestRotationForPlacement(player.ecosystem, stolen.card, placeAt);
+    const rotation = bestRotationForPlacement(player.ecosystem, stolen.card, placeAt, { restrictTo: "creator-only" });
     player.ecosystem.placed.set(keyOf(placeAt), { card: stolen.card, pos: placeAt, rotation });
     player.score += 1;
     next.lastEvent = `${player.name} stole ${stolen.card.name} from ${victim.name} and placed it`;
