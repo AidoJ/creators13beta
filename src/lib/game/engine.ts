@@ -326,11 +326,23 @@ export function placeOnEcosystem(
   // their rotation stays 0; placing a Creator instead triggers repivot on any
   // adjacent animals that now have a Creator neighbour.
   const isAnimalLike = card.kind === "animal" || card.kind === "sky_creature";
+  // For an animal landing next to a Creator, pin rotation to that single
+  // Creator so the matching half deterministically faces it.
+  const driverCreator = isAnimalLike
+    ? neighbours(pos)
+        .map((n) => player.ecosystem.placed.get(keyOf(n)))
+        .find((nb) => nb && (nb.card.kind === "creator" || nb.card.kind === "sky_creator"))
+    : undefined;
   const rotation = isAnimalLike
-    ? bestRotationForPlacement(player.ecosystem, card, pos, { restrictTo: "creator-only" })
+    ? bestRotationForPlacement(player.ecosystem, card, pos, {
+        restrictTo: "creator-only",
+        driverPos: driverCreator?.pos,
+      })
     : 0;
   player.ecosystem.placed.set(keyOf(pos), { card, pos, rotation });
-  repivotNeighbours(player.ecosystem, pos);
+  // After placing, re-pivot adjacent animals — when the placed card is a
+  // Creator, drive their rotation off this new Creator only.
+  repivotNeighbours(player.ecosystem, pos, pos);
   player.hand.splice(idx, 1);
   player.score += card.kind === "creator" || card.kind === "sky_creator" ? 3 : 1;
   next.placedThisTurn += 1;
@@ -338,19 +350,20 @@ export function placeOnEcosystem(
   return afterAction(next);
 }
 
-/** After a card lands at `pos`, re-pivot every adjacent two-colour card
- *  (animals / sky-creatures) so its colour halves face the freshly updated
- *  ecosystem. Single-colour cards are left alone (rotation is irrelevant). */
-function repivotNeighbours(eco: Ecosystem, pos: Axial): void {
+/** After a card lands at `pos`, re-pivot every adjacent animal/sky-creature
+ *  so its matching half faces the freshly updated ecosystem. When `driverPos`
+ *  is provided, each animal pivots toward THAT hex only — useful when a
+ *  Creator was just placed and should be the sole driver for its neighbours. */
+function repivotNeighbours(eco: Ecosystem, pos: Axial, driverPos?: Axial): void {
   for (const n of neighbours(pos)) {
     const nKey = keyOf(n);
     const pc = eco.placed.get(nKey);
     if (!pc) continue;
     if (pc.card.kind !== "animal" && pc.card.kind !== "sky_creature") continue;
-    // Only auto-pivot when this animal actually has a Creator neighbour.
     const newRot = bestRotationForPlacement(eco, pc.card, pc.pos, {
       restrictTo: "creator-only",
       currentRotation: pc.rotation ?? 0,
+      driverPos,
     });
     if (newRot !== (pc.rotation ?? 0)) {
       eco.placed.set(nKey, { ...pc, rotation: newRot });
