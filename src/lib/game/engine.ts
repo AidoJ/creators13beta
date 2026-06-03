@@ -940,7 +940,7 @@ function enumerateElementCoveringQuartets(
     const el = ELEMENTS[eIdx];
     for (let i = 0; i < creators.length; i++) {
       if (used.has(i)) continue;
-      if (!elementsOf(creators[i]).includes(el)) continue;
+      if (!elsOf(creators[i]).includes(el)) continue;
       used.add(i); picked.push(creators[i]);
       recurse(eIdx + 1);
       used.delete(i); picked.pop();
