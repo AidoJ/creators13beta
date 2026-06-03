@@ -68,7 +68,7 @@ export function botStep(state: MatchState): MatchState {
   );
   for (const card of player.hand) {
     if (card.kind !== "animal" && card.kind !== "sky_creature" && card.kind !== "golden_body") continue;
-    const link = placedCreators.find((pc) => animalLinksToCreator(card, pc.card));
+    const link = placedCreators.find((pc) => animalLinksToCreator(card, pc.card, { optimistic: true }));
     if (!link) continue;
     const cells = legalEcoCells(player.ecosystem);
     const adj = cells.filter((c) => isAdjacent(c, link.pos));
@@ -79,12 +79,16 @@ export function botStep(state: MatchState): MatchState {
 
   // 3) Play a disaster ONLY when we (a) still have headroom, (b) have already
   //    completed our own creator set, AND (c) that creator set spans all 4
-  //    elements (Earth/Fire/Air/Water). This mirrors the player rule — you
-  //    can't unleash a natural disaster without a balanced ecosystem.
+  //    elements (Earth/Fire/Air/Water). This mirrors the player rule — Sky
+  //    counts only for its locked sub-type's element, not as a free wildcard.
   const myElements = new Set<string>();
   for (const pc of placedCreators) {
     if (pc.card.kind === "sky_creator") {
-      ELEMENTS.forEach((e) => myElements.add(e)); // wildcard counts for all
+      const sub = skyLockedSubType(player.ecosystem, pc.pos);
+      if (sub) {
+        const el = TYPE_TO_ELEMENT[sub];
+        if (el && el !== "Sky") myElements.add(el);
+      }
     } else if (pc.card.element) {
       myElements.add(pc.card.element);
     }
