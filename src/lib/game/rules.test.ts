@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { rotateMyPlacedHex, skyLockedSubType, validateEcosystemWin } from "./engine";
-import type { DeckCard, PlayerState } from "./types";
+import type { DeckCard, MatchState, PlayerState } from "./types";
 import type { Element } from "./elements";
 import type { CreatorTypeName } from "@/lib/gameCards";
 
@@ -144,6 +144,71 @@ describe("classic ecosystem win validation", () => {
     ]);
 
     expect(validateEcosystemWin(p).valid).toBe(true);
+  });
+
+  it("accepts the screenshot-style hand: Sky subbed as Fire, Snow Air, Mountain Earth, Lake Water with Golden Body", () => {
+    const p = buildPlayer([
+      [creator("Snow", "Air"),
+        animal("duck", ["Snow", "River"]),
+        animal("spider", ["Snow", "Tree"]),
+        animal("leopard", ["Snow", "Mountain"])],
+      [skyCreator(),
+        animal("fox", ["Lava", "Fire"]),
+        animal("cheetah", ["Fire", "Lightning"]),
+        animal("gorilla", ["Fire", "Mountain"]),
+        animal("mouse", ["Fire", "Snow"])],
+      [creator("Mountain", "Earth"),
+        animal("lynx", ["Mountain", "Snow"]),
+        animal("gorilla-2", ["Fire", "Mountain"]),
+        animal("leopard-2", ["Snow", "Mountain"])],
+      [creator("Lake", "Water"),
+        animal("panda", ["Fire", "Lake"]),
+        animal("swan", ["Snow", "Lake"]),
+        goldenBody("golden-body")],
+    ]);
+    const skyPc = Array.from(p.ecosystem.placed.values()).find((pc) => pc.card.kind === "sky_creator")!;
+    const skyAnimals = Array.from(p.ecosystem.placed.values()).filter((pc) => pc.pos.q >= 10 && pc.pos.q <= 11 && pc.pos.r >= 9 && pc.pos.r <= 11 && pc.card.kind === "animal");
+    skyAnimals.forEach((pc) => {
+      const dirToSky = NEI.findIndex((d) => pc.pos.q + d.q === skyPc.pos.q && pc.pos.r + d.r === skyPc.pos.r);
+      const fireIsSecondHalf = pc.card.types?.[1] === "Fire";
+      p.ecosystem.placed.set(`${pc.pos.q},${pc.pos.r}`, { ...pc, rotation: rotationFacing(dirToSky, fireIsSecondHalf ? "B" : "A") });
+    });
+
+    expect(skyLockedSubType(p.ecosystem, skyPc.pos)).toBe("Fire");
+    expect(validateEcosystemWin(p).valid).toBe(true);
+  });
+
+  it("re-checks the win immediately when a rotation makes the touching half match", () => {
+    const p = buildPlayer([
+      [creator("Snow", "Air"),
+        animal("snow-0", ["Snow", "Lightning"]),
+        animal("snow-1", ["Snow", "Lightning"]),
+        animal("snow-2", ["Snow", "Lightning"])],
+      [creator("Fire", "Fire"),
+        animal("fire-0", ["Fire", "Sun"]),
+        animal("fire-1", ["Fire", "Sun"]),
+        animal("fire-2", ["Fire", "Sun"])],
+      [creator("Soil", "Earth"),
+        animal("soil-0", ["Soil", "Tree"]),
+        animal("soil-1", ["Soil", "Tree"]),
+        animal("soil-2", ["Soil", "Tree"])],
+      [creator("Ocean", "Water"),
+        animal("ocean-0", ["Ocean", "River"]),
+        animal("ocean-1", ["Ocean", "River"]),
+        animal("ocean-2", ["Ocean", "River"])],
+    ]);
+    const badKey = "1,0";
+    const badPc = p.ecosystem.placed.get(badKey)!;
+    p.ecosystem.placed.set(badKey, { ...badPc, rotation: 5 });
+    expect(validateEcosystemWin(p).valid).toBe(false);
+
+    const state: MatchState = {
+      players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 0, placedThisTurn: 0,
+      turnNumber: 1, finished: false, winnerId: null,
+    };
+    const next = rotateMyPlacedHex(state, "p1", badKey);
+    expect(next.finished).toBe(true);
+    expect(next.winnerId).toBe("p1");
   });
 
   it("rejects Sky Creator with no adjacent animals (no sub-type can lock)", () => {
