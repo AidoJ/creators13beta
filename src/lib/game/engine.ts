@@ -668,8 +668,13 @@ export function playSkyCreatureSteal(
     if (!legal.some((c) => c.q === placeAt.q && c.r === placeAt.r)) {
       throw new Error("Pick a glowing hex on your own board to place the stolen card.");
     }
-    
-    const rotation = bestRotationForPlacement(player.ecosystem, stolen.card, placeAt, { restrictTo: "creator-only" });
+    const driverCreator = neighbours(placeAt)
+      .map((n) => player.ecosystem.placed.get(keyOf(n)))
+      .find((nb) => nb && (nb.card.kind === "creator" || nb.card.kind === "sky_creator"));
+    const rotation = bestRotationForPlacement(player.ecosystem, stolen.card, placeAt, {
+      restrictTo: "creator-only",
+      driverPos: driverCreator?.pos,
+    });
     player.ecosystem.placed.set(keyOf(placeAt), { card: stolen.card, pos: placeAt, rotation });
     player.score += 1;
     next.lastEvent = `${player.name} stole ${stolen.card.name} from ${victim.name} and placed it`;
