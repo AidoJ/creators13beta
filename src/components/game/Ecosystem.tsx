@@ -224,6 +224,7 @@ export function Ecosystem({
                 card={pc.card}
                 size={size}
                 rotation={pc.rotation ?? 0}
+                skySubType={pc.card.kind === "sky_creator" ? skyLockedSubType(eco, pc.pos) : null}
                 onClick={clickHandler}
                 draggable={canDragMove}
                 onDragStart={canDragMove ? (e) => {
