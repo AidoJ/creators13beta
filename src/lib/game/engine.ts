@@ -791,11 +791,27 @@ export function validateEcosystemWin(player: PlayerState): EcosystemWinValidatio
   const pcByUid = new Map<string, PlacedCard>();
   for (const pc of placedAll) pcByUid.set(pc.card.uid, pc);
 
-  const quartets = enumerateElementCoveringQuartets(creators);
+  // Pre-compute Sky Creators' locked sub-types from the board.
+  const skySubByUid = new Map<string, string | null>();
+  for (const pc of creatorPcs) {
+    if (pc.card.kind === "sky_creator") {
+      skySubByUid.set(pc.card.uid, skyLockedSubType(player.ecosystem, pc.pos));
+    }
+  }
+
+  const quartets = enumerateElementCoveringQuartets(creators, (c) => {
+    if (c.kind === "sky_creator") {
+      const sub = skySubByUid.get(c.uid) ?? null;
+      if (!sub) return [];
+      const el = TYPE_TO_ELEMENT[sub];
+      return el && el !== "Sky" ? [el as Element] : [];
+    }
+    return c.element ? [c.element] : [];
+  });
   for (const quartet of quartets) {
     const quartetPcs = quartet.map((c) => pcByUid.get(c.uid)!).filter(Boolean);
     if (quartetPcs.length !== quartet.length) continue;
-    if (canAssignAdjacentAnimalsToCreators(quartetPcs, animalPcs)) {
+    if (canAssignAdjacentAnimalsToCreators(quartetPcs, animalPcs, skySubByUid)) {
       return {
         valid: stillHoldingCreators.length === 0,
         creators,
