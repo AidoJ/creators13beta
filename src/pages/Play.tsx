@@ -278,7 +278,7 @@ export default function Play() {
       try {
         setState((s) => {
           if (!s) return s;
-          const next = botStep(s);
+          const next = botStep(s, botDifficultyRef.current);
           schedulePersist(next);
           return next;
         });
