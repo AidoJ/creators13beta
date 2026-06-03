@@ -171,7 +171,7 @@ export function GameModeSelector({ open, onCancel, onChoose }: Props) {
               if (!enabled) return null;
               const active = difficulty === d;
               const label = d === "easy" ? "Easy" : d === "medium" ? "Medium" : "Hard";
-              const sub = d === "easy" ? "Forging — plays sub-optimal moves." : d === "medium" ? "Standard greedy play." : "Uses eligible Disasters as soon as allowed.";
+              const sub = d === "easy" ? "Forgiving — plays sub-optimal moves." : d === "medium" ? "Standard greedy play." : "Uses eligible Disasters as soon as allowed.";
               return (
                 <button
                   key={d}
