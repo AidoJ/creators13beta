@@ -222,7 +222,7 @@ export default function GameSettingsPanel() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 items-end">
           <div className="space-y-1">
-            <Label className="text-xs">Bot difficulty</Label>
+            <Label className="text-xs">Default bot difficulty</Label>
             <Select value={s.bot_difficulty} onValueChange={(v) => setS((p) => ({ ...p, bot_difficulty: v as GameSettings["bot_difficulty"] }))}>
               <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -235,9 +235,14 @@ export default function GameSettingsPanel() {
           <NumField k="bot_think_ms" label="Bot think-time (ms)" min={0} max={5000} hint="Delay between bot actions" />
           <NumField k="max_players_per_match" label="Max players per match" min={2} max={6} />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
           <BoolField k="allow_guest_play" label="Allow guest play" hint="Unauthenticated visitors can play" />
           <BoolField k="allow_solo_vs_bot" label="Allow solo vs bot" hint="Single-player vs CPU opponents" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <BoolField k="bot_easy_enabled" label="Easy tier" hint="Players can pick Easy bot" />
+          <BoolField k="bot_medium_enabled" label="Medium tier" hint="Players can pick Medium bot" />
+          <BoolField k="bot_hard_enabled" label="Hard tier" hint="Players can pick Hard bot" />
         </div>
       </section>
 
