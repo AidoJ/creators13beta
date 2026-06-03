@@ -265,19 +265,28 @@ export function animalLinksToCreator(
       (t) => t?.toLowerCase() === sub.toLowerCase(),
     );
   }
-  }
   if (creator.kind !== "creator") return false;
   const animalTypes = (animal.types ?? []) as string[];
-  // Strict rule: animal links ONLY if one of its 2 Creator Types matches this
-  // Creator's exact type. (No element-bucket fallback — that caused huge
-  // collateral wipes when a Fire Creator also pulled in Lava/Sun animals.)
   const creatorType = creator.displayType;
   if (creatorType) {
     return animalTypes.some((t) => t?.toLowerCase() === creatorType.toLowerCase());
   }
-  // Truly untyped creator (shouldn't happen) — fall back to element match.
   const el = creator.element!;
   return animalTypes.some((t) => TYPE_TO_ELEMENT[t] === el);
+}
+
+/** Find the creator card placed in this ecosystem that an animal would link to (if any). */
+export function findLinkedCreator(
+  eco: Ecosystem,
+  animal: DeckCard,
+): PlacedCard | null {
+  for (const pc of eco.placed.values()) {
+    if (pc.card.kind === "creator" || pc.card.kind === "sky_creator") {
+      // Optimistic: Sky Creators here count as matching any typed animal.
+      if (animalLinksToCreator(animal, pc.card, { optimistic: true })) return pc;
+    }
+  }
+  return null;
 }
 
 
