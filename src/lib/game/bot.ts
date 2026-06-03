@@ -25,7 +25,9 @@ import { CREATORS_NEEDED, HAND_LIMIT, type DeckCard, type MatchState } from "./t
 import { TYPE_TO_ELEMENT, ELEMENTS } from "./elements";
 import { isAdjacent } from "./board";
 
-export function botStep(state: MatchState): MatchState {
+export type BotDifficulty = "easy" | "medium" | "hard";
+
+export function botStep(state: MatchState, difficulty: BotDifficulty = "medium"): MatchState {
   if (state.finished) return state;
 
   const me = state.players[state.turn];
