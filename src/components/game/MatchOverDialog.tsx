@@ -146,6 +146,8 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
 
 const CANONICAL_ORDER = ["Lava","Fire","Whirlwind","Snow","Lightning","Sun","Lake","Ocean","Tree","Mountain","Soil","River","Sky"] as const;
 
+type SlotAnimal = { pc: PlacedCard; shared: boolean };
+
 type CreatorSlot = {
   placed: PlacedCard;
   isSky: boolean;
@@ -156,8 +158,10 @@ type CreatorSlot = {
   /** Animals assigned to this slot, counted by Creator Type. */
   animalsByType: Map<string, number>;
   /** Actual animal cards assigned to this slot, for human-readable listing. */
-  animalsList: PlacedCard[];
+  animalsList: SlotAnimal[];
   animalCount: number;
+  /** Golden Body animals adjacent to this Creator. */
+  goldenBodyCount: number;
 };
 
 function TypeChip({
@@ -165,24 +169,38 @@ function TypeChip({
   role,
   n,
   subbed = false,
+  shared = false,
+  bgOverride,
+  outlineColor,
+  label,
 }: {
   type: string;
-  role: "Creator" | "Animal";
+  role: "Creator" | "Animal" | "Sub";
   n: number;
   subbed?: boolean;
+  shared?: boolean;
+  bgOverride?: string;
+  outlineColor?: string;
+  label?: string;
 }) {
-  const color = CREATOR_TYPE_COLORS[type as keyof typeof CREATOR_TYPE_COLORS] ?? "#888";
+  const color = bgOverride ?? CREATOR_TYPE_COLORS[type as keyof typeof CREATOR_TYPE_COLORS] ?? "#888";
   const glyph = glyphForType(type);
+  const style: React.CSSProperties = { background: color };
+  if (outlineColor) {
+    style.outline = `1.5px solid ${outlineColor}`;
+    style.outlineOffset = "-2px";
+  }
   return (
     <div
       className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-white"
-      style={{ background: color }}
-      title={`${role} · ${type}: ${n}${subbed ? " (Sky subbed)" : ""}`}
+      style={style}
+      title={`${role} · ${label ?? type}: ${n}${subbed ? " (Sky subbed)" : ""}${shared ? " (shared with another Creator)" : ""}`}
     >
       {glyph && <img src={glyph} alt="" className="w-3 h-3 object-contain" />}
       <span className="opacity-80">{role}</span>
-      <span>{type}</span>
+      <span>{label ?? type}</span>
       <span className="opacity-80">×{n}</span>
+      {shared && <span className="opacity-90 ml-0.5">↔</span>}
     </div>
   );
 }
@@ -196,10 +214,11 @@ function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: bool
     for (const pc of placedList) {
       const k = pc.card.kind;
       if (k === "creator" || k === "sky_creator") creators.push(pc);
-      else if (k === "golden_body") { goldenBodyCount++; animals.push(pc); }
-      else animals.push(pc);
+      else {
+        if (k === "golden_body") goldenBodyCount++;
+        animals.push(pc);
+      }
     }
-
 
     // Build slots from each placed creator
     const slots: CreatorSlot[] = creators.map((pc) => ({
@@ -214,59 +233,47 @@ function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: bool
       animalsByType: new Map(),
       animalsList: [],
       animalCount: 0,
+      goldenBodyCount: 0,
     }));
 
     const slotByKey = new Map<string, CreatorSlot>();
     for (const s of slots) slotByKey.set(keyOf(s.placed.pos), s);
 
-    // Assign each animal to one creator slot.
-    const unassigned: PlacedCard[] = [];
+    // Cards not adjacent to any Creator (or adjacent but not type-matching).
+    const otherCards: PlacedCard[] = [];
+
     for (const an of animals) {
+      const isGolden = an.card.kind === "golden_body";
       const animalTypes = (an.card.types ?? []) as string[];
-      // 1) prefer ADJACENT typed creator matching one of the animal's types
-      let chosen: CreatorSlot | null = null;
+
+      // Collect ADJACENT creator slots.
+      const adjacent: CreatorSlot[] = [];
       for (const n of neighbours(an.pos)) {
         const s = slotByKey.get(keyOf(n));
-        if (!s) continue;
-        if (!s.isSky && animalTypes.some((t) => t.toLowerCase() === s.slotType.toLowerCase())) {
-          chosen = s;
-          break;
-        }
+        if (s) adjacent.push(s);
       }
-      // 2) else any adjacent Sky creator slot
-      if (!chosen) {
-        for (const n of neighbours(an.pos)) {
-          const s = slotByKey.get(keyOf(n));
-          if (s && s.isSky) {
-            chosen = s;
-            break;
-          }
-        }
-      }
-      // 3) else any non-adjacent typed creator matching
-      if (!chosen) {
-        chosen =
-          slots.find(
-            (s) =>
-              !s.isSky &&
-              animalTypes.some((t) => t.toLowerCase() === s.slotType.toLowerCase()),
-          ) ?? null;
-      }
-      // 4) else first Sky creator slot
-      if (!chosen) chosen = slots.find((s) => s.isSky) ?? null;
+      if (adjacent.length === 0) { otherCards.push(an); continue; }
 
-      if (!chosen) {
-        unassigned.push(an);
-        continue;
+      // Golden Body: attach to first adjacent creator as a "Sub" chip.
+      if (isGolden) { adjacent[0].goldenBodyCount += 1; continue; }
+
+      // Matching slots: typed creator whose type appears in animal's types,
+      // OR any adjacent Sky creator (Sky accepts any neighbour).
+      const matching = adjacent.filter((s) =>
+        s.isSky || animalTypes.some((t) => t.toLowerCase() === s.slotType.toLowerCase()),
+      );
+      if (matching.length === 0) { otherCards.push(an); continue; }
+
+      const shared = matching.length > 1;
+      for (const s of matching) {
+        const primary =
+          animalTypes.find((t) => t.toLowerCase() === s.slotType.toLowerCase()) ??
+          animalTypes[0] ??
+          "Sky";
+        s.animalsByType.set(primary, (s.animalsByType.get(primary) ?? 0) + 1);
+        s.animalsList.push({ pc: an, shared });
+        s.animalCount += 1;
       }
-      // Bucket this animal under its primary matching type
-      const primary =
-        animalTypes.find((t) => t.toLowerCase() === chosen!.slotType.toLowerCase()) ??
-        animalTypes[0] ??
-        "Sky";
-      chosen.animalsByType.set(primary, (chosen.animalsByType.get(primary) ?? 0) + 1);
-      chosen.animalsList.push(an);
-      chosen.animalCount += 1;
     }
 
     // For Sky slots without a displayType, infer the "subbed for" type from
@@ -276,35 +283,35 @@ function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: bool
         let bestType = s.slotType;
         let best = -1;
         for (const [t, n] of s.animalsByType) {
-          if (n > best && t !== "Sky") {
-            best = n;
-            bestType = t;
-          }
+          if (n > best && t !== "Sky") { best = n; bestType = t; }
         }
         s.slotType = bestType;
         s.element = String(TYPE_TO_ELEMENT[bestType] ?? "Sky");
       }
     }
 
-    // Sort slots by canonical order of their slotType (Sky last)
+    // Sort slots by canonical order of their slotType
     slots.sort((a, b) => {
       const ia = CANONICAL_ORDER.indexOf(a.slotType as typeof CANONICAL_ORDER[number]);
       const ib = CANONICAL_ORDER.indexOf(b.slotType as typeof CANONICAL_ORDER[number]);
       return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
     });
 
-    // Unassigned animals grouped by primary type
-    const unassignedByType = new Map<string, number>();
-    for (const an of unassigned) {
-      const t = ((an.card.types ?? [])[0] as string) ?? "Sky";
-      unassignedByType.set(t, (unassignedByType.get(t) ?? 0) + 1);
+    // Other cards on board, grouped by type for chips.
+    const otherByType = new Map<string, number>();
+    for (const an of otherCards) {
+      const key = an.card.kind === "golden_body"
+        ? "Golden Body"
+        : ((an.card.types ?? [])[0] as string) ?? "Sky";
+      otherByType.set(key, (otherByType.get(key) ?? 0) + 1);
     }
 
     return {
       slots,
-      unassignedByType,
+      otherByType,
+      otherCards,
       creatorsCount: creators.length,
-      animalsCount: animals.length,
+      animalsCount: animals.length - goldenBodyCount,
       goldenBodyCount,
     };
   }, [player]);
@@ -318,66 +325,102 @@ function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: bool
       <div className="flex items-baseline justify-between mb-2">
         <div className="font-semibold">{player.name}</div>
         <div className="text-xs text-muted-foreground">
-          {data.creatorsCount} creators · {data.animalsCount - data.goldenBodyCount} animals{data.goldenBodyCount > 0 ? ` · ${data.goldenBodyCount} Golden Body` : ""} · {playerTotalScore(player)} pts
+          {data.creatorsCount} creators · {data.animalsCount} animals{data.goldenBodyCount > 0 ? ` · ${data.goldenBodyCount} Golden Body` : ""} · {playerTotalScore(player)} pts
         </div>
       </div>
 
-
-      {data.slots.length === 0 && data.unassignedByType.size === 0 ? (
+      {data.slots.length === 0 && data.otherByType.size === 0 ? (
         <div className="text-xs text-muted-foreground italic">No cards placed.</div>
       ) : (
         <div className="space-y-2">
-          {data.slots.map((s, i) => (
-            <div key={i} className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mr-1">
-                {s.slotType} ({s.element}){s.isSky ? " — Sky subbed" : ""}
-              </span>
-              <TypeChip
-                type={s.slotType}
-                role="Creator"
-                n={1}
-                subbed={s.isSky}
-              />
-              {Array.from(s.animalsByType.entries())
-                .sort((a, b) => {
-                  const ia = CANONICAL_ORDER.indexOf(a[0] as typeof CANONICAL_ORDER[number]);
-                  const ib = CANONICAL_ORDER.indexOf(b[0] as typeof CANONICAL_ORDER[number]);
-                  return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
-                })
-                .map(([t, n]) => (
-                  <TypeChip key={`a-${t}`} type={t} role="Animal" n={n} />
-                ))}
-              {s.animalCount === 0 && (
-                <span className="text-[11px] italic text-muted-foreground">no animals linked</span>
-              )}
-              {s.animalsList.length > 0 && (
-                <div className="basis-full pl-1 mt-0.5 text-[11px] text-muted-foreground font-mono">
-                  {s.animalsList
-                    .map((pc) => {
-                      const t = (pc.card.types ?? []) as string[];
-                      const code = creatorTypeCode(t[0], t[1]);
-                      return `${pc.card.name}${code ? ` (${code})` : ""}`;
-                    })
-                    .join(", ")}
+          {data.slots.map((s, i) => {
+            const slotColor = CREATOR_TYPE_COLORS[s.slotType as keyof typeof CREATOR_TYPE_COLORS] ?? "#888";
+            const skyColor = CREATOR_TYPE_COLORS.Sky;
+            return (
+              <div key={i} className="border-t border-dashed border-border/50 pt-2 first:border-t-0 first:pt-0">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1 flex items-center gap-1.5">
+                  <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: slotColor }} />
+                  {s.isSky ? `Sky → ${s.slotType}` : s.slotType} ({s.element}){s.isSky ? " — Sky subbed" : ""}
                 </div>
-              )}
-            </div>
-          ))}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <TypeChip
+                    type={s.slotType}
+                    role="Creator"
+                    n={1}
+                    subbed={s.isSky}
+                    bgOverride={slotColor}
+                    outlineColor={s.isSky ? skyColor : undefined}
+                    label={s.isSky ? `Sky→${s.slotType}` : s.slotType}
+                  />
+                  {Array.from(s.animalsByType.entries())
+                    .sort((a, b) => {
+                      const ia = CANONICAL_ORDER.indexOf(a[0] as typeof CANONICAL_ORDER[number]);
+                      const ib = CANONICAL_ORDER.indexOf(b[0] as typeof CANONICAL_ORDER[number]);
+                      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+                    })
+                    .map(([t, n]) => {
+                      const sharedCount = s.animalsList.filter((a) => a.shared && ((a.pc.card.types ?? []) as string[]).some((x) => x.toLowerCase() === t.toLowerCase())).length;
+                      return (
+                        <TypeChip
+                          key={`a-${t}`}
+                          type={t}
+                          role="Animal"
+                          n={n}
+                          shared={sharedCount > 0}
+                        />
+                      );
+                    })}
+                  {s.goldenBodyCount > 0 && (
+                    <TypeChip type="Sky" role="Sub" n={s.goldenBodyCount} bgOverride="#888" label="Golden Body" />
+                  )}
+                  {s.animalCount === 0 && s.goldenBodyCount === 0 && (
+                    <span className="text-[11px] italic text-muted-foreground">no animals linked</span>
+                  )}
+                </div>
+                {s.animalsList.length > 0 && (
+                  <div className="pl-1 mt-1 text-[11px] text-muted-foreground font-mono">
+                    {s.animalsList
+                      .map(({ pc, shared }) => {
+                        const t = (pc.card.types ?? []) as string[];
+                        const code = creatorTypeCode(t[0], t[1]);
+                        return `${pc.card.name}${code ? ` (${code})` : ""}${shared ? " ↔" : ""}`;
+                      })
+                      .join(", ")}
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
-          {data.unassignedByType.size > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border/40">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mr-1">
-                Unassigned animals
-              </span>
-              {Array.from(data.unassignedByType.entries())
-                .sort((a, b) => {
-                  const ia = CANONICAL_ORDER.indexOf(a[0] as typeof CANONICAL_ORDER[number]);
-                  const ib = CANONICAL_ORDER.indexOf(b[0] as typeof CANONICAL_ORDER[number]);
-                  return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
-                })
-                .map(([t, n]) => (
-                  <TypeChip key={`u-${t}`} type={t} role="Animal" n={n} />
-                ))}
+          {data.otherByType.size > 0 && (
+            <div className="border-t border-border/40 pt-2 mt-2">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                Other cards on board
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {Array.from(data.otherByType.entries())
+                  .sort((a, b) => {
+                    const ia = CANONICAL_ORDER.indexOf(a[0] as typeof CANONICAL_ORDER[number]);
+                    const ib = CANONICAL_ORDER.indexOf(b[0] as typeof CANONICAL_ORDER[number]);
+                    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+                  })
+                  .map(([t, n]) =>
+                    t === "Golden Body" ? (
+                      <TypeChip key={`o-${t}`} type="Sky" role="Sub" n={n} bgOverride="#888" label="Golden Body" />
+                    ) : (
+                      <TypeChip key={`o-${t}`} type={t} role="Animal" n={n} />
+                    ),
+                  )}
+              </div>
+              <div className="pl-1 mt-1 text-[11px] text-muted-foreground font-mono">
+                {data.otherCards
+                  .map((pc) => {
+                    const t = (pc.card.types ?? []) as string[];
+                    const code = creatorTypeCode(t[0], t[1]);
+                    return `${pc.card.name}${code ? ` (${code})` : ""}`;
+                  })
+                  .join(", ")}
+              </div>
             </div>
           )}
         </div>
@@ -385,4 +428,5 @@ function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: bool
     </div>
   );
 }
+
 
