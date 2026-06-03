@@ -77,7 +77,7 @@ export function GameModeSelector({ open, onCancel, onChoose }: Props) {
       config.matchMinutes = matchMinutes;
       config.turnSeconds = turnSeconds;
     }
-    onChoose(mode, config);
+    onChoose(mode, config, difficulty);
   }
 
   return (
