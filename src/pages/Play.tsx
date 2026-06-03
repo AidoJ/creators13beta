@@ -1113,7 +1113,7 @@ export default function Play() {
         <GameModeSelector
           open
           onCancel={() => setModeSelectorOpen(false)}
-          onChoose={(m, c) => startSoloMatch(m, c)}
+          onChoose={(m, c, d) => startSoloMatch(m, c, d)}
         />
       )}
 
