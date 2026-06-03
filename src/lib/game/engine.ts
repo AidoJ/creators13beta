@@ -284,11 +284,15 @@ export function placeOnEcosystem(
   // soft rule — animals can be placed freely; win-check verifies linkage.
 
 
-  const rotation = bestRotationForPlacement(player.ecosystem, card, pos);
+  // Auto-pivot rules: an animal only pivots when it lands next to a matching
+  // Creator (or Sky-Creator). Creator cards have no facing colour halves, so
+  // their rotation stays 0; placing a Creator instead triggers repivot on any
+  // adjacent animals that now have a Creator neighbour.
+  const isAnimalLike = card.kind === "animal" || card.kind === "sky_creature";
+  const rotation = isAnimalLike
+    ? bestRotationForPlacement(player.ecosystem, card, pos, { restrictTo: "creator-only" })
+    : 0;
   player.ecosystem.placed.set(keyOf(pos), { card, pos, rotation });
-  // Re-pivot any adjacent animal/sky-creature so its colour halves now align
-  // with this new neighbour (e.g. placing a Lava Creator next to a Lava
-  // animal previously dropped on its own should auto-rotate the animal).
   repivotNeighbours(player.ecosystem, pos);
   player.hand.splice(idx, 1);
   player.score += card.kind === "creator" || card.kind === "sky_creator" ? 3 : 1;
