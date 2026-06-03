@@ -543,19 +543,22 @@ export default function Play() {
     setModeSelectorOpen(true);
   }
 
-  async function startSoloMatch(mode: GameMode, config: GameConfig) {
+  async function startSoloMatch(mode: GameMode, config: GameConfig, difficulty: BotDifficulty) {
     if (!allCards) return;
     const youName = user ? await fetchPlayerShortName(user) : "You";
     const deck = buildDeck(allCards, specialCards);
+    const botLabel = difficulty === "easy" ? "Bot · Easy" : difficulty === "hard" ? "Bot · Hard" : "Bot · Medium";
     const fresh = createMatch({
       deck,
       players: [
         { id: "you", name: youName },
-        { id: "bot", name: "Tutorial Bot" },
+        { id: "bot", name: botLabel },
       ],
       gameMode: mode,
       gameConfig: config,
     });
+    botDifficultyRef.current = difficulty;
+    botStatsRecordedRef.current = false;
     setState(fresh);
     setSelectedUid(null);
     setMode("place");
