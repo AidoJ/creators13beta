@@ -310,7 +310,11 @@ function repivotNeighbours(eco: Ecosystem, pos: Axial): void {
     const pc = eco.placed.get(nKey);
     if (!pc) continue;
     if (pc.card.kind !== "animal" && pc.card.kind !== "sky_creature") continue;
-    const newRot = bestRotationForPlacement(eco, pc.card, pc.pos);
+    // Only auto-pivot when this animal actually has a Creator neighbour.
+    const newRot = bestRotationForPlacement(eco, pc.card, pc.pos, {
+      restrictTo: "creator-only",
+      currentRotation: pc.rotation ?? 0,
+    });
     if (newRot !== (pc.rotation ?? 0)) {
       eco.placed.set(nKey, { ...pc, rotation: newRot });
     }
