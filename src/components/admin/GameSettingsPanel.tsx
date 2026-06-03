@@ -25,6 +25,7 @@ type Bool = keyof Pick<GameSettings,
   "mode_end_of_days_enabled" | "mode_top_score_enabled" | "mode_beat_clock_enabled"
   | "enable_disasters" | "enable_golden_hive" | "enable_sky_creator" | "enable_golden_body" | "enable_sky_creature_steal"
   | "allow_guest_play" | "allow_solo_vs_bot"
+  | "bot_easy_enabled" | "bot_medium_enabled" | "bot_hard_enabled"
   | "show_tutorial_overlay" | "show_discord_chat" | "show_review_boards" | "prompt_player_name" | "show_score_panel"
   | "maintenance_banner_enabled" | "play_disabled" | "profile_discount_enabled">;
 
