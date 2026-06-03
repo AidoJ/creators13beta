@@ -12,6 +12,7 @@ import { playerTotalScore } from "@/lib/game/types";
 import { validateEcosystemWin } from "@/lib/game/engine";
 import { TYPE_TO_ELEMENT } from "@/lib/game/elements";
 import { keyOf, neighbours } from "@/lib/game/board";
+import { creatorTypeCode } from "@/lib/creatorTypeCode";
 
 
 function buildWinReason(state: MatchState, winner: PlayerState): { headline: string; detail: string } {
