@@ -42,11 +42,13 @@ function buildPlayer(clusters: DeckCard[][], hand: DeckCard[] = []): PlayerState
   clusters.forEach((group, i) => {
     const origin = { q: i * 10, r: i * 10 };
     const [creator, ...animals] = group;
+      const targetType = creator.kind === "creator" ? creator.displayType : animals.find((a) => a.types?.[0])?.types?.[0];
     placed.set(`${origin.q},${origin.r}`, { card: creator, pos: origin });
     animals.forEach((a, j) => {
       const off = NEI[j];
       const pos = { q: origin.q + off.q, r: origin.r + off.r };
-      const rotation = rotationFacing((j + 3) % 6, "A");
+      const half = targetType && a.types?.[1] === targetType && a.types?.[0] !== targetType ? "B" : "A";
+      const rotation = a.kind === "golden_body" ? 0 : rotationFacing((j + 3) % 6, half);
       placed.set(`${pos.q},${pos.r}`, { card: a, pos, rotation });
     });
   });
