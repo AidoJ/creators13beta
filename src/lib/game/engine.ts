@@ -481,6 +481,27 @@ export function playDisaster(
     );
   }
 
+  // Rule book prerequisite: you may only unleash a Disaster once your own
+  // ecosystem covers all four elements (Earth/Fire/Air/Water). A Sky Creator
+  // on your board counts for the element of its locked sub-type only.
+  const myElements = new Set<Element>();
+  for (const pc of player.ecosystem.placed.values()) {
+    if (pc.card.kind === "creator" && pc.card.element) {
+      myElements.add(pc.card.element);
+    } else if (pc.card.kind === "sky_creator") {
+      const sub = skyLockedSubType(player.ecosystem, pc.pos);
+      if (sub) {
+        const el = TYPE_TO_ELEMENT[sub];
+        if (el && el !== "Sky") myElements.add(el as Element);
+      }
+    }
+  }
+  if (!ELEMENTS.every((e) => myElements.has(e))) {
+    throw new Error(
+      "You must place one Creator of each element (Earth, Fire, Air, Water) on your own board before you can unleash a Disaster.",
+    );
+  }
+
   const spentCreator = { ...creator, disasterSpent: true };
   player.hand.splice(idx, 1);
   next.used.push(spentCreator);
