@@ -75,12 +75,13 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
   const navigate = useNavigate();
   const [progress, setProgress] = useState<ProgressRow | null>(null);
   const [matches, setMatches] = useState<MatchRow[]>([]);
+  const [botStats, setBotStats] = useState<BotStatRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [progRes, matchRes] = await Promise.all([
+      const [progRes, matchRes, botRes] = await Promise.all([
         supabase
           .from("player_progress")
           .select("points, types_seen, elo, current_streak, longest_streak, perfect_ecosystems, badges, last_played_at")
@@ -92,6 +93,10 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
           .or(`host_user_id.eq.${userId},guest_user_id.eq.${userId}`)
           .order("updated_at", { ascending: false })
           .limit(30),
+        supabase
+          .from("bot_match_stats" as any)
+          .select("difficulty, wins, losses, draws, perfect_ecos, last_played_at")
+          .eq("user_id", userId),
       ]);
       if (cancelled) return;
       setProgress(
@@ -102,6 +107,7 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
         },
       );
       setMatches((matchRes.data || []) as MatchRow[]);
+      setBotStats(((botRes.data as any[]) ?? []) as BotStatRow[]);
       setLoading(false);
     })();
     return () => { cancelled = true; };
