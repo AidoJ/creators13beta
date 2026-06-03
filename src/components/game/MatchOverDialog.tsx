@@ -12,6 +12,7 @@ import { playerTotalScore } from "@/lib/game/types";
 import { validateEcosystemWin } from "@/lib/game/engine";
 import { TYPE_TO_ELEMENT } from "@/lib/game/elements";
 import { keyOf, neighbours } from "@/lib/game/board";
+import { creatorTypeCode } from "@/lib/creatorTypeCode";
 
 
 function buildWinReason(state: MatchState, winner: PlayerState): { headline: string; detail: string } {
@@ -154,6 +155,8 @@ type CreatorSlot = {
   element: string;
   /** Animals assigned to this slot, counted by Creator Type. */
   animalsByType: Map<string, number>;
+  /** Actual animal cards assigned to this slot, for human-readable listing. */
+  animalsList: PlacedCard[];
   animalCount: number;
 };
 
@@ -209,6 +212,7 @@ function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: bool
         ? String(TYPE_TO_ELEMENT[pc.card.displayType] ?? "Sky")
         : "Sky",
       animalsByType: new Map(),
+      animalsList: [],
       animalCount: 0,
     }));
 
@@ -261,6 +265,7 @@ function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: bool
         animalTypes[0] ??
         "Sky";
       chosen.animalsByType.set(primary, (chosen.animalsByType.get(primary) ?? 0) + 1);
+      chosen.animalsList.push(an);
       chosen.animalCount += 1;
     }
 
@@ -344,6 +349,17 @@ function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: bool
                 ))}
               {s.animalCount === 0 && (
                 <span className="text-[11px] italic text-muted-foreground">no animals linked</span>
+              )}
+              {s.animalsList.length > 0 && (
+                <div className="basis-full pl-1 mt-0.5 text-[11px] text-muted-foreground font-mono">
+                  {s.animalsList
+                    .map((pc) => {
+                      const t = (pc.card.types ?? []) as string[];
+                      const code = creatorTypeCode(t[0], t[1]);
+                      return `${pc.card.name}${code ? ` (${code})` : ""}`;
+                    })
+                    .join(", ")}
+                </div>
               )}
             </div>
           ))}

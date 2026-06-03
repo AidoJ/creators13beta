@@ -11,6 +11,8 @@ export interface GameCard {
   type_a: CreatorTypeName;
   type_b: CreatorTypeName;
   types: [CreatorTypeName, CreatorTypeName];
+  /** 4-char first+last-letter code (e.g. Snow+Soil → "SwSl"). DB-generated. */
+  code: string | null;
   mythical: boolean;
   descriptor: string | null;
   art_path: string | null;
@@ -36,6 +38,7 @@ function decorate(row: any): GameCard {
     type_a: row.type_a,
     type_b: row.type_b,
     types: [row.type_a, row.type_b],
+    code: row.code ?? null,
     mythical: row.mythical,
     descriptor: row.descriptor,
     art_path: row.art_path,

@@ -562,6 +562,7 @@ export type Database = {
       game_cards: {
         Row: {
           art_path: string | null
+          code: string | null
           created_at: string
           descriptor: string | null
           id: string
@@ -575,6 +576,7 @@ export type Database = {
         }
         Insert: {
           art_path?: string | null
+          code?: string | null
           created_at?: string
           descriptor?: string | null
           id?: string
@@ -588,6 +590,7 @@ export type Database = {
         }
         Update: {
           art_path?: string | null
+          code?: string | null
           created_at?: string
           descriptor?: string | null
           id?: string
@@ -1238,6 +1241,7 @@ export type Database = {
       special_cards: {
         Row: {
           art_path: string | null
+          code: string | null
           color_hex: string | null
           created_at: string
           descriptor: string | null
@@ -1250,6 +1254,7 @@ export type Database = {
         }
         Insert: {
           art_path?: string | null
+          code?: string | null
           color_hex?: string | null
           created_at?: string
           descriptor?: string | null
@@ -1262,6 +1267,7 @@ export type Database = {
         }
         Update: {
           art_path?: string | null
+          code?: string | null
           color_hex?: string | null
           created_at?: string
           descriptor?: string | null
@@ -1658,6 +1664,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      creator_type_code: {
+        Args: { _lower: boolean; _type: string }
+        Returns: string
       }
       generate_practitioner_code:
         | { Args: never; Returns: string }
