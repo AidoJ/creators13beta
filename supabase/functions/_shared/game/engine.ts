@@ -83,8 +83,8 @@ export interface CreateMatchOptions {
   players: Array<Pick<PlayerState, "id" | "name">>;
   deck: DeckCard[];
   rand?: () => number;
-  gameMode?: import("./types").GameMode;
-  gameConfig?: import("./types").GameConfig;
+  gameMode?: import("./types.ts").GameMode;
+  gameConfig?: import("./types.ts").GameConfig;
 }
 
 export function createMatch(opts: CreateMatchOptions): MatchState {
