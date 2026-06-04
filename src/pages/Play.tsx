@@ -88,7 +88,11 @@ export default function Play() {
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { settings: gameSettings } = useGameSettings();
-  const saveSeqRef = useRef(0);
+  /** Promise-chain mutex for PvP move submission. Ensures only one
+   *  apply-move request is in flight at a time per match, so optimistic
+   *  state mutations submit in the order the user made them and `seq`
+   *  stays monotonic on the wire. */
+  const inFlightMoveRef = useRef<Promise<void> | null>(null);
   /** Server-side `seq` last seen on this match row. Bumped by applyMoveServer
    *  and by realtime updates. Used as the optimistic-concurrency token when
    *  submitting the next move. */
