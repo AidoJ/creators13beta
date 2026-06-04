@@ -315,6 +315,13 @@ export function findLinkedCreator(
   return null;
 }
 
+function findAdjacentDriverCreator(eco: Ecosystem, card: DeckCard, pos: Axial): PlacedCard | undefined {
+  const adjacentCreators = neighbours(pos)
+    .map((n) => eco.placed.get(keyOf(n)))
+    .filter((pc): pc is PlacedCard => !!pc && (pc.card.kind === "creator" || pc.card.kind === "sky_creator"));
+  return adjacentCreators.find((pc) => animalLinksToCreator(card, pc.card, { optimistic: true })) ?? adjacentCreators[0];
+}
+
 /* --------------------------- place phase --------------------------- */
 
 export function placeOnEcosystem(
@@ -355,9 +362,7 @@ export function placeOnEcosystem(
   // For an animal landing next to a Creator, pin rotation to that single
   // Creator so the matching half deterministically faces it.
   const driverCreator = isAnimalLike
-    ? neighbours(pos)
-        .map((n) => player.ecosystem.placed.get(keyOf(n)))
-        .find((nb) => nb && (nb.card.kind === "creator" || nb.card.kind === "sky_creator"))
+    ? findAdjacentDriverCreator(player.ecosystem, card, pos)
     : undefined;
   const rotation = isAnimalLike
     ? bestRotationForPlacement(player.ecosystem, card, pos, {
