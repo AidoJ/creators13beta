@@ -494,13 +494,13 @@ export default function Play() {
     const dragMoveKey = draggedUid?.startsWith("move:") ? draggedUid.slice(5) : null;
     const fromKey = dragMoveKey ?? (mode === "move" ? moveFromKey : null);
     if (fromKey) {
-      // move-hex isn't in the ServerMove union yet — local + legacy save only.
+      // Server-authoritative in PvP, legacy save for solo.
       try {
         const snap = state;
         const next = moveMyPlacedHex(state, selfSlot, fromKey, pos);
         pushUndo(snap);
         setState(next);
-        schedulePersist(next);
+        schedulePersist(next, { type: "move_hex", from_key: fromKey, to_pos: pos });
         setMoveFromKey(null);
         armQuickUndo();
       } catch (e: any) {
@@ -544,12 +544,12 @@ export default function Play() {
       setMoveFromKey((cur) => (cur === posKey ? null : posKey));
       return;
     }
-    // Rotate: presentation-only, not in ServerMove union — local + legacy save.
+    // Rotate: presentation-only. Server-authoritative in PvP, legacy save for solo.
     setState((s) => {
       if (!s) return s;
       pushUndo(s);
       const next = rotateMyPlacedHex(s, selfSlot, posKey);
-      schedulePersist(next);
+      schedulePersist(next, { type: "rotate_hex", pos_key: posKey });
       return next;
     });
   }
