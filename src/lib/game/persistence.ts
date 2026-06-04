@@ -23,6 +23,12 @@ export interface GameMatchRow {
   guest_name: string | null;
   invite_token: string | null;
   state: SerializedMatchState;
+  /** Server-managed monotonic sequence. Bumped by `commit_move`. */
+  seq: number;
+  /** True for pvp matches with ELO impact. Solo bot matches set this false. */
+  is_ranked: boolean;
+  /** Opponent-redacted copy of `state` written by the server. */
+  public_state: SerializedMatchState | null;
   winner_user_id: string | null;
   last_action_by: string | null;
   created_at: string;
@@ -54,6 +60,8 @@ export async function createMatchRow(args: {
       host_name: args.hostName,
       guest_name: args.guestName ?? null,
       invite_token: inviteToken,
+      // Solo bot matches are non-ranked — kept client-authoritative.
+      is_ranked: args.mode === "pvp",
       state: serializeMatch(args.state) as any,
       last_action_by: args.hostUserId,
     })
