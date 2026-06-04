@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType, glyphMarkForType } from "@/lib/game/glyphs";
@@ -13,6 +14,11 @@ interface Props {
   onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
   onDragEnd?: () => void;
   draggable?: boolean;
+  /** Touch / pointer fallback for iOS Safari & iPad where HTML5 drag events
+   *  do not fire reliably. Parent should treat these the same as onDragStart /
+   *  onDragEnd. */
+  onTouchDragStart?: () => void;
+  onTouchDragEnd?: () => void;
   highlight?: "selected" | "match" | null;
   /** 0..5 — 60° clockwise rotations applied to the hex background only. */
   rotation?: number;
