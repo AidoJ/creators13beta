@@ -2,8 +2,14 @@
  * Realtime sync hook for a multiplayer match row.
  *
  * Subscribes to UPDATE events on the game_matches row. Whenever the OTHER
- * player writes (last_action_by !== us), we deserialize their state into
- * our local React state.
+ * player writes (last_action_by !== us), we deserialize the canonical state
+ * into our local React state.
+ *
+ * Hand redaction: PvP matches now have a server-managed `public_state`
+ * column that is the opponent-redacted view (their hand stripped, only a
+ * `handCount` left). We prefer that whenever it's present; the full `state`
+ * column is service-role-only and clients can't read it directly, but the
+ * old code path keeps working for legacy / pre-server-auth rows.
  */
 
 import { useEffect } from "react";
@@ -11,6 +17,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { deserializeMatch } from "@/lib/game/serialize";
 import type { MatchState } from "@/lib/game/types";
 import type { GameMatchRow } from "@/lib/game/persistence";
+
+function pickStateForRecipient(row: GameMatchRow): MatchState {
+  // public_state is opponent-redacted (the actor's hand is visible, the
+  // OTHER side's hand was stripped before write). Since this hook only
+  // fires for updates NOT performed by us, public_state is the right view
+  // for our side. Fall back to `state` for older rows.
+  const raw = (row.public_state ?? row.state) as any;
+  return deserializeMatch(raw);
+}
 
 export function useMatchRealtime(
   matchId: string | null,
@@ -35,7 +50,7 @@ export function useMatchRealtime(
           const row = payload.new as unknown as GameMatchRow;
           if (row.last_action_by && row.last_action_by === selfUserId) return;
           try {
-            onRemoteUpdate(deserializeMatch(row.state), row);
+            onRemoteUpdate(pickStateForRecipient(row), row);
           } catch (e) {
             console.error("[match-realtime] deserialize failed", e);
           }
@@ -46,7 +61,6 @@ export function useMatchRealtime(
       });
 
     // Polling fallback in case realtime is blocked (corp networks, ws issues).
-    // Light: every 4s pull the row and emit if last_action_by !== self and updated_at advanced.
     let lastUpdatedAt = "";
     const poll = setInterval(async () => {
       if (cancelled) return;
@@ -61,7 +75,7 @@ export function useMatchRealtime(
       lastUpdatedAt = row.updated_at;
       if (row.last_action_by && row.last_action_by === selfUserId) return;
       try {
-        onRemoteUpdate(deserializeMatch(row.state), row);
+        onRemoteUpdate(pickStateForRecipient(row), row);
       } catch (e) {
         console.error("[match-realtime] poll deserialize failed", e);
       }

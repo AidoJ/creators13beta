@@ -1,11 +1,12 @@
 # Server-Authoritative Moves — Design Doc
 
-**Status:** Draft for review
+**Status:** Implemented (Steps 1–6). Steps 7+ are follow-ups, see §10.
 **Author:** Lovable
 **Date:** 2026-06-04
-**Decision needed:** Greenlight before implementation (est. 1–2 weeks of work)
+**Decision needed:** None — shipped.
 
 ---
+
 
 ## 1. Why we're doing this
 
@@ -194,13 +195,28 @@ Each step ships independently; you can pause after any of them.
 
 **Total: ~6–7 working days**, shippable in increments so you keep testing throughout.
 
-## 9. Open questions for you
+## 9. Open questions for you  *(resolved)*
 
-1. **Option C OK?** Or do you want pure DB (A) for latency / pure client-still-trusts (status quo) for speed?
-2. **Feature flag rollout** vs **flip-the-switch** — happy for us to flag-gate per-move during migration, or want it all-or-nothing?
-3. **Bot games** — keep them client-authoritative (no point validating yourself) and just mark them `is_ranked = false`?
-4. **Spectators** — is "anyone with a link can watch" a future feature? If yes, `public_state` design needs a third "spectator" redaction (no hands at all). If no, simpler.
+1. **Option C OK?** ✅ Yes (edge fn + thin RPC).
+2. **Feature flag rollout vs flip-the-switch?** ✅ Flip the switch.
+3. **Bot games stay client-authoritative + `is_ranked = false`?** ✅ Yes.
+4. **Spectators?** ✅ Not for launch — `public_state` is just opponent-redacted, no third tier.
+
+## 10. Follow-ups (not blocking launch)
+
+- **At-rest hand redaction.** Realtime push uses `public_state` so opponent
+  hands are not broadcast. A determined client can still `SELECT state`
+  on `game_matches` (RLS allows row-level reads). To fully redact at rest
+  we'd need to revoke column SELECT on `state` from `authenticated` and
+  provide a `get_my_view(match_id)` SECDEF RPC that returns the caller's
+  own hand plus a redacted opponent view. Punted because every PvP move
+  reconciles via the apply-move response which already returns the
+  caller's correct view.
+- **Idle / disconnect forfeit timer.** Mentioned in §7 — still untouched.
+  An abandoned PvP match sits in `active` forever.
+- **Anti-collusion heuristics on the ladder.** Out of scope.
 
 ---
+
 
 When you've read this, just answer the 4 questions and I'll start on step 1.

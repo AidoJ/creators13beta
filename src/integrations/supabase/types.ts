@@ -1787,6 +1787,7 @@ export type Database = {
         Args: { _lower: boolean; _type: string }
         Returns: string
       }
+      finalise_ranked_match: { Args: { _match_id: string }; Returns: undefined }
       generate_practitioner_code:
         | { Args: never; Returns: string }
         | { Args: { _first_name?: string }; Returns: string }

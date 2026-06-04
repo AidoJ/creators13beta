@@ -234,6 +234,24 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "player slot empty" }, 500);
   }
 
+  // Name sync: keep player display names aligned with the row's host_name /
+  // guest_name (the join flow updates those columns; clients are no longer
+  // allowed to overwrite `state` directly to patch them).
+  const rowHostName = (match.host_name ?? "").toString();
+  const rowGuestName = (match.guest_name ?? "").toString();
+  let namesPatched = false;
+  state.players = state.players.map((p, i) => {
+    const rowName = i === 0 ? rowHostName : rowGuestName;
+    if (rowName && p.name !== rowName) {
+      namesPatched = true;
+      return { ...p, name: rowName };
+    }
+    return p;
+  });
+  if (namesPatched) {
+    console.log("[apply-move] patched player names from row", { rowHostName, rowGuestName });
+  }
+
   // Turn check (skipped for non-turn-bound actions).
   // rotate_hex is purely presentational on the caller's own ecosystem, so
   // we allow it any time. Everything else requires it to be the caller's turn.
@@ -300,6 +318,16 @@ Deno.serve(async (req) => {
     }
     console.error("[apply-move] commit failed", commitErr);
     return jsonResponse({ error: "commit failed", detail: commitErr.message }, 500);
+  }
+
+  // Server-vouched ranked match outcome. Only fires for ranked PvP matches
+  // that just transitioned to finished. The RPC is service-role only and is
+  // idempotent (it tags `state.__finalised`).
+  if (finished && match.is_ranked) {
+    const { error: finErr } = await svc.rpc("finalise_ranked_match", {
+      _match_id: body.match_id,
+    });
+    if (finErr) console.error("[apply-move] finalise_ranked_match failed", finErr);
   }
 
   return jsonResponse({
