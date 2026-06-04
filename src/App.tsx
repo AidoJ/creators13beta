@@ -28,6 +28,8 @@ import CardPreview from "./pages/CardPreview";
 import Play from "./pages/Play";
 import JoinMatch from "./pages/JoinMatch";
 import GlobalFooter from "@/components/shared/GlobalFooter";
+import ErrorBoundary from "@/components/ErrorBoundary";
+
 
 const queryClient = new QueryClient();
 
@@ -59,9 +61,10 @@ const App = () => (
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route path="/card-preview" element={<CardPreview />} />
-                <Route path="/play" element={<Play />} />
-                <Route path="/play/m/:matchId" element={<ProtectedRoute><Play /></ProtectedRoute>} />
+                <Route path="/play" element={<ErrorBoundary><Play /></ErrorBoundary>} />
+                <Route path="/play/m/:matchId" element={<ProtectedRoute><ErrorBoundary><Play /></ErrorBoundary></ProtectedRoute>} />
                 <Route path="/play/join/:token" element={<JoinMatch />} />
+
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>

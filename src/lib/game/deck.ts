@@ -71,6 +71,18 @@ function goldenHive(): DeckCard {
   return { uid: nextUid("golden-hive"), kind: "golden_hive", name: "Golden Hive", special: true };
 }
 
+/**
+ * Expected deck composition (audit invariant — keep in sync with the header
+ * comment). Asserted at the end of `buildDeck` so silent drift in
+ * `game_cards` or the special-card list trips immediately in dev/tests.
+ */
+const EXPECTED_TOTAL = 115;
+const EXPECTED_MYTHICALS = 12; // sky_creature kind
+const EXPECTED_CREATORS = 24;  // 12 non-Sky types × 2
+const EXPECTED_SKY_CREATORS = 2;
+const EXPECTED_GOLDEN_BODY = 8;
+const EXPECTED_GOLDEN_HIVE = 1;
+
 export function buildDeck(allCards: GameCard[], specials: SpecialCard[] = []): DeckCard[] {
   _seq = 0;
   const deck: DeckCard[] = [];
@@ -93,6 +105,34 @@ export function buildDeck(allCards: GameCard[], specials: SpecialCard[] = []): D
   const ghOv = bySlug.get("golden-hive");
   for (let i = 0; i < 1; i++) deck.push(applySpecial(goldenHive(), ghOv));
 
+  // ---- Invariant assertions ----------------------------------------------
+  // Only enforce when the caller passed the full 80-card source set. Some
+  // tests/preview pages build minimal decks from a subset of cards; in that
+  // case we just skip the asserts rather than fail loudly.
+  if (allCards.length === 80) {
+    const counts = {
+      total: deck.length,
+      mythical: deck.filter((c) => c.kind === "sky_creature").length,
+      creator: deck.filter((c) => c.kind === "creator").length,
+      sky_creator: deck.filter((c) => c.kind === "sky_creator").length,
+      golden_body: deck.filter((c) => c.kind === "golden_body").length,
+      golden_hive: deck.filter((c) => c.kind === "golden_hive").length,
+    };
+    const errors: string[] = [];
+    if (counts.total !== EXPECTED_TOTAL) errors.push(`total=${counts.total}≠${EXPECTED_TOTAL}`);
+    if (counts.mythical !== EXPECTED_MYTHICALS) errors.push(`mythical=${counts.mythical}≠${EXPECTED_MYTHICALS}`);
+    if (counts.creator !== EXPECTED_CREATORS) errors.push(`creator=${counts.creator}≠${EXPECTED_CREATORS}`);
+    if (counts.sky_creator !== EXPECTED_SKY_CREATORS) errors.push(`sky_creator=${counts.sky_creator}≠${EXPECTED_SKY_CREATORS}`);
+    if (counts.golden_body !== EXPECTED_GOLDEN_BODY) errors.push(`golden_body=${counts.golden_body}≠${EXPECTED_GOLDEN_BODY}`);
+    if (counts.golden_hive !== EXPECTED_GOLDEN_HIVE) errors.push(`golden_hive=${counts.golden_hive}≠${EXPECTED_GOLDEN_HIVE}`);
+    if (errors.length) {
+      const msg = `[buildDeck] invariant violation: ${errors.join(", ")}`;
+      console.error(msg, counts);
+      if (import.meta.env?.DEV) throw new Error(msg);
+    }
+  }
+
   return deck;
 }
+
 
