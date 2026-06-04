@@ -36,6 +36,8 @@ import {
   inviteUrl,
   type GameMatchRow,
 } from "@/lib/game/persistence";
+import { applyMoveServer, type ServerMove } from "@/lib/game/serverMoves";
+import { deserializeMatch } from "@/lib/game/serialize";
 import { recordProgressDiff } from "@/lib/game/progress";
 import type { BotDifficulty } from "@/lib/game/bot";
 import { supabase } from "@/integrations/supabase/client";
