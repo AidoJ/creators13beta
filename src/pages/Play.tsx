@@ -348,101 +348,22 @@ export default function Play() {
     }
   }
 
-  /** Submit a Move to the server-authoritative `apply-move` edge function.
-   *  Local state has already been updated optimistically. On rejection we
-   *  refetch the canonical row and reconcile — that's the safety net that
-   *  closes the cheating window without rolling our own conflict resolution.
-   *
-   *  Serialised via `inFlightMoveRef` so concurrent callers (e.g. a tile
-   *  placement immediately followed by an auto end-turn) submit in order
-   *  and `serverSeqRef` stays monotonic. */
-  function submitServerMove(move: ServerMove, _optimisticNext: MatchState): Promise<void> {
-    if (!matchRow) return Promise.resolve();
-    const run = async () => {
-      const expected = serverSeqRef.current;
-      const result = await applyMoveServer(matchRow.id, expected, move);
-      if (result.ok === true) {
-        serverSeqRef.current = result.seq;
-        return;
-      }
-      const rejected = result as Extract<typeof result, { ok: false }>;
-      if (rejected.reason === "not_implemented") {
-        console.warn("[apply-move] server not yet implementing", move.type);
-        return;
-      }
-      if (rejected.reason === "stale") {
-        toast.message("Catching up to opponent…");
-      } else {
-        toast.error(rejected.message ?? "Move rejected by server");
-      }
-      // Refetch the canonical row + state.
-      try {
-        const { row, state: canonical } = await loadMatch(matchRow.id);
-        setMatchRow(row);
-        setState(canonical);
-        serverSeqRef.current = Number(row.seq ?? 0);
-      } catch (e) {
-        console.error("[apply-move] reconcile failed", e);
-      }
-    };
-    const chained = (inFlightMoveRef.current ?? Promise.resolve())
-      .then(run, run)
-      .finally(() => {
-        if (inFlightMoveRef.current === chained) inFlightMoveRef.current = null;
-      });
-    inFlightMoveRef.current = chained;
-    return chained;
-  }
+  /* ----------- Beat-the-Clock timer (extracted to a hook) ----------- */
+  useBeatTheClockTimer({
+    state,
+    selfSlot,
+    turnStartedAtRef,
+    onTick: () => setNowTick((n) => n + 1),
+    onMatchEnd: (next) => {
+      setState(next);
+      schedulePersist(next, { type: "finalise_by_score" });
+    },
+    onTurnExpired: (next) => {
+      setState(next);
+      schedulePersist(next, { type: "end_turn" });
+    },
+  });
 
-
-  /* ----------- Beat-the-Clock timers (stable ticker via refs) ----------- */
-  // Reset turn timer whenever the current turn changes.
-  useEffect(() => {
-    turnStartedAtRef.current = Date.now();
-  }, [state?.turn, state?.turnNumber]);
-
-  // Keep latest state / selfSlot accessible to a single persistent interval
-  // so rapid state churn doesn't keep cancelling the 1s tick (the bug that
-  // caused Beat the Clock to never enforce its time limit).
-  const stateRef = useRef<MatchState | null>(null);
-  const selfSlotRef = useRef<string>(selfSlot);
-  useEffect(() => { stateRef.current = state; }, [state]);
-  useEffect(() => { selfSlotRef.current = selfSlot; }, [selfSlot]);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setNowTick((n) => n + 1); // re-render countdown labels every second
-      const s = stateRef.current;
-      if (!s || s.finished) return;
-      if (s.gameMode !== "beat_clock") return;
-      const now = Date.now();
-      const endsAt = s.gameConfig?.matchEndsAt ?? 0;
-      if (endsAt && now >= endsAt) {
-        try {
-          const next = finaliseByScore(s);
-          setState(next);
-          schedulePersist(next, { type: "finalise_by_score" });
-        } catch {/* ignore */}
-        return;
-      }
-      const turnSecs = s.gameConfig?.turnSeconds ?? 0;
-      if (
-        turnSecs > 0 &&
-        s.phase === "place" &&
-        !s.pendingDisaster &&
-        s.players[s.turn].id === selfSlotRef.current &&
-        now - turnStartedAtRef.current >= turnSecs * 1000
-      ) {
-        try {
-          const next = endTurnEarly(s);
-          setState(next);
-          schedulePersist(next, { type: "end_turn" });
-        } catch {/* ignore */}
-      }
-    }, 1000);
-    return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
 
   /* ----------- Derived view-model ----------- */
