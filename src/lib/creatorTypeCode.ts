@@ -32,3 +32,33 @@ export function creatorTypeCode(typeA?: string | null, typeB?: string | null): s
 export function creatorTypeHalf(type: string): string {
   return half(type);
 }
+
+/** Short badge code for any DeckCard kind, used on board + hand tiles.
+ *  - animal / sky_creature → 4-char dual-type code (e.g. "LgSn")
+ *  - creator               → 2-char displayType code (e.g. "Sn")
+ *  - sky_creator           → "Sy"
+ *  - golden_body           → "GB"
+ *  - golden_hive           → "GH"
+ */
+export function cardCodeLabel(card: {
+  kind: string;
+  types?: readonly (string | null | undefined)[];
+  displayType?: string | null;
+  element?: string | null;
+}): string {
+  switch (card.kind) {
+    case "animal":
+    case "sky_creature":
+      return creatorTypeCode(card.types?.[0], card.types?.[1]);
+    case "creator":
+      return half(card.displayType ?? card.element ?? "");
+    case "sky_creator":
+      return "Sy";
+    case "golden_body":
+      return "GB";
+    case "golden_hive":
+      return "GH";
+    default:
+      return "";
+  }
+}

@@ -250,6 +250,27 @@ export function skyLockedSubType(eco: Ecosystem, skyPos: Axial): string | null {
   return candidates[0] ?? null;
 }
 
+/** Returns the Creator-Type colour a Golden Body should mirror on its second
+ *  hex-half so the board visually shows what it's locked into. A Golden Body
+ *  is a wildcard animal placed adjacent to one Creator card — we return that
+ *  Creator's displayType (or element name fallback). Null if no adjacent
+ *  Creator card. */
+export function goldenBodyLockedType(eco: Ecosystem, gbPos: Axial): string | null {
+  for (const n of neighbours(gbPos)) {
+    const pc = eco.placed.get(keyOf(n));
+    if (!pc) continue;
+    if (pc.card.kind === "creator") {
+      return (pc.card.displayType as string | undefined) ?? (pc.card.element as string | undefined) ?? null;
+    }
+    if (pc.card.kind === "sky_creator") {
+      const sub = skyLockedSubType(eco, pc.pos);
+      return sub ?? "Sky";
+    }
+  }
+  return null;
+}
+
+
 function animalTouchesCreatorAs(
   animalPc: PlacedCard,
   creatorPc: PlacedCard,

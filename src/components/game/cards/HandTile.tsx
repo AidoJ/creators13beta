@@ -9,6 +9,7 @@ import { getSpecialCardFallbackArt, getSpecialCardFallbackDescriptor } from "@/l
 import type { DeckCard } from "@/lib/game/types";
 import { getCardCreditArtist } from "@/lib/cardCredits";
 import { TypeGlyphMark, displayCardName } from "./TypeGlyphMark";
+import { cardCodeLabel } from "@/lib/creatorTypeCode";
 import CreatorCardInfoPopup from "./CreatorCardInfoPopup";
 
 interface Props {
@@ -32,6 +33,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
   const isCreatorLike = card.kind === "creator" || card.kind === "sky_creator" || isGolden;
   const isTwoTone = card.kind === "animal" || card.kind === "sky_creature";
   const name = card.name;
+  const codeLabel = cardCodeLabel(card);
 
   const descriptor = card.source?.descriptor?.trim() || defaultDescriptor(card);
 
@@ -107,8 +109,22 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
               />
             )}
 
+            {codeLabel && (
+              <div
+                className="absolute top-1.5 right-1.5 z-20 bg-white text-black font-bold rounded-full shadow-sm border border-black/10"
+                style={{
+                  fontFamily: '"Questrial", sans-serif',
+                  fontSize: Math.max(9, size * 0.12),
+                  lineHeight: 1,
+                  padding: `${Math.max(2, size * 0.03)}px ${Math.max(5, size * 0.06)}px`,
+                  letterSpacing: "0.02em",
+                }}
+              >
+                {codeLabel}
+              </div>
+            )}
             {badge && (
-              <div className="absolute top-1.5 right-1.5 z-20 text-[8px] font-bold uppercase tracking-wider bg-black/55 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm">
+              <div className="absolute bottom-1.5 right-1.5 z-20 text-[8px] font-bold uppercase tracking-wider bg-black/55 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm">
                 {badge}
               </div>
             )}

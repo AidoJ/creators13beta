@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Axial, Ecosystem as EcoType } from "@/lib/game/types";
 import { axialToPixel, keyOf } from "@/lib/game/board";
-import { legalEcoCells, skyLockedSubType } from "@/lib/game/engine";
+import { legalEcoCells, skyLockedSubType, goldenBodyLockedType } from "@/lib/game/engine";
 import { BoardHexPiece, EmptyHexCell } from "./BoardHexPiece";
 
 interface Props {
@@ -178,6 +178,7 @@ export function Ecosystem({
                 size={size}
                 rotation={pc.rotation ?? 0}
                 skySubType={pc.card.kind === "sky_creator" ? skyLockedSubType(eco, pc.pos) : null}
+                goldenLockedType={pc.card.kind === "golden_body" ? goldenBodyLockedType(eco, pc.pos) : null}
                 onClick={clickHandler}
                 draggable={canDragMove}
                 onDragStart={canDragMove ? (e) => {
