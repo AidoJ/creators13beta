@@ -26,6 +26,9 @@ interface Props {
   /** For Sky Creator only — when set, paints half-Sky / half-this-type so
    *  the board visually shows which sub-type the Sky has locked onto. */
   skySubType?: string | null;
+  /** For Golden Body only — when set, paints half-gold / half-this-type so
+   *  the board shows which Creator the wildcard has locked onto. */
+  goldenLockedType?: string | null;
 }
 
 /** Hex piece that renders any DeckCard kind (animal, creator, special).
