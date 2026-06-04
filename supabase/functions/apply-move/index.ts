@@ -1,30 +1,45 @@
 /**
  * apply-move — server-authoritative move processor.
  *
- * Step 2 of the server-authoritative migration (see
- * .lovable/server-authoritative-design.md). This edge function is the ONLY
- * path through which the canonical match state is mutated once migration
- * is complete.
+ * Step 3 of the server-authoritative migration (see
+ * .lovable/server-authoritative-design.md). Every legal user action becomes
+ * one entry in a discriminated union, validated + reduced here on the server,
+ * and committed atomically via the `commit_move` RPC (which holds a row
+ * lock + bumps `seq`).
+ *
+ * Game rules are not duplicated: we import the engine from
+ * `supabase/functions/_shared/game/`, which is a generated mirror of
+ * `src/lib/game/{types,board,elements,rotation,engine}.ts`. The
+ * `scripts/sync-game-engine.sh --check` step in CI fails the build if the
+ * mirror drifts from the client.
  *
  * Flow per request:
- *   1. Verify caller JWT, load match row by id (RLS bypassed via service role).
- *   2. Verify caller is host or guest.
+ *   1. Verify caller JWT, load match row (service role bypasses RLS).
+ *   2. Verify caller is host or guest of this match.
  *   3. Reject if `expected_seq != row.seq` (client is stale → 409).
- *   4. Dispatch on move.type. Each handler:
- *        - validates the move against current full state,
- *        - runs the engine reducer to produce the next full state,
- *        - returns { state, publicState, finished?, winner? }.
- *   5. Call public.commit_move RPC (locks row + appends move + bumps seq).
+ *   4. Deserialise full state, dispatch on move.type to the engine reducer.
+ *      Engine throws on illegal moves; we map that to a 400 with the
+ *      message so the client can show a toast and reconcile.
+ *   5. Re-serialise + redact for each side, call `commit_move`.
  *   6. Return the caller's redacted view + new seq.
- *
- * Status: scaffolding. Only `concede` is wired end-to-end as a vertical
- * slice. The remaining 10 move types return 501 until they're migrated
- * one-by-one in the next step (which keeps each migration small + testable
- * + revertable).
  */
 
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
+
+import {
+  drawInitialFive,
+  pickFromDraw,
+  pickFromUsed,
+  skipDraws,
+  endTurnEarly,
+  placeOnEcosystem,
+  discardCard,
+  playDisaster,
+  resolveDisaster,
+  playSkyCreatureSteal,
+} from "../_shared/game/engine.ts";
+import type { Axial, Ecosystem, MatchState, PlacedCard } from "../_shared/game/types.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -34,10 +49,16 @@ type Move =
   | { type: "draw_initial_5" }
   | { type: "pickup_from_used"; uid: string }
   | { type: "pickup_from_draw" }
-  | { type: "place"; uid: string; pos: { q: number; r: number }; rotation: number }
-  | { type: "play_disaster"; uid: string; target_player_id: string }
+  | { type: "place"; uid: string; pos: Axial; rotation?: number }
+  | { type: "play_disaster"; uid: string; target_player_id?: string }
   | { type: "resolve_disaster"; use_hive: boolean }
-  | { type: "play_sky_steal"; uid: string; from_player_id: string; target_uid: string }
+  | {
+      type: "play_sky_steal";
+      uid: string;
+      from_player_id: string;
+      victim_pos_key: string;
+      place_at?: Axial;
+    }
   | { type: "discard"; uid: string }
   | { type: "skip_draws" }
   | { type: "end_turn" }
@@ -56,12 +77,40 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
-/** Strip opponent hands from full state to produce per-recipient public state. */
-function redactFor(fullState: any, recipientPlayerId: string) {
-  if (!fullState?.players) return fullState;
+/* ----------------------- serialize / deserialize ----------------------- */
+// Inlined mirrors of src/lib/game/serialize.ts so we don't pull a React-y
+// import. The shapes must match the client exactly.
+
+function deserialise(raw: any): MatchState {
   return {
-    ...fullState,
-    players: fullState.players.map((p: any) =>
+    ...raw,
+    players: (raw.players ?? []).map((p: any) => ({
+      ...p,
+      firstPickupDone: p.firstPickupDone ?? true,
+      ecosystem: {
+        placed: new Map<string, PlacedCard>(p.ecosystem?.placed ?? []),
+      } as Ecosystem,
+    })),
+    pendingDisaster: raw.pendingDisaster ?? null,
+  };
+}
+
+function serialise(state: MatchState): any {
+  return {
+    ...state,
+    players: state.players.map((p) => ({
+      ...p,
+      ecosystem: { placed: Array.from(p.ecosystem.placed.entries()) },
+    })),
+  };
+}
+
+/** Build the per-recipient public view: hand visible only to its owner. */
+function redactFor(serialisedState: any, recipientPlayerId: string | null) {
+  if (!serialisedState?.players) return serialisedState;
+  return {
+    ...serialisedState,
+    players: serialisedState.players.map((p: any) =>
       p.id === recipientPlayerId
         ? p
         : { ...p, hand: [], handCount: Array.isArray(p.hand) ? p.hand.length : 0 },
@@ -69,11 +118,50 @@ function redactFor(fullState: any, recipientPlayerId: string) {
   };
 }
 
+/* ----------------------- move dispatch ----------------------- */
+
+function applyMove(state: MatchState, move: Move): MatchState {
+  switch (move.type) {
+    case "draw_initial_5":
+      return drawInitialFive(state);
+    case "pickup_from_draw":
+      return pickFromDraw(state);
+    case "pickup_from_used":
+      return pickFromUsed(state);
+    case "skip_draws":
+      return skipDraws(state);
+    case "end_turn":
+      return endTurnEarly(state);
+    case "place":
+      return placeOnEcosystem(state, move.uid, move.pos);
+    case "discard":
+      return discardCard(state, move.uid);
+    case "play_disaster":
+      return playDisaster(state, move.uid);
+    case "resolve_disaster":
+      return resolveDisaster(state, !!move.use_hive);
+    case "play_sky_steal":
+      return playSkyCreatureSteal(
+        state,
+        move.uid,
+        move.from_player_id,
+        move.victim_pos_key,
+        move.place_at,
+      );
+    case "concede": {
+      // No engine fn — straight mutation. The caller's opponent wins.
+      // Caller authority is enforced below (slot resolution).
+      throw new Error("__handled_in_dispatcher__");
+    }
+  }
+}
+
+/* ----------------------- entrypoint ----------------------- */
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "method not allowed" }, 405);
 
-  // Identify the caller from their JWT.
   const auth = req.headers.get("Authorization") ?? "";
   if (!auth.toLowerCase().startsWith("bearer ")) {
     return jsonResponse({ error: "missing bearer token" }, 401);
@@ -95,7 +183,6 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "missing fields" }, 400);
   }
 
-  // Service-role client to read full state + call commit_move.
   const svc = createClient(SUPABASE_URL, SERVICE_KEY);
 
   const { data: match, error: matchErr } = await svc
@@ -116,64 +203,81 @@ Deno.serve(async (req) => {
     );
   }
 
-  // Resolve which player slot the caller represents in the state players[] array.
-  // host_user_id maps to players[0].id, guest_user_id maps to players[1].id.
-  const state: any = match.state;
-  if (!state?.players?.length) return jsonResponse({ error: "match has no state" }, 500);
-  const callerSlot =
-    match.host_user_id === userId ? 0 : 1;
-  const callerPlayerId = state.players[callerSlot]?.id;
-  if (!callerPlayerId) return jsonResponse({ error: "player slot empty" }, 500);
+  // Resolve caller's player slot.
+  const callerSlot = match.host_user_id === userId ? 0 : 1;
+  const otherSlot = callerSlot === 0 ? 1 : 0;
 
-  // ---------- Move dispatch ----------
-  let nextState = state;
-  let finished = false;
-  let winnerUserId: string | null = null;
-
-  switch (body.move.type) {
-    case "concede": {
-      // Other player wins.
-      const otherSlot = callerSlot === 0 ? 1 : 0;
-      const otherPlayer = state.players[otherSlot];
-      nextState = {
-        ...state,
-        finished: true,
-        winnerId: otherPlayer?.id ?? null,
-        lastEvent: `${state.players[callerSlot].name} conceded.`,
-      };
-      finished = true;
-      winnerUserId =
-        otherSlot === 0 ? match.host_user_id : match.guest_user_id;
-      break;
-    }
-
-    // TODO(step 3): port one move at a time from src/lib/game/engine.ts.
-    // Each port should: (a) reuse engine logic via a shared module, or
-    // (b) re-implement validation+reducer in this function. Recommended
-    // order: end_turn → pickup_from_draw → pickup_from_used → place →
-    // discard → skip_draws → draw_initial_5 → play_disaster →
-    // resolve_disaster → play_sky_steal.
-    default:
-      return jsonResponse(
-        { error: `move type '${body.move.type}' not yet implemented server-side` },
-        501,
-      );
+  let state: MatchState;
+  try {
+    state = deserialise(match.state);
+  } catch (e) {
+    console.error("[apply-move] deserialise failed", e);
+    return jsonResponse({ error: "state corrupt" }, 500);
+  }
+  if (!state?.players?.length) {
+    return jsonResponse({ error: "match has no state" }, 500);
   }
 
-  // ---------- Commit ----------
-  const publicStateForCaller = redactFor(nextState, callerPlayerId);
-  // public_state on the row is the OPPONENT's redaction (so the row update is
-  // valuable to the listener on the other side). Caller gets their own view
-  // in the response.
-  const otherPlayerId = state.players[callerSlot === 0 ? 1 : 0]?.id;
-  const publicStateForRow = redactFor(nextState, otherPlayerId);
+  const callerPlayerId = state.players[callerSlot]?.id;
+  const otherPlayerId = state.players[otherSlot]?.id;
+  if (!callerPlayerId || !otherPlayerId) {
+    return jsonResponse({ error: "player slot empty" }, 500);
+  }
+
+  // Turn check (skipped for non-turn-bound actions).
+  const NON_TURN_MOVES = new Set<Move["type"]>(["resolve_disaster", "concede"]);
+  if (!NON_TURN_MOVES.has(body.move.type)) {
+    if (state.turn !== callerSlot) {
+      return jsonResponse({ error: "not your turn" }, 400);
+    }
+  }
+  if (body.move.type === "resolve_disaster") {
+    if (state.pendingDisaster?.victimId !== callerPlayerId) {
+      return jsonResponse({ error: "you are not the disaster victim" }, 400);
+    }
+  }
+
+  // ----- apply -----
+  let nextState: MatchState;
+  if (body.move.type === "concede") {
+    nextState = {
+      ...state,
+      players: state.players.map((p) => ({ ...p })),
+      finished: true,
+      winnerId: otherPlayerId,
+      lastEvent: `${state.players[callerSlot].name} conceded.`,
+    };
+  } else {
+    try {
+      nextState = applyMove(state, body.move);
+    } catch (e) {
+      return jsonResponse(
+        { error: "illegal move", message: (e as Error).message },
+        400,
+      );
+    }
+  }
+
+  const finished = !!nextState.finished;
+  let winnerUserId: string | null = null;
+  if (finished && nextState.winnerId) {
+    const winnerSlot = nextState.players.findIndex((p) => p.id === nextState.winnerId);
+    winnerUserId =
+      winnerSlot === 0 ? match.host_user_id : winnerSlot === 1 ? match.guest_user_id : null;
+  }
+
+  const serialisedNext = serialise(nextState);
+  const publicStateForCaller = redactFor(serialisedNext, callerPlayerId);
+  // public_state stored on the row is the OPPONENT's redaction — that's the
+  // payload the realtime listener on the other side picks up.
+  const publicStateForRow = redactFor(serialisedNext, otherPlayerId);
 
   const { error: commitErr } = await svc.rpc("commit_move", {
     _match_id: body.match_id,
     _expected_seq: body.expected_seq,
     _actor: userId,
     _move: body.move as any,
-    _new_state: nextState,
+    _new_state: serialisedNext,
     _public_state: publicStateForRow,
     _winner: winnerUserId,
     _finished: finished,
@@ -191,5 +295,6 @@ Deno.serve(async (req) => {
     seq: body.expected_seq + 1,
     public_state: publicStateForCaller,
     finished,
+    winner_user_id: winnerUserId,
   });
 });
