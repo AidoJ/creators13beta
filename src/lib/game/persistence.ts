@@ -119,7 +119,7 @@ export async function acceptInvite(token: string, guestName: string): Promise<st
 export async function listMyActiveMatches(userId: string): Promise<GameMatchRow[]> {
   const { data, error } = await supabase
     .from("game_matches")
-    .select("*")
+    .select(NON_STATE_COLS)
     .or(`host_user_id.eq.${userId},guest_user_id.eq.${userId}`)
     .neq("status", "finished")
     .order("updated_at", { ascending: false })
