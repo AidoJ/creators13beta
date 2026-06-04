@@ -33,6 +33,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
   const isCreatorLike = card.kind === "creator" || card.kind === "sky_creator" || isGolden;
   const isTwoTone = card.kind === "animal" || card.kind === "sky_creature";
   const name = card.name;
+  const codeLabel = cardCodeLabel(card);
 
   const descriptor = card.source?.descriptor?.trim() || defaultDescriptor(card);
 
