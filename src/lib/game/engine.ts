@@ -268,6 +268,8 @@ export function goldenBodyLockedType(eco: Ecosystem, gbPos: Axial): string | nul
     }
   }
   return null;
+}
+
 
 function animalTouchesCreatorAs(
   animalPc: PlacedCard,
