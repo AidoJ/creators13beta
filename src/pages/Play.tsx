@@ -368,18 +368,20 @@ export default function Play() {
     if (!matchRow) return;
     const expected = serverSeqRef.current;
     const result = await applyMoveServer(matchRow.id, expected, move);
-    if (result.ok) {
+    if (result.ok === true) {
       serverSeqRef.current = result.seq;
       return;
     }
-    if (result.reason === "not_implemented") {
+    // result is now { ok: false; rejected: true; reason; message? }
+    const rejected = result as Extract<typeof result, { ok: false }>;
+    if (rejected.reason === "not_implemented") {
       console.warn("[apply-move] server not yet implementing", move.type);
       return;
     }
-    if (result.reason === "stale") {
+    if (rejected.reason === "stale") {
       toast.message("Catching up to opponent…");
     } else {
-      toast.error(result.message ?? "Move rejected by server");
+      toast.error(rejected.message ?? "Move rejected by server");
     }
     // Refetch the canonical row + state.
     try {
