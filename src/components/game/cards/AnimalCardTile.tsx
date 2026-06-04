@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { CREATOR_TYPE_COLORS, type AnimalCard } from "@/data/cards";
 import { glyphMarkForType } from "@/lib/game/glyphs";
 import { TypeGlyphMark } from "./TypeGlyphMark";
@@ -13,7 +14,7 @@ interface Props {
  * Creator-Type colours (from A'Hara's palette). Animal illustration sits
  * on top, name + type pair across the bottom.
  */
-export function AnimalCardTile({ card, imageSrc, size = 220 }: Props) {
+function AnimalCardTileImpl({ card, imageSrc, size = 220 }: Props) {
   const [t1, t2] = card.types;
   const c1 = CREATOR_TYPE_COLORS[t1];
   const c2 = CREATOR_TYPE_COLORS[t2];
@@ -65,6 +66,7 @@ export function AnimalCardTile({ card, imageSrc, size = 220 }: Props) {
               src={imageSrc}
               alt={card.name}
               loading="lazy"
+              decoding="async"
               className="max-h-full max-w-full object-contain"
             />
           ) : (

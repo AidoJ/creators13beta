@@ -129,3 +129,5 @@ function AnimalHexPieceImpl({ card, imageSrc, size = 140 }: Props) {
     </div>
   );
 }
+
+export const AnimalHexPiece = memo(AnimalHexPieceImpl);
