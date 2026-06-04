@@ -90,6 +90,10 @@ export default function Play() {
   const isMobile = useIsMobile();
   const { settings: gameSettings } = useGameSettings();
   const saveSeqRef = useRef(0);
+  /** Server-side `seq` last seen on this match row. Bumped by applyMoveServer
+   *  and by realtime updates. Used as the optimistic-concurrency token when
+   *  submitting the next move. */
+  const serverSeqRef = useRef(0);
   const undoStackRef = useRef<MatchState[]>([]);
   const [undoCount, setUndoCount] = useState(0);
   const botDifficultyRef = useRef<BotDifficulty>("medium");
