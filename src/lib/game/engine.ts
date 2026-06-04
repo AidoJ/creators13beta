@@ -26,7 +26,7 @@ import {
   type PlacedCard,
   type PlayerState,
 } from "./types";
-import { keyOf, neighbours, isAdjacent, NEIGHBOUR_DIRS } from "./board";
+import { keyOf, neighbours, isAdjacent } from "./board";
 import { ELEMENTS, TYPE_TO_ELEMENT, type Element } from "./elements";
 
 import { bestRotationForPlacement, rotatePlacedHex } from "./rotation";
@@ -371,6 +371,14 @@ export function placeOnEcosystem(
       })
     : 0;
   player.ecosystem.placed.set(keyOf(pos), { card, pos, rotation });
+  if (isAnimalLike) {
+    const lockedRotation = bestRotationForPlacement(player.ecosystem, card, pos, {
+      restrictTo: "creator-only",
+      currentRotation: rotation,
+      driverPos: driverCreator?.pos,
+    });
+    player.ecosystem.placed.set(keyOf(pos), { card, pos, rotation: lockedRotation });
+  }
   // After placing, re-pivot adjacent animals — when the placed card is a
   // Creator, drive their rotation off this new Creator only.
   repivotNeighbours(player.ecosystem, pos, pos);
