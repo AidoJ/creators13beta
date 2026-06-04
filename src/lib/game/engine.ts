@@ -382,6 +382,7 @@ export function placeOnEcosystem(
   // After placing, re-pivot adjacent animals — when the placed card is a
   // Creator, drive their rotation off this new Creator only.
   repivotNeighbours(player.ecosystem, pos, pos);
+  repivotSkyLockNeighbours(player.ecosystem, pos);
   player.hand.splice(idx, 1);
   player.score += card.kind === "creator" || card.kind === "sky_creator" ? 3 : 1;
   next.placedThisTurn += 1;
@@ -407,6 +408,15 @@ function repivotNeighbours(eco: Ecosystem, pos: Axial, driverPos?: Axial): void 
     if (newRot !== (pc.rotation ?? 0)) {
       eco.placed.set(nKey, { ...pc, rotation: newRot });
     }
+  }
+}
+
+function repivotSkyLockNeighbours(eco: Ecosystem, pos: Axial): void {
+  const skyPcs = [eco.placed.get(keyOf(pos)), ...neighbours(pos).map((n) => eco.placed.get(keyOf(n)))]
+    .filter((pc): pc is PlacedCard => !!pc && pc.card.kind === "sky_creator");
+  for (const skyPc of skyPcs) {
+    if (!skyLockedSubType(eco, skyPc.pos)) continue;
+    repivotNeighbours(eco, skyPc.pos, skyPc.pos);
   }
 }
 
