@@ -132,8 +132,8 @@ function semanticEdgeScore(
   return facingColor(card, rotation, dir).toLowerCase() === facingColor(neighbour.card, neighbour.rotation ?? 0, (dir + 3) % 6).toLowerCase() ? 1 : 0;
 }
 
-/** Pick the rotation (0..5) that maximises matching-colour edges with
- *  existing neighbours in `eco`. Ties broken by preferring rotation 0. */
+/** Pick the rotation (0..5) that maximises matching edges with existing
+ *  neighbours in `eco`. If no real match is possible, preserve rotation. */
 export function bestRotationForPlacement(
   eco: Ecosystem,
   card: DeckCard,
@@ -176,6 +176,7 @@ export function bestRotationForPlacement(
       bestRot = rot;
     }
   }
+  if (bestScore <= 0) return current;
   return bestRot;
 }
 
