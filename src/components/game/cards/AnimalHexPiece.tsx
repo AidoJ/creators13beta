@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { CREATOR_TYPE_COLORS, type AnimalCard } from "@/data/cards";
 import { glyphMarkForType } from "@/lib/game/glyphs";
 import { TypeGlyphMark } from "./TypeGlyphMark";
@@ -14,7 +15,7 @@ interface Props {
  * colours, cut along the diagonal between the upper-right and lower-left
  * hex vertices (rotationally symmetric → equal visual weight).
  */
-export function AnimalHexPiece({ card, imageSrc, size = 140 }: Props) {
+function AnimalHexPieceImpl({ card, imageSrc, size = 140 }: Props) {
   const [t1, t2] = card.types;
   const c1 = CREATOR_TYPE_COLORS[t1];
   const c2 = CREATOR_TYPE_COLORS[t2];
@@ -87,6 +88,9 @@ export function AnimalHexPiece({ card, imageSrc, size = 140 }: Props) {
           src={imageSrc}
           alt={card.name}
           loading="lazy"
+          decoding="async"
+          width={Math.round(size * 0.78)}
+          height={Math.round(size * 0.78)}
           className="absolute left-1/2 -translate-x-1/2 object-contain pointer-events-none"
           style={{
             top: "14%",

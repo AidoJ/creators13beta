@@ -383,6 +383,8 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
   );
 }
 
+export const HandTile = memo(HandTileImpl);
+
 function defaultDescriptor(card: DeckCard): string {
   if (card.kind === "sky_creature") {
     return "Mythical Sky Creature. Acts as an Animal of its two Creator Types, AND can be played as a Stealer — discard it to take any one Animal from a rival ecosystem.";
