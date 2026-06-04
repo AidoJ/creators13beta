@@ -198,6 +198,10 @@ export function Ecosystem({
                 setDragOverKey(null);
                 onPlace?.(cell, e.dataTransfer.getData("text/plain") || undefined);
               } : undefined}
+              // Wrapper-level click so synthetic .click() dispatched by touch
+              // drag-fallbacks (PlayerHand / BoardHexPiece) reaches the place
+              // handler — synthetic clicks on a parent do not propagate to children.
+              onClick={canDrop ? () => onPlace?.(cell) : undefined}
             >
               <EmptyHexCell
                 size={size}
@@ -233,6 +237,8 @@ export function Ecosystem({
                   onMoveDragStart?.(k);
                 } : undefined}
                 onDragEnd={canDragMove ? () => onMoveDragEnd?.() : undefined}
+                onTouchDragStart={canDragMove ? () => onMoveDragStart?.(k) : undefined}
+                onTouchDragEnd={canDragMove ? () => onMoveDragEnd?.() : undefined}
                 highlight={moveFromKey === k ? "selected" : null}
               />
             </div>
