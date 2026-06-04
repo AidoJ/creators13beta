@@ -233,6 +233,8 @@ export function Ecosystem({
                   onMoveDragStart?.(k);
                 } : undefined}
                 onDragEnd={canDragMove ? () => onMoveDragEnd?.() : undefined}
+                onTouchDragStart={canDragMove ? () => onMoveDragStart?.(k) : undefined}
+                onTouchDragEnd={canDragMove ? () => onMoveDragEnd?.() : undefined}
                 highlight={moveFromKey === k ? "selected" : null}
               />
             </div>
