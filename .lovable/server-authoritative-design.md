@@ -1,11 +1,12 @@
 # Server-Authoritative Moves — Design Doc
 
-**Status:** Draft for review
+**Status:** Implemented (Steps 1–6). Steps 7+ are follow-ups, see §10.
 **Author:** Lovable
 **Date:** 2026-06-04
-**Decision needed:** Greenlight before implementation (est. 1–2 weeks of work)
+**Decision needed:** None — shipped.
 
 ---
+
 
 ## 1. Why we're doing this
 
