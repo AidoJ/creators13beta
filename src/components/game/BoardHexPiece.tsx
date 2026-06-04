@@ -237,12 +237,13 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
         <div
           className="absolute z-30 pointer-events-none bg-white text-black font-bold rounded-full flex items-center justify-center shadow-sm border border-black/10"
           style={{
-            top: "6%",
-            left: "14%",
+            top: "10%",
+            left: "50%",
+            transform: "translateX(-50%)",
             fontFamily: '"Questrial", sans-serif',
-            fontSize: Math.max(9, size * 0.13),
+            fontSize: Math.max(7, size * 0.104),
             lineHeight: 1,
-            padding: `${Math.max(2, size * 0.025)}px ${Math.max(4, size * 0.05)}px`,
+            padding: `${Math.max(1, size * 0.02)}px ${Math.max(3, size * 0.04)}px`,
             letterSpacing: "0.02em",
           }}
         >

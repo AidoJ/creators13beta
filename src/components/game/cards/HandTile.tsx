@@ -111,12 +111,15 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
 
             {codeLabel && (
               <div
-                className="absolute top-1.5 right-1.5 z-20 bg-white text-black font-bold rounded-full shadow-sm border border-black/10"
+                className="absolute z-20 bg-white text-black font-bold rounded-full shadow-sm border border-black/10"
                 style={{
+                  top: 4,
+                  left: "50%",
+                  transform: "translateX(-50%)",
                   fontFamily: '"Questrial", sans-serif',
-                  fontSize: Math.max(9, size * 0.12),
+                  fontSize: Math.max(8, size * 0.096),
                   lineHeight: 1,
-                  padding: `${Math.max(2, size * 0.03)}px ${Math.max(5, size * 0.06)}px`,
+                  padding: `${Math.max(1, size * 0.024)}px ${Math.max(4, size * 0.048)}px`,
                   letterSpacing: "0.02em",
                 }}
               >
