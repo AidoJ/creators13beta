@@ -320,6 +320,16 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "commit failed", detail: commitErr.message }, 500);
   }
 
+  // Server-vouched ranked match outcome. Only fires for ranked PvP matches
+  // that just transitioned to finished. The RPC is service-role only and is
+  // idempotent (it tags `state.__finalised`).
+  if (finished && match.is_ranked) {
+    const { error: finErr } = await svc.rpc("finalise_ranked_match", {
+      _match_id: body.match_id,
+    });
+    if (finErr) console.error("[apply-move] finalise_ranked_match failed", finErr);
+  }
+
   return jsonResponse({
     ok: true,
     seq: body.expected_seq + 1,
