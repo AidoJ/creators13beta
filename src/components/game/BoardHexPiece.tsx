@@ -35,7 +35,7 @@ interface Props {
  *  Board pieces show ONLY the artwork / glyph — no name plate — since the
  *  player has already chosen the card from the deck-style hand tile.
  *  Only the coloured background rotates; the artwork stays upright. */
-export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEnd, draggable = false, onTouchDragStart, onTouchDragEnd, highlight = null, rotation = 0, skySubType = null }: Props) {
+export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEnd, draggable = false, onTouchDragStart, onTouchDragEnd, highlight = null, rotation = 0, skySubType = null, goldenLockedType = null }: Props) {
   const h = size * 1.1547;
   // Pointer-based drag fallback state (iOS Safari / iPad).
   const ptrRef = useRef<{ id: number; x: number; y: number; dragging: boolean; suppressClick: boolean } | null>(null);
@@ -52,6 +52,9 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
   // Sky Creator that has locked a sub-type renders as a true two-colour split,
   // same shape as animal cards, so the board shows the locked sub-type at a glance.
   const skySplit = card.kind === "sky_creator" && !!skySubType;
+  // Golden Body locked to a Creator renders gold / locked-type split for the
+  // same visual feedback.
+  const goldenSplit = card.kind === "golden_body" && !!goldenLockedType;
   if (card.kind === "animal" || card.kind === "sky_creature") {
     const [t1, t2] = card.types ?? [];
     c1 = CREATOR_TYPE_COLORS[t1 as keyof typeof CREATOR_TYPE_COLORS] ?? "#444";
@@ -69,13 +72,18 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
       : ELEMENT_COLORS.Sky;
     artGlyph = CREATOR_TYPE_GLYPHS.Sky;
   } else if (card.kind === "golden_body") {
-    c1 = "#f5c542"; c2 = "#e0a920"; artGlyph = goldenBodyArt;
+    c1 = "#f5c542";
+    c2 = goldenSplit
+      ? (CREATOR_TYPE_COLORS[goldenLockedType as keyof typeof CREATOR_TYPE_COLORS] ?? ELEMENT_COLORS[goldenLockedType as keyof typeof ELEMENT_COLORS] ?? "#e0a920")
+      : "#e0a920";
+    artGlyph = goldenBodyArt;
   } else if (card.kind === "golden_hive") {
     c1 = "#f5c542"; c2 = "#fff"; artGlyph = goldenHiveArt;
   }
 
   const art = card.source?.art_url ?? artGlyph;
   const displayName = displayCardName(card.name);
+  const codeLabel = cardCodeLabel(card);
 
   const ring =
     highlight === "selected" ? "rgba(255,255,255,0.95)"
