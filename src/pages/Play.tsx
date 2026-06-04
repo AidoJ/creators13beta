@@ -456,13 +456,13 @@ export default function Play() {
   );
   const usedTop = state?.used[state.used.length - 1];
 
-  const guarded = (fn: () => MatchState) => {
+  const guarded = (fn: () => MatchState, move?: ServerMove) => {
     try {
       const snap = state;
       const next = fn();
       pushUndo(snap);
       setState(next);
-      schedulePersist(next);
+      schedulePersist(next, move);
       setSelectedUid(null);
       setMode("place");
     } catch (e: any) {
@@ -470,23 +470,31 @@ export default function Play() {
     }
   };
 
-  function onPickDraw() { if (state) guarded(() => pickFromDraw(state)); }
-  function onPickUsed() { if (state) guarded(() => pickFromUsed(state)); }
+  function onPickDraw() {
+    if (state) guarded(() => pickFromDraw(state), { type: "pickup_from_draw" });
+  }
+  function onPickUsed() {
+    if (!state) return;
+    const top = state.used[state.used.length - 1];
+    if (!top) return;
+    guarded(() => pickFromUsed(state), { type: "pickup_from_used", uid: top.uid });
+  }
   function onDrawOne() {
-    if (state) guarded(() => pickFromDraw(state));
+    if (state) guarded(() => pickFromDraw(state), { type: "pickup_from_draw" });
   }
   function onDrawOpening() {
-    if (state) guarded(() => drawInitialFive(state));
+    if (state) guarded(() => drawInitialFive(state), { type: "draw_initial_5" });
   }
   function onResolveDisaster(useHive: boolean) {
     if (!state) return;
-    guarded(() => resolveDisaster(state, useHive));
+    guarded(() => resolveDisaster(state, useHive), { type: "resolve_disaster", use_hive: useHive });
   }
   function onPlace(pos: Axial, draggedUid?: string) {
     if (!state) return;
     const dragMoveKey = draggedUid?.startsWith("move:") ? draggedUid.slice(5) : null;
     const fromKey = dragMoveKey ?? (mode === "move" ? moveFromKey : null);
     if (fromKey) {
+      // move-hex isn't in the ServerMove union yet — local + legacy save only.
       try {
         const snap = state;
         const next = moveMyPlacedHex(state, selfSlot, fromKey, pos);
@@ -503,11 +511,18 @@ export default function Play() {
     const cardUid = draggedUid ?? selectedUid;
     if (!cardUid) return;
     const before = undoStackRef.current.length;
-    guarded(() => placeOnEcosystem(state, cardUid, pos));
-    // If guarded succeeded it pushed an undo snapshot; arm the 5s quick-undo.
+    guarded(() => placeOnEcosystem(state, cardUid, pos), {
+      type: "place",
+      uid: cardUid,
+      pos,
+    });
     if (undoStackRef.current.length > before) armQuickUndo();
   }
-  function onDiscard() { if (state && selectedUid) guarded(() => discardCard(state, selectedUid)); }
+  function onDiscard() {
+    if (state && selectedUid) {
+      guarded(() => discardCard(state, selectedUid), { type: "discard", uid: selectedUid });
+    }
+  }
   function onDiscardUid(uid: string) {
     if (!state) return;
     if (uid.startsWith("move:")) return; // ignore ecosystem drags
@@ -515,18 +530,21 @@ export default function Play() {
       toast.error("Pick up your 2 cards first, then drop a card on the Used/Discarded Pile to discard.");
       return;
     }
-    guarded(() => discardCard(state, uid));
+    guarded(() => discardCard(state, uid), { type: "discard", uid });
   }
-  function onSkipDraws() { if (state) guarded(() => skipDraws(state)); }
-  function onEndTurn() { if (state) guarded(() => endTurnEarly(state)); }
+  function onSkipDraws() {
+    if (state) guarded(() => skipDraws(state), { type: "skip_draws" });
+  }
+  function onEndTurn() {
+    if (state) guarded(() => endTurnEarly(state), { type: "end_turn" });
+  }
   function onPlacedHexClick(posKey: string) {
     if (!state || !selfPlayer) return;
     if (mode === "move") {
-      // Toggle: pick up or drop-on-self (no-op)
       setMoveFromKey((cur) => (cur === posKey ? null : posKey));
       return;
     }
-    // Default: rotate
+    // Rotate: presentation-only, not in ServerMove union — local + legacy save.
     setState((s) => {
       if (!s) return s;
       pushUndo(s);
@@ -535,12 +553,25 @@ export default function Play() {
       return next;
     });
   }
-  function onDisaster() { if (state && selectedUid) guarded(() => playDisaster(state, selectedUid)); }
+  function onDisaster() {
+    if (state && selectedUid) {
+      guarded(() => playDisaster(state, selectedUid), { type: "play_disaster", uid: selectedUid });
+    }
+  }
   function onStealHex(posKey: string) {
     if (!state || !selectedUid || !opponent || !selfPlayer) return;
     const cells = legalEcoCells(selfPlayer.ecosystem);
     const placeAt = cells[0] ?? { q: 0, r: 0 };
-    guarded(() => playSkyCreatureSteal(state, selectedUid, opponent.id, posKey, placeAt));
+    guarded(
+      () => playSkyCreatureSteal(state, selectedUid, opponent.id, posKey, placeAt),
+      {
+        type: "play_sky_steal",
+        uid: selectedUid,
+        from_player_id: opponent.id,
+        victim_pos_key: posKey,
+        place_at: placeAt,
+      },
+    );
     setMode("place");
   }
 
