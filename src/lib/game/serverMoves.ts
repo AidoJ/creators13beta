@@ -29,7 +29,9 @@ export type ServerMove =
   | { type: "discard"; uid: string }
   | { type: "skip_draws" }
   | { type: "end_turn" }
-  | { type: "concede" };
+  | { type: "concede" }
+  | { type: "rotate_hex"; pos_key: string }
+  | { type: "move_hex"; from_key: string; to_pos: { q: number; r: number } };
 
 export type ApplyMoveResult =
   | { ok: true; seq: number; publicState: any; finished: boolean }
