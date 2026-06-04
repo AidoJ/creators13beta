@@ -373,10 +373,6 @@ export default function Play() {
       return;
     }
     if (result.reason === "not_implemented") {
-      // Edge function hasn't been wired for this move type yet — stay on
-      // optimistic local state. Keeps us shippable while migrating one move
-      // at a time. Safe to remove this branch once apply-move covers every
-      // ServerMove variant (it currently does, but defensive).
       console.warn("[apply-move] server not yet implementing", move.type);
       return;
     }
