@@ -18,9 +18,16 @@
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "./elements";
 import type { DeckCard, Ecosystem, PlacedCard, Axial } from "./types";
-import { NEIGHBOUR_DIRS, keyOf } from "./board";
+import { NEIGHBOUR_DIRS, keyOf, neighbours } from "./board";
 
 const BASE_HALVES: Array<"A" | "B"> = ["B", "A", "A", "A", "B", "B"];
+const CANONICAL_TYPES = [
+  "Lava", "Fire", "Whirlwind", "Snow", "Lightning", "Sun",
+  "Lake", "Ocean", "Tree", "Mountain", "Soil", "River",
+];
+
+const sameType = (a: string | null | undefined, b: string | null | undefined) =>
+  !!a && !!b && a.toLowerCase() === b.toLowerCase();
 
 /** Which half (A or B) of a hex with `rotation` faces neighbour direction `dir`. */
 export function halfFacing(dir: number, rotation: number): "A" | "B" {
@@ -70,6 +77,61 @@ function facingColor(card: DeckCard, rotation: number, dir: number): string {
   return halfFacing(dir, rotation) === "A" ? a : b;
 }
 
+function skyLockedSubTypeForRotation(eco: Ecosystem, skyPos: Axial): string | null {
+  const counts: Record<string, number> = {};
+  let golden = 0;
+  for (const n of neighbours(skyPos)) {
+    const pc = eco.placed.get(keyOf(n));
+    if (!pc) continue;
+    if (pc.card.kind === "golden_body") { golden += 1; continue; }
+    if (pc.card.kind !== "animal" && pc.card.kind !== "sky_creature") continue;
+    for (const t of pc.card.types ?? []) {
+      if (!t || t === "Sky") continue;
+      counts[t] = (counts[t] ?? 0) + 1;
+    }
+  }
+  const candidates = CANONICAL_TYPES
+    .filter((t) => (counts[t] ?? 0) > 0 && (counts[t] ?? 0) + golden >= 3)
+    .sort((a, b) => (counts[b] ?? 0) - (counts[a] ?? 0) || CANONICAL_TYPES.indexOf(a) - CANONICAL_TYPES.indexOf(b));
+  return candidates[0] ?? null;
+}
+
+function semanticEdgeScore(
+  eco: Ecosystem,
+  card: DeckCard,
+  rotation: number,
+  dir: number,
+  neighbour: PlacedCard,
+): number {
+  if (card.kind === "golden_body" || neighbour.card.kind === "golden_body") return 1;
+
+  const mine = facingTypeLabel(card, rotation, dir);
+  const theirs = facingTypeLabel(neighbour.card, neighbour.rotation ?? 0, (dir + 3) % 6);
+
+  if (card.kind === "animal" || card.kind === "sky_creature") {
+    if (neighbour.card.kind === "creator") {
+      return sameType(mine, neighbour.card.displayType) ? 4 : 0;
+    }
+    if (neighbour.card.kind === "sky_creator") {
+      const sub = skyLockedSubTypeForRotation(eco, neighbour.pos);
+      return sub && sameType(mine, sub) ? 4 : 0;
+    }
+  }
+
+  if (neighbour.card.kind === "animal" || neighbour.card.kind === "sky_creature") {
+    if (card.kind === "creator") {
+      return sameType(theirs, card.displayType) ? 4 : 0;
+    }
+    if (card.kind === "sky_creator") {
+      const sub = skyLockedSubTypeForRotation(eco, neighbour.pos);
+      return sub && sameType(theirs, sub) ? 4 : 0;
+    }
+  }
+
+  if (sameType(mine, theirs)) return 2;
+  return facingColor(card, rotation, dir).toLowerCase() === facingColor(neighbour.card, neighbour.rotation ?? 0, (dir + 3) % 6).toLowerCase() ? 1 : 0;
+}
+
 /** Pick the rotation (0..5) that maximises matching-colour edges with
  *  existing neighbours in `eco`. Ties broken by preferring rotation 0. */
 export function bestRotationForPlacement(
@@ -107,9 +169,7 @@ export function bestRotationForPlacement(
   for (let rot = 0; rot < 6; rot++) {
     let score = 0;
     for (const { dir, neighbour } of eligible) {
-      const mine = facingColor(card, rot, dir);
-      const theirs = facingColor(neighbour.card, neighbour.rotation ?? 0, (dir + 3) % 6);
-      if (mine.toLowerCase() === theirs.toLowerCase()) score += 1;
+      score += semanticEdgeScore(eco, card, rot, dir, neighbour);
     }
     if (score > bestScore) {
       bestScore = score;
