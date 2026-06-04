@@ -19,6 +19,10 @@ import type { MatchState } from "@/lib/game/types";
 interface Args {
   state: MatchState | null;
   selfSlot: string;
+  /** Page-owned stopwatch. The page also reads this in render to display
+   *  the per-turn countdown, so ownership stays in the parent and the hook
+   *  just reads + resets it. */
+  turnStartedAtRef: React.MutableRefObject<number>;
   /** Called once per second so countdown labels in the parent re-render. */
   onTick: () => void;
   /** Called when the match deadline elapses in beat_clock mode. */
@@ -30,13 +34,13 @@ interface Args {
 export function useBeatTheClockTimer({
   state,
   selfSlot,
+  turnStartedAtRef,
   onTick,
   onMatchEnd,
   onTurnExpired,
 }: Args) {
   const stateRef = useRef<MatchState | null>(null);
   const selfSlotRef = useRef<string>(selfSlot);
-  const turnStartedAtRef = useRef<number>(Date.now());
   const onTickRef = useRef(onTick);
   const onMatchEndRef = useRef(onMatchEnd);
   const onTurnExpiredRef = useRef(onTurnExpired);
@@ -50,7 +54,7 @@ export function useBeatTheClockTimer({
   // Reset per-turn stopwatch whenever the active turn changes.
   useEffect(() => {
     turnStartedAtRef.current = Date.now();
-  }, [state?.turn, state?.turnNumber]);
+  }, [state?.turn, state?.turnNumber, turnStartedAtRef]);
 
   useEffect(() => {
     const id = setInterval(() => {
