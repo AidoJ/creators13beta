@@ -90,10 +90,7 @@ export default function Play() {
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { settings: gameSettings } = useGameSettings();
-  /** Per-turn stopwatch — owned here because the render path also reads it
-   *  to display the countdown. Reset + tick are driven by the
-   *  useBeatTheClockTimer hook below. */
-  const turnStartedAtRef = useRef<number>(Date.now());
+  // (turnStartedAtRef declared below, alongside other refs.)
   const undoStackRef = useRef<MatchState[]>([]);
   const [undoCount, setUndoCount] = useState(0);
   const botDifficultyRef = useRef<BotDifficulty>("medium");
