@@ -196,39 +196,6 @@ export function Ecosystem({
             </div>
           );
         })}
-        {matches.map((m) => {
-          const w = Math.max(16, size * 0.22);
-          const h = w * 0.55;
-          return (
-            <div
-              key={`m-${m.key}`}
-              className="absolute z-30 pointer-events-none animate-scale-in"
-              style={{
-                left: m.x + offX,
-                top: m.y + offY,
-                transform: "translate(-50%, -50%)",
-              }}
-              title={`Matched: ${m.label}`}
-            >
-              <svg
-                viewBox="0 0 100 50"
-                width={w}
-                height={h}
-                fill="none"
-                stroke={m.color}
-                strokeWidth={10}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-                style={{
-                  filter: `drop-shadow(0 0 3px rgba(0,0,0,0.85)) drop-shadow(0 0 6px ${m.color})`,
-                }}
-              >
-                <path d="M25,25 C25,10 5,10 5,25 C5,40 25,40 25,25 C25,10 50,40 50,25 C50,10 75,40 75,25 C75,10 95,10 95,25 C95,40 75,40 75,25 C75,40 50,10 50,25 C50,40 25,10 25,25 Z" />
-              </svg>
-            </div>
-          );
-        })}
 
       </div>
     </div>
