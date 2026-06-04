@@ -518,17 +518,10 @@ export default function Play() {
     if (!ok) return;
 
     if (matchRow && user && isPvp && state) {
-      // Forfeit → server-authoritative `concede` move. The edge function
-      // sets winner/finished using the row identities, so we don't have to
-      // trust the client to name the winner.
-      const result = await applyMoveServer(matchRow.id, serverSeqRef.current, { type: "concede" });
-      if (!result.ok) {
-        console.error("[abandon] concede failed", result);
-        // Client can no longer write to game_matches.state — there's nothing
-        // to fall back to. Just navigate away and let the opponent's idle
-        // timeout / forfeit policy handle the orphaned match.
-        toast.error("Couldn't notify the server — leaving anyway.");
-      }
+      // Forfeit — server-authoritative `concede` move via the reconcile
+      // hook. Any rejection is toasted + reconciled inside; we always
+      // navigate away after firing.
+      await submitServerMove({ type: "concede" });
     } else {
       // Solo — drop the local snapshot.
       try { localStorage.removeItem(LOCAL_STORAGE_KEY); } catch {}
