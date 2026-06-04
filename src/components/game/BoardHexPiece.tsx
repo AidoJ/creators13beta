@@ -155,7 +155,7 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
           transition: "transform 220ms ease",
         }}
       >
-        {card.kind === "animal" || card.kind === "sky_creature" || skySplit ? (
+        {card.kind === "animal" || card.kind === "sky_creature" || skySplit || goldenSplit ? (
           <>
             <polygon points={halfA} fill={c1} />
             <polygon points={halfB} fill={c2} />
