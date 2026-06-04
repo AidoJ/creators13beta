@@ -27,7 +27,6 @@ import {
   moveMyPlacedHex,
   skipDraws,
   endTurnEarly,
-  finaliseByScore,
 } from "@/lib/game";
 import {
   createMatchRow,
@@ -35,12 +34,14 @@ import {
   inviteUrl,
   type GameMatchRow,
 } from "@/lib/game/persistence";
-import { applyMoveServer, type ServerMove } from "@/lib/game/serverMoves";
+import { type ServerMove } from "@/lib/game/serverMoves";
 import { deserializeMatch } from "@/lib/game/serialize";
 import { recordProgressDiff } from "@/lib/game/progress";
 import type { BotDifficulty } from "@/lib/game/bot";
 import { supabase } from "@/integrations/supabase/client";
 import { useMatchRealtime } from "@/hooks/useMatchRealtime";
+import { usePvpReconcile } from "@/hooks/usePvpReconcile";
+import { useBeatTheClockTimer } from "@/hooks/useBeatTheClockTimer";
 import { useAuth } from "@/contexts/AuthContext";
 import { DISCORD_INVITE_URL } from "@/config/discordChat";
 import type { Axial, DeckCard, GameConfig, GameMode, MatchState } from "@/lib/game/types";
@@ -88,15 +89,7 @@ export default function Play() {
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { settings: gameSettings } = useGameSettings();
-  /** Promise-chain mutex for PvP move submission. Ensures only one
-   *  apply-move request is in flight at a time per match, so optimistic
-   *  state mutations submit in the order the user made them and `seq`
-   *  stays monotonic on the wire. */
-  const inFlightMoveRef = useRef<Promise<void> | null>(null);
-  /** Server-side `seq` last seen on this match row. Bumped by applyMoveServer
-   *  and by realtime updates. Used as the optimistic-concurrency token when
-   *  submitting the next move. */
-  const serverSeqRef = useRef(0);
+  // (turnStartedAtRef declared below, alongside other refs.)
   const undoStackRef = useRef<MatchState[]>([]);
   const [undoCount, setUndoCount] = useState(0);
   const botDifficultyRef = useRef<BotDifficulty>("medium");
@@ -238,6 +231,13 @@ export default function Play() {
     };
   }, [allCards, routeMatchId, user]);
 
+  /* ----------- PvP server reconcile (seq + submit) ----------- */
+  const { serverSeqRef, submitServerMove } = usePvpReconcile({
+    matchRow,
+    setMatchRow,
+    setState,
+  });
+
   /* ----------- Realtime: opponent's moves ----------- */
 
   const handleRemote = useCallback(
@@ -247,7 +247,7 @@ export default function Play() {
       serverSeqRef.current = Number(row.seq ?? 0);
       if (row.status === "active") setWaitingForGuest(false);
     },
-    [],
+    [serverSeqRef],
   );
   useMatchRealtime(
     isPvp ? matchRow?.id ?? null : null,
@@ -255,11 +255,6 @@ export default function Play() {
     handleRemote,
   );
 
-  // Keep serverSeqRef in sync whenever the row reference changes (e.g. after
-  // initial load, or after a save that returns a fresh row).
-  useEffect(() => {
-    if (matchRow) serverSeqRef.current = Number(matchRow.seq ?? 0);
-  }, [matchRow]);
 
   /* ----------- Bot driver — only for solo (matchRow null OR mode='solo') ----------- */
 
@@ -341,7 +336,7 @@ export default function Play() {
       // Every PvP write must come with a structured Move and goes through
       // the apply-move edge function.
       if (matchRow.mode === "pvp") {
-        if (move) submitServerMove(move, next);
+        if (move) submitServerMove(move);
         // No fallback — if a code path produces a state mutation without
         // a Move, that's a bug. Log loudly so we catch it.
         else console.error("[play] PvP state mutation without a Move — dropped", next.lastEvent);
@@ -354,101 +349,22 @@ export default function Play() {
     }
   }
 
-  /** Submit a Move to the server-authoritative `apply-move` edge function.
-   *  Local state has already been updated optimistically. On rejection we
-   *  refetch the canonical row and reconcile — that's the safety net that
-   *  closes the cheating window without rolling our own conflict resolution.
-   *
-   *  Serialised via `inFlightMoveRef` so concurrent callers (e.g. a tile
-   *  placement immediately followed by an auto end-turn) submit in order
-   *  and `serverSeqRef` stays monotonic. */
-  function submitServerMove(move: ServerMove, _optimisticNext: MatchState): Promise<void> {
-    if (!matchRow) return Promise.resolve();
-    const run = async () => {
-      const expected = serverSeqRef.current;
-      const result = await applyMoveServer(matchRow.id, expected, move);
-      if (result.ok === true) {
-        serverSeqRef.current = result.seq;
-        return;
-      }
-      const rejected = result as Extract<typeof result, { ok: false }>;
-      if (rejected.reason === "not_implemented") {
-        console.warn("[apply-move] server not yet implementing", move.type);
-        return;
-      }
-      if (rejected.reason === "stale") {
-        toast.message("Catching up to opponent…");
-      } else {
-        toast.error(rejected.message ?? "Move rejected by server");
-      }
-      // Refetch the canonical row + state.
-      try {
-        const { row, state: canonical } = await loadMatch(matchRow.id);
-        setMatchRow(row);
-        setState(canonical);
-        serverSeqRef.current = Number(row.seq ?? 0);
-      } catch (e) {
-        console.error("[apply-move] reconcile failed", e);
-      }
-    };
-    const chained = (inFlightMoveRef.current ?? Promise.resolve())
-      .then(run, run)
-      .finally(() => {
-        if (inFlightMoveRef.current === chained) inFlightMoveRef.current = null;
-      });
-    inFlightMoveRef.current = chained;
-    return chained;
-  }
+  /* ----------- Beat-the-Clock timer (extracted to a hook) ----------- */
+  useBeatTheClockTimer({
+    state,
+    selfSlot,
+    turnStartedAtRef,
+    onTick: () => setNowTick((n) => n + 1),
+    onMatchEnd: (next) => {
+      setState(next);
+      schedulePersist(next, { type: "finalise_by_score" });
+    },
+    onTurnExpired: (next) => {
+      setState(next);
+      schedulePersist(next, { type: "end_turn" });
+    },
+  });
 
-
-  /* ----------- Beat-the-Clock timers (stable ticker via refs) ----------- */
-  // Reset turn timer whenever the current turn changes.
-  useEffect(() => {
-    turnStartedAtRef.current = Date.now();
-  }, [state?.turn, state?.turnNumber]);
-
-  // Keep latest state / selfSlot accessible to a single persistent interval
-  // so rapid state churn doesn't keep cancelling the 1s tick (the bug that
-  // caused Beat the Clock to never enforce its time limit).
-  const stateRef = useRef<MatchState | null>(null);
-  const selfSlotRef = useRef<string>(selfSlot);
-  useEffect(() => { stateRef.current = state; }, [state]);
-  useEffect(() => { selfSlotRef.current = selfSlot; }, [selfSlot]);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setNowTick((n) => n + 1); // re-render countdown labels every second
-      const s = stateRef.current;
-      if (!s || s.finished) return;
-      if (s.gameMode !== "beat_clock") return;
-      const now = Date.now();
-      const endsAt = s.gameConfig?.matchEndsAt ?? 0;
-      if (endsAt && now >= endsAt) {
-        try {
-          const next = finaliseByScore(s);
-          setState(next);
-          schedulePersist(next, { type: "finalise_by_score" });
-        } catch {/* ignore */}
-        return;
-      }
-      const turnSecs = s.gameConfig?.turnSeconds ?? 0;
-      if (
-        turnSecs > 0 &&
-        s.phase === "place" &&
-        !s.pendingDisaster &&
-        s.players[s.turn].id === selfSlotRef.current &&
-        now - turnStartedAtRef.current >= turnSecs * 1000
-      ) {
-        try {
-          const next = endTurnEarly(s);
-          setState(next);
-          schedulePersist(next, { type: "end_turn" });
-        } catch {/* ignore */}
-      }
-    }, 1000);
-    return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
 
   /* ----------- Derived view-model ----------- */
@@ -601,17 +517,10 @@ export default function Play() {
     if (!ok) return;
 
     if (matchRow && user && isPvp && state) {
-      // Forfeit → server-authoritative `concede` move. The edge function
-      // sets winner/finished using the row identities, so we don't have to
-      // trust the client to name the winner.
-      const result = await applyMoveServer(matchRow.id, serverSeqRef.current, { type: "concede" });
-      if (!result.ok) {
-        console.error("[abandon] concede failed", result);
-        // Client can no longer write to game_matches.state — there's nothing
-        // to fall back to. Just navigate away and let the opponent's idle
-        // timeout / forfeit policy handle the orphaned match.
-        toast.error("Couldn't notify the server — leaving anyway.");
-      }
+      // Forfeit — server-authoritative `concede` move via the reconcile
+      // hook. Any rejection is toasted + reconciled inside; we always
+      // navigate away after firing.
+      await submitServerMove({ type: "concede" });
     } else {
       // Solo — drop the local snapshot.
       try { localStorage.removeItem(LOCAL_STORAGE_KEY); } catch {}
