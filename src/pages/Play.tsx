@@ -305,7 +305,7 @@ export default function Play() {
 
   /* ----------- Persistence helpers ----------- */
 
-  function schedulePersist(next: MatchState) {
+  function schedulePersist(next: MatchState, move?: ServerMove) {
     const prev = state;
     const alreadyFinishedBefore = !!prev?.finished;
     const isBotMatch = !matchRow || matchRow.mode === "solo";
@@ -334,8 +334,16 @@ export default function Play() {
       }).then(({ error }) => { if (error) console.warn("bump_bot_match_stats failed", error); });
     }
     if (matchRow && user) {
+      // PvP + a structured Move → go through the server-authoritative pipeline.
+      // (See .lovable/server-authoritative-design.md.) Without `move` we fall
+      // back to the legacy saveMatchState write — used by rotate / move-hex
+      // and ephemeral patches like name-sync, which aren't in the Move union
+      // yet. That gap is closed before RLS lockdown in step 5.
+      if (matchRow.mode === "pvp" && move) {
+        submitServerMove(move, next);
+        return;
+      }
       const seq = ++saveSeqRef.current;
-      // Compute winner user id for pvp.
       let winnerUserId: string | null = null;
       if (next.finished && next.winnerId && matchRow.mode === "pvp") {
         winnerUserId =
@@ -349,6 +357,42 @@ export default function Play() {
         });
     } else {
       persistLocalMatch(next);
+    }
+  }
+
+  /** Submit a Move to the server-authoritative `apply-move` edge function.
+   *  Local state has already been updated optimistically. On rejection we
+   *  refetch the canonical row and reconcile — that's the safety net that
+   *  closes the cheating window without rolling our own conflict resolution. */
+  async function submitServerMove(move: ServerMove, optimisticNext: MatchState) {
+    if (!matchRow) return;
+    const expected = serverSeqRef.current;
+    const result = await applyMoveServer(matchRow.id, expected, move);
+    if (result.ok) {
+      serverSeqRef.current = result.seq;
+      return;
+    }
+    if (result.reason === "not_implemented") {
+      // Edge function hasn't been wired for this move type yet — stay on
+      // optimistic local state. Keeps us shippable while migrating one move
+      // at a time. Safe to remove this branch once apply-move covers every
+      // ServerMove variant (it currently does, but defensive).
+      console.warn("[apply-move] server not yet implementing", move.type);
+      return;
+    }
+    if (result.reason === "stale") {
+      toast.message("Catching up to opponent…");
+    } else {
+      toast.error(result.message ?? "Move rejected by server");
+    }
+    // Refetch the canonical row + state.
+    try {
+      const { row, state: canonical } = await loadMatch(matchRow.id);
+      setMatchRow(row);
+      setState(canonical);
+      serverSeqRef.current = Number(row.seq ?? 0);
+    } catch (e) {
+      console.error("[apply-move] reconcile failed", e);
     }
   }
 
