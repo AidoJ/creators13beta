@@ -234,6 +234,24 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "player slot empty" }, 500);
   }
 
+  // Name sync: keep player display names aligned with the row's host_name /
+  // guest_name (the join flow updates those columns; clients are no longer
+  // allowed to overwrite `state` directly to patch them).
+  const rowHostName = (match.host_name ?? "").toString();
+  const rowGuestName = (match.guest_name ?? "").toString();
+  let namesPatched = false;
+  state.players = state.players.map((p, i) => {
+    const rowName = i === 0 ? rowHostName : rowGuestName;
+    if (rowName && p.name !== rowName) {
+      namesPatched = true;
+      return { ...p, name: rowName };
+    }
+    return p;
+  });
+  if (namesPatched) {
+    console.log("[apply-move] patched player names from row", { rowHostName, rowGuestName });
+  }
+
   // Turn check (skipped for non-turn-bound actions).
   // rotate_hex is purely presentational on the caller's own ecosystem, so
   // we allow it any time. Everything else requires it to be the caller's turn.
