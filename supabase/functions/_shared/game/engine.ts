@@ -269,7 +269,7 @@ function animalTouchesCreatorAs(
   const creatorType = creatorPc.card.displayType;
   if (creatorType) return animalTypes.some((t) => t.toLowerCase() === creatorType.toLowerCase());
   const el = creatorPc.card.element;
-  return !!el && animalTypes.some((t) => TYPE_TO_ELEMENT[t] === el);
+  return !!el && animalTypes.some((t) => TYPE_TO_ELEMENT[t as keyof typeof TYPE_TO_ELEMENT] === el);
 }
 
 /** Does this animal/sky-creature link to that creator card?
@@ -300,7 +300,7 @@ export function animalLinksToCreator(
     return animalTypes.some((t) => t?.toLowerCase() === creatorType.toLowerCase());
   }
   const el = creator.element!;
-  return animalTypes.some((t) => TYPE_TO_ELEMENT[t] === el);
+  return animalTypes.some((t) => TYPE_TO_ELEMENT[t as keyof typeof TYPE_TO_ELEMENT] === el);
 }
 
 /** Find the creator card placed in this ecosystem that an animal would link to (if any). */
@@ -543,7 +543,7 @@ export function playDisaster(
     } else if (pc.card.kind === "sky_creator") {
       const sub = skyLockedSubType(player.ecosystem, pc.pos);
       if (sub) {
-        const el = TYPE_TO_ELEMENT[sub];
+        const el = TYPE_TO_ELEMENT[sub as keyof typeof TYPE_TO_ELEMENT];
         if (el && el !== "Sky") myElements.add(el as Element);
       }
     }
@@ -853,7 +853,7 @@ export function validateEcosystemWin(player: PlayerState): EcosystemWinValidatio
     if (c.kind === "sky_creator") {
       const sub = skySubByUid.get(c.uid) ?? null;
       if (!sub) return [];
-      const el = TYPE_TO_ELEMENT[sub];
+      const el = TYPE_TO_ELEMENT[sub as keyof typeof TYPE_TO_ELEMENT];
       return el && el !== "Sky" ? [el as Element] : [];
     }
     return c.element ? [c.element] : [];
