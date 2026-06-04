@@ -304,9 +304,13 @@ export default function Play() {
     const prev = state;
     const alreadyFinishedBefore = !!prev?.finished;
     const isBotMatch = !matchRow || matchRow.mode === "solo";
-    if (user && !isBotMatch) {
-      // Update player_progress (points / types seen / streak / ELO) for the signed-in player.
-      // Note: no points are earned when playing the Bot — encourage real-player matches.
+    // Solo bot matches: client tracks lifetime stats (no ELO / no ladder).
+    // PvP matches: the server-side `finalise_ranked_match` RPC, invoked from
+    // `apply-move` when the match transitions to finished, is the ONLY thing
+    // that touches player_progress for ranked play. The client never writes.
+    if (user && isBotMatch) {
+      // No ranked progress for bot matches — discoverable types still get
+      // synced to the player so the Creators dex updates locally.
       recordProgressDiff({
         userId: user.id,
         selfSlot,
@@ -329,24 +333,21 @@ export default function Play() {
       }).then(({ error }) => { if (error) console.warn("bump_bot_match_stats failed", error); });
     }
     if (matchRow && user) {
-      // PvP + a structured Move → go through the server-authoritative pipeline.
-      // (See .lovable/server-authoritative-design.md.) Without `move` we fall
-      // back to the legacy saveMatchState write — used by rotate / move-hex
-      // and ephemeral patches like name-sync, which aren't in the Move union
-      // yet. That gap is closed before RLS lockdown in step 5.
-      if (matchRow.mode === "pvp" && move) {
-        submitServerMove(move, next);
+      // PvP is fully server-authoritative now: clients no longer have UPDATE
+      // privilege on game_matches.state / public_state / seq / winner.
+      // Every PvP write must come with a structured Move and goes through
+      // the apply-move edge function.
+      if (matchRow.mode === "pvp") {
+        if (move) submitServerMove(move, next);
+        // No fallback — if a code path produces a state mutation without
+        // a Move, that's a bug. Log loudly so we catch it.
+        else console.error("[play] PvP state mutation without a Move — dropped", next.lastEvent);
         return;
       }
+      // Solo matches with a row (rare; mostly historical) — keep the legacy
+      // save path. Bot solos in practice run purely from localStorage.
       const seq = ++saveSeqRef.current;
-      let winnerUserId: string | null = null;
-      if (next.finished && next.winnerId && matchRow.mode === "pvp") {
-        winnerUserId =
-          next.winnerId === "host" ? matchRow.host_user_id
-          : next.winnerId === "guest" ? matchRow.guest_user_id
-          : null;
-      }
-      saveMatchState({ matchId: matchRow.id, actingUserId: user.id, state: next, winnerUserId })
+      saveMatchState({ matchId: matchRow.id, actingUserId: user.id, state: next })
         .catch((e) => {
           if (seq === saveSeqRef.current) console.error("Save failed", e);
         });
