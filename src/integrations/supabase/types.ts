@@ -637,6 +637,38 @@ export type Database = {
         }
         Relationships: []
       }
+      game_match_moves: {
+        Row: {
+          actor: string
+          applied_at: string
+          match_id: string
+          move: Json
+          seq: number
+        }
+        Insert: {
+          actor: string
+          applied_at?: string
+          match_id: string
+          move: Json
+          seq: number
+        }
+        Update: {
+          actor?: string
+          applied_at?: string
+          match_id?: string
+          move?: Json
+          seq?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_match_moves_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "game_matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_matches: {
         Row: {
           created_at: string
@@ -646,8 +678,12 @@ export type Database = {
           host_user_id: string
           id: string
           invite_token: string | null
+          is_ranked: boolean
           last_action_by: string | null
           mode: Database["public"]["Enums"]["match_mode"]
+          public_state: Json | null
+          rng_seed: number
+          seq: number
           state: Json
           status: Database["public"]["Enums"]["match_status"]
           updated_at: string
@@ -661,8 +697,12 @@ export type Database = {
           host_user_id: string
           id?: string
           invite_token?: string | null
+          is_ranked?: boolean
           last_action_by?: string | null
           mode?: Database["public"]["Enums"]["match_mode"]
+          public_state?: Json | null
+          rng_seed?: number
+          seq?: number
           state: Json
           status?: Database["public"]["Enums"]["match_status"]
           updated_at?: string
@@ -676,8 +716,12 @@ export type Database = {
           host_user_id?: string
           id?: string
           invite_token?: string | null
+          is_ranked?: boolean
           last_action_by?: string | null
           mode?: Database["public"]["Enums"]["match_mode"]
+          public_state?: Json | null
+          rng_seed?: number
+          seq?: number
           state?: Json
           status?: Database["public"]["Enums"]["match_status"]
           updated_at?: string
@@ -1725,6 +1769,19 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      commit_move: {
+        Args: {
+          _actor: string
+          _expected_seq: number
+          _finished?: boolean
+          _match_id: string
+          _move: Json
+          _new_state: Json
+          _public_state: Json
+          _winner?: string
+        }
+        Returns: Json
       }
       creator_type_code: {
         Args: { _lower: boolean; _type: string }
