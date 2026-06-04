@@ -337,7 +337,7 @@ export default function Play() {
       // Every PvP write must come with a structured Move and goes through
       // the apply-move edge function.
       if (matchRow.mode === "pvp") {
-        if (move) submitServerMove(move, next);
+        if (move) submitServerMove(move);
         // No fallback — if a code path produces a state mutation without
         // a Move, that's a bug. Log loudly so we catch it.
         else console.error("[play] PvP state mutation without a Move — dropped", next.lastEvent);
