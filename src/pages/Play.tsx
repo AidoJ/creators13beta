@@ -420,7 +420,7 @@ export default function Play() {
         try {
           const next = finaliseByScore(s);
           setState(next);
-          schedulePersist(next);
+          schedulePersist(next, { type: "finalise_by_score" });
         } catch {/* ignore */}
         return;
       }
@@ -435,7 +435,7 @@ export default function Play() {
         try {
           const next = endTurnEarly(s);
           setState(next);
-          schedulePersist(next);
+          schedulePersist(next, { type: "end_turn" });
         } catch {/* ignore */}
       }
     }, 1000);

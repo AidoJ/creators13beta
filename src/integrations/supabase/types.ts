@@ -1770,6 +1770,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      bump_types_seen: { Args: { _types: string[] }; Returns: undefined }
       commit_move: {
         Args: {
           _actor: string
