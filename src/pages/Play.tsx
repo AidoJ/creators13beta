@@ -592,24 +592,31 @@ export default function Play() {
     if (!ok) return;
 
     if (matchRow && user && isPvp && state) {
-      // Forfeit: mark finished, opponent wins.
-      const opponentSlot = selfSlot === "host" ? "guest" : "host";
-      const opponentUserId =
-        opponentSlot === "host" ? matchRow.host_user_id : matchRow.guest_user_id;
-      const finishedState: MatchState = {
-        ...state,
-        finished: true,
-        winnerId: opponentSlot,
-      };
-      try {
-        await saveMatchState({
-          matchId: matchRow.id,
-          actingUserId: user.id,
-          state: finishedState,
-          winnerUserId: opponentUserId,
-        });
-      } catch (e) {
-        console.error("[abandon] save failed", e);
+      // Forfeit → server-authoritative `concede` move. The edge function
+      // sets winner/finished using the row identities, so we don't have to
+      // trust the client to name the winner.
+      const result = await applyMoveServer(matchRow.id, serverSeqRef.current, { type: "concede" });
+      if (!result.ok) {
+        console.error("[abandon] concede failed", result);
+        // Fallback to legacy save so the player can still exit the match.
+        const opponentSlot = selfSlot === "host" ? "guest" : "host";
+        const opponentUserId =
+          opponentSlot === "host" ? matchRow.host_user_id : matchRow.guest_user_id;
+        const finishedState: MatchState = {
+          ...state,
+          finished: true,
+          winnerId: opponentSlot,
+        };
+        try {
+          await saveMatchState({
+            matchId: matchRow.id,
+            actingUserId: user.id,
+            state: finishedState,
+            winnerUserId: opponentUserId,
+          });
+        } catch (e) {
+          console.error("[abandon] fallback save failed", e);
+        }
       }
     } else {
       // Solo — drop the local snapshot.
