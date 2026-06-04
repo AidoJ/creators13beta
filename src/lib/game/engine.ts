@@ -541,7 +541,7 @@ export function playDisaster(
     } else if (pc.card.kind === "sky_creator") {
       const sub = skyLockedSubType(player.ecosystem, pc.pos);
       if (sub) {
-        const el = TYPE_TO_ELEMENT[sub];
+        const el = TYPE_TO_ELEMENT[sub as keyof typeof TYPE_TO_ELEMENT];
         if (el && el !== "Sky") myElements.add(el as Element);
       }
     }
