@@ -1,12 +1,12 @@
-import { useRef } from "react";
+import { memo, useRef } from "react";
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType, glyphMarkForType } from "@/lib/game/glyphs";
 import type { DeckCard } from "@/lib/game/types";
 import { TypeGlyphMark, displayCardName } from "./cards/TypeGlyphMark";
 import { cardCodeLabel } from "@/lib/creatorTypeCode";
-import goldenBodyArt from "@/assets/golden-body-card.png";
-import goldenHiveArt from "@/assets/golden-hive-card.png";
+import goldenBodyArt from "@/assets/golden-body-card.webp";
+import goldenHiveArt from "@/assets/golden-hive-card.webp";
 
 interface Props {
   card: DeckCard;
@@ -35,7 +35,7 @@ interface Props {
  *  Board pieces show ONLY the artwork / glyph — no name plate — since the
  *  player has already chosen the card from the deck-style hand tile.
  *  Only the coloured background rotates; the artwork stays upright. */
-export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEnd, draggable = false, onTouchDragStart, onTouchDragEnd, highlight = null, rotation = 0, skySubType = null, goldenLockedType = null }: Props) {
+function BoardHexPieceImpl({ card, size = 110, onClick, onDragStart, onDragEnd, draggable = false, onTouchDragStart, onTouchDragEnd, highlight = null, rotation = 0, skySubType = null, goldenLockedType = null }: Props) {
   const h = size * 1.1547;
   // Pointer-based drag fallback state (iOS Safari / iPad).
   const ptrRef = useRef<{ id: number; x: number; y: number; dragging: boolean; suppressClick: boolean } | null>(null);
@@ -268,7 +268,7 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
                 {i > 0 && <span className="text-white/50 text-[8px]">+</span>}
                 <span className="inline-flex items-center gap-0.5 font-semibold uppercase tracking-wider text-white" style={{ fontSize: size * 0.07 }}>
                   {chip.glyph ? (
-                    <img src={chip.glyph} alt="" className="object-contain" style={{ width: size * 0.1, height: size * 0.1 }} aria-hidden />
+                    <img src={chip.glyph} alt="" loading="lazy" decoding="async" className="object-contain" style={{ width: size * 0.1, height: size * 0.1 }} aria-hidden />
                   ) : (
                     <span className="rounded-full" style={{ width: size * 0.06, height: size * 0.06, background: chip.color }} aria-hidden />
                   )}
@@ -282,6 +282,8 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
     </div>
   );
 }
+
+export const BoardHexPiece = memo(BoardHexPieceImpl);
 
 export function EmptyHexCell({
   size = 110,

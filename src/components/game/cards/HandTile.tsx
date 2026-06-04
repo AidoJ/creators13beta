@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Info, X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
@@ -21,7 +21,7 @@ interface Props {
   forceFlipped?: boolean;
 }
 
-export function HandTile({ card, size = 96, selected = false, dimmed = false, forceFlipped }: Props) {
+function HandTileImpl({ card, size = 96, selected = false, dimmed = false, forceFlipped }: Props) {
   const [zoomed, setZoomed] = useState(false);
   const [flipped, setFlipped] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -137,6 +137,7 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
                   src={art}
                   alt={card.name}
                   loading="lazy"
+                  decoding="async"
                   className="object-contain pointer-events-none"
                   style={isCreatorLike
                     ? { width: "100%", height: "100%" }
@@ -381,6 +382,8 @@ export function HandTile({ card, size = 96, selected = false, dimmed = false, fo
     </div>
   );
 }
+
+export const HandTile = memo(HandTileImpl);
 
 function defaultDescriptor(card: DeckCard): string {
   if (card.kind === "sky_creature") {

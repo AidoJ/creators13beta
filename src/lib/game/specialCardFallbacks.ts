@@ -1,6 +1,6 @@
 import { CREATOR_TYPE_GLYPHS } from "@/lib/game/glyphs";
-import goldenBodyArt from "@/assets/golden-body-card.png";
-import goldenHiveArt from "@/assets/golden-hive-card.png";
+import goldenBodyArt from "@/assets/golden-body-card.webp";
+import goldenHiveArt from "@/assets/golden-hive-card.webp";
 
 export function getSpecialCardFallbackArt(slug: string): string | null {
   if (slug.startsWith("creator-")) {
