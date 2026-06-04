@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { playDisaster, rotateMyPlacedHex, skyLockedSubType, validateEcosystemWin } from "./engine";
+import { playDisaster, skyLockedSubType, validateEcosystemWin } from "./engine";
+import { bestRotationForPlacement, facingTypeLabel } from "./rotation";
 import type { DeckCard, MatchState, PlayerState } from "./types";
 import type { Element } from "./elements";
 import type { CreatorTypeName } from "@/lib/gameCards";
@@ -248,7 +249,7 @@ describe("classic ecosystem win validation", () => {
     expect(validateEcosystemWin(p).valid).toBe(true);
   });
 
-  it("re-checks the win immediately when a rotation makes the touching half match", () => {
+  it("accepts a complete ecosystem even if a matching animal is visually mis-rotated", () => {
     const p = buildPlayer([
       [creator("Snow", "Air"),
         animal("snow-0", ["Snow", "Lightning"]),
@@ -270,15 +271,22 @@ describe("classic ecosystem win validation", () => {
     const badKey = "1,0";
     const badPc = p.ecosystem.placed.get(badKey)!;
     p.ecosystem.placed.set(badKey, { ...badPc, rotation: 5 });
-    expect(validateEcosystemWin(p).valid).toBe(false);
+    expect(validateEcosystemWin(p).valid).toBe(true);
+  });
 
-    const state: MatchState = {
-      players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 0, placedThisTurn: 0,
-      turnNumber: 1, finished: false, winnerId: null,
+  it("auto-pivots an animal so its exact Creator Type half faces the adjacent Creator", () => {
+    const soil = creator("Soil", "Earth");
+    const bear = animal("bear", ["Lava", "Soil"]);
+    const eco = {
+      placed: new Map<string, { card: DeckCard; pos: { q: number; r: number }; rotation?: number }>([
+        ["0,0", { card: soil, pos: { q: 0, r: 0 }, rotation: 0 }],
+      ]),
     };
-    const next = rotateMyPlacedHex(state, "p1", badKey);
-    expect(next.finished).toBe(true);
-    expect(next.winnerId).toBe("p1");
+    const pos = { q: 1, r: 0 };
+    const dirToCreator = NEI.findIndex((d) => pos.q + d.q === 0 && pos.r + d.r === 0);
+    const rotation = bestRotationForPlacement(eco, bear, pos, { restrictTo: "creator-only", driverPos: { q: 0, r: 0 } });
+
+    expect(facingTypeLabel(bear, rotation, dirToCreator)).toBe("Soil");
   });
 
   it("rejects Sky Creator with no adjacent animals (no sub-type can lock)", () => {
