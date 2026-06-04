@@ -357,36 +357,49 @@ export default function Play() {
   /** Submit a Move to the server-authoritative `apply-move` edge function.
    *  Local state has already been updated optimistically. On rejection we
    *  refetch the canonical row and reconcile — that's the safety net that
-   *  closes the cheating window without rolling our own conflict resolution. */
-  async function submitServerMove(move: ServerMove, optimisticNext: MatchState) {
-    if (!matchRow) return;
-    const expected = serverSeqRef.current;
-    const result = await applyMoveServer(matchRow.id, expected, move);
-    if (result.ok === true) {
-      serverSeqRef.current = result.seq;
-      return;
-    }
-    // result is now { ok: false; rejected: true; reason; message? }
-    const rejected = result as Extract<typeof result, { ok: false }>;
-    if (rejected.reason === "not_implemented") {
-      console.warn("[apply-move] server not yet implementing", move.type);
-      return;
-    }
-    if (rejected.reason === "stale") {
-      toast.message("Catching up to opponent…");
-    } else {
-      toast.error(rejected.message ?? "Move rejected by server");
-    }
-    // Refetch the canonical row + state.
-    try {
-      const { row, state: canonical } = await loadMatch(matchRow.id);
-      setMatchRow(row);
-      setState(canonical);
-      serverSeqRef.current = Number(row.seq ?? 0);
-    } catch (e) {
-      console.error("[apply-move] reconcile failed", e);
-    }
+   *  closes the cheating window without rolling our own conflict resolution.
+   *
+   *  Serialised via `inFlightMoveRef` so concurrent callers (e.g. a tile
+   *  placement immediately followed by an auto end-turn) submit in order
+   *  and `serverSeqRef` stays monotonic. */
+  function submitServerMove(move: ServerMove, _optimisticNext: MatchState): Promise<void> {
+    if (!matchRow) return Promise.resolve();
+    const run = async () => {
+      const expected = serverSeqRef.current;
+      const result = await applyMoveServer(matchRow.id, expected, move);
+      if (result.ok === true) {
+        serverSeqRef.current = result.seq;
+        return;
+      }
+      const rejected = result as Extract<typeof result, { ok: false }>;
+      if (rejected.reason === "not_implemented") {
+        console.warn("[apply-move] server not yet implementing", move.type);
+        return;
+      }
+      if (rejected.reason === "stale") {
+        toast.message("Catching up to opponent…");
+      } else {
+        toast.error(rejected.message ?? "Move rejected by server");
+      }
+      // Refetch the canonical row + state.
+      try {
+        const { row, state: canonical } = await loadMatch(matchRow.id);
+        setMatchRow(row);
+        setState(canonical);
+        serverSeqRef.current = Number(row.seq ?? 0);
+      } catch (e) {
+        console.error("[apply-move] reconcile failed", e);
+      }
+    };
+    const chained = (inFlightMoveRef.current ?? Promise.resolve())
+      .then(run, run)
+      .finally(() => {
+        if (inFlightMoveRef.current === chained) inFlightMoveRef.current = null;
+      });
+    inFlightMoveRef.current = chained;
+    return chained;
   }
+
 
   /* ----------- Beat-the-Clock timers (stable ticker via refs) ----------- */
   // Reset turn timer whenever the current turn changes.
