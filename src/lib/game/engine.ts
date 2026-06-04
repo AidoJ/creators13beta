@@ -475,6 +475,7 @@ export function moveMyPlacedHex(
     player.ecosystem.placed.set(toKey, { ...existing, pos: toPos, rotation: newRot });
   }
   repivotNeighbours(player.ecosystem, toPos, toPos);
+  repivotSkyLockNeighbours(player.ecosystem, toPos);
   next.lastEvent = `${player.name} moved ${existing.card.name}`;
   checkWin(next);
   return next;
@@ -651,6 +652,7 @@ function applyDisasterWipe(
             driverPos: driverCreator?.pos,
           });
           player.ecosystem.placed.set(keyOf(pos), { card: pc.card, pos, rotation });
+          repivotSkyLockNeighbours(player.ecosystem, pos);
           player.score += 1;
           placedOnBoard += 1;
         } else {
@@ -721,6 +723,7 @@ export function playSkyCreatureSteal(
       driverPos: driverCreator?.pos,
     });
     player.ecosystem.placed.set(keyOf(placeAt), { card: stolen.card, pos: placeAt, rotation });
+    repivotSkyLockNeighbours(player.ecosystem, placeAt);
     player.score += 1;
     next.lastEvent = `${player.name} stole ${stolen.card.name} from ${victim.name} and placed it`;
   } else {
