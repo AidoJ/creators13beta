@@ -448,9 +448,7 @@ export function moveMyPlacedHex(
   // Re-pivot the moved card to match its new neighbours, and re-pivot any
   // adjacent animals whose neighbour set just changed.
   if (existing.card.kind === "animal" || existing.card.kind === "sky_creature") {
-    const driverCreator = neighbours(toPos)
-      .map((n) => player.ecosystem.placed.get(keyOf(n)))
-      .find((nb) => nb && (nb.card.kind === "creator" || nb.card.kind === "sky_creator"));
+    const driverCreator = findAdjacentDriverCreator(player.ecosystem, existing.card, toPos);
     const newRot = bestRotationForPlacement(player.ecosystem, existing.card, toPos, {
       restrictTo: "creator-only",
       currentRotation: existing.rotation ?? 0,
@@ -629,9 +627,7 @@ function applyDisasterWipe(
         const cells = legalEcoCells(player.ecosystem);
         if (cells.length > 0) {
           const pos = cells[0];
-          const driverCreator = neighbours(pos)
-            .map((n) => player.ecosystem.placed.get(keyOf(n)))
-            .find((nb) => nb && (nb.card.kind === "creator" || nb.card.kind === "sky_creator"));
+          const driverCreator = findAdjacentDriverCreator(player.ecosystem, pc.card, pos);
           const rotation = bestRotationForPlacement(player.ecosystem, pc.card, pos, {
             restrictTo: "creator-only",
             driverPos: driverCreator?.pos,
@@ -701,9 +697,7 @@ export function playSkyCreatureSteal(
     if (!legal.some((c) => c.q === placeAt.q && c.r === placeAt.r)) {
       throw new Error("Pick a glowing hex on your own board to place the stolen card.");
     }
-    const driverCreator = neighbours(placeAt)
-      .map((n) => player.ecosystem.placed.get(keyOf(n)))
-      .find((nb) => nb && (nb.card.kind === "creator" || nb.card.kind === "sky_creator"));
+    const driverCreator = findAdjacentDriverCreator(player.ecosystem, stolen.card, placeAt);
     const rotation = bestRotationForPlacement(player.ecosystem, stolen.card, placeAt, {
       restrictTo: "creator-only",
       driverPos: driverCreator?.pos,
