@@ -38,6 +38,8 @@ import {
   playDisaster,
   resolveDisaster,
   playSkyCreatureSteal,
+  rotateMyPlacedHex,
+  moveMyPlacedHex,
 } from "../_shared/game/engine.ts";
 import type { Axial, Ecosystem, MatchState, PlacedCard } from "../_shared/game/types.ts";
 
@@ -62,7 +64,9 @@ type Move =
   | { type: "discard"; uid: string }
   | { type: "skip_draws" }
   | { type: "end_turn" }
-  | { type: "concede" };
+  | { type: "concede" }
+  | { type: "rotate_hex"; pos_key: string }
+  | { type: "move_hex"; from_key: string; to_pos: Axial };
 
 interface ApplyBody {
   match_id: string;
