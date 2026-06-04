@@ -66,7 +66,9 @@ export function useMatchRealtime(
       if (cancelled) return;
       const { data, error } = await supabase
         .from("game_matches")
-        .select("*")
+        .select(
+          "id, mode, status, host_user_id, host_name, guest_user_id, guest_name, invite_token, seq, is_ranked, public_state, winner_user_id, last_action_by, created_at, updated_at",
+        )
         .eq("id", matchId)
         .maybeSingle();
       if (error || !data) return;

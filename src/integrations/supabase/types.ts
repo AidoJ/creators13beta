@@ -1807,6 +1807,7 @@ export type Database = {
           practitioner_id: string
         }[]
       }
+      get_match_state: { Args: { _match_id: string }; Returns: Json }
       get_public_player_stats: {
         Args: { _user_id: string }
         Returns: {

@@ -71,15 +71,20 @@ export async function createMatchRow(args: {
   return data as unknown as GameMatchRow;
 }
 
+const NON_STATE_COLS =
+  "id, mode, status, host_user_id, host_name, guest_user_id, guest_name, invite_token, seq, is_ranked, public_state, winner_user_id, last_action_by, created_at, updated_at";
+
 export async function loadMatch(matchId: string): Promise<{ row: GameMatchRow; state: MatchState }> {
-  const { data, error } = await supabase
-    .from("game_matches")
-    .select("*")
-    .eq("id", matchId)
-    .single();
-  if (error) throw error;
-  const row = data as unknown as GameMatchRow;
-  return { row, state: deserializeMatch(row.state) };
+  // `state` is no longer in the SELECT grant for `authenticated`; fetch the
+  // row (sans state) and resolve the caller's redacted view via RPC.
+  const [rowRes, stateRes] = await Promise.all([
+    supabase.from("game_matches").select(NON_STATE_COLS).eq("id", matchId).single(),
+    supabase.rpc("get_match_state", { _match_id: matchId }),
+  ]);
+  if (rowRes.error) throw rowRes.error;
+  if (stateRes.error) throw stateRes.error;
+  const row = { ...(rowRes.data as any), state: stateRes.data } as unknown as GameMatchRow;
+  return { row, state: deserializeMatch(stateRes.data as unknown as SerializedMatchState) };
 }
 
 export async function saveMatchState(args: {
@@ -114,7 +119,7 @@ export async function acceptInvite(token: string, guestName: string): Promise<st
 export async function listMyActiveMatches(userId: string): Promise<GameMatchRow[]> {
   const { data, error } = await supabase
     .from("game_matches")
-    .select("*")
+    .select(NON_STATE_COLS)
     .or(`host_user_id.eq.${userId},guest_user_id.eq.${userId}`)
     .neq("status", "finished")
     .order("updated_at", { ascending: false })
