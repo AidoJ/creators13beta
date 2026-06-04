@@ -80,12 +80,56 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
 
   return (
     <div
-      onClick={onClick}
+      onClick={(e) => {
+        if (ptrRef.current?.suppressClick) {
+          ptrRef.current.suppressClick = false;
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        onClick?.();
+      }}
       draggable={draggable}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
+      onPointerDown={draggable ? (e) => {
+        if (e.pointerType === "mouse") return; // mouse uses native HTML5 drag
+        ptrRef.current = { id: e.pointerId, x: e.clientX, y: e.clientY, dragging: false, suppressClick: false };
+      } : undefined}
+      onPointerMove={draggable ? (e) => {
+        const p = ptrRef.current;
+        if (!p || p.id !== e.pointerId) return;
+        if (!p.dragging) {
+          const dx = e.clientX - p.x;
+          const dy = e.clientY - p.y;
+          if (dx * dx + dy * dy >= THRESHOLD * THRESHOLD) {
+            p.dragging = true;
+            p.suppressClick = true;
+            onTouchDragStart?.();
+            (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+          }
+        }
+        if (p.dragging) e.preventDefault();
+      } : undefined}
+      onPointerUp={draggable ? (e) => {
+        const p = ptrRef.current;
+        if (!p || p.id !== e.pointerId) return;
+        ptrRef.current = null;
+        if (p.dragging) {
+          const dropTarget = document
+            .elementFromPoint(e.clientX, e.clientY)
+            ?.closest('[data-legal-drop="true"]') as HTMLElement | null;
+          dropTarget?.click();
+          onTouchDragEnd?.();
+        }
+      } : undefined}
+      onPointerCancel={draggable ? () => {
+        const p = ptrRef.current;
+        ptrRef.current = null;
+        if (p?.dragging) onTouchDragEnd?.();
+      } : undefined}
       className={`group relative inline-block ${(onClick || draggable) ? "cursor-pointer transition-transform hover:scale-105" : ""} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
-      style={{ width: size, height: h }}
+      style={{ width: size, height: h, touchAction: draggable ? "none" : undefined }}
       aria-label={displayName}
       title={displayName}
     >
