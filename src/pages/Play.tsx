@@ -598,25 +598,10 @@ export default function Play() {
       const result = await applyMoveServer(matchRow.id, serverSeqRef.current, { type: "concede" });
       if (!result.ok) {
         console.error("[abandon] concede failed", result);
-        // Fallback to legacy save so the player can still exit the match.
-        const opponentSlot = selfSlot === "host" ? "guest" : "host";
-        const opponentUserId =
-          opponentSlot === "host" ? matchRow.host_user_id : matchRow.guest_user_id;
-        const finishedState: MatchState = {
-          ...state,
-          finished: true,
-          winnerId: opponentSlot,
-        };
-        try {
-          await saveMatchState({
-            matchId: matchRow.id,
-            actingUserId: user.id,
-            state: finishedState,
-            winnerUserId: opponentUserId,
-          });
-        } catch (e) {
-          console.error("[abandon] fallback save failed", e);
-        }
+        // Client can no longer write to game_matches.state — there's nothing
+        // to fall back to. Just navigate away and let the opponent's idle
+        // timeout / forfeit policy handle the orphaned match.
+        toast.error("Couldn't notify the server — leaving anyway.");
       }
     } else {
       // Solo — drop the local snapshot.
