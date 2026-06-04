@@ -189,26 +189,21 @@ export default function Play() {
 
           // Sync the live player names in the match state with the latest
           // host_name / guest_name on the row (which the join flow updates).
-          // This means a freshly-joined guest sees their real name instead
-          // of the "Waiting…" placeholder the host first put there.
+          // PURELY local — the server now also patches names from the row
+          // inside apply-move, so we don't need (and aren't allowed) to
+          // write the state column back from the client.
           let patched = state;
-          let mutated = false;
           const nextPlayers = state.players.map((p) => {
             if (p.id === "host" && row.host_name && p.name !== row.host_name) {
-              mutated = true;
               return { ...p, name: row.host_name };
             }
             if (p.id === "guest" && row.guest_name && p.name !== row.guest_name) {
-              mutated = true;
               return { ...p, name: row.guest_name };
             }
             return p;
           });
-          if (mutated) {
+          if (nextPlayers.some((p, i) => p.name !== state.players[i].name)) {
             patched = { ...state, players: nextPlayers };
-            if (user) {
-              saveMatchState({ matchId: row.id, actingUserId: user.id, state: patched }).catch(() => {});
-            }
           }
 
           setMatchRow(row);
