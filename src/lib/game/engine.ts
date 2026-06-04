@@ -29,7 +29,7 @@ import {
 import { keyOf, neighbours, isAdjacent, NEIGHBOUR_DIRS } from "./board";
 import { ELEMENTS, TYPE_TO_ELEMENT, type Element } from "./elements";
 
-import { bestRotationForPlacement, facingTypeLabel, rotatePlacedHex } from "./rotation";
+import { bestRotationForPlacement, rotatePlacedHex } from "./rotation";
 
 /* --------------------------- helpers --------------------------- */
 
@@ -250,20 +250,6 @@ export function skyLockedSubType(eco: Ecosystem, skyPos: Axial): string | null {
   return candidates[0] ?? null;
 }
 
-function directionIndex(from: Axial, to: Axial): number | null {
-  for (let i = 0; i < NEIGHBOUR_DIRS.length; i++) {
-    const d = NEIGHBOUR_DIRS[i];
-    if (from.q + d.q === to.q && from.r + d.r === to.r) return i;
-  }
-  return null;
-}
-
-function animalTypeFacingCreator(animalPc: PlacedCard, creatorPos: Axial): string | null {
-  const dir = directionIndex(animalPc.pos, creatorPos);
-  if (dir == null) return null;
-  return facingTypeLabel(animalPc.card, animalPc.rotation ?? 0, dir);
-}
-
 function animalTouchesCreatorAs(
   animalPc: PlacedCard,
   creatorPc: PlacedCard,
@@ -272,17 +258,16 @@ function animalTouchesCreatorAs(
   if (!isAdjacent(animalPc.pos, creatorPc.pos)) return false;
   if (animalPc.card.kind === "golden_body") return true;
   if (animalPc.card.kind !== "animal" && animalPc.card.kind !== "sky_creature") return false;
-  const facing = animalTypeFacingCreator(animalPc, creatorPc.pos);
-  if (!facing) return false;
+  const animalTypes = animalPc.card.types ?? [];
   if (creatorPc.card.kind === "sky_creator") {
     const sub = opts?.skySubType;
-    return !!sub && (animalPc.card.types ?? []).some((t) => t.toLowerCase() === sub.toLowerCase());
+    return !!sub && animalTypes.some((t) => t.toLowerCase() === sub.toLowerCase());
   }
   if (creatorPc.card.kind !== "creator") return false;
   const creatorType = creatorPc.card.displayType;
-  if (creatorType) return facing.toLowerCase() === creatorType.toLowerCase();
+  if (creatorType) return animalTypes.some((t) => t.toLowerCase() === creatorType.toLowerCase());
   const el = creatorPc.card.element;
-  return !!el && TYPE_TO_ELEMENT[facing as keyof typeof TYPE_TO_ELEMENT] === el;
+  return !!el && animalTypes.some((t) => TYPE_TO_ELEMENT[t] === el);
 }
 
 /** Does this animal/sky-creature link to that creator card?
