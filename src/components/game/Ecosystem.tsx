@@ -46,7 +46,7 @@ export function Ecosystem({
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
 
-  const { placed, empties, legal, legalKeys, bounds, matches } = useMemo(() => {
+  const { placed, empties, legal, legalKeys, bounds } = useMemo(() => {
     const placed = Array.from(eco.placed.values());
     const legal = legalEcoCells(eco, moveFromKey ?? undefined);
     const legalKeys = new Set(legal.map(keyOf));
@@ -60,56 +60,8 @@ export function Ecosystem({
       minY = Math.min(minY, y); maxY = Math.max(maxY, y);
     }
     const pad = 0;
-
-    // Walk every adjacent pair of placed hexes and flag those that share at
-    // least one Creator-Type / Element, regardless of which half faces which.
-    const cardLabels = (card: typeof placed[number]["card"]): string[] => {
-      const out: string[] = [];
-      if (card.types) out.push(...card.types);
-      if (card.element) out.push(card.element);
-      if (card.displayType) out.push(card.displayType);
-      if (card.kind === "sky_creator") out.push("Sky");
-      if (card.kind === "golden_body" || card.kind === "golden_hive") out.push("*");
-      return out.map((s) => s.toLowerCase());
-    };
-    const matches: { x: number; y: number; label: string; color: string; key: string }[] = [];
-    const seenEdges = new Set<string>();
-    for (const pc of placed) {
-      const myLabels = cardLabels(pc.card);
-      for (let dir = 0; dir < 6; dir++) {
-        const d = NEIGHBOUR_DIRS[dir];
-        const nPos = { q: pc.pos.q + d.q, r: pc.pos.r + d.r };
-        const nKey = keyOf(nPos);
-        const nb = eco.placed.get(nKey);
-        if (!nb) continue;
-        const edgeKey = [keyOf(pc.pos), nKey].sort().join("|");
-        if (seenEdges.has(edgeKey)) continue;
-        const theirLabels = cardLabels(nb.card);
-        // Wildcards match anything; otherwise need a shared non-wildcard label.
-        let shared: string | null = null;
-        if (myLabels.includes("*") || theirLabels.includes("*")) {
-          shared = (myLabels.find((l) => l !== "*") ?? theirLabels.find((l) => l !== "*")) ?? null;
-        } else {
-          shared = myLabels.find((l) => theirLabels.includes(l)) ?? null;
-        }
-        if (!shared) continue;
-        seenEdges.add(edgeKey);
-        const a = axialToPixel(pc.pos.q, pc.pos.r, size);
-        const b = axialToPixel(nPos.q, nPos.r, size);
-        const cx = (a.x + b.x) / 2 + size / 2;
-        const cy = (a.y + b.y) / 2 + (size * 1.1547) / 2;
-        const titleCase = shared.charAt(0).toUpperCase() + shared.slice(1);
-        const color =
-          CREATOR_TYPE_COLORS[titleCase as keyof typeof CREATOR_TYPE_COLORS] ??
-          ELEMENT_COLORS[titleCase as keyof typeof ELEMENT_COLORS] ??
-          "#ffffff";
-        matches.push({ x: cx, y: cy, label: titleCase, color, key: edgeKey });
-      }
-    }
-
-
     return {
-      placed, empties, legal, legalKeys, matches,
+      placed, empties, legal, legalKeys,
       bounds: {
         minX: minX - pad, minY: minY - pad,
         width: maxX - minX + size + pad * 2,
