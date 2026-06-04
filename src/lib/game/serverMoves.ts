@@ -16,10 +16,16 @@ export type ServerMove =
   | { type: "draw_initial_5" }
   | { type: "pickup_from_used"; uid: string }
   | { type: "pickup_from_draw" }
-  | { type: "place"; uid: string; pos: { q: number; r: number }; rotation: number }
-  | { type: "play_disaster"; uid: string; target_player_id: string }
+  | { type: "place"; uid: string; pos: { q: number; r: number }; rotation?: number }
+  | { type: "play_disaster"; uid: string; target_player_id?: string }
   | { type: "resolve_disaster"; use_hive: boolean }
-  | { type: "play_sky_steal"; uid: string; from_player_id: string; target_uid: string }
+  | {
+      type: "play_sky_steal";
+      uid: string;
+      from_player_id: string;
+      victim_pos_key: string;
+      place_at?: { q: number; r: number };
+    }
   | { type: "discard"; uid: string }
   | { type: "skip_draws" }
   | { type: "end_turn" }
