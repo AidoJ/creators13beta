@@ -31,8 +31,11 @@ interface Props {
  *  Board pieces show ONLY the artwork / glyph — no name plate — since the
  *  player has already chosen the card from the deck-style hand tile.
  *  Only the coloured background rotates; the artwork stays upright. */
-export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEnd, draggable = false, highlight = null, rotation = 0, skySubType = null }: Props) {
+export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEnd, draggable = false, onTouchDragStart, onTouchDragEnd, highlight = null, rotation = 0, skySubType = null }: Props) {
   const h = size * 1.1547;
+  // Pointer-based drag fallback state (iOS Safari / iPad).
+  const ptrRef = useRef<{ id: number; x: number; y: number; dragging: boolean; suppressClick: boolean } | null>(null);
+  const THRESHOLD = 8;
   const hexPoints = "0.5,0 1,0.25 1,0.75 0.5,1 0,0.75 0,0.25";
   const halfA = "0.5,0 1,0.25 0,0.75 0,0.25";
   const halfB = "1,0.25 1,0.75 0.5,1 0,0.75";
