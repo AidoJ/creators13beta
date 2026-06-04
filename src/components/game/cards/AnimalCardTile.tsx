@@ -92,6 +92,8 @@ function AnimalCardTileImpl({ card, imageSrc, size = 220 }: Props) {
   );
 }
 
+export const AnimalCardTile = memo(AnimalCardTileImpl);
+
 function TypeChip({ name, color }: { name: string; color: string }) {
   return (
     <span
