@@ -851,7 +851,7 @@ export function validateEcosystemWin(player: PlayerState): EcosystemWinValidatio
     if (c.kind === "sky_creator") {
       const sub = skySubByUid.get(c.uid) ?? null;
       if (!sub) return [];
-      const el = TYPE_TO_ELEMENT[sub];
+      const el = TYPE_TO_ELEMENT[sub as keyof typeof TYPE_TO_ELEMENT];
       return el && el !== "Sky" ? [el as Element] : [];
     }
     return c.element ? [c.element] : [];
