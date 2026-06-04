@@ -544,12 +544,12 @@ export default function Play() {
       setMoveFromKey((cur) => (cur === posKey ? null : posKey));
       return;
     }
-    // Rotate: presentation-only, not in ServerMove union — local + legacy save.
+    // Rotate: presentation-only. Server-authoritative in PvP, legacy save for solo.
     setState((s) => {
       if (!s) return s;
       pushUndo(s);
       const next = rotateMyPlacedHex(s, selfSlot, posKey);
-      schedulePersist(next);
+      schedulePersist(next, { type: "rotate_hex", pos_key: posKey });
       return next;
     });
   }
