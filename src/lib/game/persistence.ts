@@ -87,25 +87,10 @@ export async function loadMatch(matchId: string): Promise<{ row: GameMatchRow; s
   return { row, state: deserializeMatch(stateRes.data as unknown as SerializedMatchState) };
 }
 
-export async function saveMatchState(args: {
-  matchId: string;
-  actingUserId: string;
-  state: MatchState;
-  /** For pvp, caller maps slot ("host"/"guest") to a real user_id. */
-  winnerUserId?: string | null;
-}): Promise<void> {
-  const status: MatchStatus = args.state.finished ? "finished" : "active";
-  const { error } = await supabase
-    .from("game_matches")
-    .update({
-      state: serializeMatch(args.state) as any,
-      status,
-      winner_user_id: args.state.finished ? args.winnerUserId ?? null : null,
-      last_action_by: args.actingUserId,
-    })
-    .eq("id", args.matchId);
-  if (error) throw error;
-}
+// saveMatchState was the legacy client-authoritative writer for game_matches.
+// PvP now goes through the apply-move edge function; solo bot matches persist
+// via localStorage. Clients no longer have UPDATE privilege on
+// game_matches.state, so any call here would throw RLS. Removed.
 
 export async function acceptInvite(token: string, guestName: string): Promise<string> {
   const { data, error } = await supabase.rpc("accept_game_invite", {

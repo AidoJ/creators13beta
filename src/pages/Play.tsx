@@ -32,7 +32,6 @@ import {
 import {
   createMatchRow,
   loadMatch,
-  saveMatchState,
   inviteUrl,
   type GameMatchRow,
 } from "@/lib/game/persistence";
@@ -89,7 +88,11 @@ export default function Play() {
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { settings: gameSettings } = useGameSettings();
-  const saveSeqRef = useRef(0);
+  /** Promise-chain mutex for PvP move submission. Ensures only one
+   *  apply-move request is in flight at a time per match, so optimistic
+   *  state mutations submit in the order the user made them and `seq`
+   *  stays monotonic on the wire. */
+  const inFlightMoveRef = useRef<Promise<void> | null>(null);
   /** Server-side `seq` last seen on this match row. Bumped by applyMoveServer
    *  and by realtime updates. Used as the optimistic-concurrency token when
    *  submitting the next move. */
@@ -139,11 +142,7 @@ export default function Play() {
     // there's no "rewind the server" move — undo button isn't surfaced for
     // PvP, but defend against it firing anyway.
     if (matchRow?.mode === "pvp") return;
-    if (matchRow && user) {
-      saveMatchState({ matchId: matchRow.id, actingUserId: user.id, state: prev }).catch(() => {});
-    } else {
-      persistLocalMatch(prev);
-    }
+    persistLocalMatch(prev);
   }
 
   // Derived: identity inside the match.
@@ -348,13 +347,8 @@ export default function Play() {
         else console.error("[play] PvP state mutation without a Move — dropped", next.lastEvent);
         return;
       }
-      // Solo matches with a row (rare; mostly historical) — keep the legacy
-      // save path. Bot solos in practice run purely from localStorage.
-      const seq = ++saveSeqRef.current;
-      saveMatchState({ matchId: matchRow.id, actingUserId: user.id, state: next })
-        .catch((e) => {
-          if (seq === saveSeqRef.current) console.error("Save failed", e);
-        });
+      // Solo matches (with or without a row) persist locally only.
+      persistLocalMatch(next);
     } else {
       persistLocalMatch(next);
     }
@@ -363,36 +357,49 @@ export default function Play() {
   /** Submit a Move to the server-authoritative `apply-move` edge function.
    *  Local state has already been updated optimistically. On rejection we
    *  refetch the canonical row and reconcile — that's the safety net that
-   *  closes the cheating window without rolling our own conflict resolution. */
-  async function submitServerMove(move: ServerMove, optimisticNext: MatchState) {
-    if (!matchRow) return;
-    const expected = serverSeqRef.current;
-    const result = await applyMoveServer(matchRow.id, expected, move);
-    if (result.ok === true) {
-      serverSeqRef.current = result.seq;
-      return;
-    }
-    // result is now { ok: false; rejected: true; reason; message? }
-    const rejected = result as Extract<typeof result, { ok: false }>;
-    if (rejected.reason === "not_implemented") {
-      console.warn("[apply-move] server not yet implementing", move.type);
-      return;
-    }
-    if (rejected.reason === "stale") {
-      toast.message("Catching up to opponent…");
-    } else {
-      toast.error(rejected.message ?? "Move rejected by server");
-    }
-    // Refetch the canonical row + state.
-    try {
-      const { row, state: canonical } = await loadMatch(matchRow.id);
-      setMatchRow(row);
-      setState(canonical);
-      serverSeqRef.current = Number(row.seq ?? 0);
-    } catch (e) {
-      console.error("[apply-move] reconcile failed", e);
-    }
+   *  closes the cheating window without rolling our own conflict resolution.
+   *
+   *  Serialised via `inFlightMoveRef` so concurrent callers (e.g. a tile
+   *  placement immediately followed by an auto end-turn) submit in order
+   *  and `serverSeqRef` stays monotonic. */
+  function submitServerMove(move: ServerMove, _optimisticNext: MatchState): Promise<void> {
+    if (!matchRow) return Promise.resolve();
+    const run = async () => {
+      const expected = serverSeqRef.current;
+      const result = await applyMoveServer(matchRow.id, expected, move);
+      if (result.ok === true) {
+        serverSeqRef.current = result.seq;
+        return;
+      }
+      const rejected = result as Extract<typeof result, { ok: false }>;
+      if (rejected.reason === "not_implemented") {
+        console.warn("[apply-move] server not yet implementing", move.type);
+        return;
+      }
+      if (rejected.reason === "stale") {
+        toast.message("Catching up to opponent…");
+      } else {
+        toast.error(rejected.message ?? "Move rejected by server");
+      }
+      // Refetch the canonical row + state.
+      try {
+        const { row, state: canonical } = await loadMatch(matchRow.id);
+        setMatchRow(row);
+        setState(canonical);
+        serverSeqRef.current = Number(row.seq ?? 0);
+      } catch (e) {
+        console.error("[apply-move] reconcile failed", e);
+      }
+    };
+    const chained = (inFlightMoveRef.current ?? Promise.resolve())
+      .then(run, run)
+      .finally(() => {
+        if (inFlightMoveRef.current === chained) inFlightMoveRef.current = null;
+      });
+    inFlightMoveRef.current = chained;
+    return chained;
   }
+
 
   /* ----------- Beat-the-Clock timers (stable ticker via refs) ----------- */
   // Reset turn timer whenever the current turn changes.

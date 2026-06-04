@@ -331,11 +331,17 @@ Deno.serve(async (req) => {
     _finished: finished,
   });
   if (commitErr) {
-    if (String(commitErr.message ?? "").includes("stale seq")) {
-      return jsonResponse({ error: "stale", message: commitErr.message }, 409);
+    // PG serialization-failure code (40001) is what commit_move RAISEs when
+    // _expected_seq drifts. Match on code first, then fall back to substring
+    // because supabase-js doesn't always surface .code cleanly through
+    // functions.invoke.
+    const code = (commitErr as any).code ?? "";
+    const msg = String(commitErr.message ?? "");
+    if (code === "40001" || msg.includes("stale seq")) {
+      return jsonResponse({ error: "stale", message: msg }, 409);
     }
     console.error("[apply-move] commit failed", commitErr);
-    return jsonResponse({ error: "commit failed", detail: commitErr.message }, 500);
+    return jsonResponse({ error: "commit failed", detail: msg }, 500);
   }
 
   // Server-vouched ranked match outcome. Only fires for ranked PvP matches
