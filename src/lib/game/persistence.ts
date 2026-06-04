@@ -84,7 +84,7 @@ export async function loadMatch(matchId: string): Promise<{ row: GameMatchRow; s
   if (rowRes.error) throw rowRes.error;
   if (stateRes.error) throw stateRes.error;
   const row = { ...(rowRes.data as any), state: stateRes.data } as unknown as GameMatchRow;
-  return { row, state: deserializeMatch(stateRes.data as SerializedMatchState) };
+  return { row, state: deserializeMatch(stateRes.data as unknown as SerializedMatchState) };
 }
 
 export async function saveMatchState(args: {
