@@ -232,6 +232,13 @@ export default function Play() {
     };
   }, [allCards, routeMatchId, user]);
 
+  /* ----------- PvP server reconcile (seq + submit) ----------- */
+  const { serverSeqRef, submitServerMove } = usePvpReconcile({
+    matchRow,
+    setMatchRow,
+    setState,
+  });
+
   /* ----------- Realtime: opponent's moves ----------- */
 
   const handleRemote = useCallback(
@@ -241,7 +248,7 @@ export default function Play() {
       serverSeqRef.current = Number(row.seq ?? 0);
       if (row.status === "active") setWaitingForGuest(false);
     },
-    [],
+    [serverSeqRef],
   );
   useMatchRealtime(
     isPvp ? matchRow?.id ?? null : null,
@@ -249,11 +256,6 @@ export default function Play() {
     handleRemote,
   );
 
-  // Keep serverSeqRef in sync whenever the row reference changes (e.g. after
-  // initial load, or after a save that returns a fresh row).
-  useEffect(() => {
-    if (matchRow) serverSeqRef.current = Number(matchRow.seq ?? 0);
-  }, [matchRow]);
 
   /* ----------- Bot driver — only for solo (matchRow null OR mode='solo') ----------- */
 
