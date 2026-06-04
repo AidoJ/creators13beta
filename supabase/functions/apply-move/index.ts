@@ -235,7 +235,9 @@ Deno.serve(async (req) => {
   }
 
   // Turn check (skipped for non-turn-bound actions).
-  const NON_TURN_MOVES = new Set<Move["type"]>(["resolve_disaster", "concede"]);
+  // rotate_hex is purely presentational on the caller's own ecosystem, so
+  // we allow it any time. Everything else requires it to be the caller's turn.
+  const NON_TURN_MOVES = new Set<Move["type"]>(["resolve_disaster", "concede", "rotate_hex"]);
   if (!NON_TURN_MOVES.has(body.move.type)) {
     if (state.turn !== callerSlot) {
       return jsonResponse({ error: "not your turn" }, 400);
@@ -259,7 +261,7 @@ Deno.serve(async (req) => {
     };
   } else {
     try {
-      nextState = applyMove(state, body.move);
+      nextState = applyMove(state, body.move, callerPlayerId);
     } catch (e) {
       return jsonResponse(
         { error: "illegal move", message: (e as Error).message },
