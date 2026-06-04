@@ -26,10 +26,10 @@ import {
   type PlacedCard,
   type PlayerState,
 } from "./types";
-import { keyOf, neighbours, isAdjacent, NEIGHBOUR_DIRS } from "./board";
+import { keyOf, neighbours, isAdjacent } from "./board";
 import { ELEMENTS, TYPE_TO_ELEMENT, type Element } from "./elements";
 
-import { bestRotationForPlacement, facingTypeLabel, rotatePlacedHex } from "./rotation";
+import { bestRotationForPlacement, rotatePlacedHex } from "./rotation";
 
 /* --------------------------- helpers --------------------------- */
 
@@ -250,20 +250,6 @@ export function skyLockedSubType(eco: Ecosystem, skyPos: Axial): string | null {
   return candidates[0] ?? null;
 }
 
-function directionIndex(from: Axial, to: Axial): number | null {
-  for (let i = 0; i < NEIGHBOUR_DIRS.length; i++) {
-    const d = NEIGHBOUR_DIRS[i];
-    if (from.q + d.q === to.q && from.r + d.r === to.r) return i;
-  }
-  return null;
-}
-
-function animalTypeFacingCreator(animalPc: PlacedCard, creatorPos: Axial): string | null {
-  const dir = directionIndex(animalPc.pos, creatorPos);
-  if (dir == null) return null;
-  return facingTypeLabel(animalPc.card, animalPc.rotation ?? 0, dir);
-}
-
 function animalTouchesCreatorAs(
   animalPc: PlacedCard,
   creatorPc: PlacedCard,
@@ -272,17 +258,16 @@ function animalTouchesCreatorAs(
   if (!isAdjacent(animalPc.pos, creatorPc.pos)) return false;
   if (animalPc.card.kind === "golden_body") return true;
   if (animalPc.card.kind !== "animal" && animalPc.card.kind !== "sky_creature") return false;
-  const facing = animalTypeFacingCreator(animalPc, creatorPc.pos);
-  if (!facing) return false;
+  const animalTypes = animalPc.card.types ?? [];
   if (creatorPc.card.kind === "sky_creator") {
     const sub = opts?.skySubType;
-    return !!sub && (animalPc.card.types ?? []).some((t) => t.toLowerCase() === sub.toLowerCase());
+    return !!sub && animalTypes.some((t) => t.toLowerCase() === sub.toLowerCase());
   }
   if (creatorPc.card.kind !== "creator") return false;
   const creatorType = creatorPc.card.displayType;
-  if (creatorType) return facing.toLowerCase() === creatorType.toLowerCase();
+  if (creatorType) return animalTypes.some((t) => t.toLowerCase() === creatorType.toLowerCase());
   const el = creatorPc.card.element;
-  return !!el && TYPE_TO_ELEMENT[facing as keyof typeof TYPE_TO_ELEMENT] === el;
+  return !!el && animalTypes.some((t) => TYPE_TO_ELEMENT[t] === el);
 }
 
 /** Does this animal/sky-creature link to that creator card?
@@ -330,6 +315,13 @@ export function findLinkedCreator(
   return null;
 }
 
+function findAdjacentDriverCreator(eco: Ecosystem, card: DeckCard, pos: Axial): PlacedCard | undefined {
+  const adjacentCreators = neighbours(pos)
+    .map((n) => eco.placed.get(keyOf(n)))
+    .filter((pc): pc is PlacedCard => !!pc && (pc.card.kind === "creator" || pc.card.kind === "sky_creator"));
+  return adjacentCreators.find((pc) => animalLinksToCreator(card, pc.card, { optimistic: true })) ?? adjacentCreators[0];
+}
+
 /* --------------------------- place phase --------------------------- */
 
 export function placeOnEcosystem(
@@ -370,9 +362,7 @@ export function placeOnEcosystem(
   // For an animal landing next to a Creator, pin rotation to that single
   // Creator so the matching half deterministically faces it.
   const driverCreator = isAnimalLike
-    ? neighbours(pos)
-        .map((n) => player.ecosystem.placed.get(keyOf(n)))
-        .find((nb) => nb && (nb.card.kind === "creator" || nb.card.kind === "sky_creator"))
+    ? findAdjacentDriverCreator(player.ecosystem, card, pos)
     : undefined;
   const rotation = isAnimalLike
     ? bestRotationForPlacement(player.ecosystem, card, pos, {
@@ -381,9 +371,18 @@ export function placeOnEcosystem(
       })
     : 0;
   player.ecosystem.placed.set(keyOf(pos), { card, pos, rotation });
+  if (isAnimalLike) {
+    const lockedRotation = bestRotationForPlacement(player.ecosystem, card, pos, {
+      restrictTo: "creator-only",
+      currentRotation: rotation,
+      driverPos: driverCreator?.pos,
+    });
+    player.ecosystem.placed.set(keyOf(pos), { card, pos, rotation: lockedRotation });
+  }
   // After placing, re-pivot adjacent animals — when the placed card is a
   // Creator, drive their rotation off this new Creator only.
   repivotNeighbours(player.ecosystem, pos, pos);
+  repivotSkyLockNeighbours(player.ecosystem, pos);
   player.hand.splice(idx, 1);
   player.score += card.kind === "creator" || card.kind === "sky_creator" ? 3 : 1;
   next.placedThisTurn += 1;
@@ -409,6 +408,15 @@ function repivotNeighbours(eco: Ecosystem, pos: Axial, driverPos?: Axial): void 
     if (newRot !== (pc.rotation ?? 0)) {
       eco.placed.set(nKey, { ...pc, rotation: newRot });
     }
+  }
+}
+
+function repivotSkyLockNeighbours(eco: Ecosystem, pos: Axial): void {
+  const skyPcs = [eco.placed.get(keyOf(pos)), ...neighbours(pos).map((n) => eco.placed.get(keyOf(n)))]
+    .filter((pc): pc is PlacedCard => !!pc && pc.card.kind === "sky_creator");
+  for (const skyPc of skyPcs) {
+    if (!skyLockedSubType(eco, skyPc.pos)) continue;
+    repivotNeighbours(eco, skyPc.pos, skyPc.pos);
   }
 }
 
@@ -458,9 +466,7 @@ export function moveMyPlacedHex(
   // Re-pivot the moved card to match its new neighbours, and re-pivot any
   // adjacent animals whose neighbour set just changed.
   if (existing.card.kind === "animal" || existing.card.kind === "sky_creature") {
-    const driverCreator = neighbours(toPos)
-      .map((n) => player.ecosystem.placed.get(keyOf(n)))
-      .find((nb) => nb && (nb.card.kind === "creator" || nb.card.kind === "sky_creator"));
+    const driverCreator = findAdjacentDriverCreator(player.ecosystem, existing.card, toPos);
     const newRot = bestRotationForPlacement(player.ecosystem, existing.card, toPos, {
       restrictTo: "creator-only",
       currentRotation: existing.rotation ?? 0,
@@ -469,6 +475,7 @@ export function moveMyPlacedHex(
     player.ecosystem.placed.set(toKey, { ...existing, pos: toPos, rotation: newRot });
   }
   repivotNeighbours(player.ecosystem, toPos, toPos);
+  repivotSkyLockNeighbours(player.ecosystem, toPos);
   next.lastEvent = `${player.name} moved ${existing.card.name}`;
   checkWin(next);
   return next;
@@ -639,14 +646,13 @@ function applyDisasterWipe(
         const cells = legalEcoCells(player.ecosystem);
         if (cells.length > 0) {
           const pos = cells[0];
-          const driverCreator = neighbours(pos)
-            .map((n) => player.ecosystem.placed.get(keyOf(n)))
-            .find((nb) => nb && (nb.card.kind === "creator" || nb.card.kind === "sky_creator"));
+          const driverCreator = findAdjacentDriverCreator(player.ecosystem, pc.card, pos);
           const rotation = bestRotationForPlacement(player.ecosystem, pc.card, pos, {
             restrictTo: "creator-only",
             driverPos: driverCreator?.pos,
           });
           player.ecosystem.placed.set(keyOf(pos), { card: pc.card, pos, rotation });
+          repivotSkyLockNeighbours(player.ecosystem, pos);
           player.score += 1;
           placedOnBoard += 1;
         } else {
@@ -711,14 +717,13 @@ export function playSkyCreatureSteal(
     if (!legal.some((c) => c.q === placeAt.q && c.r === placeAt.r)) {
       throw new Error("Pick a glowing hex on your own board to place the stolen card.");
     }
-    const driverCreator = neighbours(placeAt)
-      .map((n) => player.ecosystem.placed.get(keyOf(n)))
-      .find((nb) => nb && (nb.card.kind === "creator" || nb.card.kind === "sky_creator"));
+    const driverCreator = findAdjacentDriverCreator(player.ecosystem, stolen.card, placeAt);
     const rotation = bestRotationForPlacement(player.ecosystem, stolen.card, placeAt, {
       restrictTo: "creator-only",
       driverPos: driverCreator?.pos,
     });
     player.ecosystem.placed.set(keyOf(placeAt), { card: stolen.card, pos: placeAt, rotation });
+    repivotSkyLockNeighbours(player.ecosystem, placeAt);
     player.score += 1;
     next.lastEvent = `${player.name} stole ${stolen.card.name} from ${victim.name} and placed it`;
   } else {
