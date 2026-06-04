@@ -30,3 +30,6 @@ jobs:
 
       - name: Tests
         run: bunx vitest run
+
+      - name: Server engine mirror is in sync
+        run: bash scripts/sync-game-engine.sh --check
