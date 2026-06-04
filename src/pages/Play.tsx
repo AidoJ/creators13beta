@@ -246,6 +246,7 @@ export default function Play() {
     (remoteState: MatchState, row: GameMatchRow) => {
       setState(remoteState);
       setMatchRow(row);
+      serverSeqRef.current = Number(row.seq ?? 0);
       if (row.status === "active") setWaitingForGuest(false);
     },
     [],
@@ -255,6 +256,12 @@ export default function Play() {
     user?.id ?? null,
     handleRemote,
   );
+
+  // Keep serverSeqRef in sync whenever the row reference changes (e.g. after
+  // initial load, or after a save that returns a fresh row).
+  useEffect(() => {
+    if (matchRow) serverSeqRef.current = Number(matchRow.seq ?? 0);
+  }, [matchRow]);
 
   /* ----------- Bot driver — only for solo (matchRow null OR mode='solo') ----------- */
 
