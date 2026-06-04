@@ -135,6 +135,10 @@ export default function Play() {
     setSelectedUid(null);
     setMoveFromKey(null);
     setMode("place");
+    // Undo is solo-only by design. PvP matches are server-authoritative and
+    // there's no "rewind the server" move — undo button isn't surfaced for
+    // PvP, but defend against it firing anyway.
+    if (matchRow?.mode === "pvp") return;
     if (matchRow && user) {
       saveMatchState({ matchId: matchRow.id, actingUserId: user.id, state: prev }).catch(() => {});
     } else {
