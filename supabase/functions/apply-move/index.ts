@@ -40,6 +40,7 @@ import {
   playSkyCreatureSteal,
   rotateMyPlacedHex,
   moveMyPlacedHex,
+  finaliseByScore,
 } from "../_shared/game/engine.ts";
 import type { Axial, Ecosystem, MatchState, PlacedCard } from "../_shared/game/types.ts";
 
@@ -66,7 +67,8 @@ type Move =
   | { type: "end_turn" }
   | { type: "concede" }
   | { type: "rotate_hex"; pos_key: string }
-  | { type: "move_hex"; from_key: string; to_pos: Axial };
+  | { type: "move_hex"; from_key: string; to_pos: Axial }
+  | { type: "finalise_by_score" };
 
 interface ApplyBody {
   match_id: string;
@@ -158,6 +160,17 @@ function applyMove(state: MatchState, move: Move, callerPlayerId: string): Match
     case "move_hex":
       // Caller can only reposition hexes in their own ecosystem.
       return moveMyPlacedHex(state, callerPlayerId, move.from_key, move.to_pos);
+    case "finalise_by_score": {
+      // Legality: only legal in beat_clock mode after the match deadline.
+      // Allow a 2s clock-skew tolerance so the first client whose timer
+      // fires isn't rejected by a server that thinks the deadline is a
+      // beat away.
+      const endsAt = state.gameConfig?.matchEndsAt ?? 0;
+      if (state.gameMode !== "beat_clock" || !endsAt || Date.now() + 2000 < endsAt) {
+        throw new Error("finalise_by_score not legal: match has not ended");
+      }
+      return finaliseByScore(state);
+    }
     case "concede": {
       // No engine fn — straight mutation. The caller's opponent wins.
       // Caller authority is enforced below (slot resolution).
@@ -255,7 +268,12 @@ Deno.serve(async (req) => {
   // Turn check (skipped for non-turn-bound actions).
   // rotate_hex is purely presentational on the caller's own ecosystem, so
   // we allow it any time. Everything else requires it to be the caller's turn.
-  const NON_TURN_MOVES = new Set<Move["type"]>(["resolve_disaster", "concede", "rotate_hex"]);
+  const NON_TURN_MOVES = new Set<Move["type"]>([
+    "resolve_disaster",
+    "concede",
+    "rotate_hex",
+    "finalise_by_score",
+  ]);
   if (!NON_TURN_MOVES.has(body.move.type)) {
     if (state.turn !== callerSlot) {
       return jsonResponse({ error: "not your turn" }, 400);

@@ -47,15 +47,13 @@ export async function recordProgressDiff(args: {
     const justFinished = next.finished && !alreadyFinishedBefore;
 
     // Mid-game: only sync newly-discovered types into types_seen. No points.
+    // Uses the narrow `bump_types_seen` RPC (the broader bump_player_progress
+    // is no longer EXECUTE-able by `authenticated`; ranked finalisation runs
+    // server-side via finalise_ranked_match).
     if (!justFinished) {
       if (!discoveredNewType) return;
-      await supabase.rpc("bump_player_progress", {
-        _user_id: userId,
-        _points_delta: 0,
-        _types_seen: [...nextTypes],
-        _won: null,
-        _perfect_eco: false,
-        _elo_delta: 0,
+      await (supabase.rpc as any)("bump_types_seen", {
+        _types: [...nextTypes],
       });
       return;
     }
