@@ -27,7 +27,6 @@ import {
   moveMyPlacedHex,
   skipDraws,
   endTurnEarly,
-  finaliseByScore,
 } from "@/lib/game";
 import {
   createMatchRow,
