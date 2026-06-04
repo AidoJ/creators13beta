@@ -32,7 +32,6 @@ import {
 import {
   createMatchRow,
   loadMatch,
-  saveMatchState,
   inviteUrl,
   type GameMatchRow,
 } from "@/lib/game/persistence";
@@ -139,11 +138,7 @@ export default function Play() {
     // there's no "rewind the server" move — undo button isn't surfaced for
     // PvP, but defend against it firing anyway.
     if (matchRow?.mode === "pvp") return;
-    if (matchRow && user) {
-      saveMatchState({ matchId: matchRow.id, actingUserId: user.id, state: prev }).catch(() => {});
-    } else {
-      persistLocalMatch(prev);
-    }
+    persistLocalMatch(prev);
   }
 
   // Derived: identity inside the match.
@@ -348,13 +343,8 @@ export default function Play() {
         else console.error("[play] PvP state mutation without a Move — dropped", next.lastEvent);
         return;
       }
-      // Solo matches with a row (rare; mostly historical) — keep the legacy
-      // save path. Bot solos in practice run purely from localStorage.
-      const seq = ++saveSeqRef.current;
-      saveMatchState({ matchId: matchRow.id, actingUserId: user.id, state: next })
-        .catch((e) => {
-          if (seq === saveSeqRef.current) console.error("Save failed", e);
-        });
+      // Solo matches (with or without a row) persist locally only.
+      persistLocalMatch(next);
     } else {
       persistLocalMatch(next);
     }
