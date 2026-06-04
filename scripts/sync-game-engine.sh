@@ -71,10 +71,14 @@ mirror() {
     sed \
       -e 's|from "@/lib/gameCards"|from "./gameCards.ts"|g' \
       -e 's|from "@/data/cards"|from "./cards.ts"|g' \
-      -e 's|from "./types"|from "./types.ts"|g' \
-      -e 's|from "./board"|from "./board.ts"|g' \
-      -e 's|from "./elements"|from "./elements.ts"|g' \
-      -e 's|from "./rotation"|from "./rotation.ts"|g' \
+      -e 's|from "\./types"|from "./types.ts"|g' \
+      -e 's|from "\./board"|from "./board.ts"|g' \
+      -e 's|from "\./elements"|from "./elements.ts"|g' \
+      -e 's|from "\./rotation"|from "./rotation.ts"|g' \
+      -e 's|import("\./types")|import("./types.ts")|g' \
+      -e 's|import("\./board")|import("./board.ts")|g' \
+      -e 's|import("\./elements")|import("./elements.ts")|g' \
+      -e 's|import("\./rotation")|import("./rotation.ts")|g' \
       "$in"
   } > "$out"
 }
