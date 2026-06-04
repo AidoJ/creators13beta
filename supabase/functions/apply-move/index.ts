@@ -124,7 +124,7 @@ function redactFor(serialisedState: any, recipientPlayerId: string | null) {
 
 /* ----------------------- move dispatch ----------------------- */
 
-function applyMove(state: MatchState, move: Move): MatchState {
+function applyMove(state: MatchState, move: Move, callerPlayerId: string): MatchState {
   switch (move.type) {
     case "draw_initial_5":
       return drawInitialFive(state);
@@ -152,6 +152,12 @@ function applyMove(state: MatchState, move: Move): MatchState {
         move.victim_pos_key,
         move.place_at,
       );
+    case "rotate_hex":
+      // Caller can only rotate hexes in their own ecosystem.
+      return rotateMyPlacedHex(state, callerPlayerId, move.pos_key);
+    case "move_hex":
+      // Caller can only reposition hexes in their own ecosystem.
+      return moveMyPlacedHex(state, callerPlayerId, move.from_key, move.to_pos);
     case "concede": {
       // No engine fn — straight mutation. The caller's opponent wins.
       // Caller authority is enforced below (slot resolution).
