@@ -231,6 +231,27 @@ export function BoardHexPiece({ card, size = 110, onClick, onDragStart, onDragEn
         </div>
       )}
 
+      {/* Card code badge — top-left white pill, bold black text. Sits above
+       *  the rotating glyphs and art so it stays upright as the hex rotates. */}
+      {codeLabel && (
+        <div
+          className="absolute z-30 pointer-events-none bg-white text-black font-bold rounded-full flex items-center justify-center shadow-sm border border-black/10"
+          style={{
+            top: "6%",
+            left: "14%",
+            fontFamily: '"Questrial", sans-serif',
+            fontSize: Math.max(9, size * 0.13),
+            lineHeight: 1,
+            padding: `${Math.max(2, size * 0.025)}px ${Math.max(4, size * 0.05)}px`,
+            letterSpacing: "0.02em",
+          }}
+        >
+          {codeLabel}
+        </div>
+      )}
+
+
+
       {/* Hover tooltip overlay */}
       <div className="absolute inset-0 z-20 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none">
         <div className="bg-black/80 backdrop-blur-sm rounded-lg px-2 py-1.5 flex flex-col items-center gap-1 max-w-[90%]">
