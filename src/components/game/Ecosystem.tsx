@@ -1,10 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Axial, Ecosystem as EcoType } from "@/lib/game/types";
-import { axialToPixel, keyOf, NEIGHBOUR_DIRS } from "@/lib/game/board";
+import { axialToPixel, keyOf } from "@/lib/game/board";
 import { legalEcoCells, skyLockedSubType } from "@/lib/game/engine";
-import { facingTypeLabel } from "@/lib/game/rotation";
-import { CREATOR_TYPE_COLORS } from "@/data/cards";
-import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { BoardHexPiece, EmptyHexCell } from "./BoardHexPiece";
 
 interface Props {
@@ -46,7 +43,7 @@ export function Ecosystem({
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
 
-  const { placed, empties, legal, legalKeys, bounds, matches } = useMemo(() => {
+  const { placed, empties, legal, legalKeys, bounds } = useMemo(() => {
     const placed = Array.from(eco.placed.values());
     const legal = legalEcoCells(eco, moveFromKey ?? undefined);
     const legalKeys = new Set(legal.map(keyOf));
@@ -60,56 +57,8 @@ export function Ecosystem({
       minY = Math.min(minY, y); maxY = Math.max(maxY, y);
     }
     const pad = 0;
-
-    // Walk every adjacent pair of placed hexes and flag those that share at
-    // least one Creator-Type / Element, regardless of which half faces which.
-    const cardLabels = (card: typeof placed[number]["card"]): string[] => {
-      const out: string[] = [];
-      if (card.types) out.push(...card.types);
-      if (card.element) out.push(card.element);
-      if (card.displayType) out.push(card.displayType);
-      if (card.kind === "sky_creator") out.push("Sky");
-      if (card.kind === "golden_body" || card.kind === "golden_hive") out.push("*");
-      return out.map((s) => s.toLowerCase());
-    };
-    const matches: { x: number; y: number; label: string; color: string; key: string }[] = [];
-    const seenEdges = new Set<string>();
-    for (const pc of placed) {
-      const myLabels = cardLabels(pc.card);
-      for (let dir = 0; dir < 6; dir++) {
-        const d = NEIGHBOUR_DIRS[dir];
-        const nPos = { q: pc.pos.q + d.q, r: pc.pos.r + d.r };
-        const nKey = keyOf(nPos);
-        const nb = eco.placed.get(nKey);
-        if (!nb) continue;
-        const edgeKey = [keyOf(pc.pos), nKey].sort().join("|");
-        if (seenEdges.has(edgeKey)) continue;
-        const theirLabels = cardLabels(nb.card);
-        // Wildcards match anything; otherwise need a shared non-wildcard label.
-        let shared: string | null = null;
-        if (myLabels.includes("*") || theirLabels.includes("*")) {
-          shared = (myLabels.find((l) => l !== "*") ?? theirLabels.find((l) => l !== "*")) ?? null;
-        } else {
-          shared = myLabels.find((l) => theirLabels.includes(l)) ?? null;
-        }
-        if (!shared) continue;
-        seenEdges.add(edgeKey);
-        const a = axialToPixel(pc.pos.q, pc.pos.r, size);
-        const b = axialToPixel(nPos.q, nPos.r, size);
-        const cx = (a.x + b.x) / 2 + size / 2;
-        const cy = (a.y + b.y) / 2 + (size * 1.1547) / 2;
-        const titleCase = shared.charAt(0).toUpperCase() + shared.slice(1);
-        const color =
-          CREATOR_TYPE_COLORS[titleCase as keyof typeof CREATOR_TYPE_COLORS] ??
-          ELEMENT_COLORS[titleCase as keyof typeof ELEMENT_COLORS] ??
-          "#ffffff";
-        matches.push({ x: cx, y: cy, label: titleCase, color, key: edgeKey });
-      }
-    }
-
-
     return {
-      placed, empties, legal, legalKeys, matches,
+      placed, empties, legal, legalKeys,
       bounds: {
         minX: minX - pad, minY: minY - pad,
         width: maxX - minX + size + pad * 2,
@@ -241,39 +190,6 @@ export function Ecosystem({
                 onTouchDragEnd={canDragMove ? () => onMoveDragEnd?.() : undefined}
                 highlight={moveFromKey === k ? "selected" : null}
               />
-            </div>
-          );
-        })}
-        {matches.map((m) => {
-          const w = Math.max(16, size * 0.22);
-          const h = w * 0.55;
-          return (
-            <div
-              key={`m-${m.key}`}
-              className="absolute z-30 pointer-events-none animate-scale-in"
-              style={{
-                left: m.x + offX,
-                top: m.y + offY,
-                transform: "translate(-50%, -50%)",
-              }}
-              title={`Matched: ${m.label}`}
-            >
-              <svg
-                viewBox="0 0 100 50"
-                width={w}
-                height={h}
-                fill="none"
-                stroke={m.color}
-                strokeWidth={10}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-                style={{
-                  filter: `drop-shadow(0 0 3px rgba(0,0,0,0.85)) drop-shadow(0 0 6px ${m.color})`,
-                }}
-              >
-                <path d="M25,25 C25,10 5,10 5,25 C5,40 25,40 25,25 C25,10 50,40 50,25 C50,10 75,40 75,25 C75,10 95,10 95,25 C95,40 75,40 75,25 C75,40 50,10 50,25 C50,40 25,10 25,25 Z" />
-              </svg>
             </div>
           );
         })}
