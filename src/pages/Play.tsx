@@ -90,15 +90,10 @@ export default function Play() {
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { settings: gameSettings } = useGameSettings();
-  /** Promise-chain mutex for PvP move submission. Ensures only one
-   *  apply-move request is in flight at a time per match, so optimistic
-   *  state mutations submit in the order the user made them and `seq`
-   *  stays monotonic on the wire. */
-  const inFlightMoveRef = useRef<Promise<void> | null>(null);
-  /** Server-side `seq` last seen on this match row. Bumped by applyMoveServer
-   *  and by realtime updates. Used as the optimistic-concurrency token when
-   *  submitting the next move. */
-  const serverSeqRef = useRef(0);
+  /** Per-turn stopwatch — owned here because the render path also reads it
+   *  to display the countdown. Reset + tick are driven by the
+   *  useBeatTheClockTimer hook below. */
+  const turnStartedAtRef = useRef<number>(Date.now());
   const undoStackRef = useRef<MatchState[]>([]);
   const [undoCount, setUndoCount] = useState(0);
   const botDifficultyRef = useRef<BotDifficulty>("medium");
