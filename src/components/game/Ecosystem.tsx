@@ -178,6 +178,7 @@ export function Ecosystem({
                 size={size}
                 rotation={pc.rotation ?? 0}
                 skySubType={pc.card.kind === "sky_creator" ? skyLockedSubType(eco, pc.pos) : null}
+                goldenLockedType={pc.card.kind === "golden_body" ? goldenBodyLockedType(eco, pc.pos) : null}
                 onClick={clickHandler}
                 draggable={canDragMove}
                 onDragStart={canDragMove ? (e) => {
