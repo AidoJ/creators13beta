@@ -298,7 +298,7 @@ export function animalLinksToCreator(
     return animalTypes.some((t) => t?.toLowerCase() === creatorType.toLowerCase());
   }
   const el = creator.element!;
-  return animalTypes.some((t) => TYPE_TO_ELEMENT[t] === el);
+  return animalTypes.some((t) => TYPE_TO_ELEMENT[t as keyof typeof TYPE_TO_ELEMENT] === el);
 }
 
 /** Find the creator card placed in this ecosystem that an animal would link to (if any). */
