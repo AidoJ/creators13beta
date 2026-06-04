@@ -1770,6 +1770,19 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      commit_move: {
+        Args: {
+          _actor: string
+          _expected_seq: number
+          _finished?: boolean
+          _match_id: string
+          _move: Json
+          _new_state: Json
+          _public_state: Json
+          _winner?: string
+        }
+        Returns: Json
+      }
       creator_type_code: {
         Args: { _lower: boolean; _type: string }
         Returns: string
