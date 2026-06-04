@@ -13,6 +13,18 @@ interface Props {
   size?: number;
 }
 
+// Distance (px) the finger must travel before a press becomes a drag.
+// Mirrors BoardHexPiece so behaviour is consistent across the app.
+const DRAG_THRESHOLD = 16;
+
+interface PointerTrack {
+  uid: string;
+  x: number;
+  y: number;
+  dragging: boolean;
+  suppressClick: boolean;
+}
+
 export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd, disabled, size = 104 }: Props) {
   // Track which card uids have completed their draw-in animation.
   const revealedRef = useRef<Set<string>>(new Set());
@@ -23,6 +35,10 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
   // Per-card timers so we never cancel another card's in-flight animation
   // when `hand` changes (e.g. drawing 2 new cards while older ones still settle).
   const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>[]>>(new Map());
+
+  // Per-pointerId touch tracker. Keyed at the PlayerHand level so multi-touch
+  // (e.g. an errant second finger) doesn't clobber the primary drag.
+  const pointersRef = useRef<Map<number, PointerTrack>>(new Map());
 
   useEffect(() => {
     const newCards: string[] = [];
@@ -102,19 +118,65 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
             <div
               key={card.uid}
               draggable={!disabled && !isAnimating}
-              onClick={() => !disabled && !isAnimating && onSelect(card.uid)}
+              onClick={(e) => {
+                if (disabled || isAnimating) return;
+                // If pointerup already classified this as a drag we suppress
+                // the synthetic click so we don't double-fire onSelect /
+                // toggle a card the user was dragging onto the board.
+                const tracks = Array.from(pointersRef.current.values());
+                if (tracks.some((t) => t.uid === card.uid && t.suppressClick)) {
+                  return;
+                }
+                onSelect(card.uid);
+              }}
               onPointerDown={(e) => {
                 if (disabled || isAnimating) return;
                 if ((e.target as HTMLElement).closest("button")) return;
-                e.currentTarget.setPointerCapture?.(e.pointerId);
-                onSelect(card.uid);
+                // Mouse uses native HTML5 drag-and-drop (onDragStart). Only
+                // touch / pen need the pointer-event drag path.
+                if (e.pointerType === "mouse") return;
+                pointersRef.current.set(e.pointerId, {
+                  uid: card.uid,
+                  x: e.clientX,
+                  y: e.clientY,
+                  dragging: false,
+                  suppressClick: false,
+                });
+              }}
+              onPointerMove={(e) => {
+                if (disabled || isAnimating) return;
+                const p = pointersRef.current.get(e.pointerId);
+                if (!p || p.uid !== card.uid) return;
+                if (!p.dragging) {
+                  const dx = e.clientX - p.x;
+                  const dy = e.clientY - p.y;
+                  if (dx * dx + dy * dy >= DRAG_THRESHOLD * DRAG_THRESHOLD) {
+                    p.dragging = true;
+                    p.suppressClick = true;
+                    onSelect(card.uid);
+                    onDragStart?.(card.uid);
+                    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+                  }
+                }
+                if (p.dragging) e.preventDefault();
               }}
               onPointerUp={(e) => {
+                const p = pointersRef.current.get(e.pointerId);
+                pointersRef.current.delete(e.pointerId);
                 if (disabled || isAnimating) return;
-                const dropTarget = document
-                  .elementFromPoint(e.clientX, e.clientY)
-                  ?.closest('[data-legal-drop="true"]') as HTMLElement | null;
-                dropTarget?.click();
+                if (!p || p.uid !== card.uid) return;
+                if (p.dragging) {
+                  const dropTarget = document
+                    .elementFromPoint(e.clientX, e.clientY)
+                    ?.closest('[data-legal-drop="true"]') as HTMLElement | null;
+                  dropTarget?.click();
+                  onDragEnd?.();
+                }
+              }}
+              onPointerCancel={(e) => {
+                const p = pointersRef.current.get(e.pointerId);
+                pointersRef.current.delete(e.pointerId);
+                if (p?.dragging) onDragEnd?.();
               }}
               onDragStart={(e) => {
                 if (disabled || isAnimating) return;
@@ -131,13 +193,14 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                 onDragEnd?.();
               }}
               className="cursor-grab active:cursor-grabbing"
-              style={
-                isDropping
+              style={{
+                touchAction: "none",
+                ...(isDropping
                   ? {
                       animation: `handDrop 500ms cubic-bezier(0.2, 0.85, 0.35, 1.1) ${stagger}ms both`,
                     }
-                  : undefined
-              }
+                  : {}),
+              }}
             >
               {isAnimating ? (
                 <div
