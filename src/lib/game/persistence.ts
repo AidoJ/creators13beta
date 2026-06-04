@@ -60,6 +60,8 @@ export async function createMatchRow(args: {
       host_name: args.hostName,
       guest_name: args.guestName ?? null,
       invite_token: inviteToken,
+      // Solo bot matches are non-ranked — kept client-authoritative.
+      is_ranked: args.mode === "pvp",
       state: serializeMatch(args.state) as any,
       last_action_by: args.hostUserId,
     })
