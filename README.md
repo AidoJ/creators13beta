@@ -1,73 +1,56 @@
-# Welcome to your Lovable project
+# Creators 13
 
-## Project info
+A PWA for the **Creators 13** profiling system: a 13-Creator-Types framework
+delivered as a tap-based onboarding flow, a practitioner / trainer LMS, and a
+card game (`/play`).
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Stack
 
-## How can I edit this code?
+- Vite 5 + React 18 + TypeScript + Tailwind + shadcn/ui (front end)
+- Lovable Cloud / Supabase: Postgres + RLS, Auth, Realtime, Storage, Edge Functions
+- Stripe (enrollment payments only)
 
-There are several ways of editing your application.
+## Apps in this repo
 
-**Use Lovable**
+| Route prefix         | Purpose                                          |
+| -------------------- | ------------------------------------------------ |
+| `/enroll/*`          | Client onboarding (plan, payment, photos, etc.) |
+| `/dashboard`         | Client home                                      |
+| `/practitioner`      | Practitioner workspace                           |
+| `/trainer`, `/admin` | Trainer & admin tools                            |
+| `/play`, `/play/*`   | The card game (solo bot + 2-player PvP)         |
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Game architecture notes
 
-Changes made via Lovable will be committed automatically to this repo.
+- Game logic lives in `src/lib/game/*` as pure functions; `engine.ts` is the
+  rule book in code form.
+- Match state is persisted as a JSONB blob on `game_matches`. **Currently the
+  client is authoritative**: any participant can write a new `state` row.
+  This is acceptable for friends-and-family play. Anti-cheat (server-side
+  move validation + a `seq` column + hand redaction) is on the roadmap.
+- **Opponent hands are visible** to anyone who inspects the match row in
+  devtools today. Treat PvP as "open hand" until server-side moves ship.
 
-**Use your preferred IDE**
+## Local dev
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Requires Node 20+ and [Bun](https://bun.sh).
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+bun install
+bun run dev
 ```
 
-**Edit a file directly in GitHub**
+## Testing
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```sh
+bunx vitest run        # all unit tests
+bun run lint           # eslint
+bunx tsc --noEmit      # type check
+```
 
-**Use GitHub Codespaces**
+CI runs lint + type check + tests on every push to `main` and every PR
+(see `.github/workflows/ci.yml`).
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Deployment
 
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Managed via Lovable. Use the in-app **Publish** button.

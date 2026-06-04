@@ -28,9 +28,26 @@ export function serializeMatch(state: MatchState): SerializedMatchState {
   };
 }
 
+/**
+ * Strip any HTML/script payloads out of the opponent-supplied `lastEvent`
+ * string and cap its length. `lastEvent` is client-authored narration —
+ * the engine generates safe strings, but the multiplayer row trusts whatever
+ * the other player writes, so we sanitise on deserialise to keep XSS-like
+ * payloads out of any future renderer.
+ */
+function sanitiseLastEvent(raw: unknown): string | undefined {
+  if (raw == null) return undefined;
+  const s = String(raw);
+  if (!s) return undefined;
+  // Remove tags and control chars, then cap.
+  const cleaned = s.replace(/<[^>]*>/g, "").replace(/[\u0000-\u001F\u007F]+/g, " ").trim();
+  return cleaned.slice(0, 240);
+}
+
 export function deserializeMatch(raw: SerializedMatchState): MatchState {
   return {
     ...raw,
+    lastEvent: sanitiseLastEvent(raw.lastEvent),
     players: raw.players.map((p) => ({
       ...p,
       // Older matches saved before opening-5 mechanic had hands pre-dealt;
@@ -43,3 +60,4 @@ export function deserializeMatch(raw: SerializedMatchState): MatchState {
     pendingDisaster: raw.pendingDisaster ?? null,
   };
 }
+
