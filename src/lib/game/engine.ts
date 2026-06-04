@@ -267,7 +267,7 @@ function animalTouchesCreatorAs(
   const creatorType = creatorPc.card.displayType;
   if (creatorType) return animalTypes.some((t) => t.toLowerCase() === creatorType.toLowerCase());
   const el = creatorPc.card.element;
-  return !!el && animalTypes.some((t) => TYPE_TO_ELEMENT[t] === el);
+  return !!el && animalTypes.some((t) => TYPE_TO_ELEMENT[t as keyof typeof TYPE_TO_ELEMENT] === el);
 }
 
 /** Does this animal/sky-creature link to that creator card?
