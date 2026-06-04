@@ -492,7 +492,9 @@ export default function Play() {
   function onPlace(pos: Axial, draggedUid?: string) {
     if (!state) return;
     const dragMoveKey = draggedUid?.startsWith("move:") ? draggedUid.slice(5) : null;
-    const fromKey = dragMoveKey ?? (mode === "move" ? moveFromKey : null);
+    // moveFromKey is set either by tap-to-move (mode === "move") or by an
+    // active drag (HTML5 or touch fallback); honour either source.
+    const fromKey = dragMoveKey ?? moveFromKey;
     if (fromKey) {
       // Server-authoritative in PvP, legacy save for solo.
       try {
