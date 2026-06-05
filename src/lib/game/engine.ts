@@ -227,6 +227,10 @@ export function endTurnEarly(state: MatchState): MatchState {
  *  circular failure where valid Sky-as-Soil / Sky-as-any-type groups never lock.
  */
 export function skyLockedSubType(eco: Ecosystem, skyPos: Axial): string | null {
+  // Sky cluster (≥3 adjacent Sky Creatures) is a deferred wildcard — it never
+  // locks to a sub-type. Its element is resolved at win-check time as
+  // whichever of Earth/Fire/Air/Water is otherwise missing from the ecosystem.
+  if (isSkyCluster(eco, skyPos)) return null;
   const CANONICAL = [
     "Lava", "Fire", "Whirlwind", "Snow", "Lightning", "Sun",
     "Lake", "Ocean", "Tree", "Mountain", "Soil", "River",
@@ -238,7 +242,11 @@ export function skyLockedSubType(eco: Ecosystem, skyPos: Axial): string | null {
     if (!pc) continue;
     const k = pc.card.kind;
     if (k === "golden_body") { golden += 1; continue; }
-    if (k !== "animal" && k !== "sky_creature") continue;
+    // Sky Creatures do NOT contribute to per-type lock counts — only regular
+    // animals do. This way "2 sky_creatures + 1 animal of type X" never locks
+    // Sky to X; you need either a full Sky-Creature trio (handled above) or
+    // 3 regular animals sharing a Creator Type.
+    if (k !== "animal") continue;
     for (const t of pc.card.types ?? []) {
       if (!t || t === "Sky") continue;
       counts[t] = (counts[t] ?? 0) + 1;
@@ -248,6 +256,19 @@ export function skyLockedSubType(eco: Ecosystem, skyPos: Axial): string | null {
     .filter((t) => (counts[t] ?? 0) > 0 && (counts[t] ?? 0) + golden >= 3)
     .sort((a, b) => (counts[b] ?? 0) - (counts[a] ?? 0) || CANONICAL.indexOf(a) - CANONICAL.indexOf(b));
   return candidates[0] ?? null;
+}
+
+/** True iff this Sky Creator has 3 or more adjacent Sky Creature cards. A
+ *  Sky cluster is treated as a deferred-wildcard creator: its element is
+ *  unspecified until win-check time, at which point it fills whichever of
+ *  the four elements is missing from the rest of the ecosystem. */
+export function isSkyCluster(eco: Ecosystem, skyPos: Axial): boolean {
+  let n = 0;
+  for (const nb of neighbours(skyPos)) {
+    const pc = eco.placed.get(keyOf(nb));
+    if (pc?.card.kind === "sky_creature") n += 1;
+  }
+  return n >= 3;
 }
 
 /** Returns the Creator-Type colour a Golden Body should mirror on its second
@@ -274,13 +295,17 @@ export function goldenBodyLockedType(eco: Ecosystem, gbPos: Axial): string | nul
 function animalTouchesCreatorAs(
   animalPc: PlacedCard,
   creatorPc: PlacedCard,
-  opts?: { skySubType?: string | null },
+  opts?: { skySubType?: string | null; skyCluster?: boolean },
 ): boolean {
   if (!isAdjacent(animalPc.pos, creatorPc.pos)) return false;
   if (animalPc.card.kind === "golden_body") return true;
   if (animalPc.card.kind !== "animal" && animalPc.card.kind !== "sky_creature") return false;
   const animalTypes = animalPc.card.types ?? [];
   if (creatorPc.card.kind === "sky_creator") {
+    // Sky cluster: only Sky Creatures (or Golden-Body wildcards) count as
+    // the creator's three "animals" — and they must be adjacent (already
+    // checked above).
+    if (opts?.skyCluster) return animalPc.card.kind === "sky_creature";
     const sub = opts?.skySubType;
     return !!sub && animalTypes.some((t) => t.toLowerCase() === sub.toLowerCase());
   }
@@ -299,10 +324,11 @@ function animalTouchesCreatorAs(
 export function animalLinksToCreator(
   animal: DeckCard,
   creator: DeckCard,
-  opts?: { skySubType?: string | null; optimistic?: boolean },
+  opts?: { skySubType?: string | null; skyCluster?: boolean; optimistic?: boolean },
 ): boolean {
   if (animal.kind === "golden_body") return true; // wildcard
   if (creator.kind === "sky_creator") {
+    if (opts?.skyCluster) return animal.kind === "sky_creature";
     if (opts?.optimistic) {
       return ((animal.types ?? []) as string[]).some((t) => !!t);
     }
@@ -621,13 +647,20 @@ export function playDisaster(
   // Rule book prerequisite: you may only unleash a Disaster once your own
   // ecosystem covers all four elements (Earth/Fire/Air/Water). A Sky Creator
   // on your board counts for the element of its locked sub-type if locked;
-  // otherwise it counts for ANY element it's currently adjacent to (any
-  // neighbouring card with a non-Sky Creator Type or Creator element).
+  // otherwise it counts for ANY element it's currently adjacent to. A Sky
+  // Creator that has formed a "Sky cluster" (≥3 adjacent Sky Creatures) is a
+  // deferred wildcard — it fills whichever single element is otherwise
+  // missing from the rest of the ecosystem.
   const myElements = new Set<Element>();
+  let hasWildcardSky = false;
   for (const pc of player.ecosystem.placed.values()) {
     if (pc.card.kind === "creator" && pc.card.element) {
       myElements.add(pc.card.element);
     } else if (pc.card.kind === "sky_creator") {
+      if (isSkyCluster(player.ecosystem, pc.pos)) {
+        hasWildcardSky = true;
+        continue;
+      }
       const sub = skyLockedSubType(player.ecosystem, pc.pos);
       if (sub) {
         const el = TYPE_TO_ELEMENT[sub as keyof typeof TYPE_TO_ELEMENT];
@@ -649,6 +682,9 @@ export function playDisaster(
         }
       }
     }
+  }
+  if (hasWildcardSky && myElements.size >= ELEMENTS.length - 1) {
+    for (const e of ELEMENTS) myElements.add(e);
   }
   if (!ELEMENTS.every((e) => myElements.has(e))) {
     throw new Error(
@@ -946,16 +982,22 @@ export function validateEcosystemWin(player: PlayerState): EcosystemWinValidatio
   const pcByUid = new Map<string, PlacedCard>();
   for (const pc of placedAll) pcByUid.set(pc.card.uid, pc);
 
-  // Pre-compute Sky Creators' locked sub-types from the board.
+  // Pre-compute Sky Creators' locked sub-types AND cluster flags from the board.
+  // A Sky cluster (≥3 adjacent Sky Creatures) is a deferred wildcard: its
+  // element is whichever of Earth/Fire/Air/Water is otherwise missing.
   const skySubByUid = new Map<string, string | null>();
+  const skyClusterByUid = new Map<string, boolean>();
   for (const pc of creatorPcs) {
     if (pc.card.kind === "sky_creator") {
-      skySubByUid.set(pc.card.uid, skyLockedSubType(player.ecosystem, pc.pos));
+      const cluster = isSkyCluster(player.ecosystem, pc.pos);
+      skyClusterByUid.set(pc.card.uid, cluster);
+      skySubByUid.set(pc.card.uid, cluster ? null : skyLockedSubType(player.ecosystem, pc.pos));
     }
   }
 
   const quartets = enumerateElementCoveringQuartets(creators, (c) => {
     if (c.kind === "sky_creator") {
+      if (skyClusterByUid.get(c.uid)) return ELEMENTS; // deferred wildcard fills any element
       const sub = skySubByUid.get(c.uid) ?? null;
       if (!sub) return [];
       const el = TYPE_TO_ELEMENT[sub as keyof typeof TYPE_TO_ELEMENT];
@@ -966,7 +1008,7 @@ export function validateEcosystemWin(player: PlayerState): EcosystemWinValidatio
   for (const quartet of quartets) {
     const quartetPcs = quartet.map((c) => pcByUid.get(c.uid)!).filter(Boolean);
     if (quartetPcs.length !== quartet.length) continue;
-    if (canAssignAdjacentAnimalsToCreators(quartetPcs, animalPcs, skySubByUid)) {
+    if (canAssignAdjacentAnimalsToCreators(quartetPcs, animalPcs, skySubByUid, skyClusterByUid)) {
       return {
         valid: stillHoldingCreators.length === 0,
         creators,
@@ -994,6 +1036,7 @@ function canAssignAdjacentAnimalsToCreators(
   creators: PlacedCard[],
   animals: PlacedCard[],
   skySubByUid?: Map<string, string | null>,
+  skyClusterByUid?: Map<string, boolean>,
 ): boolean {
   if (creators.length !== CREATORS_NEEDED) return false;
   if (animals.length < CREATORS_NEEDED * ANIMALS_PER_CREATOR) return false;
@@ -1002,7 +1045,10 @@ function canAssignAdjacentAnimalsToCreators(
 
   const linkOpts = (creator: DeckCard) =>
     creator.kind === "sky_creator"
-      ? { skySubType: skySubByUid?.get(creator.uid) ?? null }
+      ? {
+          skySubType: skySubByUid?.get(creator.uid) ?? null,
+          skyCluster: skyClusterByUid?.get(creator.uid) ?? false,
+        }
       : undefined;
 
   const recurse = (): boolean => {
