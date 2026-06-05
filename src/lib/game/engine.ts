@@ -620,7 +620,9 @@ export function playDisaster(
 
   // Rule book prerequisite: you may only unleash a Disaster once your own
   // ecosystem covers all four elements (Earth/Fire/Air/Water). A Sky Creator
-  // on your board counts for the element of its locked sub-type only.
+  // on your board counts for the element of its locked sub-type if locked;
+  // otherwise it counts for ANY element it's currently adjacent to (any
+  // neighbouring card with a non-Sky Creator Type or Creator element).
   const myElements = new Set<Element>();
   for (const pc of player.ecosystem.placed.values()) {
     if (pc.card.kind === "creator" && pc.card.element) {
@@ -630,14 +632,30 @@ export function playDisaster(
       if (sub) {
         const el = TYPE_TO_ELEMENT[sub as keyof typeof TYPE_TO_ELEMENT];
         if (el && el !== "Sky") myElements.add(el as Element);
+        continue;
+      }
+      // Unlocked Sky → look at neighbours and credit every element it touches.
+      for (const n of neighbours(pc.pos)) {
+        const nb = player.ecosystem.placed.get(keyOf(n));
+        if (!nb) continue;
+        if (nb.card.kind === "creator" && nb.card.element) {
+          myElements.add(nb.card.element);
+        } else if (nb.card.kind === "animal" || nb.card.kind === "sky_creature") {
+          for (const t of nb.card.types ?? []) {
+            if (!t || t === "Sky") continue;
+            const el = TYPE_TO_ELEMENT[t as keyof typeof TYPE_TO_ELEMENT];
+            if (el && el !== "Sky") myElements.add(el as Element);
+          }
+        }
       }
     }
   }
   if (!ELEMENTS.every((e) => myElements.has(e))) {
     throw new Error(
-      "You must place one Creator of each element (Earth, Fire, Air, Water) on your own board before you can unleash a Disaster.",
+      "You must place one Creator of each element (Earth, Fire, Air, Water) on your own board before you can unleash a Disaster. A Sky Creator counts for whatever element it's connected to.",
     );
   }
+
 
   const spentCreator = { ...creator, disasterSpent: true };
   player.hand.splice(idx, 1);

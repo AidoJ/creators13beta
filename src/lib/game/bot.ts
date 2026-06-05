@@ -24,7 +24,7 @@ import {
 } from "./engine";
 import { CREATORS_NEEDED, HAND_LIMIT, type DeckCard, type MatchState } from "./types";
 import { TYPE_TO_ELEMENT, ELEMENTS } from "./elements";
-import { isAdjacent } from "./board";
+import { isAdjacent, neighbours, keyOf } from "./board";
 
 
 export type BotDifficulty = "easy" | "medium" | "hard";
@@ -102,8 +102,9 @@ export function botStep(state: MatchState, difficulty: BotDifficulty = "medium")
 
   // 3) Play a disaster ONLY when we (a) still have headroom, (b) have already
   //    completed our own creator set, AND (c) that creator set spans all 4
-  //    elements (Earth/Fire/Air/Water). This mirrors the player rule — Sky
-  //    counts only for its locked sub-type's element, not as a free wildcard.
+  //    elements (Earth/Fire/Air/Water). Mirrors the engine rule: a Sky Creator
+  //    counts for its locked sub-type's element when locked, otherwise for any
+  //    element it is currently adjacent to.
   const myElements = new Set<string>();
   for (const pc of placedCreators) {
     if (pc.card.kind === "sky_creator") {
@@ -111,11 +112,26 @@ export function botStep(state: MatchState, difficulty: BotDifficulty = "medium")
       if (sub) {
         const el = TYPE_TO_ELEMENT[sub];
         if (el && el !== "Sky") myElements.add(el);
+        continue;
+      }
+      for (const n of neighbours(pc.pos)) {
+        const nb = player.ecosystem.placed.get(keyOf(n));
+        if (!nb) continue;
+        if (nb.card.kind === "creator" && nb.card.element) {
+          myElements.add(nb.card.element);
+        } else if (nb.card.kind === "animal" || nb.card.kind === "sky_creature") {
+          for (const t of nb.card.types ?? []) {
+            if (!t || t === "Sky") continue;
+            const el = TYPE_TO_ELEMENT[t];
+            if (el && el !== "Sky") myElements.add(el);
+          }
+        }
       }
     } else if (pc.card.element) {
       myElements.add(pc.card.element);
     }
   }
+
   const hasAllElements = ELEMENTS.every((e) => myElements.has(e));
   const disasterEligible = creators >= CREATORS_NEEDED && hasAllElements;
   if ((aggressiveDisasters || !handFull) && disasterEligible) {
