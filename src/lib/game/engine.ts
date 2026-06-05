@@ -647,13 +647,20 @@ export function playDisaster(
   // Rule book prerequisite: you may only unleash a Disaster once your own
   // ecosystem covers all four elements (Earth/Fire/Air/Water). A Sky Creator
   // on your board counts for the element of its locked sub-type if locked;
-  // otherwise it counts for ANY element it's currently adjacent to (any
-  // neighbouring card with a non-Sky Creator Type or Creator element).
+  // otherwise it counts for ANY element it's currently adjacent to. A Sky
+  // Creator that has formed a "Sky cluster" (≥3 adjacent Sky Creatures) is a
+  // deferred wildcard — it fills whichever single element is otherwise
+  // missing from the rest of the ecosystem.
   const myElements = new Set<Element>();
+  let hasWildcardSky = false;
   for (const pc of player.ecosystem.placed.values()) {
     if (pc.card.kind === "creator" && pc.card.element) {
       myElements.add(pc.card.element);
     } else if (pc.card.kind === "sky_creator") {
+      if (isSkyCluster(player.ecosystem, pc.pos)) {
+        hasWildcardSky = true;
+        continue;
+      }
       const sub = skyLockedSubType(player.ecosystem, pc.pos);
       if (sub) {
         const el = TYPE_TO_ELEMENT[sub as keyof typeof TYPE_TO_ELEMENT];
@@ -675,6 +682,9 @@ export function playDisaster(
         }
       }
     }
+  }
+  if (hasWildcardSky && myElements.size >= ELEMENTS.length - 1) {
+    for (const e of ELEMENTS) myElements.add(e);
   }
   if (!ELEMENTS.every((e) => myElements.has(e))) {
     throw new Error(
