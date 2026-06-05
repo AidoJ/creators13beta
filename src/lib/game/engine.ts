@@ -1036,6 +1036,7 @@ function canAssignAdjacentAnimalsToCreators(
   creators: PlacedCard[],
   animals: PlacedCard[],
   skySubByUid?: Map<string, string | null>,
+  skyClusterByUid?: Map<string, boolean>,
 ): boolean {
   if (creators.length !== CREATORS_NEEDED) return false;
   if (animals.length < CREATORS_NEEDED * ANIMALS_PER_CREATOR) return false;
@@ -1044,7 +1045,10 @@ function canAssignAdjacentAnimalsToCreators(
 
   const linkOpts = (creator: DeckCard) =>
     creator.kind === "sky_creator"
-      ? { skySubType: skySubByUid?.get(creator.uid) ?? null }
+      ? {
+          skySubType: skySubByUid?.get(creator.uid) ?? null,
+          skyCluster: skyClusterByUid?.get(creator.uid) ?? false,
+        }
       : undefined;
 
   const recurse = (): boolean => {
