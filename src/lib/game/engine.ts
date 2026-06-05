@@ -545,6 +545,9 @@ export function moveMyPlacedHex(
     const adjacent = neighbours(toPos).some((n) => tempPlaced.has(keyOf(n)));
     if (!adjacent) throw new Error("Target hex must touch your ecosystem");
   }
+  // Adjacency-match rule: also applies to repositioning.
+  assertAdjacencyMatches({ placed: tempPlaced }, existing.card, toPos);
+
   tempPlaced.set(toKey, { ...existing, pos: toPos });
   player.ecosystem = { placed: tempPlaced };
   // Re-pivot the moved card to match its new neighbours, and re-pivot any
