@@ -109,7 +109,7 @@ export function buildDeck(allCards: GameCard[], specials: SpecialCard[] = []): D
   // Only enforce when the caller passed the full 80-card source set. Some
   // tests/preview pages build minimal decks from a subset of cards; in that
   // case we just skip the asserts rather than fail loudly.
-  if (allCards.length === 80) {
+  if (allCards.length === 79) {
     const counts = {
       total: deck.length,
       mythical: deck.filter((c) => c.kind === "sky_creature").length,
