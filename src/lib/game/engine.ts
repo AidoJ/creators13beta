@@ -295,13 +295,17 @@ export function goldenBodyLockedType(eco: Ecosystem, gbPos: Axial): string | nul
 function animalTouchesCreatorAs(
   animalPc: PlacedCard,
   creatorPc: PlacedCard,
-  opts?: { skySubType?: string | null },
+  opts?: { skySubType?: string | null; skyCluster?: boolean },
 ): boolean {
   if (!isAdjacent(animalPc.pos, creatorPc.pos)) return false;
   if (animalPc.card.kind === "golden_body") return true;
   if (animalPc.card.kind !== "animal" && animalPc.card.kind !== "sky_creature") return false;
   const animalTypes = animalPc.card.types ?? [];
   if (creatorPc.card.kind === "sky_creator") {
+    // Sky cluster: only Sky Creatures (or Golden-Body wildcards) count as
+    // the creator's three "animals" — and they must be adjacent (already
+    // checked above).
+    if (opts?.skyCluster) return animalPc.card.kind === "sky_creature";
     const sub = opts?.skySubType;
     return !!sub && animalTypes.some((t) => t.toLowerCase() === sub.toLowerCase());
   }
@@ -320,10 +324,11 @@ function animalTouchesCreatorAs(
 export function animalLinksToCreator(
   animal: DeckCard,
   creator: DeckCard,
-  opts?: { skySubType?: string | null; optimistic?: boolean },
+  opts?: { skySubType?: string | null; skyCluster?: boolean; optimistic?: boolean },
 ): boolean {
   if (animal.kind === "golden_body") return true; // wildcard
   if (creator.kind === "sky_creator") {
+    if (opts?.skyCluster) return animal.kind === "sky_creature";
     if (opts?.optimistic) {
       return ((animal.types ?? []) as string[]).some((t) => !!t);
     }
