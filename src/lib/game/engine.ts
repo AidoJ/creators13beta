@@ -227,6 +227,10 @@ export function endTurnEarly(state: MatchState): MatchState {
  *  circular failure where valid Sky-as-Soil / Sky-as-any-type groups never lock.
  */
 export function skyLockedSubType(eco: Ecosystem, skyPos: Axial): string | null {
+  // Sky cluster (≥3 adjacent Sky Creatures) is a deferred wildcard — it never
+  // locks to a sub-type. Its element is resolved at win-check time as
+  // whichever of Earth/Fire/Air/Water is otherwise missing from the ecosystem.
+  if (isSkyCluster(eco, skyPos)) return null;
   const CANONICAL = [
     "Lava", "Fire", "Whirlwind", "Snow", "Lightning", "Sun",
     "Lake", "Ocean", "Tree", "Mountain", "Soil", "River",
@@ -238,7 +242,11 @@ export function skyLockedSubType(eco: Ecosystem, skyPos: Axial): string | null {
     if (!pc) continue;
     const k = pc.card.kind;
     if (k === "golden_body") { golden += 1; continue; }
-    if (k !== "animal" && k !== "sky_creature") continue;
+    // Sky Creatures do NOT contribute to per-type lock counts — only regular
+    // animals do. This way "2 sky_creatures + 1 animal of type X" never locks
+    // Sky to X; you need either a full Sky-Creature trio (handled above) or
+    // 3 regular animals sharing a Creator Type.
+    if (k !== "animal") continue;
     for (const t of pc.card.types ?? []) {
       if (!t || t === "Sky") continue;
       counts[t] = (counts[t] ?? 0) + 1;
@@ -248,6 +256,19 @@ export function skyLockedSubType(eco: Ecosystem, skyPos: Axial): string | null {
     .filter((t) => (counts[t] ?? 0) > 0 && (counts[t] ?? 0) + golden >= 3)
     .sort((a, b) => (counts[b] ?? 0) - (counts[a] ?? 0) || CANONICAL.indexOf(a) - CANONICAL.indexOf(b));
   return candidates[0] ?? null;
+}
+
+/** True iff this Sky Creator has 3 or more adjacent Sky Creature cards. A
+ *  Sky cluster is treated as a deferred-wildcard creator: its element is
+ *  unspecified until win-check time, at which point it fills whichever of
+ *  the four elements is missing from the rest of the ecosystem. */
+export function isSkyCluster(eco: Ecosystem, skyPos: Axial): boolean {
+  let n = 0;
+  for (const nb of neighbours(skyPos)) {
+    const pc = eco.placed.get(keyOf(nb));
+    if (pc?.card.kind === "sky_creature") n += 1;
+  }
+  return n >= 3;
 }
 
 /** Returns the Creator-Type colour a Golden Body should mirror on its second
