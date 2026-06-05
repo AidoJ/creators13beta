@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { DeckCard } from "@/lib/game/types";
 import { HandTile } from "./cards/HandTile";
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import logoBack from "@/assets/13creators-logo.png";
 
 interface Props {
