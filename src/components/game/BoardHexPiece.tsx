@@ -38,6 +38,11 @@ interface Props {
  *  Only the coloured background rotates; the artwork stays upright. */
 function BoardHexPieceImpl({ card, size = 110, onClick, onDragStart, onDragEnd, draggable = false, onTouchDragStart, onTouchDragEnd, highlight = null, rotation = 0, skySubType = null, goldenLockedType = null }: Props) {
   const h = size * 1.1547;
+  const coarse = useCoarsePointer();
+  // On touch devices the HTML5 `draggable` attribute triggers iOS Safari's
+  // long-press selection-highlight rectangle ("squares") and an unreliable
+  // ghost drag. Use the pointer-event fallback instead.
+  const nativeDraggable = draggable && !coarse;
   // Pointer-based drag fallback state (iOS Safari / iPad).
   const ptrRef = useRef<{ id: number; x: number; y: number; dragging: boolean; suppressClick: boolean } | null>(null);
   const THRESHOLD = 8;
