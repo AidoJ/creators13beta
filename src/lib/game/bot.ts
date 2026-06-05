@@ -20,6 +20,7 @@ import {
   ecosystemSummary,
   playDisaster,
   skyLockedSubType,
+  isSkyCluster,
   placementMatchesNeighbours,
 } from "./engine";
 import { CREATORS_NEEDED, HAND_LIMIT, type DeckCard, type MatchState } from "./types";
