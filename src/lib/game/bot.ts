@@ -107,8 +107,13 @@ export function botStep(state: MatchState, difficulty: BotDifficulty = "medium")
   //    counts for its locked sub-type's element when locked, otherwise for any
   //    element it is currently adjacent to.
   const myElements = new Set<string>();
+  let hasWildcardSky = false;
   for (const pc of placedCreators) {
     if (pc.card.kind === "sky_creator") {
+      if (isSkyCluster(player.ecosystem, pc.pos)) {
+        hasWildcardSky = true;
+        continue;
+      }
       const sub = skyLockedSubType(player.ecosystem, pc.pos);
       if (sub) {
         const el = TYPE_TO_ELEMENT[sub];
@@ -131,6 +136,9 @@ export function botStep(state: MatchState, difficulty: BotDifficulty = "medium")
     } else if (pc.card.element) {
       myElements.add(pc.card.element);
     }
+  }
+  if (hasWildcardSky && myElements.size >= ELEMENTS.length - 1) {
+    for (const e of ELEMENTS) myElements.add(e);
   }
 
   const hasAllElements = ELEMENTS.every((e) => myElements.has(e));
