@@ -107,11 +107,11 @@ function BoardHexPieceImpl({ card, size = 110, onClick, onDragStart, onDragEnd, 
         }
         onClick?.();
       }}
-      draggable={draggable}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
+      draggable={nativeDraggable}
+      onDragStart={nativeDraggable ? onDragStart : undefined}
+      onDragEnd={nativeDraggable ? onDragEnd : undefined}
       onPointerDown={draggable ? (e) => {
-        if (e.pointerType === "mouse") return; // mouse uses native HTML5 drag
+        if (e.pointerType === "mouse" && nativeDraggable) return; // mouse uses native HTML5 drag
         ptrRef.current = { id: e.pointerId, x: e.clientX, y: e.clientY, dragging: false, suppressClick: false };
       } : undefined}
       onPointerMove={draggable ? (e) => {
