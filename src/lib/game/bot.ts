@@ -24,7 +24,7 @@ import {
 } from "./engine";
 import { CREATORS_NEEDED, HAND_LIMIT, type DeckCard, type MatchState } from "./types";
 import { TYPE_TO_ELEMENT, ELEMENTS } from "./elements";
-import { isAdjacent } from "./board";
+import { isAdjacent, neighbours, keyOf } from "./board";
 
 
 export type BotDifficulty = "easy" | "medium" | "hard";
