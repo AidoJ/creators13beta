@@ -429,6 +429,11 @@ export function placeOnEcosystem(
     throw new Error("Hex must be empty and adjacent to your ecosystem");
   }
 
+  // Adjacency-match rule: every neighbouring card must share a Creator Type
+  // with the incoming card (wildcards — Sky Creator, Golden Body — match all).
+  assertAdjacencyMatches(player.ecosystem, card, pos);
+
+
   // Rules: animals must adjoin / belong to a matching Creator. We enforce a
   // soft rule — animals can be placed freely; win-check verifies linkage.
 
