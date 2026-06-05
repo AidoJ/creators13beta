@@ -982,16 +982,22 @@ export function validateEcosystemWin(player: PlayerState): EcosystemWinValidatio
   const pcByUid = new Map<string, PlacedCard>();
   for (const pc of placedAll) pcByUid.set(pc.card.uid, pc);
 
-  // Pre-compute Sky Creators' locked sub-types from the board.
+  // Pre-compute Sky Creators' locked sub-types AND cluster flags from the board.
+  // A Sky cluster (≥3 adjacent Sky Creatures) is a deferred wildcard: its
+  // element is whichever of Earth/Fire/Air/Water is otherwise missing.
   const skySubByUid = new Map<string, string | null>();
+  const skyClusterByUid = new Map<string, boolean>();
   for (const pc of creatorPcs) {
     if (pc.card.kind === "sky_creator") {
-      skySubByUid.set(pc.card.uid, skyLockedSubType(player.ecosystem, pc.pos));
+      const cluster = isSkyCluster(player.ecosystem, pc.pos);
+      skyClusterByUid.set(pc.card.uid, cluster);
+      skySubByUid.set(pc.card.uid, cluster ? null : skyLockedSubType(player.ecosystem, pc.pos));
     }
   }
 
   const quartets = enumerateElementCoveringQuartets(creators, (c) => {
     if (c.kind === "sky_creator") {
+      if (skyClusterByUid.get(c.uid)) return ELEMENTS; // deferred wildcard fills any element
       const sub = skySubByUid.get(c.uid) ?? null;
       if (!sub) return [];
       const el = TYPE_TO_ELEMENT[sub as keyof typeof TYPE_TO_ELEMENT];
@@ -1002,7 +1008,7 @@ export function validateEcosystemWin(player: PlayerState): EcosystemWinValidatio
   for (const quartet of quartets) {
     const quartetPcs = quartet.map((c) => pcByUid.get(c.uid)!).filter(Boolean);
     if (quartetPcs.length !== quartet.length) continue;
-    if (canAssignAdjacentAnimalsToCreators(quartetPcs, animalPcs, skySubByUid)) {
+    if (canAssignAdjacentAnimalsToCreators(quartetPcs, animalPcs, skySubByUid, skyClusterByUid)) {
       return {
         valid: stillHoldingCreators.length === 0,
         creators,
