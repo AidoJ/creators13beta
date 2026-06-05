@@ -345,6 +345,64 @@ function findAdjacentDriverCreator(eco: Ecosystem, card: DeckCard, pos: Axial): 
   return adjacentCreators.find((pc) => animalLinksToCreator(card, pc.card, { optimistic: true })) ?? adjacentCreators[0];
 }
 
+/* --------------------------- adjacency match rule --------------------------- */
+
+/** Effective Creator-Type label set used for the "must touch a matching type"
+ *  placement rule. Wildcards (Sky Creator, Golden Body / Hive) match anything. */
+function cardMatchTypes(card: DeckCard): { wildcard: boolean; types: string[] } {
+  if (card.kind === "sky_creator" || card.kind === "golden_body" || card.kind === "golden_hive") {
+    return { wildcard: true, types: [] };
+  }
+  if (card.kind === "creator") {
+    if (card.displayType) return { wildcard: false, types: [card.displayType] };
+    if (card.element) {
+      const all = (Object.entries(TYPE_TO_ELEMENT) as [string, string][])
+        .filter(([, el]) => el === card.element)
+        .map(([t]) => t);
+      return { wildcard: false, types: all };
+    }
+    return { wildcard: true, types: [] };
+  }
+  // animal / sky_creature
+  return { wildcard: false, types: ((card.types ?? []) as string[]).filter(Boolean) };
+}
+
+/** Two placed-or-incoming cards may sit beside each other only if they share
+ *  at least one Creator Type (or one side is a wildcard). */
+export function cardsShareCreatorType(a: DeckCard, b: DeckCard): boolean {
+  const ta = cardMatchTypes(a);
+  const tb = cardMatchTypes(b);
+  if (ta.wildcard || tb.wildcard) return true;
+  const setB = new Set(tb.types.map((t) => t.toLowerCase()));
+  return ta.types.some((t) => setB.has(t.toLowerCase()));
+}
+
+/** Throws a friendly error if placing `card` at `pos` would touch any
+ *  existing card that shares no Creator Type with it. */
+function assertAdjacencyMatches(eco: Ecosystem, card: DeckCard, pos: Axial): void {
+  for (const n of neighbours(pos)) {
+    const pc = eco.placed.get(keyOf(n));
+    if (!pc) continue;
+    if (!cardsShareCreatorType(card, pc.card)) {
+      throw new Error(
+        `${card.name} can't sit next to ${pc.card.name} — they share no Creator Type.`,
+      );
+    }
+  }
+}
+
+/** Returns true iff placing `card` at `pos` would respect the adjacency rule. */
+export function placementMatchesNeighbours(eco: Ecosystem, card: DeckCard, pos: Axial): boolean {
+  for (const n of neighbours(pos)) {
+    const pc = eco.placed.get(keyOf(n));
+    if (!pc) continue;
+    if (!cardsShareCreatorType(card, pc.card)) return false;
+  }
+  return true;
+}
+
+
+
 /* --------------------------- place phase --------------------------- */
 
 export function placeOnEcosystem(
@@ -372,6 +430,11 @@ export function placeOnEcosystem(
   if (!legal.some((c) => c.q === pos.q && c.r === pos.r)) {
     throw new Error("Hex must be empty and adjacent to your ecosystem");
   }
+
+  // Adjacency-match rule: every neighbouring card must share a Creator Type
+  // with the incoming card (wildcards — Sky Creator, Golden Body — match all).
+  assertAdjacencyMatches(player.ecosystem, card, pos);
+
 
   // Rules: animals must adjoin / belong to a matching Creator. We enforce a
   // soft rule — animals can be placed freely; win-check verifies linkage.
@@ -484,6 +547,9 @@ export function moveMyPlacedHex(
     const adjacent = neighbours(toPos).some((n) => tempPlaced.has(keyOf(n)));
     if (!adjacent) throw new Error("Target hex must touch your ecosystem");
   }
+  // Adjacency-match rule: also applies to repositioning.
+  assertAdjacencyMatches({ placed: tempPlaced }, existing.card, toPos);
+
   tempPlaced.set(toKey, { ...existing, pos: toPos });
   player.ecosystem = { placed: tempPlaced };
   // Re-pivot the moved card to match its new neighbours, and re-pivot any
@@ -740,6 +806,8 @@ export function playSkyCreatureSteal(
     if (!legal.some((c) => c.q === placeAt.q && c.r === placeAt.r)) {
       throw new Error("Pick a glowing hex on your own board to place the stolen card.");
     }
+    assertAdjacencyMatches(player.ecosystem, stolen.card, placeAt);
+
     const driverCreator = findAdjacentDriverCreator(player.ecosystem, stolen.card, placeAt);
     const rotation = bestRotationForPlacement(player.ecosystem, stolen.card, placeAt, {
       restrictTo: "creator-only",
