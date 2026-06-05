@@ -62,12 +62,20 @@ export function botStep(state: MatchState, difficulty: BotDifficulty = "medium")
   const skipOptimal = difficulty === "easy" && Math.random() < 0.4;
   const aggressiveDisasters = difficulty === "hard";
 
+  // Helper: first legal cell that also satisfies the adjacency-match rule.
+  const firstValidCell = (card: DeckCard) => {
+    const cells = legalEcoCells(player.ecosystem);
+    return cells.find((c) => placementMatchesNeighbours(player.ecosystem, card, c));
+  };
+
   // 1) Place a creator we still need.
   if (!skipOptimal && creators < CREATORS_NEEDED) {
     const creator = player.hand.find((c) => c.kind === "creator" || c.kind === "sky_creator");
     if (creator) {
-      const cell = legalEcoCells(player.ecosystem)[0];
-      try { return placeOnEcosystem(state, creator.uid, cell); } catch {}
+      const cell = firstValidCell(creator);
+      if (cell) {
+        try { return placeOnEcosystem(state, creator.uid, cell); } catch {}
+      }
     }
   }
 
@@ -83,7 +91,8 @@ export function botStep(state: MatchState, difficulty: BotDifficulty = "medium")
       if (card.kind !== "animal" && card.kind !== "sky_creature" && card.kind !== "golden_body") continue;
       const link = placedCreators.find((pc) => animalLinksToCreator(card, pc.card, { optimistic: true }));
       if (!link) continue;
-      const cells = legalEcoCells(player.ecosystem);
+      const cells = legalEcoCells(player.ecosystem)
+        .filter((c) => placementMatchesNeighbours(player.ecosystem, card, c));
       const adj = cells.filter((c) => isAdjacent(c, link.pos));
       const cell = adj[0] ?? cells[0];
       if (!cell) continue;
@@ -116,12 +125,14 @@ export function botStep(state: MatchState, difficulty: BotDifficulty = "medium")
     }
   }
 
-  // 4) Place anything legal.
-  const any = player.hand.find((c) => c.kind !== "golden_hive");
-  if (any) {
-    const cell = legalEcoCells(player.ecosystem)[0];
-    try { return placeOnEcosystem(state, any.uid, cell); } catch {}
+  // 4) Place anything legal (respecting adjacency-match rule).
+  for (const card of player.hand) {
+    if (card.kind === "golden_hive") continue;
+    const cell = firstValidCell(card);
+    if (!cell) continue;
+    try { return placeOnEcosystem(state, card.uid, cell); } catch {}
   }
+
 
   // 5) Discard the first card.
   const dump = player.hand[0];
