@@ -804,6 +804,8 @@ export function playSkyCreatureSteal(
     if (!legal.some((c) => c.q === placeAt.q && c.r === placeAt.r)) {
       throw new Error("Pick a glowing hex on your own board to place the stolen card.");
     }
+    assertAdjacencyMatches(player.ecosystem, stolen.card, placeAt);
+
     const driverCreator = findAdjacentDriverCreator(player.ecosystem, stolen.card, placeAt);
     const rotation = bestRotationForPlacement(player.ecosystem, stolen.card, placeAt, {
       restrictTo: "creator-only",
