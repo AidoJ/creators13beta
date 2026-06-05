@@ -1817,6 +1817,7 @@ export type Database = {
           elo: number
           longest_streak: number
           points: number
+          total_bot_losses: number
           total_bot_wins: number
         }[]
       }
