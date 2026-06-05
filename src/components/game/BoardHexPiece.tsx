@@ -146,8 +146,15 @@ function BoardHexPieceImpl({ card, size = 110, onClick, onDragStart, onDragEnd, 
         ptrRef.current = null;
         if (p?.dragging) onTouchDragEnd?.();
       } : undefined}
-      className={`group relative inline-block ${(onClick || draggable) ? "cursor-pointer transition-transform hover:scale-105" : ""} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
-      style={{ width: size, height: h, touchAction: draggable ? "none" : undefined }}
+      className={`group relative inline-block select-none ${(onClick || draggable) ? "cursor-pointer transition-transform hover:scale-105" : ""} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
+      style={{
+        width: size,
+        height: h,
+        touchAction: draggable ? "none" : undefined,
+        WebkitTouchCallout: "none",
+        WebkitUserSelect: "none",
+        WebkitTapHighlightColor: "transparent",
+      }}
       aria-label={displayName}
       title={displayName}
     >
