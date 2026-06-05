@@ -119,7 +119,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
           return (
             <div
               key={card.uid}
-              draggable={!disabled && !isAnimating}
+              draggable={!disabled && !isAnimating && !coarse}
               onClick={(e) => {
                 if (disabled || isAnimating) return;
                 // If pointerup already classified this as a drag we suppress
