@@ -194,9 +194,12 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                 dropTarget?.click();
                 onDragEnd?.();
               }}
-              className="cursor-grab active:cursor-grabbing"
+              className="cursor-grab active:cursor-grabbing select-none"
               style={{
                 touchAction: "none",
+                WebkitTouchCallout: "none",
+                WebkitUserSelect: "none",
+                WebkitTapHighlightColor: "transparent",
                 ...(isDropping
                   ? {
                       animation: `handDrop 500ms cubic-bezier(0.2, 0.85, 0.35, 1.1) ${stagger}ms both`,
