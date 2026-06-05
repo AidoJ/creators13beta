@@ -1,9 +1,9 @@
 /**
- * Deck construction. Combines the 80 hand-drawn animal cards from the DB with
+ * Deck construction. Combines the 79 hand-drawn animal cards from the DB with
  * the synthesised Creator, Sky Creator, Golden Body and Golden Hive cards.
  *
- * Quantities (115 cards total):
- *   - 68 standard Animal Cards (the 80 minus 12 mythical -> sky_creatures)
+ * Quantities (114 cards total):
+ *   - 67 standard Animal Cards (the 79 minus 12 mythical -> sky_creatures)
  *   - 12 Sky Creature Cards (mythicals: Griffin, Dragon, Fairy, Unicorn, …)
  *   - 24 Creator Cards: 2 each of the 12 element-mapped Creator Types
  *   -  2 Sky Creator Cards (wildcard element)
