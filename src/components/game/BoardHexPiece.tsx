@@ -5,6 +5,7 @@ import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType, glyphMarkForType } f
 import type { DeckCard } from "@/lib/game/types";
 import { TypeGlyphMark, displayCardName } from "./cards/TypeGlyphMark";
 import { cardCodeLabel } from "@/lib/creatorTypeCode";
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import goldenBodyArt from "@/assets/golden-body-card.webp";
 import goldenHiveArt from "@/assets/golden-hive-card.webp";
 
@@ -37,6 +38,11 @@ interface Props {
  *  Only the coloured background rotates; the artwork stays upright. */
 function BoardHexPieceImpl({ card, size = 110, onClick, onDragStart, onDragEnd, draggable = false, onTouchDragStart, onTouchDragEnd, highlight = null, rotation = 0, skySubType = null, goldenLockedType = null }: Props) {
   const h = size * 1.1547;
+  const coarse = useCoarsePointer();
+  // On touch devices the HTML5 `draggable` attribute triggers iOS Safari's
+  // long-press selection-highlight rectangle ("squares") and an unreliable
+  // ghost drag. Use the pointer-event fallback instead.
+  const nativeDraggable = draggable && !coarse;
   // Pointer-based drag fallback state (iOS Safari / iPad).
   const ptrRef = useRef<{ id: number; x: number; y: number; dragging: boolean; suppressClick: boolean } | null>(null);
   const THRESHOLD = 8;
@@ -101,11 +107,11 @@ function BoardHexPieceImpl({ card, size = 110, onClick, onDragStart, onDragEnd, 
         }
         onClick?.();
       }}
-      draggable={draggable}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
+      draggable={nativeDraggable}
+      onDragStart={nativeDraggable ? onDragStart : undefined}
+      onDragEnd={nativeDraggable ? onDragEnd : undefined}
       onPointerDown={draggable ? (e) => {
-        if (e.pointerType === "mouse") return; // mouse uses native HTML5 drag
+        if (e.pointerType === "mouse" && nativeDraggable) return; // mouse uses native HTML5 drag
         ptrRef.current = { id: e.pointerId, x: e.clientX, y: e.clientY, dragging: false, suppressClick: false };
       } : undefined}
       onPointerMove={draggable ? (e) => {
@@ -140,8 +146,15 @@ function BoardHexPieceImpl({ card, size = 110, onClick, onDragStart, onDragEnd, 
         ptrRef.current = null;
         if (p?.dragging) onTouchDragEnd?.();
       } : undefined}
-      className={`group relative inline-block ${(onClick || draggable) ? "cursor-pointer transition-transform hover:scale-105" : ""} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
-      style={{ width: size, height: h, touchAction: draggable ? "none" : undefined }}
+      className={`group relative inline-block select-none ${(onClick || draggable) ? "cursor-pointer transition-transform hover:scale-105" : ""} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
+      style={{
+        width: size,
+        height: h,
+        touchAction: draggable ? "none" : undefined,
+        WebkitTouchCallout: "none",
+        WebkitUserSelect: "none",
+        WebkitTapHighlightColor: "transparent",
+      }}
       aria-label={displayName}
       title={displayName}
     >

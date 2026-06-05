@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { DeckCard } from "@/lib/game/types";
 import { HandTile } from "./cards/HandTile";
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import logoBack from "@/assets/13creators-logo.png";
 
 interface Props {
@@ -26,6 +27,7 @@ interface PointerTrack {
 }
 
 export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd, disabled, size = 104 }: Props) {
+  const coarse = useCoarsePointer();
   // Track which card uids have completed their draw-in animation.
   const revealedRef = useRef<Set<string>>(new Set());
   const [, force] = useState(0);
@@ -117,7 +119,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
           return (
             <div
               key={card.uid}
-              draggable={!disabled && !isAnimating}
+              draggable={!disabled && !isAnimating && !coarse}
               onClick={(e) => {
                 if (disabled || isAnimating) return;
                 // If pointerup already classified this as a drag we suppress
@@ -132,9 +134,9 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
               onPointerDown={(e) => {
                 if (disabled || isAnimating) return;
                 if ((e.target as HTMLElement).closest("button")) return;
-                // Mouse uses native HTML5 drag-and-drop (onDragStart). Only
-                // touch / pen need the pointer-event drag path.
-                if (e.pointerType === "mouse") return;
+                // Mouse uses native HTML5 drag-and-drop (onDragStart) when
+                // available. Touch / pen always go through the pointer path.
+                if (e.pointerType === "mouse" && !coarse) return;
                 pointersRef.current.set(e.pointerId, {
                   uid: card.uid,
                   x: e.clientX,
@@ -192,9 +194,12 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                 dropTarget?.click();
                 onDragEnd?.();
               }}
-              className="cursor-grab active:cursor-grabbing"
+              className="cursor-grab active:cursor-grabbing select-none"
               style={{
                 touchAction: "none",
+                WebkitTouchCallout: "none",
+                WebkitUserSelect: "none",
+                WebkitTapHighlightColor: "transparent",
                 ...(isDropping
                   ? {
                       animation: `handDrop 500ms cubic-bezier(0.2, 0.85, 0.35, 1.1) ${stagger}ms both`,
