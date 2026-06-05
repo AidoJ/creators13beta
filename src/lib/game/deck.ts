@@ -1,9 +1,9 @@
 /**
- * Deck construction. Combines the 80 hand-drawn animal cards from the DB with
+ * Deck construction. Combines the 79 hand-drawn animal cards from the DB with
  * the synthesised Creator, Sky Creator, Golden Body and Golden Hive cards.
  *
- * Quantities (115 cards total):
- *   - 68 standard Animal Cards (the 80 minus 12 mythical -> sky_creatures)
+ * Quantities (114 cards total):
+ *   - 67 standard Animal Cards (the 79 minus 12 mythical -> sky_creatures)
  *   - 12 Sky Creature Cards (mythicals: Griffin, Dragon, Fairy, Unicorn, …)
  *   - 24 Creator Cards: 2 each of the 12 element-mapped Creator Types
  *   -  2 Sky Creator Cards (wildcard element)
@@ -76,7 +76,7 @@ function goldenHive(): DeckCard {
  * comment). Asserted at the end of `buildDeck` so silent drift in
  * `game_cards` or the special-card list trips immediately in dev/tests.
  */
-const EXPECTED_TOTAL = 115;
+const EXPECTED_TOTAL = 114;
 const EXPECTED_MYTHICALS = 12; // sky_creature kind
 const EXPECTED_CREATORS = 24;  // 12 non-Sky types × 2
 const EXPECTED_SKY_CREATORS = 2;
@@ -109,7 +109,7 @@ export function buildDeck(allCards: GameCard[], specials: SpecialCard[] = []): D
   // Only enforce when the caller passed the full 80-card source set. Some
   // tests/preview pages build minimal decks from a subset of cards; in that
   // case we just skip the asserts rather than fail loudly.
-  if (allCards.length === 80) {
+  if (allCards.length === 79) {
     const counts = {
       total: deck.length,
       mythical: deck.filter((c) => c.kind === "sky_creature").length,
