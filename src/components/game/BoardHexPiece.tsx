@@ -5,6 +5,7 @@ import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType, glyphMarkForType } f
 import type { DeckCard } from "@/lib/game/types";
 import { TypeGlyphMark, displayCardName } from "./cards/TypeGlyphMark";
 import { cardCodeLabel } from "@/lib/creatorTypeCode";
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import goldenBodyArt from "@/assets/golden-body-card.webp";
 import goldenHiveArt from "@/assets/golden-hive-card.webp";
 
