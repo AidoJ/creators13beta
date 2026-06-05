@@ -134,9 +134,9 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
               onPointerDown={(e) => {
                 if (disabled || isAnimating) return;
                 if ((e.target as HTMLElement).closest("button")) return;
-                // Mouse uses native HTML5 drag-and-drop (onDragStart). Only
-                // touch / pen need the pointer-event drag path.
-                if (e.pointerType === "mouse") return;
+                // Mouse uses native HTML5 drag-and-drop (onDragStart) when
+                // available. Touch / pen always go through the pointer path.
+                if (e.pointerType === "mouse" && !coarse) return;
                 pointersRef.current.set(e.pointerId, {
                   uid: card.uid,
                   x: e.clientX,
