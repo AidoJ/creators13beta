@@ -27,6 +27,7 @@ interface PointerTrack {
 }
 
 export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd, disabled, size = 104 }: Props) {
+  const coarse = useCoarsePointer();
   // Track which card uids have completed their draw-in animation.
   const revealedRef = useRef<Set<string>>(new Set());
   const [, force] = useState(0);
