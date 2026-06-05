@@ -875,7 +875,18 @@ export default function Play() {
         </div>
       ) : (<>
 
-      {!ribbonHidden && gameSettings.show_score_panel && <ScorePanel state={state} />}
+      {!ribbonHidden && gameSettings.show_score_panel && (
+        <ScorePanel
+          state={state}
+          playerUserIds={
+            matchRow?.mode === "pvp"
+              ? state.players.map((p) =>
+                  p.id === "host" ? matchRow.host_user_id : p.id === "guest" ? matchRow.guest_user_id : null,
+                )
+              : state.players.map((p) => (p.id === "you" ? user?.id ?? null : null))
+          }
+        />
+      )}
 
       {/* Prominent Beat-the-Clock countdown */}
       {isBeatClock && !state.finished && (
