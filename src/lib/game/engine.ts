@@ -26,10 +26,10 @@ import {
   type PlacedCard,
   type PlayerState,
 } from "./types";
-import { keyOf, neighbours, isAdjacent } from "./board";
+import { keyOf, neighbours, isAdjacent, NEIGHBOUR_DIRS } from "./board";
 import { ELEMENTS, TYPE_TO_ELEMENT, type Element } from "./elements";
 
-import { bestRotationForPlacement, rotatePlacedHex } from "./rotation";
+import { bestRotationForPlacement, rotatePlacedHex, facingTypeLabel } from "./rotation";
 
 /* --------------------------- helpers --------------------------- */
 
