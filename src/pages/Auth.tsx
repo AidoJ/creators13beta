@@ -21,7 +21,9 @@ export default function Auth() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const returnTo = new URLSearchParams(window.location.search).get("returnTo") || "/dashboard";
+  const search = new URLSearchParams(window.location.search);
+  const returnTo = search.get("returnTo") || "/dashboard";
+  const refCode = search.get("ref") || "";
 
   useEffect(() => {
     if (user) navigate(returnTo, { replace: true });
@@ -57,11 +59,17 @@ export default function Auth() {
       if (error) {
         toast({ title: "Signup failed", description: error.message, variant: "destructive" });
       } else {
-        // Best-effort write to profiles so name shows up immediately.
         if (data.user?.id) {
+          let invitedBy: string | null = null;
+          if (refCode.trim()) {
+            const { data: refUser } = await supabase.rpc("resolve_invitation_code", { _code: refCode.trim() });
+            if (refUser) invitedBy = refUser as unknown as string;
+          }
+          const update: Record<string, unknown> = { first_name: first, last_name: last };
+          if (invitedBy) update.invited_by_user_id = invitedBy;
           await supabase
             .from("profiles")
-            .update({ first_name: first, last_name: last })
+            .update(update as never)
             .eq("user_id", data.user.id);
         }
         toast({
