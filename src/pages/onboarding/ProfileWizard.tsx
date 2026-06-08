@@ -175,7 +175,7 @@ export default function ProfileWizard() {
       return;
     }
     toast({ title: "Welcome to the community!" });
-    navigate("/dashboard", { replace: true });
+    navigate("/community/dashboard", { replace: true });
   };
 
   if (authLoading || loading) {
