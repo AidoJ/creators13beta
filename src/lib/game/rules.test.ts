@@ -196,6 +196,21 @@ describe("classic ecosystem win validation", () => {
     expect(() => placeOnEcosystem(state, bear.uid, { q: 1, r: 0 })).toThrowError(/Only Sky Creature/);
   });
 
+  it("allows animal neighbours when they share a Creator Type anywhere on the card", () => {
+    const otter = animal("otter", ["Ocean", "River"]);
+    const duck = animal("duck", ["Lake", "River"]);
+    const p: PlayerState = {
+      id: "p1", name: "Goldie", hand: [duck], hiveShield: false, score: 0, firstPickupDone: true,
+      ecosystem: { placed: new Map([["0,0", { card: otter, pos: { q: 0, r: 0 }, rotation: 0 }]]) },
+    };
+    const state: MatchState = {
+      players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
+      turnNumber: 1, finished: false, winnerId: null,
+    };
+    const next = placeOnEcosystem(state, duck.uid, { q: 1, r: 0 });
+    expect(next.players[0].ecosystem.placed.has("1,0")).toBe(true);
+  });
+
 
   it("accepts a complete ecosystem even if a matching animal is visually mis-rotated", () => {
     const p = buildPlayer([
