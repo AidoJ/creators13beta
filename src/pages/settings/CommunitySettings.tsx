@@ -31,6 +31,7 @@ export default function CommunitySettings() {
   const [hadJoinedAt, setHadJoinedAt] = useState(false);
   const [acceptsMessages, setAcceptsMessages] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth?returnTo=/settings/community", { replace: true });
