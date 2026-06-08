@@ -20,6 +20,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Skeleton } from "@/components/ui/skeleton";
 import { Settings, Map as MapIcon, Users, MessageCircle, Calendar, ShoppingBag, Copy, Check } from "lucide-react";
 import { capitaliseTypeName, getCreatorTypeColor } from "@/lib/creatorTypes";
+import { glyphMarkForType } from "@/lib/game/glyphs";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -42,7 +43,8 @@ type CreatorOfMonth = {
   computed_at: string;
 };
 
-// Tier order for size buckets. Higher score = larger lotus.
+// Tier order for size buckets. Compressed 2.5:1 range so smaller matches still
+// register as members rather than visual placeholders.
 function sizeFor(score: number): "sm" | "md" | "lg" | "xl" {
   if (score >= 7) return "xl";
   if (score >= 5) return "lg";
@@ -251,11 +253,26 @@ export default function CommunityDashboard() {
             }}
           >
             <div
-              className="h-14 w-14 rounded-full flex items-center justify-center font-display text-2xl text-white shadow-md flex-shrink-0"
+              className="h-14 w-14 rounded-full flex items-center justify-center shadow-md flex-shrink-0 p-2"
               style={{ backgroundColor: featuredColor }}
               aria-hidden
             >
-              {capitaliseTypeName(featured.creator_type).charAt(0)}
+              {(() => {
+                const g = glyphMarkForType(capitaliseTypeName(featured.creator_type));
+                return g ? (
+                  <img
+                    src={g}
+                    alt=""
+                    className="w-full h-full object-contain"
+                    style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.25))" }}
+                    draggable={false}
+                  />
+                ) : (
+                  <span className="font-display text-2xl text-white">
+                    {capitaliseTypeName(featured.creator_type).charAt(0)}
+                  </span>
+                );
+              })()}
             </div>
             <div className="min-w-0">
               <p className="text-[11px] uppercase tracking-widest text-muted-foreground">

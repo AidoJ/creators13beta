@@ -1,30 +1,23 @@
 /**
  * LotusProfile — reusable profile frame component (Appendix 7 of Phase 2 spec).
  *
- * Three visual states (no mixed states are possible in Phase 2.1 — the lock
- * trigger prevents self_selected + practitioner mixing, and practitioner rows
- * are overwritten in full):
+ * Petals render the Creator-Type glyph silhouettes (from glyphMarkForType).
+ * Source determines visual weight:
+ *   - 'self_selected'         → filled at reduced opacity (muted)
+ *   - 'practitioner'/'case_study' → filled at full opacity
+ * Empty slots render as a faint dashed outline so the lotus shape stays stable.
  *
- *   1. Self-Profiled        — one type, source='self_selected'
- *                            → single petal, outlined / muted glyph
- *   2. Officially (Partial) — one type, source='practitioner'|'case_study'
- *                            → single petal, filled with family colour
- *   3. Officially (Full)    — 2-4 types, source='practitioner'|'case_study'
- *                            → up to 4 petals around the avatar, filled
- *
- * Petal positions for n=1..4:    top → right → bottom → left.
- *
- * If glyph SVG assets ever land in the codebase, swap the letter placeholder
- * below for a real glyph component. Sky has no family colour; it renders in
- * the neutral gold/cream palette from Appendix 1.
+ * Avatar fallback uses a generic person silhouette (User icon) — never an
+ * initial letter — so the centre can't be mistaken for a 5th petal.
  */
 import { CSSProperties, useMemo } from "react";
 import { User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getCreatorTypeColor } from "@/lib/creatorTypes";
+import { capitaliseTypeName, getCreatorTypeColor } from "@/lib/creatorTypes";
+import { glyphMarkForType } from "@/lib/game/glyphs";
 
 export type LotusCreatorType = {
-  type: string; // one of the 13 names, any casing
+  type: string;
   source: "self_selected" | "practitioner" | "case_study";
 };
 
@@ -39,10 +32,10 @@ export interface LotusProfileProps {
 }
 
 const SIZE_PX: Record<NonNullable<LotusProfileProps["size"]>, number> = {
-  sm: 60,
+  sm: 80,
   md: 100,
-  lg: 160,
-  xl: 240,
+  lg: 140,
+  xl: 200,
 };
 
 const SKY_NEUTRAL = "#edd58a"; // Appendix 1 "Gold"
@@ -60,10 +53,6 @@ function petalColor(type: string): string {
   return getCreatorTypeColor(type);
 }
 
-function initial(name: string): string {
-  return name.charAt(0).toUpperCase();
-}
-
 export function LotusProfile({
   avatarUrl,
   displayName,
@@ -75,13 +64,6 @@ export function LotusProfile({
 }: LotusProfileProps) {
   const px = SIZE_PX[size];
 
-  // Determine state. If any type is officially assigned, treat the whole row
-  // as "official" (we don't mix sources within a single profile per spec).
-  const isOfficial = creatorTypes.some(
-    (t) => t.source === "practitioner" || t.source === "case_study"
-  );
-
-  // Pad to 4 slots so the layout is stable. Empty slots render as outlined.
   const slots = useMemo(() => {
     const filled = creatorTypes.slice(0, 4);
     const out: Array<LotusCreatorType | null> = [...filled];
@@ -89,7 +71,7 @@ export function LotusProfile({
     return out;
   }, [creatorTypes]);
 
-  // Sizing within the SVG viewBox (100x100).
+  // SVG viewBox 100x100.
   const avatarR = 22;
   const petalR = 13;
   const orbit = 36;
@@ -124,13 +106,11 @@ export function LotusProfile({
         className="absolute inset-0 w-full h-full overflow-visible"
         aria-hidden
       >
-        {/* Petals */}
         {slots.map((slot, i) => {
           const pos = POSITIONS[i];
           const cx = 50 + pos.x * orbit;
           const cy = 50 + pos.y * orbit;
           if (!slot) {
-            // Empty lotus position — faint outline only.
             return (
               <circle
                 key={i}
@@ -146,34 +126,50 @@ export function LotusProfile({
             );
           }
           const color = petalColor(slot.type);
-          const filled = isOfficial; // self-selected → muted; official → filled
+          const muted = slot.source === "self_selected";
           return (
-            <g key={i}>
-              <circle
-                cx={cx}
-                cy={cy}
-                r={petalR}
-                fill={filled ? color : "transparent"}
-                stroke={color}
-                strokeWidth={filled ? 0 : 2}
-                opacity={filled ? 1 : 0.85}
-              />
-              <text
-                x={cx}
-                y={cy}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize={petalR * 1.05}
-                fontFamily="'Lilita One', 'Questrial', sans-serif"
-                fill={filled ? "#fff" : color}
-                style={{ pointerEvents: "none" }}
-              >
-                {initial(slot.type)}
-              </text>
-            </g>
+            <circle
+              key={i}
+              cx={cx}
+              cy={cy}
+              r={petalR}
+              fill={color}
+              opacity={muted ? 0.55 : 1}
+            />
           );
         })}
       </svg>
+
+      {/* Petal glyphs as foreignObject-free HTML imgs so they crisp-render */}
+      {slots.map((slot, i) => {
+        if (!slot) return null;
+        const pos = POSITIONS[i];
+        // Convert viewBox coords (cx,cy) → percent of container
+        const cxPct = 50 + pos.x * orbit;
+        const cyPct = 50 + pos.y * orbit;
+        const glyph = glyphMarkForType(capitaliseTypeName(slot.type));
+        if (!glyph) return null;
+        const glyphPx = petalR * 1.6 * (px / 100);
+        const muted = slot.source === "self_selected";
+        return (
+          <img
+            key={`g-${i}`}
+            src={glyph}
+            alt=""
+            aria-hidden
+            draggable={false}
+            className="pointer-events-none absolute"
+            style={{
+              width: glyphPx,
+              height: glyphPx,
+              left: `calc(${cxPct}% - ${glyphPx / 2}px)`,
+              top: `calc(${cyPct}% - ${glyphPx / 2}px)`,
+              opacity: muted ? 0.75 : 0.95,
+              filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.25))",
+            }}
+          />
+        );
+      })}
 
       {/* Central avatar */}
       <div
@@ -192,26 +188,25 @@ export function LotusProfile({
             className="w-full h-full object-cover"
             draggable={false}
           />
-        ) : displayName ? (
-          <span
-            className="font-display text-foreground/80"
-            style={{ fontSize: Math.max(12, px * 0.16) }}
-          >
-            {initial(displayName)}
-          </span>
         ) : (
-          <User className="w-1/2 h-1/2 text-muted-foreground" />
+          <User
+            className="text-muted-foreground/70"
+            style={{ width: "55%", height: "55%" }}
+            strokeWidth={1.75}
+          />
         )}
       </div>
 
-      {/* Match score badge */}
+      {/* Match score badge — small, muted, top-right */}
       {typeof matchScore === "number" && (
         <div
-          className="absolute -bottom-1 -right-1 rounded-full bg-primary text-primary-foreground font-display flex items-center justify-center shadow-md ring-2 ring-background"
+          className="absolute rounded-full bg-secondary text-secondary-foreground font-display flex items-center justify-center shadow-sm ring-1 ring-background"
           style={{
-            width: Math.max(20, px * 0.26),
-            height: Math.max(20, px * 0.26),
-            fontSize: Math.max(10, px * 0.13),
+            width: 26,
+            height: 26,
+            fontSize: 12,
+            top: -4,
+            right: -4,
           }}
           aria-label={`Match score ${matchScore}`}
         >
