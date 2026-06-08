@@ -73,19 +73,19 @@ export default function MemberProfile() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase.rpc(
-        // RPC is in the generated types after the migration runs.
-        "get_public_member_profile" as never,
-        { _target_user_id: userId } as never
+      const { data, error } = await (supabase as any).rpc(
+        "get_public_member_profile",
+        { _target_user_id: userId }
       );
       if (cancelled) return;
-      if (error || !data || (Array.isArray(data) && data.length === 0)) {
+      const rows = (data ?? []) as PublicProfile[];
+      if (error || rows.length === 0) {
         setProfile(null);
         setResolvedAvatar(null);
         setLoading(false);
         return;
       }
-      const row = (Array.isArray(data) ? data[0] : data) as PublicProfile;
+      const row = rows[0];
       setProfile(row);
       const url = await resolveAvatarUrl(row.avatar_url);
       if (!cancelled) {
