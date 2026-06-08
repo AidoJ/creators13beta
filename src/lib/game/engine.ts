@@ -29,7 +29,7 @@ import {
 import { keyOf, neighbours, isAdjacent, NEIGHBOUR_DIRS } from "./board";
 import { ELEMENTS, TYPE_TO_ELEMENT, type Element } from "./elements";
 
-import { bestRotationForPlacement, rotatePlacedHex, facingTypeLabel } from "./rotation";
+import { bestRotationForPlacement, rotatePlacedHex } from "./rotation";
 
 /* --------------------------- helpers --------------------------- */
 
@@ -344,9 +344,8 @@ function findAdjacentDriverCreator(eco: Ecosystem, card: DeckCard, pos: Axial): 
  *     regular animals, Golden Body and Golden Hive cannot land there.
  *   - Golden Body is a wildcard animal; it can sit beside any non-Sky-Creator
  *     card.
- *   - For animal-to-animal / animal-to-sky-creature contact, the incoming
- *     card needs at least one of its two Creator Types to match the existing
- *     neighbour's facing half (rotation-aware).
+ *   - For animal-to-animal / animal-to-sky-creature contact, the cards only
+ *     need to share at least one Creator Type anywhere on their two halves.
  */
 function adjacencyError(
   eco: Ecosystem,
@@ -378,17 +377,17 @@ function adjacencyError(
     // Incoming Golden Body is a wildcard animal.
     if (card.kind === "golden_body") continue;
 
-    // Both incoming and neighbour are animal-like. Half-match rule:
-    // either of the incoming card's types must equal the neighbour's
-    // facing-half type (using its stored rotation).
+    // Both incoming and neighbour are animal-like. Shared-type rule:
+    // any Creator Type on the incoming card may match any Creator Type on
+    // the neighbouring animal, regardless of which halves are touching.
     if (card.kind === "animal" || card.kind === "sky_creature") {
-      const oppositeDir = (dir + 3) % 6;
-      const theirFacing = facingTypeLabel(pc.card, pc.rotation ?? 0, oppositeDir);
-      if (!theirFacing) continue;
       const myTypes = ((card.types ?? []) as string[]).filter(Boolean);
-      const hit = myTypes.some((t) => t.toLowerCase() === theirFacing.toLowerCase());
+      const theirTypes = ((pc.card.types ?? []) as string[]).filter(Boolean);
+      const hit = myTypes.some((mine) =>
+        theirTypes.some((theirs) => mine.toLowerCase() === theirs.toLowerCase()),
+      );
       if (!hit) {
-        return `${card.name} can't sit next to ${pc.card.name} — no shared half (${theirFacing}).`;
+        return `${card.name} can't sit next to ${pc.card.name} — no shared Creator Type.`;
       }
     }
   }
