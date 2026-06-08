@@ -33,6 +33,7 @@ import RequiresCompletedProfile from "@/components/RequiresCompletedProfile";
 import GlobalFooter from "@/components/shared/GlobalFooter";
 import ErrorBoundary from "@/components/ErrorBoundary";
 const MemberProfile = lazy(() => import("./pages/member/MemberProfile"));
+const CommunityDashboard = lazy(() => import("./pages/community/CommunityDashboard"));
 const LotusPreview = import.meta.env.DEV
   ? lazy(() => import("./pages/_preview/LotusPreview"))
   : null;
