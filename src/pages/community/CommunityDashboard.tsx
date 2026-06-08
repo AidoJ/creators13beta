@@ -252,11 +252,26 @@ export default function CommunityDashboard() {
             }}
           >
             <div
-              className="h-14 w-14 rounded-full flex items-center justify-center font-display text-2xl text-white shadow-md flex-shrink-0"
+              className="h-14 w-14 rounded-full flex items-center justify-center shadow-md flex-shrink-0 p-2"
               style={{ backgroundColor: featuredColor }}
               aria-hidden
             >
-              {capitaliseTypeName(featured.creator_type).charAt(0)}
+              {(() => {
+                const g = glyphMarkForType(capitaliseTypeName(featured.creator_type));
+                return g ? (
+                  <img
+                    src={g}
+                    alt=""
+                    className="w-full h-full object-contain"
+                    style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.25))" }}
+                    draggable={false}
+                  />
+                ) : (
+                  <span className="font-display text-2xl text-white">
+                    {capitaliseTypeName(featured.creator_type).charAt(0)}
+                  </span>
+                );
+              })()}
             </div>
             <div className="min-w-0">
               <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
