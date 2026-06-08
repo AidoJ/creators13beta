@@ -841,34 +841,38 @@ export function playSkyCreatureSteal(
   const stolen = victim.ecosystem.placed.get(victimPosKey);
   if (!stolen) throw new Error("Target hex empty");
   const k = stolen.card.kind;
-  if (k !== "animal" && k !== "sky_creature" && k !== "golden_body") {
-    throw new Error("Sky Creatures can only steal animals");
+  if (k === "golden_body") {
+    throw new Error("Golden Body is a wildcard treasure and cannot be stolen.");
   }
+  if (k !== "animal" && k !== "sky_creature") {
+    throw new Error("Sky Creatures can only steal animals.");
+  }
+  if (!placeAt) {
+    throw new Error("Pick a hex on your own board to place the stolen animal.");
+  }
+
+  const legal = legalEcoCells(player.ecosystem);
+  if (!legal.some((c) => c.q === placeAt.q && c.r === placeAt.r)) {
+    throw new Error("Pick a glowing hex on your own board to place the stolen card.");
+  }
+  assertAdjacencyMatches(player.ecosystem, stolen.card, placeAt);
 
   player.hand.splice(idx, 1);
-  next.used.push(sky);
+  // Sky Creature played as a Stealer goes to the used pile FLAGGED SPENT so
+  // no other player can pick it up.
+  next.used.push({ ...sky, spent: true });
   victim.ecosystem.placed.delete(victimPosKey);
 
-  if (placeAt) {
-    const legal = legalEcoCells(player.ecosystem);
-    if (!legal.some((c) => c.q === placeAt.q && c.r === placeAt.r)) {
-      throw new Error("Pick a glowing hex on your own board to place the stolen card.");
-    }
-    assertAdjacencyMatches(player.ecosystem, stolen.card, placeAt);
+  const driverCreator = findAdjacentDriverCreator(player.ecosystem, stolen.card, placeAt);
+  const rotation = bestRotationForPlacement(player.ecosystem, stolen.card, placeAt, {
+    restrictTo: "creator-only",
+    driverPos: driverCreator?.pos,
+  });
+  player.ecosystem.placed.set(keyOf(placeAt), { card: stolen.card, pos: placeAt, rotation });
+  repivotSkyLockNeighbours(player.ecosystem, placeAt);
+  player.score += 1;
+  next.lastEvent = `${player.name} stole ${stolen.card.name} from ${victim.name} and placed it`;
 
-    const driverCreator = findAdjacentDriverCreator(player.ecosystem, stolen.card, placeAt);
-    const rotation = bestRotationForPlacement(player.ecosystem, stolen.card, placeAt, {
-      restrictTo: "creator-only",
-      driverPos: driverCreator?.pos,
-    });
-    player.ecosystem.placed.set(keyOf(placeAt), { card: stolen.card, pos: placeAt, rotation });
-    repivotSkyLockNeighbours(player.ecosystem, placeAt);
-    player.score += 1;
-    next.lastEvent = `${player.name} stole ${stolen.card.name} from ${victim.name} and placed it`;
-  } else {
-    player.hand.push(stolen.card);
-    next.lastEvent = `${player.name} stole ${stolen.card.name} from ${victim.name}`;
-  }
 
   next.placedThisTurn += 1;
   return afterAction(next);
