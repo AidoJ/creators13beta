@@ -65,7 +65,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      const [profileRes, bookingRes, subRes, ctpRes, csRes, cpRes, photosRes] = await Promise.all([
+      const [profileRes, bookingRes, subRes, ctpRes, csRes, cpRes, photosRes, visRes] = await Promise.all([
         supabase.from("profiles").select("first_name, last_name, enrollment_step, date_of_birth, gender, pronouns, height_cm, shoe_size, phone, city, state, country, case_study_consent_at").eq("user_id", user.id).maybeSingle(),
         supabase.from("bookings").select("scheduled_at, status, zoom_link").eq("client_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
         supabase.from("subscriptions").select("tier, status, referral_code").eq("user_id", user.id).maybeSingle(),
@@ -73,6 +73,7 @@ export default function Dashboard() {
         supabase.from("case_studies").select("id").eq("subject_user_id", user.id).limit(1),
         supabase.from("client_practitioner").select("practitioner_id").eq("client_id", user.id).eq("active", true),
         supabase.from("profiling_photos").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("profiles").select("community_visible, profile_completed_at").eq("user_id", user.id).maybeSingle(),
       ]);
       if (profileRes.data) setProfile(profileRes.data);
       if (bookingRes.data) setBooking(bookingRes.data);
