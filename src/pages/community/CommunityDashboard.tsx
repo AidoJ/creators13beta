@@ -42,7 +42,8 @@ type CreatorOfMonth = {
   computed_at: string;
 };
 
-// Tier order for size buckets. Higher score = larger lotus.
+// Tier order for size buckets. Compressed 2.5:1 range so smaller matches still
+// register as members rather than visual placeholders.
 function sizeFor(score: number): "sm" | "md" | "lg" | "xl" {
   if (score >= 7) return "xl";
   if (score >= 5) return "lg";
