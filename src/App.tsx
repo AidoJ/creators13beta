@@ -27,6 +27,9 @@ import TermsOfService from "./pages/TermsOfService";
 import CardPreview from "./pages/CardPreview";
 import Play from "./pages/Play";
 import JoinMatch from "./pages/JoinMatch";
+import ProfileWizard from "./pages/onboarding/ProfileWizard";
+import CommunitySettings from "./pages/settings/CommunitySettings";
+import RequiresCompletedProfile from "@/components/RequiresCompletedProfile";
 import GlobalFooter from "@/components/shared/GlobalFooter";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
@@ -54,15 +57,17 @@ const App = () => (
                 <Route path="/enroll/consent" element={<ProtectedRoute><Consent /></ProtectedRoute>} />
                 <Route path="/enroll/photos" element={<ProtectedRoute><Photos /></ProtectedRoute>} />
                 <Route path="/enroll/booking" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/onboarding/profile" element={<ProtectedRoute><ProfileWizard /></ProtectedRoute>} />
+                <Route path="/settings/community" element={<ProtectedRoute><RequiresCompletedProfile><CommunitySettings /></RequiresCompletedProfile></ProtectedRoute>} />
+                <Route path="/dashboard" element={<ProtectedRoute><RequiresCompletedProfile><Dashboard /></RequiresCompletedProfile></ProtectedRoute>} />
                 <Route path="/practitioner" element={<ProtectedRoute><RoleGuard allowedRoles={["practitioner", "trainee", "trainer"]}><PractitionerDashboard /></RoleGuard></ProtectedRoute>} />
                 <Route path="/trainer" element={<ProtectedRoute><RoleGuard allowedRoles={["trainer"]}><TrainerDashboard /></RoleGuard></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute><RoleGuard allowedRoles={["trainer", "admin"]}><AdminDashboard /></RoleGuard></ProtectedRoute>} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route path="/card-preview" element={<CardPreview />} />
-                <Route path="/play" element={<ErrorBoundary><Play /></ErrorBoundary>} />
-                <Route path="/play/m/:matchId" element={<ProtectedRoute><ErrorBoundary><Play /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/play" element={<RequiresCompletedProfile><ErrorBoundary><Play /></ErrorBoundary></RequiresCompletedProfile>} />
+                <Route path="/play/m/:matchId" element={<ProtectedRoute><RequiresCompletedProfile><ErrorBoundary><Play /></ErrorBoundary></RequiresCompletedProfile></ProtectedRoute>} />
                 <Route path="/play/join/:token" element={<JoinMatch />} />
 
                 <Route path="*" element={<NotFound />} />
