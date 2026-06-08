@@ -161,12 +161,70 @@ export default function CommunitySettings() {
 
         <section className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <h2 className="font-display font-semibold text-lg">Profile</h2>
-          {avatarUrl && (
-            <div className="flex items-center gap-3">
-              <img src={avatarUrl} alt="" className="h-16 w-16 rounded-full object-cover border border-border" />
-              <p className="text-xs text-muted-foreground">To change your avatar, re-run the onboarding wizard.</p>
+          <div className="flex items-center gap-4">
+            <div className="h-20 w-20 rounded-full overflow-hidden border border-border bg-muted flex items-center justify-center flex-shrink-0">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <UserIcon className="h-9 w-9 text-muted-foreground/70" strokeWidth={1.75} />
+              )}
             </div>
-          )}
+            <div className="space-y-2">
+              <Label htmlFor="avatar_upload" className="cursor-pointer">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-border bg-card hover:bg-accent transition">
+                  {uploadingAvatar ? (
+                    <Leaf className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  {avatarUrl ? "Change photo" : "Upload photo"}
+                </span>
+              </Label>
+              <input
+                id="avatar_upload"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                disabled={uploadingAvatar}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!file || !user) return;
+                  if (file.size > 5 * 1024 * 1024) {
+                    toast({ title: "Image too large", description: "Max 5MB.", variant: "destructive" });
+                    return;
+                  }
+                  setUploadingAvatar(true);
+                  const extFromType =
+                    file.type === "image/png" ? "png" :
+                    file.type === "image/webp" ? "webp" : "jpg";
+                  const key = avatarStorageKey(user.id, extFromType);
+                  const { error: upErr } = await supabase.storage
+                    .from("profile-avatars")
+                    .upload(key, file, { upsert: true, contentType: file.type, cacheControl: "3600" });
+                  if (upErr) {
+                    setUploadingAvatar(false);
+                    toast({ title: "Upload failed", description: upErr.message, variant: "destructive" });
+                    return;
+                  }
+                  const { error: profErr } = await supabase
+                    .from("profiles")
+                    .update({ avatar_url: key } as never)
+                    .eq("user_id", user.id);
+                  if (profErr) {
+                    setUploadingAvatar(false);
+                    toast({ title: "Couldn't save avatar", description: profErr.message, variant: "destructive" });
+                    return;
+                  }
+                  const signed = await resolveAvatarUrl(key);
+                  setAvatarUrl(signed ? `${signed}#${Date.now()}` : signed);
+                  setUploadingAvatar(false);
+                  toast({ title: "Photo updated" });
+                }}
+              />
+              <p className="text-xs text-muted-foreground">JPEG, PNG or WebP. Max 5MB. Square works best.</p>
+            </div>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="display_name">Display name</Label>
             <Input id="display_name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={40} />
