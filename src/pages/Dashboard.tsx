@@ -59,6 +59,7 @@ export default function Dashboard() {
   const [creatorTypes, setCreatorTypes] = useState<string[]>([]);
   const [hasTrainerPractitioner, setHasTrainerPractitioner] = useState(false);
   const [photoCount, setPhotoCount] = useState(0);
+  const [communityVisible, setCommunityVisible] = useState(false);
 
 
   useEffect(() => {
