@@ -346,8 +346,10 @@ function findAdjacentDriverCreator(eco: Ecosystem, card: DeckCard, pos: Axial): 
  *     regular animals, Golden Body and Golden Hive cannot land there.
  *   - Golden Body is a wildcard animal; it can sit beside any non-Sky-Creator
  *     card.
- *   - For animal-to-animal / animal-to-sky-creature contact, the cards only
- *     need to share at least one Creator Type anywhere on their two halves.
+ *   - Animals / Sky Creatures need AT LEAST ONE legal neighbour: a Creator
+ *     (wildcard), a Golden card (wildcard), or another animal/sky-creature
+ *     that shares at least one Creator Type. Non-matching animal neighbours
+ *     on other sides do NOT block placement — they just aren't the anchor.
  */
 function adjacencyError(
   eco: Ecosystem,
@@ -357,41 +359,47 @@ function adjacencyError(
   // Creators (incl. Sky Creator) place anywhere.
   if (card.kind === "creator" || card.kind === "sky_creator") return null;
 
+  let sawNeighbour = false;
+  let hasAnchor = false;
   for (let dir = 0; dir < 6; dir++) {
     const d = NEIGHBOUR_DIRS[dir];
     const nKey = keyOf({ q: pos.q + d.q, r: pos.r + d.r });
     const pc = eco.placed.get(nKey);
     if (!pc) continue;
+    sawNeighbour = true;
 
-    // Sky Creator reserves its neighbour cells for Sky Creatures only.
+    // Hard veto: Sky Creator reserves its neighbour cells for Sky Creatures.
     if (pc.card.kind === "sky_creator") {
       if (card.kind !== "sky_creature") {
         return `Only Sky Creature cards can sit next to a Sky Creator.`;
       }
+      hasAnchor = true;
       continue;
     }
 
-    // Regular Creator / Golden Body / Golden Hive neighbour → wildcard.
-    if (pc.card.kind === "creator" || pc.card.kind === "golden_body" || pc.card.kind === "golden_hive") {
+    // Wildcard neighbours always count as an anchor.
+    if (
+      pc.card.kind === "creator" ||
+      pc.card.kind === "golden_body" ||
+      pc.card.kind === "golden_hive" ||
+      card.kind === "golden_body"
+    ) {
+      hasAnchor = true;
       continue;
     }
 
-    // Incoming Golden Body is a wildcard animal.
-    if (card.kind === "golden_body") continue;
-
-    // Both incoming and neighbour are animal-like. Shared-type rule:
-    // any Creator Type on the incoming card may match any Creator Type on
-    // the neighbouring animal, regardless of which halves are touching.
+    // Animal/sky-creature neighbour: anchor iff they share a Creator Type.
     if (card.kind === "animal" || card.kind === "sky_creature") {
       const myTypes = ((card.types ?? []) as string[]).filter(Boolean);
       const theirTypes = ((pc.card.types ?? []) as string[]).filter(Boolean);
-      const hit = myTypes.some((mine) =>
-        theirTypes.some((theirs) => mine.toLowerCase() === theirs.toLowerCase()),
-      );
-      if (!hit) {
-        return `${card.name} can't sit next to ${pc.card.name} — no shared Creator Type.`;
+      if (myTypes.some((mine) => theirTypes.some((t) => mine.toLowerCase() === t.toLowerCase()))) {
+        hasAnchor = true;
       }
     }
+  }
+
+  if (sawNeighbour && !hasAnchor) {
+    return `${card.name} needs at least one neighbour that shares a Creator Type (or a Creator / Golden card).`;
   }
   return null;
 }
