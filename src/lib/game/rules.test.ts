@@ -237,37 +237,22 @@ describe("classic ecosystem win validation", () => {
     expect(facingTypeLabel(bear, rotation, dirToCreator)).toBe("Soil");
   });
 
-  it("auto-pivots the third animal that makes a Sky Creator lock to a sub-type", () => {
+  it("allows placing a Sky Creature next to a Sky Creator (cells reserved for Sky Creatures)", () => {
     const sky = skyCreator();
-    const soilAnimalA = animal("soil-a", ["Fire", "Soil"]);
-    const soilAnimalB = animal("soil-b", ["Ocean", "Soil"]);
-    const soilAnimalC = animal("soil-c", ["Snow", "Soil"]);
+    const myth = skyCreature("griffin");
     const p: PlayerState = {
-      id: "p1",
-      name: "Goldie",
-      hand: [soilAnimalC],
-      hiveShield: false,
-      score: 0,
-      firstPickupDone: true,
-      ecosystem: {
-        placed: new Map([
-          ["0,0", { card: sky, pos: { q: 0, r: 0 } }],
-          ["1,0", { card: soilAnimalA, pos: { q: 1, r: 0 }, rotation: 0 }],
-          ["1,-1", { card: soilAnimalB, pos: { q: 1, r: -1 }, rotation: 0 }],
-        ]),
-      },
+      id: "p1", name: "Goldie", hand: [myth], hiveShield: false, score: 0, firstPickupDone: true,
+      ecosystem: { placed: new Map([["0,0", { card: sky, pos: { q: 0, r: 0 } }]]) },
     };
     const state: MatchState = {
       players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
       turnNumber: 1, finished: false, winnerId: null,
     };
-    const next = placeOnEcosystem(state, soilAnimalC.uid, { q: 0, r: -1 });
-    const placed = next.players[0].ecosystem.placed.get("0,-1")!;
-    const dirToSky = NEI.findIndex((d) => placed.pos.q + d.q === 0 && placed.pos.r + d.r === 0);
-
-    expect(skyLockedSubType(next.players[0].ecosystem, { q: 0, r: 0 })).toBe("Soil");
-    expect(facingTypeLabel(placed.card, placed.rotation ?? 0, dirToSky)).toBe("Soil");
+    const next = placeOnEcosystem(state, myth.uid, { q: 1, r: 0 });
+    expect(next.players[0].ecosystem.placed.has("1,0")).toBe(true);
   });
+
+
 
   it("rejects Sky Creator with no adjacent animals (no sub-type can lock)", () => {
     // Sky placed alone; the other 3 creators have their own clusters.
