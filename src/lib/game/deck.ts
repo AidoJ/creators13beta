@@ -72,12 +72,10 @@ function goldenHive(): DeckCard {
 }
 
 /**
- * Expected deck composition (audit invariant — keep in sync with the header
- * comment). Asserted at the end of `buildDeck` so silent drift in
- * `game_cards` or the special-card list trips immediately in dev/tests.
+ * Expected synthesised-card counts. The animal/sky-creature totals are
+ * derived from whatever's in `game_cards` (mythical=true => sky_creature),
+ * so adding more hand-drawn cards later does NOT require touching this file.
  */
-const EXPECTED_TOTAL = 114;
-const EXPECTED_MYTHICALS = 12; // sky_creature kind
 const EXPECTED_CREATORS = 24;  // 12 non-Sky types × 2
 const EXPECTED_SKY_CREATORS = 2;
 const EXPECTED_GOLDEN_BODY = 8;
