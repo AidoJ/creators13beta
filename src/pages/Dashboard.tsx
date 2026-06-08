@@ -153,6 +153,16 @@ export default function Dashboard() {
       <DashboardHeader email={user?.email} onSignOut={signOut} />
 
       <main className="container mx-auto px-4 py-8 max-w-5xl space-y-5">
+        {communityVisible && (
+          <div className="flex justify-end -mb-2">
+            <a
+              href="/community/dashboard"
+              className="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
+            >
+              Community Dashboard →
+            </a>
+          </div>
+        )}
         {/* GAME DASHBOARD — shown for every tier */}
         {user && (
           <GameDashboardSection
