@@ -1,14 +1,19 @@
 /**
- * Deck construction. Combines the 79 hand-drawn animal cards from the DB with
- * the synthesised Creator, Sky Creator, Golden Body and Golden Hive cards.
+ * Deck construction. Combines the hand-drawn animal cards from the DB
+ * (`game_cards`) with the synthesised Creator, Sky Creator, Golden Body and
+ * Golden Hive cards.
  *
- * Quantities (114 cards total):
- *   - 67 standard Animal Cards (the 79 minus 12 mythical -> sky_creatures)
+ * Today's quantities (114 cards total):
+ *   - 67 standard Animal Cards (current 79 minus 12 mythical -> sky_creatures)
  *   - 12 Sky Creature Cards (mythicals: Griffin, Dragon, Fairy, Unicorn, …)
  *   - 24 Creator Cards: 2 each of the 12 element-mapped Creator Types
  *   -  2 Sky Creator Cards (wildcard element)
  *   -  8 Golden Body Cards (wildcard animal)
  *   -  1 Golden Hive Card (block one disaster)
+ *
+ * Future-proof: animal + sky_creature counts derive from `game_cards`, so
+ * adding the planned +13 cards (or any other rows) requires NO code change.
+ * Special-card quantities (creator / sky_creator / golden_*) stay fixed.
  */
 
 import type { GameCard, CreatorTypeName, SpecialCard } from "@/lib/gameCards";
@@ -72,12 +77,10 @@ function goldenHive(): DeckCard {
 }
 
 /**
- * Expected deck composition (audit invariant — keep in sync with the header
- * comment). Asserted at the end of `buildDeck` so silent drift in
- * `game_cards` or the special-card list trips immediately in dev/tests.
+ * Expected synthesised-card counts. The animal/sky-creature totals are
+ * derived from whatever's in `game_cards` (mythical=true => sky_creature),
+ * so adding more hand-drawn cards later does NOT require touching this file.
  */
-const EXPECTED_TOTAL = 114;
-const EXPECTED_MYTHICALS = 12; // sky_creature kind
 const EXPECTED_CREATORS = 24;  // 12 non-Sky types × 2
 const EXPECTED_SKY_CREATORS = 2;
 const EXPECTED_GOLDEN_BODY = 8;
@@ -106,12 +109,19 @@ export function buildDeck(allCards: GameCard[], specials: SpecialCard[] = []): D
   for (let i = 0; i < 1; i++) deck.push(applySpecial(goldenHive(), ghOv));
 
   // ---- Invariant assertions ----------------------------------------------
-  // Only enforce when the caller passed the full 80-card source set. Some
-  // tests/preview pages build minimal decks from a subset of cards; in that
-  // case we just skip the asserts rather than fail loudly.
-  if (allCards.length === 79) {
+  // Skip for trivially small subsets (tests / preview pages with a handful
+  // of cards). Otherwise derive animal/sky-creature targets from the input
+  // so adding more hand-drawn cards later "just works".
+  if (allCards.length >= 20) {
+    const expectedMythicals = allCards.filter((c) => c.mythical).length;
+    const expectedAnimals = allCards.length - expectedMythicals;
+    const expectedTotal =
+      expectedAnimals + expectedMythicals + EXPECTED_CREATORS +
+      EXPECTED_SKY_CREATORS + EXPECTED_GOLDEN_BODY + EXPECTED_GOLDEN_HIVE;
+
     const counts = {
       total: deck.length,
+      animal: deck.filter((c) => c.kind === "animal").length,
       mythical: deck.filter((c) => c.kind === "sky_creature").length,
       creator: deck.filter((c) => c.kind === "creator").length,
       sky_creator: deck.filter((c) => c.kind === "sky_creator").length,
@@ -119,8 +129,9 @@ export function buildDeck(allCards: GameCard[], specials: SpecialCard[] = []): D
       golden_hive: deck.filter((c) => c.kind === "golden_hive").length,
     };
     const errors: string[] = [];
-    if (counts.total !== EXPECTED_TOTAL) errors.push(`total=${counts.total}≠${EXPECTED_TOTAL}`);
-    if (counts.mythical !== EXPECTED_MYTHICALS) errors.push(`mythical=${counts.mythical}≠${EXPECTED_MYTHICALS}`);
+    if (counts.total !== expectedTotal) errors.push(`total=${counts.total}≠${expectedTotal}`);
+    if (counts.animal !== expectedAnimals) errors.push(`animal=${counts.animal}≠${expectedAnimals}`);
+    if (counts.mythical !== expectedMythicals) errors.push(`mythical=${counts.mythical}≠${expectedMythicals}`);
     if (counts.creator !== EXPECTED_CREATORS) errors.push(`creator=${counts.creator}≠${EXPECTED_CREATORS}`);
     if (counts.sky_creator !== EXPECTED_SKY_CREATORS) errors.push(`sky_creator=${counts.sky_creator}≠${EXPECTED_SKY_CREATORS}`);
     if (counts.golden_body !== EXPECTED_GOLDEN_BODY) errors.push(`golden_body=${counts.golden_body}≠${EXPECTED_GOLDEN_BODY}`);
@@ -131,6 +142,7 @@ export function buildDeck(allCards: GameCard[], specials: SpecialCard[] = []): D
       if (import.meta.env?.DEV) throw new Error(msg);
     }
   }
+
 
   return deck;
 }
