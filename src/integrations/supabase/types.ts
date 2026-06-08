@@ -1919,6 +1919,17 @@ export type Database = {
         Returns: Json
       }
       complete_profile: { Args: { _payload: Json }; Returns: undefined }
+      compute_creator_of_the_month: {
+        Args: { _for_date?: string }
+        Returns: {
+          anchor_year: number
+          creator_type: string
+          cycle_ends_at: string
+          cycle_position: number
+          cycle_started_at: string
+          days_since_anchor: number
+        }[]
+      }
       compute_match_score: { Args: { _a: string; _b: string }; Returns: number }
       creator_type_code: {
         Args: { _lower: boolean; _type: string }
@@ -1933,6 +1944,7 @@ export type Database = {
       generate_practitioner_code:
         | { Args: never; Returns: string }
         | { Args: { _first_name?: string }; Returns: string }
+      get_creator_of_the_month: { Args: never; Returns: Json }
       get_enrollment_practitioner_options: {
         Args: { _practitioner_code?: string }
         Returns: {
@@ -2013,6 +2025,7 @@ export type Database = {
         Returns: undefined
       }
       resolve_invitation_code: { Args: { _code: string }; Returns: string }
+      update_creator_of_the_month: { Args: never; Returns: Json }
     }
     Enums: {
       app_role:
