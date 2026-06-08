@@ -32,6 +32,9 @@ const animal = (name: string, types: CreatorTypeName[]): DeckCard => ({
 
 const goldenBody = (uid: string): DeckCard => ({ uid, kind: "golden_body", name: "Golden Body" });
 const skyCreator = (): DeckCard => ({ uid: "sky-creator", kind: "sky_creator", name: "Sky Creator" });
+const skyCreature = (uid: string, types: CreatorTypeName[] = ["Sky", "Sky"]): DeckCard => ({
+  uid, kind: "sky_creature", name: uid, types: types as [CreatorTypeName, CreatorTypeName],
+});
 
 /** Build a player whose ecosystem places each creator at a hub and its 3
  *  associated animals on neighbouring hexes (so the win validator's
