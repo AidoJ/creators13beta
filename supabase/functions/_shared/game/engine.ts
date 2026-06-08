@@ -28,10 +28,10 @@ import {
   type PlacedCard,
   type PlayerState,
 } from "./types.ts";
-import { keyOf, neighbours, isAdjacent } from "./board.ts";
+import { keyOf, neighbours, isAdjacent, NEIGHBOUR_DIRS } from "./board.ts";
 import { ELEMENTS, TYPE_TO_ELEMENT, type Element } from "./elements.ts";
 
-import { bestRotationForPlacement, rotatePlacedHex } from "./rotation.ts";
+import { bestRotationForPlacement, rotatePlacedHex, facingTypeLabel } from "./rotation.ts";
 
 /* --------------------------- helpers --------------------------- */
 
@@ -176,8 +176,9 @@ export function pickFromUsed(state: MatchState): MatchState {
     throw new Error(`Hand limit reached (${HAND_LIMIT}). Play or discard cards before drawing more.`);
   }
   const top = state.used[state.used.length - 1];
-  if (top.kind === "golden_hive" && top.spent) {
-    throw new Error("That Golden Hive has been spent — it can't be picked up.");
+  if (top.spent) {
+    const label = top.kind === "golden_hive" ? "Golden Hive" : top.kind === "sky_creature" ? "Sky Creature Stealer" : top.name;
+    throw new Error(`That ${label} has been spent — it can't be picked up.`);
   }
   const next = cloneState(state);
   const popped = next.used.pop()!;
@@ -217,47 +218,12 @@ export function endTurnEarly(state: MatchState): MatchState {
 
 /* --------------------------- placement helpers --------------------------- */
 
-/** For a Sky Creator at `skyPos`, return its locked sub-type — the first
- *  non-Sky Creator Type with ≥3 adjacent matching animals. Dual-type animals
- *  count toward both tallies; Golden Bodies are wildcards assigned to
- *  whichever type needs them to reach 3. Tie-break: highest raw count, then
- *  canonical type order. Returns null if no type qualifies.
- *
- *  Important: this must inspect each adjacent animal's full Creator-Type list,
- *  not only the half currently facing Sky. Sky's type choice is what lets the
- *  board know which half should matter, so using facing-only checks creates a
- *  circular failure where valid Sky-as-Soil / Sky-as-any-type groups never lock.
- */
-export function skyLockedSubType(eco: Ecosystem, skyPos: Axial): string | null {
-  // Sky cluster (≥3 adjacent Sky Creatures) is a deferred wildcard — it never
-  // locks to a sub-type. Its element is resolved at win-check time as
-  // whichever of Earth/Fire/Air/Water is otherwise missing from the ecosystem.
-  if (isSkyCluster(eco, skyPos)) return null;
-  const CANONICAL = [
-    "Lava", "Fire", "Whirlwind", "Snow", "Lightning", "Sun",
-    "Lake", "Ocean", "Tree", "Mountain", "Soil", "River",
-  ];
-  const counts: Record<string, number> = {};
-  let golden = 0;
-  for (const n of neighbours(skyPos)) {
-    const pc = eco.placed.get(keyOf(n));
-    if (!pc) continue;
-    const k = pc.card.kind;
-    if (k === "golden_body") { golden += 1; continue; }
-    // Sky Creatures do NOT contribute to per-type lock counts — only regular
-    // animals do. This way "2 sky_creatures + 1 animal of type X" never locks
-    // Sky to X; you need either a full Sky-Creature trio (handled above) or
-    // 3 regular animals sharing a Creator Type.
-    if (k !== "animal") continue;
-    for (const t of pc.card.types ?? []) {
-      if (!t || t === "Sky") continue;
-      counts[t] = (counts[t] ?? 0) + 1;
-    }
-  }
-  const candidates = CANONICAL
-    .filter((t) => (counts[t] ?? 0) > 0 && (counts[t] ?? 0) + golden >= 3)
-    .sort((a, b) => (counts[b] ?? 0) - (counts[a] ?? 0) || CANONICAL.indexOf(a) - CANONICAL.indexOf(b));
-  return candidates[0] ?? null;
+/** Sky Creator no longer "locks" to a sub-type. Under the current rules
+ *  only Sky Creature cards may sit adjacent to a Sky Creator, so there are
+ *  no regular animals to derive a sub-type from. The function is retained
+ *  for callers that expect a string|null return, and always returns null. */
+export function skyLockedSubType(_eco: Ecosystem, _skyPos: Axial): string | null {
+  return null;
 }
 
 /** True iff this Sky Creator has 3 or more adjacent Sky Creature cards. A
@@ -373,59 +339,89 @@ function findAdjacentDriverCreator(eco: Ecosystem, card: DeckCard, pos: Axial): 
 
 /* --------------------------- adjacency match rule --------------------------- */
 
-/** Effective Creator-Type label set used for the "must touch a matching type"
- *  placement rule. Wildcards (Sky Creator, Golden Body / Hive) match anything. */
-function cardMatchTypes(card: DeckCard): { wildcard: boolean; types: string[] } {
-  if (card.kind === "sky_creator" || card.kind === "golden_body" || card.kind === "golden_hive") {
-    return { wildcard: true, types: [] };
-  }
-  if (card.kind === "creator") {
-    if (card.displayType) return { wildcard: false, types: [card.displayType] };
-    if (card.element) {
-      const all = (Object.entries(TYPE_TO_ELEMENT) as [string, string][])
-        .filter(([, el]) => el === card.element)
-        .map(([t]) => t);
-      return { wildcard: false, types: all };
-    }
-    return { wildcard: true, types: [] };
-  }
-  // animal / sky_creature
-  return { wildcard: false, types: ((card.types ?? []) as string[]).filter(Boolean) };
-}
+/** Updated rule set:
+ *   - Creator cards (regular + Sky) can be placed anywhere; they need no
+ *     type match with their neighbours.
+ *   - Sky Creator reserves every adjacent cell for Sky Creature cards only —
+ *     regular animals, Golden Body and Golden Hive cannot land there.
+ *   - Golden Body is a wildcard animal; it can sit beside any non-Sky-Creator
+ *     card.
+ *   - For animal-to-animal / animal-to-sky-creature contact, the incoming
+ *     card needs at least one of its two Creator Types to match the existing
+ *     neighbour's facing half (rotation-aware).
+ */
+function adjacencyError(
+  eco: Ecosystem,
+  card: DeckCard,
+  pos: Axial,
+): string | null {
+  // Creators (incl. Sky Creator) place anywhere.
+  if (card.kind === "creator" || card.kind === "sky_creator") return null;
 
-/** Two placed-or-incoming cards may sit beside each other only if they share
- *  at least one Creator Type (or one side is a wildcard). */
-export function cardsShareCreatorType(a: DeckCard, b: DeckCard): boolean {
-  const ta = cardMatchTypes(a);
-  const tb = cardMatchTypes(b);
-  if (ta.wildcard || tb.wildcard) return true;
-  const setB = new Set(tb.types.map((t) => t.toLowerCase()));
-  return ta.types.some((t) => setB.has(t.toLowerCase()));
-}
-
-/** Throws a friendly error if placing `card` at `pos` would touch any
- *  existing card that shares no Creator Type with it. */
-function assertAdjacencyMatches(eco: Ecosystem, card: DeckCard, pos: Axial): void {
-  for (const n of neighbours(pos)) {
-    const pc = eco.placed.get(keyOf(n));
+  for (let dir = 0; dir < 6; dir++) {
+    const d = NEIGHBOUR_DIRS[dir];
+    const nKey = keyOf({ q: pos.q + d.q, r: pos.r + d.r });
+    const pc = eco.placed.get(nKey);
     if (!pc) continue;
-    if (!cardsShareCreatorType(card, pc.card)) {
-      throw new Error(
-        `${card.name} can't sit next to ${pc.card.name} — they share no Creator Type.`,
-      );
+
+    // Sky Creator reserves its neighbour cells for Sky Creatures only.
+    if (pc.card.kind === "sky_creator") {
+      if (card.kind !== "sky_creature") {
+        return `Only Sky Creature cards can sit next to a Sky Creator.`;
+      }
+      continue;
+    }
+
+    // Regular Creator / Golden Body / Golden Hive neighbour → wildcard.
+    if (pc.card.kind === "creator" || pc.card.kind === "golden_body" || pc.card.kind === "golden_hive") {
+      continue;
+    }
+
+    // Incoming Golden Body is a wildcard animal.
+    if (card.kind === "golden_body") continue;
+
+    // Both incoming and neighbour are animal-like. Half-match rule:
+    // either of the incoming card's types must equal the neighbour's
+    // facing-half type (using its stored rotation).
+    if (card.kind === "animal" || card.kind === "sky_creature") {
+      const oppositeDir = (dir + 3) % 6;
+      const theirFacing = facingTypeLabel(pc.card, pc.rotation ?? 0, oppositeDir);
+      if (!theirFacing) continue;
+      const myTypes = ((card.types ?? []) as string[]).filter(Boolean);
+      const hit = myTypes.some((t) => t.toLowerCase() === theirFacing.toLowerCase());
+      if (!hit) {
+        return `${card.name} can't sit next to ${pc.card.name} — no shared half (${theirFacing}).`;
+      }
     }
   }
+  return null;
+}
+
+/** Throws a friendly error if `card` cannot be placed at `pos`. */
+function assertAdjacencyMatches(eco: Ecosystem, card: DeckCard, pos: Axial): void {
+  const err = adjacencyError(eco, card, pos);
+  if (err) throw new Error(err);
 }
 
 /** Returns true iff placing `card` at `pos` would respect the adjacency rule. */
 export function placementMatchesNeighbours(eco: Ecosystem, card: DeckCard, pos: Axial): boolean {
-  for (const n of neighbours(pos)) {
-    const pc = eco.placed.get(keyOf(n));
-    if (!pc) continue;
-    if (!cardsShareCreatorType(card, pc.card)) return false;
-  }
-  return true;
+  return adjacencyError(eco, card, pos) === null;
 }
+
+/** Kept for backwards compatibility (used by older callers / tests). Returns
+ *  true when the two cards could legally touch under the new rule set,
+ *  ignoring rotation-aware half-match nuance. */
+export function cardsShareCreatorType(a: DeckCard, b: DeckCard): boolean {
+  if (a.kind === "creator" || a.kind === "sky_creator") return b.kind !== "sky_creator" || a.kind === "creator" || a.kind === "sky_creator";
+  if (b.kind === "creator") return true;
+  if (b.kind === "sky_creator") return a.kind === "sky_creature";
+  if (a.kind === "golden_body" || a.kind === "golden_hive") return true;
+  if (b.kind === "golden_body" || b.kind === "golden_hive") return true;
+  const ta = ((a.types ?? []) as string[]).map((t) => t?.toLowerCase());
+  const tb = new Set(((b.types ?? []) as string[]).map((t) => t?.toLowerCase()));
+  return ta.some((t) => tb.has(t));
+}
+
 
 
 
@@ -847,34 +843,38 @@ export function playSkyCreatureSteal(
   const stolen = victim.ecosystem.placed.get(victimPosKey);
   if (!stolen) throw new Error("Target hex empty");
   const k = stolen.card.kind;
-  if (k !== "animal" && k !== "sky_creature" && k !== "golden_body") {
-    throw new Error("Sky Creatures can only steal animals");
+  if (k === "golden_body") {
+    throw new Error("Golden Body is a wildcard treasure and cannot be stolen.");
   }
+  if (k !== "animal" && k !== "sky_creature") {
+    throw new Error("Sky Creatures can only steal animals.");
+  }
+  if (!placeAt) {
+    throw new Error("Pick a hex on your own board to place the stolen animal.");
+  }
+
+  const legal = legalEcoCells(player.ecosystem);
+  if (!legal.some((c) => c.q === placeAt.q && c.r === placeAt.r)) {
+    throw new Error("Pick a glowing hex on your own board to place the stolen card.");
+  }
+  assertAdjacencyMatches(player.ecosystem, stolen.card, placeAt);
 
   player.hand.splice(idx, 1);
-  next.used.push(sky);
+  // Sky Creature played as a Stealer goes to the used pile FLAGGED SPENT so
+  // no other player can pick it up.
+  next.used.push({ ...sky, spent: true });
   victim.ecosystem.placed.delete(victimPosKey);
 
-  if (placeAt) {
-    const legal = legalEcoCells(player.ecosystem);
-    if (!legal.some((c) => c.q === placeAt.q && c.r === placeAt.r)) {
-      throw new Error("Pick a glowing hex on your own board to place the stolen card.");
-    }
-    assertAdjacencyMatches(player.ecosystem, stolen.card, placeAt);
+  const driverCreator = findAdjacentDriverCreator(player.ecosystem, stolen.card, placeAt);
+  const rotation = bestRotationForPlacement(player.ecosystem, stolen.card, placeAt, {
+    restrictTo: "creator-only",
+    driverPos: driverCreator?.pos,
+  });
+  player.ecosystem.placed.set(keyOf(placeAt), { card: stolen.card, pos: placeAt, rotation });
+  repivotSkyLockNeighbours(player.ecosystem, placeAt);
+  player.score += 1;
+  next.lastEvent = `${player.name} stole ${stolen.card.name} from ${victim.name} and placed it`;
 
-    const driverCreator = findAdjacentDriverCreator(player.ecosystem, stolen.card, placeAt);
-    const rotation = bestRotationForPlacement(player.ecosystem, stolen.card, placeAt, {
-      restrictTo: "creator-only",
-      driverPos: driverCreator?.pos,
-    });
-    player.ecosystem.placed.set(keyOf(placeAt), { card: stolen.card, pos: placeAt, rotation });
-    repivotSkyLockNeighbours(player.ecosystem, placeAt);
-    player.score += 1;
-    next.lastEvent = `${player.name} stole ${stolen.card.name} from ${victim.name} and placed it`;
-  } else {
-    player.hand.push(stolen.card);
-    next.lastEvent = `${player.name} stole ${stolen.card.name} from ${victim.name}`;
-  }
 
   next.placedThisTurn += 1;
   return afterAction(next);
