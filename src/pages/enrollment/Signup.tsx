@@ -118,9 +118,18 @@ export default function Signup() {
     }
     setCreatedUserId(userId);
 
-    // Save phone to profile for player signups
-    if (isPlayer && phone.trim()) {
-      await supabase.from("profiles").update({ phone: phone.trim() }).eq("user_id", userId);
+    // Save phone + referrer to profile.
+    const refCode = (params.get("ref") || "").trim();
+    let invitedBy: string | null = null;
+    if (refCode) {
+      const { data: refUser } = await supabase.rpc("resolve_invitation_code", { _code: refCode });
+      if (refUser) invitedBy = refUser as unknown as string;
+    }
+    const profilePatch: Record<string, unknown> = {};
+    if (isPlayer && phone.trim()) profilePatch.phone = phone.trim();
+    if (invitedBy) profilePatch.invited_by_user_id = invitedBy;
+    if (Object.keys(profilePatch).length > 0) {
+      await supabase.from("profiles").update(profilePatch as never).eq("user_id", userId);
     }
 
     // 2. Call the edge function to create all DB records (role, subscription, profile update)

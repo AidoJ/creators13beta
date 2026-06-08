@@ -1243,6 +1243,9 @@ export type Database = {
           address_line1: string | null
           address_line2: string | null
           avatar_url: string | null
+          bio_intriguing: string | null
+          bio_superpower: string | null
+          bio_where_i_live: string | null
           case_study_consent_at: string | null
           city: string | null
           community_joined_at: string | null
@@ -1257,6 +1260,7 @@ export type Database = {
           gender: string | null
           height_cm: number | null
           id: string
+          invitation_code: string
           invited_by_user_id: string | null
           last_name: string | null
           location_label: string | null
@@ -1270,6 +1274,7 @@ export type Database = {
           practitioner_status:
             | Database["public"]["Enums"]["practitioner_status"]
             | null
+          profile_completed_at: string | null
           pronouns: string | null
           shoe_size: string | null
           state: string | null
@@ -1282,6 +1287,9 @@ export type Database = {
           address_line1?: string | null
           address_line2?: string | null
           avatar_url?: string | null
+          bio_intriguing?: string | null
+          bio_superpower?: string | null
+          bio_where_i_live?: string | null
           case_study_consent_at?: string | null
           city?: string | null
           community_joined_at?: string | null
@@ -1298,6 +1306,7 @@ export type Database = {
           gender?: string | null
           height_cm?: number | null
           id?: string
+          invitation_code?: string
           invited_by_user_id?: string | null
           last_name?: string | null
           location_label?: string | null
@@ -1311,6 +1320,7 @@ export type Database = {
           practitioner_status?:
             | Database["public"]["Enums"]["practitioner_status"]
             | null
+          profile_completed_at?: string | null
           pronouns?: string | null
           shoe_size?: string | null
           state?: string | null
@@ -1323,6 +1333,9 @@ export type Database = {
           address_line1?: string | null
           address_line2?: string | null
           avatar_url?: string | null
+          bio_intriguing?: string | null
+          bio_superpower?: string | null
+          bio_where_i_live?: string | null
           case_study_consent_at?: string | null
           city?: string | null
           community_joined_at?: string | null
@@ -1339,6 +1352,7 @@ export type Database = {
           gender?: string | null
           height_cm?: number | null
           id?: string
+          invitation_code?: string
           invited_by_user_id?: string | null
           last_name?: string | null
           location_label?: string | null
@@ -1352,6 +1366,7 @@ export type Database = {
           practitioner_status?:
             | Database["public"]["Enums"]["practitioner_status"]
             | null
+          profile_completed_at?: string | null
           pronouns?: string | null
           shoe_size?: string | null
           state?: string | null
@@ -1867,6 +1882,7 @@ export type Database = {
         }
         Returns: Json
       }
+      complete_profile: { Args: { _payload: Json }; Returns: undefined }
       creator_type_code: {
         Args: { _lower: boolean; _type: string }
         Returns: string
@@ -1876,6 +1892,7 @@ export type Database = {
         Returns: boolean
       }
       finalise_ranked_match: { Args: { _match_id: string }; Returns: undefined }
+      generate_invitation_code: { Args: never; Returns: string }
       generate_practitioner_code:
         | { Args: never; Returns: string }
         | { Args: { _first_name?: string }; Returns: string }
@@ -1926,6 +1943,7 @@ export type Database = {
         Args: { _token: string }
         Returns: undefined
       }
+      resolve_invitation_code: { Args: { _code: string }; Returns: string }
     }
     Enums: {
       app_role:
