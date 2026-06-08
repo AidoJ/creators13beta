@@ -131,6 +131,12 @@ export default function MemberProfile() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
       <main className="container mx-auto max-w-2xl px-4 py-10 space-y-6">
+        <Button asChild variant="ghost" size="sm" className="-ml-2">
+          <Link to="/community/dashboard">
+            <ArrowLeft className="h-4 w-4 mr-1.5" />
+            Back to Community
+          </Link>
+        </Button>
         <header className="flex flex-col items-center text-center gap-4">
           <LotusProfile
             avatarUrl={resolvedAvatar}
