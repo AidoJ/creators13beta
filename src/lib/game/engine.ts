@@ -215,47 +215,12 @@ export function endTurnEarly(state: MatchState): MatchState {
 
 /* --------------------------- placement helpers --------------------------- */
 
-/** For a Sky Creator at `skyPos`, return its locked sub-type — the first
- *  non-Sky Creator Type with ≥3 adjacent matching animals. Dual-type animals
- *  count toward both tallies; Golden Bodies are wildcards assigned to
- *  whichever type needs them to reach 3. Tie-break: highest raw count, then
- *  canonical type order. Returns null if no type qualifies.
- *
- *  Important: this must inspect each adjacent animal's full Creator-Type list,
- *  not only the half currently facing Sky. Sky's type choice is what lets the
- *  board know which half should matter, so using facing-only checks creates a
- *  circular failure where valid Sky-as-Soil / Sky-as-any-type groups never lock.
- */
-export function skyLockedSubType(eco: Ecosystem, skyPos: Axial): string | null {
-  // Sky cluster (≥3 adjacent Sky Creatures) is a deferred wildcard — it never
-  // locks to a sub-type. Its element is resolved at win-check time as
-  // whichever of Earth/Fire/Air/Water is otherwise missing from the ecosystem.
-  if (isSkyCluster(eco, skyPos)) return null;
-  const CANONICAL = [
-    "Lava", "Fire", "Whirlwind", "Snow", "Lightning", "Sun",
-    "Lake", "Ocean", "Tree", "Mountain", "Soil", "River",
-  ];
-  const counts: Record<string, number> = {};
-  let golden = 0;
-  for (const n of neighbours(skyPos)) {
-    const pc = eco.placed.get(keyOf(n));
-    if (!pc) continue;
-    const k = pc.card.kind;
-    if (k === "golden_body") { golden += 1; continue; }
-    // Sky Creatures do NOT contribute to per-type lock counts — only regular
-    // animals do. This way "2 sky_creatures + 1 animal of type X" never locks
-    // Sky to X; you need either a full Sky-Creature trio (handled above) or
-    // 3 regular animals sharing a Creator Type.
-    if (k !== "animal") continue;
-    for (const t of pc.card.types ?? []) {
-      if (!t || t === "Sky") continue;
-      counts[t] = (counts[t] ?? 0) + 1;
-    }
-  }
-  const candidates = CANONICAL
-    .filter((t) => (counts[t] ?? 0) > 0 && (counts[t] ?? 0) + golden >= 3)
-    .sort((a, b) => (counts[b] ?? 0) - (counts[a] ?? 0) || CANONICAL.indexOf(a) - CANONICAL.indexOf(b));
-  return candidates[0] ?? null;
+/** Sky Creator no longer "locks" to a sub-type. Under the current rules
+ *  only Sky Creature cards may sit adjacent to a Sky Creator, so there are
+ *  no regular animals to derive a sub-type from. The function is retained
+ *  for callers that expect a string|null return, and always returns null. */
+export function skyLockedSubType(_eco: Ecosystem, _skyPos: Axial): string | null {
+  return null;
 }
 
 /** True iff this Sky Creator has 3 or more adjacent Sky Creature cards. A
