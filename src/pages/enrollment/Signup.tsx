@@ -177,6 +177,27 @@ export default function Signup() {
     }
 
     setLoading(false);
+
+    // Some environments auto-confirm email signups. In that case no verification
+    // email is sent, so continue immediately instead of showing a misleading
+    // "check your email" step.
+    if (authData.session || authData.user?.email_confirmed_at) {
+      if (isPlayer) {
+        navigate("/dashboard");
+        return;
+      }
+      const nextParams = new URLSearchParams({ tier, billing });
+      nextParams.set("uid", userId);
+      nextParams.set("email", email);
+      if (caseStudy) {
+        nextParams.set("case_study", "true");
+        nextParams.set("practitioner_code", practitionerCode);
+        if (inviteToken) nextParams.set("invite", inviteToken);
+      }
+      navigate(tier === "wren" ? `/enroll/practitioner?${nextParams.toString()}` : `/enroll/payment?${nextParams.toString()}`);
+      return;
+    }
+
     setShowVerification(true);
   };
 
