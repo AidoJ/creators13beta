@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { getRequiredEnrollmentPath, loadEnrollmentState } from "@/lib/enrollmentGate";
 import { Leaf } from "lucide-react";
 
 /**
@@ -10,10 +11,10 @@ import { Leaf } from "lucide-react";
  *
  * Logic:
  *   - Not signed in              → let through (ProtectedRoute handles auth)
+ *   - Staff (practitioner/trainer/admin) → let through
  *   - profile_completed_at set   → let through
- *   - enrollment_step is "in flight" (not NULL and not 'complete')
- *                                → let through (paid funnel finishes first)
- *   - otherwise                  → redirect to /onboarding/profile
+ *   - Enrollment funnel still has a required step (paid funnel pages) → let through
+ *   - Otherwise                  → redirect to /onboarding/profile
  */
 export function RequiresCompletedProfile({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
@@ -30,16 +31,27 @@ export function RequiresCompletedProfile({ children }: { children: ReactNode }) 
     }
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("profile_completed_at, enrollment_step")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const [profileRes, state] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("profile_completed_at")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        loadEnrollmentState(user.id),
+      ]);
       if (cancelled) return;
-      const completed = !!data?.profile_completed_at;
-      const step = data?.enrollment_step ?? null;
-      const midPaidFunnel = step !== null && step !== "complete";
-      setNeedsWizard(!completed && !midPaidFunnel);
+      const completed = !!profileRes.data?.profile_completed_at;
+      // Staff bypass the wizard entirely.
+      if (state.isStaff) {
+        setNeedsWizard(false);
+        setChecking(false);
+        return;
+      }
+      // If the paid-funnel enrollment still has steps left, let through —
+      // useEnrollmentGate on those pages will redirect appropriately.
+      const required = getRequiredEnrollmentPath(state);
+      const midFunnel = required !== null;
+      setNeedsWizard(!completed && !midFunnel);
       setChecking(false);
     })();
     return () => { cancelled = true; };
