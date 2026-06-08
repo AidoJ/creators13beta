@@ -59,12 +59,13 @@ export default function Dashboard() {
   const [creatorTypes, setCreatorTypes] = useState<string[]>([]);
   const [hasTrainerPractitioner, setHasTrainerPractitioner] = useState(false);
   const [photoCount, setPhotoCount] = useState(0);
+  const [communityVisible, setCommunityVisible] = useState(false);
 
 
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      const [profileRes, bookingRes, subRes, ctpRes, csRes, cpRes, photosRes] = await Promise.all([
+      const [profileRes, bookingRes, subRes, ctpRes, csRes, cpRes, photosRes, visRes] = await Promise.all([
         supabase.from("profiles").select("first_name, last_name, enrollment_step, date_of_birth, gender, pronouns, height_cm, shoe_size, phone, city, state, country, case_study_consent_at").eq("user_id", user.id).maybeSingle(),
         supabase.from("bookings").select("scheduled_at, status, zoom_link").eq("client_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
         supabase.from("subscriptions").select("tier, status, referral_code").eq("user_id", user.id).maybeSingle(),
@@ -72,10 +73,12 @@ export default function Dashboard() {
         supabase.from("case_studies").select("id").eq("subject_user_id", user.id).limit(1),
         supabase.from("client_practitioner").select("practitioner_id").eq("client_id", user.id).eq("active", true),
         supabase.from("profiling_photos").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("profiles").select("community_visible, profile_completed_at").eq("user_id", user.id).maybeSingle(),
       ]);
       if (profileRes.data) setProfile(profileRes.data);
       if (bookingRes.data) setBooking(bookingRes.data);
       setPhotoCount(photosRes.count || 0);
+      setCommunityVisible(!!(visRes.data?.community_visible && visRes.data?.profile_completed_at));
       if (subRes.data) setSubscription(subRes.data as SubData);
       const hasCsRecord = !!(csRes.data && csRes.data.length > 0);
       const hasConsent = !!profileRes.data?.case_study_consent_at;
@@ -150,6 +153,16 @@ export default function Dashboard() {
       <DashboardHeader email={user?.email} onSignOut={signOut} />
 
       <main className="container mx-auto px-4 py-8 max-w-5xl space-y-5">
+        {communityVisible && (
+          <div className="flex justify-end -mb-2">
+            <a
+              href="/community/dashboard"
+              className="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
+            >
+              Community Dashboard →
+            </a>
+          </div>
+        )}
         {/* GAME DASHBOARD — shown for every tier */}
         {user && (
           <GameDashboardSection
