@@ -1865,6 +1865,10 @@ export type Database = {
         Args: { _lower: boolean; _type: string }
         Returns: string
       }
+      creator_type_profile_exists_for: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       finalise_ranked_match: { Args: { _match_id: string }; Returns: undefined }
       generate_practitioner_code:
         | { Args: never; Returns: string }
