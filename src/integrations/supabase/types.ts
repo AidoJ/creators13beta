@@ -391,6 +391,7 @@ export type Database = {
           profiled_by: string | null
           profiling_data: Json | null
           secondary_type: string | null
+          source: string
           type_3: string | null
           type_4: string | null
           updated_at: string
@@ -404,6 +405,7 @@ export type Database = {
           profiled_by?: string | null
           profiling_data?: Json | null
           secondary_type?: string | null
+          source?: string
           type_3?: string | null
           type_4?: string | null
           updated_at?: string
@@ -417,6 +419,7 @@ export type Database = {
           profiled_by?: string | null
           profiling_data?: Json | null
           secondary_type?: string | null
+          source?: string
           type_3?: string | null
           type_4?: string | null
           updated_at?: string
@@ -997,6 +1000,44 @@ export type Database = {
           },
         ]
       }
+      member_animals: {
+        Row: {
+          card_slug: string
+          created_at: string
+          hidden: boolean
+          id: string
+          pinned: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_slug: string
+          created_at?: string
+          hidden?: boolean
+          id?: string
+          pinned?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_slug?: string
+          created_at?: string
+          hidden?: boolean
+          id?: string
+          pinned?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_animals_card_slug_fkey"
+            columns: ["card_slug"]
+            isOneToOne: false
+            referencedRelation: "game_cards"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       modules: {
         Row: {
           course_id: string
@@ -1204,6 +1245,7 @@ export type Database = {
           avatar_url: string | null
           case_study_consent_at: string | null
           city: string | null
+          community_visible: boolean
           country: string | null
           created_at: string
           date_of_birth: string | null
@@ -1214,7 +1256,11 @@ export type Database = {
           gender: string | null
           height_cm: number | null
           id: string
+          invited_by_user_id: string | null
           last_name: string | null
+          location_label: string | null
+          location_lat: number | null
+          location_lng: number | null
           medical_history: string | null
           phone: string | null
           postal_code: string | null
@@ -1236,6 +1282,7 @@ export type Database = {
           avatar_url?: string | null
           case_study_consent_at?: string | null
           city?: string | null
+          community_visible?: boolean
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -1248,7 +1295,11 @@ export type Database = {
           gender?: string | null
           height_cm?: number | null
           id?: string
+          invited_by_user_id?: string | null
           last_name?: string | null
+          location_label?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
           medical_history?: string | null
           phone?: string | null
           postal_code?: string | null
@@ -1270,6 +1321,7 @@ export type Database = {
           avatar_url?: string | null
           case_study_consent_at?: string | null
           city?: string | null
+          community_visible?: boolean
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -1282,7 +1334,11 @@ export type Database = {
           gender?: string | null
           height_cm?: number | null
           id?: string
+          invited_by_user_id?: string | null
           last_name?: string | null
+          location_label?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
           medical_history?: string | null
           phone?: string | null
           postal_code?: string | null
@@ -1417,6 +1473,27 @@ export type Database = {
           tier?: Database["public"]["Enums"]["subscription_tier"]
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      system_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
         }
         Relationships: []
       }
