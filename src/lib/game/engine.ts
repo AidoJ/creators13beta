@@ -174,8 +174,9 @@ export function pickFromUsed(state: MatchState): MatchState {
     throw new Error(`Hand limit reached (${HAND_LIMIT}). Play or discard cards before drawing more.`);
   }
   const top = state.used[state.used.length - 1];
-  if (top.kind === "golden_hive" && top.spent) {
-    throw new Error("That Golden Hive has been spent — it can't be picked up.");
+  if (top.spent) {
+    const label = top.kind === "golden_hive" ? "Golden Hive" : top.kind === "sky_creature" ? "Sky Creature Stealer" : top.name;
+    throw new Error(`That ${label} has been spent — it can't be picked up.`);
   }
   const next = cloneState(state);
   const popped = next.used.pop()!;
