@@ -38,7 +38,10 @@ export function RequiresCompletedProfile({ children }: { children: ReactNode }) 
       if (cancelled) return;
       const completed = !!data?.profile_completed_at;
       const step = data?.enrollment_step ?? null;
-      const midPaidFunnel = step !== null && step !== "complete";
+      // "In flight" means actively past the default plan-selection step but not done.
+      // The default 'plan_selected' value applies to every new profile, so excluding
+      // it here is what makes the wizard gate actually fire.
+      const midPaidFunnel = step !== null && step !== "complete" && step !== "plan_selected";
       setNeedsWizard(!completed && !midPaidFunnel);
       setChecking(false);
     })();
