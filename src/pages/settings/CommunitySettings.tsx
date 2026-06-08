@@ -8,9 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Leaf, ArrowLeft, Check } from "lucide-react";
+import { Leaf, ArrowLeft, Check, Upload, User as UserIcon } from "lucide-react";
 import { CREATOR_TYPE_NAMES, CREATOR_TYPE_COLORS } from "@/lib/creatorTypes";
-import { resolveAvatarUrl } from "@/lib/avatar";
+import { resolveAvatarUrl, avatarStorageKey } from "@/lib/avatar";
 
 export default function CommunitySettings() {
   const { user, loading: authLoading } = useAuth();
