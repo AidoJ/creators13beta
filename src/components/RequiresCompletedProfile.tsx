@@ -47,6 +47,14 @@ export function RequiresCompletedProfile({ children }: { children: ReactNode }) 
         setChecking(false);
         return;
       }
+      // Only users who signed up via the community path are gated by the
+      // community wizard. Paid-funnel users, player-only users, and any
+      // legacy user without an explicit community signup_path go through.
+      if (state.signupPath !== "community") {
+        setNeedsWizard(false);
+        setChecking(false);
+        return;
+      }
       // If the paid-funnel enrollment still has steps left, let through —
       // useEnrollmentGate on those pages will redirect appropriately.
       const required = getRequiredEnrollmentPath(state);
