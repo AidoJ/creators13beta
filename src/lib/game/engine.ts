@@ -336,59 +336,89 @@ function findAdjacentDriverCreator(eco: Ecosystem, card: DeckCard, pos: Axial): 
 
 /* --------------------------- adjacency match rule --------------------------- */
 
-/** Effective Creator-Type label set used for the "must touch a matching type"
- *  placement rule. Wildcards (Sky Creator, Golden Body / Hive) match anything. */
-function cardMatchTypes(card: DeckCard): { wildcard: boolean; types: string[] } {
-  if (card.kind === "sky_creator" || card.kind === "golden_body" || card.kind === "golden_hive") {
-    return { wildcard: true, types: [] };
-  }
-  if (card.kind === "creator") {
-    if (card.displayType) return { wildcard: false, types: [card.displayType] };
-    if (card.element) {
-      const all = (Object.entries(TYPE_TO_ELEMENT) as [string, string][])
-        .filter(([, el]) => el === card.element)
-        .map(([t]) => t);
-      return { wildcard: false, types: all };
-    }
-    return { wildcard: true, types: [] };
-  }
-  // animal / sky_creature
-  return { wildcard: false, types: ((card.types ?? []) as string[]).filter(Boolean) };
-}
+/** Updated rule set:
+ *   - Creator cards (regular + Sky) can be placed anywhere; they need no
+ *     type match with their neighbours.
+ *   - Sky Creator reserves every adjacent cell for Sky Creature cards only —
+ *     regular animals, Golden Body and Golden Hive cannot land there.
+ *   - Golden Body is a wildcard animal; it can sit beside any non-Sky-Creator
+ *     card.
+ *   - For animal-to-animal / animal-to-sky-creature contact, the incoming
+ *     card needs at least one of its two Creator Types to match the existing
+ *     neighbour's facing half (rotation-aware).
+ */
+function adjacencyError(
+  eco: Ecosystem,
+  card: DeckCard,
+  pos: Axial,
+): string | null {
+  // Creators (incl. Sky Creator) place anywhere.
+  if (card.kind === "creator" || card.kind === "sky_creator") return null;
 
-/** Two placed-or-incoming cards may sit beside each other only if they share
- *  at least one Creator Type (or one side is a wildcard). */
-export function cardsShareCreatorType(a: DeckCard, b: DeckCard): boolean {
-  const ta = cardMatchTypes(a);
-  const tb = cardMatchTypes(b);
-  if (ta.wildcard || tb.wildcard) return true;
-  const setB = new Set(tb.types.map((t) => t.toLowerCase()));
-  return ta.types.some((t) => setB.has(t.toLowerCase()));
-}
-
-/** Throws a friendly error if placing `card` at `pos` would touch any
- *  existing card that shares no Creator Type with it. */
-function assertAdjacencyMatches(eco: Ecosystem, card: DeckCard, pos: Axial): void {
-  for (const n of neighbours(pos)) {
-    const pc = eco.placed.get(keyOf(n));
+  for (let dir = 0; dir < 6; dir++) {
+    const d = NEIGHBOUR_DIRS[dir];
+    const nKey = keyOf({ q: pos.q + d.q, r: pos.r + d.r });
+    const pc = eco.placed.get(nKey);
     if (!pc) continue;
-    if (!cardsShareCreatorType(card, pc.card)) {
-      throw new Error(
-        `${card.name} can't sit next to ${pc.card.name} — they share no Creator Type.`,
-      );
+
+    // Sky Creator reserves its neighbour cells for Sky Creatures only.
+    if (pc.card.kind === "sky_creator") {
+      if (card.kind !== "sky_creature") {
+        return `Only Sky Creature cards can sit next to a Sky Creator.`;
+      }
+      continue;
+    }
+
+    // Regular Creator / Golden Body / Golden Hive neighbour → wildcard.
+    if (pc.card.kind === "creator" || pc.card.kind === "golden_body" || pc.card.kind === "golden_hive") {
+      continue;
+    }
+
+    // Incoming Golden Body is a wildcard animal.
+    if (card.kind === "golden_body") continue;
+
+    // Both incoming and neighbour are animal-like. Half-match rule:
+    // either of the incoming card's types must equal the neighbour's
+    // facing-half type (using its stored rotation).
+    if (card.kind === "animal" || card.kind === "sky_creature") {
+      const oppositeDir = (dir + 3) % 6;
+      const theirFacing = facingTypeLabel(pc.card, pc.rotation ?? 0, oppositeDir);
+      if (!theirFacing) continue;
+      const myTypes = ((card.types ?? []) as string[]).filter(Boolean);
+      const hit = myTypes.some((t) => t.toLowerCase() === theirFacing.toLowerCase());
+      if (!hit) {
+        return `${card.name} can't sit next to ${pc.card.name} — no shared half (${theirFacing}).`;
+      }
     }
   }
+  return null;
+}
+
+/** Throws a friendly error if `card` cannot be placed at `pos`. */
+function assertAdjacencyMatches(eco: Ecosystem, card: DeckCard, pos: Axial): void {
+  const err = adjacencyError(eco, card, pos);
+  if (err) throw new Error(err);
 }
 
 /** Returns true iff placing `card` at `pos` would respect the adjacency rule. */
 export function placementMatchesNeighbours(eco: Ecosystem, card: DeckCard, pos: Axial): boolean {
-  for (const n of neighbours(pos)) {
-    const pc = eco.placed.get(keyOf(n));
-    if (!pc) continue;
-    if (!cardsShareCreatorType(card, pc.card)) return false;
-  }
-  return true;
+  return adjacencyError(eco, card, pos) === null;
 }
+
+/** Kept for backwards compatibility (used by older callers / tests). Returns
+ *  true when the two cards could legally touch under the new rule set,
+ *  ignoring rotation-aware half-match nuance. */
+export function cardsShareCreatorType(a: DeckCard, b: DeckCard): boolean {
+  if (a.kind === "creator" || a.kind === "sky_creator") return b.kind !== "sky_creator" || a.kind === "creator" || a.kind === "sky_creator";
+  if (b.kind === "creator") return true;
+  if (b.kind === "sky_creator") return a.kind === "sky_creature";
+  if (a.kind === "golden_body" || a.kind === "golden_hive") return true;
+  if (b.kind === "golden_body" || b.kind === "golden_hive") return true;
+  const ta = ((a.types ?? []) as string[]).map((t) => t?.toLowerCase());
+  const tb = new Set(((b.types ?? []) as string[]).map((t) => t?.toLowerCase()));
+  return ta.some((t) => tb.has(t));
+}
+
 
 
 
