@@ -33,6 +33,16 @@ export default function PlayerDashboard({ userId, email, firstName, onSignOut }:
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
       <DashboardHeader email={email} onSignOut={onSignOut} />
       <main className="container mx-auto px-4 py-8 max-w-5xl space-y-5">
+        {communityVisible && (
+          <div className="flex justify-end -mb-2">
+            <a
+              href="/community/dashboard"
+              className="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
+            >
+              Community Dashboard →
+            </a>
+          </div>
+        )}
         <GameDashboardSection
           userId={userId}
           firstName={firstName}
