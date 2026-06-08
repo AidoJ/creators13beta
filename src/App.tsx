@@ -32,6 +32,10 @@ import CommunitySettings from "./pages/settings/CommunitySettings";
 import RequiresCompletedProfile from "@/components/RequiresCompletedProfile";
 import GlobalFooter from "@/components/shared/GlobalFooter";
 import ErrorBoundary from "@/components/ErrorBoundary";
+const MemberProfile = lazy(() => import("./pages/member/MemberProfile"));
+const LotusPreview = import.meta.env.DEV
+  ? lazy(() => import("./pages/_preview/LotusPreview"))
+  : null;
 
 
 const queryClient = new QueryClient();
@@ -69,6 +73,28 @@ const App = () => (
                 <Route path="/play" element={<RequiresCompletedProfile><ErrorBoundary><Play /></ErrorBoundary></RequiresCompletedProfile>} />
                 <Route path="/play/m/:matchId" element={<ProtectedRoute><RequiresCompletedProfile><ErrorBoundary><Play /></ErrorBoundary></RequiresCompletedProfile></ProtectedRoute>} />
                 <Route path="/play/join/:token" element={<JoinMatch />} />
+                <Route
+                  path="/member/:userId"
+                  element={
+                    <ProtectedRoute>
+                      <RequiresCompletedProfile>
+                        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
+                          <MemberProfile />
+                        </Suspense>
+                      </RequiresCompletedProfile>
+                    </ProtectedRoute>
+                  }
+                />
+                {LotusPreview && (
+                  <Route
+                    path="/_preview/lotus"
+                    element={
+                      <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
+                        <LotusPreview />
+                      </Suspense>
+                    }
+                  />
+                )}
 
                 <Route path="*" element={<NotFound />} />
               </Routes>
