@@ -32,6 +32,10 @@ import CommunitySettings from "./pages/settings/CommunitySettings";
 import RequiresCompletedProfile from "@/components/RequiresCompletedProfile";
 import GlobalFooter from "@/components/shared/GlobalFooter";
 import ErrorBoundary from "@/components/ErrorBoundary";
+const MemberProfile = lazy(() => import("./pages/member/MemberProfile"));
+const LotusPreview = import.meta.env.DEV
+  ? lazy(() => import("./pages/_preview/LotusPreview"))
+  : null;
 
 
 const queryClient = new QueryClient();
