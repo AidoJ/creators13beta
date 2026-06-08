@@ -78,6 +78,7 @@ export default function Dashboard() {
       if (profileRes.data) setProfile(profileRes.data);
       if (bookingRes.data) setBooking(bookingRes.data);
       setPhotoCount(photosRes.count || 0);
+      setCommunityVisible(!!(visRes.data?.community_visible && visRes.data?.profile_completed_at));
       if (subRes.data) setSubscription(subRes.data as SubData);
       const hasCsRecord = !!(csRes.data && csRes.data.length > 0);
       const hasConsent = !!profileRes.data?.case_study_consent_at;
