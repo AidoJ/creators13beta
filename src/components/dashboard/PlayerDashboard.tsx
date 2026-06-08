@@ -15,16 +15,17 @@ interface Props {
 
 export default function PlayerDashboard({ userId, email, firstName, onSignOut }: Props) {
   const [tierLabel, setTierLabel] = useState<string>("Player");
+  const [communityVisible, setCommunityVisible] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("tier, signup_path")
-        .eq("user_id", userId)
-        .maybeSingle();
+      const [{ data }, { data: prof }] = await Promise.all([
+        supabase.from("subscriptions").select("tier, signup_path").eq("user_id", userId).maybeSingle(),
+        supabase.from("profiles").select("community_visible, profile_completed_at").eq("user_id", userId).maybeSingle(),
+      ]);
       if (data?.signup_path === "player") setTierLabel("Player");
       else if (data?.tier) setTierLabel(data.tier.charAt(0).toUpperCase() + data.tier.slice(1));
+      setCommunityVisible(!!(prof?.community_visible && prof?.profile_completed_at));
     })();
   }, [userId]);
 
