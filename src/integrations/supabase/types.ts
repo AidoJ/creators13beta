@@ -1306,7 +1306,7 @@ export type Database = {
           gender?: string | null
           height_cm?: number | null
           id?: string
-          invitation_code: string
+          invitation_code?: string
           invited_by_user_id?: string | null
           last_name?: string | null
           location_label?: string | null
