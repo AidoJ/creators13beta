@@ -197,8 +197,8 @@ describe("classic ecosystem win validation", () => {
   });
 
   it("allows animal neighbours when they share a Creator Type anywhere on the card", () => {
-    const otter = animal("otter", ["Ocean", "River"]);
-    const duck = animal("duck", ["Lake", "River"]);
+    const otter = animal("otter", ["Fire", "River"]);
+    const duck = animal("duck", ["Snow", "River"]);
     const p: PlayerState = {
       id: "p1", name: "Goldie", hand: [duck], hiveShield: false, score: 0, firstPickupDone: true,
       ecosystem: { placed: new Map([["0,0", { card: otter, pos: { q: 0, r: 0 }, rotation: 0 }]]) },
