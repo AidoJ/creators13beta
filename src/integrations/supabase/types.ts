@@ -382,6 +382,21 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_type_family_map: {
+        Row: {
+          creator_type: string
+          family: string
+        }
+        Insert: {
+          creator_type: string
+          family: string
+        }
+        Update: {
+          creator_type?: string
+          family?: string
+        }
+        Relationships: []
+      }
       creator_type_profiles: {
         Row: {
           created_at: string
@@ -1037,6 +1052,27 @@ export type Database = {
             referencedColumns: ["slug"]
           },
         ]
+      }
+      member_match_scores: {
+        Row: {
+          computed_at: string
+          member_a_id: string
+          member_b_id: string
+          score: number
+        }
+        Insert: {
+          computed_at?: string
+          member_a_id: string
+          member_b_id: string
+          score: number
+        }
+        Update: {
+          computed_at?: string
+          member_a_id?: string
+          member_b_id?: string
+          score?: number
+        }
+        Relationships: []
       }
       modules: {
         Row: {
@@ -1883,6 +1919,7 @@ export type Database = {
         Returns: Json
       }
       complete_profile: { Args: { _payload: Json }; Returns: undefined }
+      compute_match_score: { Args: { _a: string; _b: string }; Returns: number }
       creator_type_code: {
         Args: { _lower: boolean; _type: string }
         Returns: string
@@ -1913,6 +1950,19 @@ export type Database = {
         }[]
       }
       get_match_state: { Args: { _match_id: string }; Returns: Json }
+      get_my_top_matches: {
+        Args: { _limit?: number }
+        Returns: {
+          avatar_url: string
+          community_joined_at: string
+          creator_types: Json
+          display_name: string
+          location_label: string
+          score: number
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          user_id: string
+        }[]
+      }
       get_public_member_profile: {
         Args: { _target_user_id: string }
         Returns: {
@@ -1956,6 +2006,10 @@ export type Database = {
       }
       mark_invitation_link_clicked: {
         Args: { _token: string }
+        Returns: undefined
+      }
+      recompute_match_scores_for_user: {
+        Args: { _user_id: string }
         Returns: undefined
       }
       resolve_invitation_code: { Args: { _code: string }; Returns: string }
