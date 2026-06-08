@@ -1,14 +1,19 @@
 /**
- * Deck construction. Combines the 79 hand-drawn animal cards from the DB with
- * the synthesised Creator, Sky Creator, Golden Body and Golden Hive cards.
+ * Deck construction. Combines the hand-drawn animal cards from the DB
+ * (`game_cards`) with the synthesised Creator, Sky Creator, Golden Body and
+ * Golden Hive cards.
  *
- * Quantities (114 cards total):
- *   - 67 standard Animal Cards (the 79 minus 12 mythical -> sky_creatures)
+ * Today's quantities (114 cards total):
+ *   - 67 standard Animal Cards (current 79 minus 12 mythical -> sky_creatures)
  *   - 12 Sky Creature Cards (mythicals: Griffin, Dragon, Fairy, Unicorn, …)
  *   - 24 Creator Cards: 2 each of the 12 element-mapped Creator Types
  *   -  2 Sky Creator Cards (wildcard element)
  *   -  8 Golden Body Cards (wildcard animal)
  *   -  1 Golden Hive Card (block one disaster)
+ *
+ * Future-proof: animal + sky_creature counts derive from `game_cards`, so
+ * adding the planned +13 cards (or any other rows) requires NO code change.
+ * Special-card quantities (creator / sky_creator / golden_*) stay fixed.
  */
 
 import type { GameCard, CreatorTypeName, SpecialCard } from "@/lib/gameCards";
