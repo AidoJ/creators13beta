@@ -32,6 +32,9 @@ const animal = (name: string, types: CreatorTypeName[]): DeckCard => ({
 
 const goldenBody = (uid: string): DeckCard => ({ uid, kind: "golden_body", name: "Golden Body" });
 const skyCreator = (): DeckCard => ({ uid: "sky-creator", kind: "sky_creator", name: "Sky Creator" });
+const skyCreature = (uid: string, types: CreatorTypeName[] = ["Sky", "Sky"]): DeckCard => ({
+  uid, kind: "sky_creature", name: uid, types: types as [CreatorTypeName, CreatorTypeName],
+});
 
 /** Build a player whose ecosystem places each creator at a hub and its 3
  *  associated animals on neighbouring hexes (so the win validator's
@@ -123,15 +126,15 @@ describe("classic ecosystem win validation", () => {
     expect(validateEcosystemWin(p).valid).toBe(true);
   });
 
-  it("allows Sky Creator to lock onto its 3 adjacent matching animals' type", () => {
-    // Per rule book: Sky locks to a sub-type once ≥3 adjacent animals share
-    // that type. Here Sky is surrounded by 3 Lightning/Snow animals → locks
-    // to Lightning (Air element). Quartet Air/Fire/Earth/Water is satisfied.
+  it("Sky Creator with 3 adjacent Sky Creatures (cluster) fills the missing element as a wildcard", () => {
+    // New rule: only Sky Creatures may sit adjacent to a Sky Creator, and a
+    // full cluster (3 Sky Creatures) lets the Sky Creator stand in for
+    // whichever of Earth/Fire/Air/Water is otherwise missing.
     const p = buildPlayer([
       [skyCreator(),
-        animal("lightning-0", ["Lightning", "Snow"]),
-        animal("lightning-1", ["Lightning", "Snow"]),
-        animal("lightning-2", ["Lightning", "Snow"])],
+        skyCreature("myth-0"),
+        skyCreature("myth-1"),
+        skyCreature("myth-2")],
       [creator("Fire", "Fire"),
         animal("fire-0", ["Fire", "Sun"]),
         animal("fire-1", ["Fire", "Sun"]),
@@ -149,65 +152,27 @@ describe("classic ecosystem win validation", () => {
     expect(validateEcosystemWin(p).valid).toBe(true);
   });
 
-  it("counts Sky Creator as the matching animal type even when that type is not the currently facing half", () => {
-    const placed = new Map<string, { card: DeckCard; pos: { q: number; r: number }; rotation?: number }>();
-    const sky = skyCreator();
-    const skyPos = { q: 0, r: 0 };
-    placed.set("0,0", { card: sky, pos: skyPos });
-
-    [
-      animal("soil-side-0", ["Fire", "Soil"]),
-      animal("soil-side-1", ["Ocean", "Soil"]),
-      animal("soil-side-2", ["Snow", "Soil"]),
-    ].forEach((a, j) => {
-      const off = NEI[j];
-      const pos = { q: skyPos.q + off.q, r: skyPos.r + off.r };
-      const dirToSky = NEI.findIndex((d) => pos.q + d.q === skyPos.q && pos.r + d.r === skyPos.r);
-      // Deliberately rotate the non-Soil half toward Sky. Sky should still be
-      // allowed to substitute as Soil because these are Soil animals.
-      placed.set(`${pos.q},${pos.r}`, { card: a, pos, rotation: rotationFacing(dirToSky, "A") });
-    });
-
-    [
-      [creator("Fire", "Fire"), ...Array.from({ length: 3 }, (_, i) => animal(`fire-sky-${i}`, ["Fire", "Sun"]))],
-      [creator("Snow", "Air"), ...Array.from({ length: 3 }, (_, i) => animal(`snow-sky-${i}`, ["Snow", "Lightning"]))],
-      [creator("Ocean", "Water"), ...Array.from({ length: 3 }, (_, i) => animal(`ocean-sky-${i}`, ["Ocean", "River"]))],
-    ].forEach((group, i) => {
-      const origin = { q: (i + 1) * 10, r: 0 };
-      const [c, ...animals] = group;
-      placed.set(`${origin.q},${origin.r}`, { card: c, pos: origin });
-      animals.forEach((a, j) => {
-        const off = NEI[j];
-        const pos = { q: origin.q + off.q, r: origin.r + off.r };
-        placed.set(`${pos.q},${pos.r}`, { card: a, pos, rotation: rotationFacing((j + 3) % 6, "A") });
-      });
-    });
-
-    const p: PlayerState = {
-      id: "p1", name: "Goldie", hand: [], hiveShield: false, score: 0,
-      ecosystem: { placed },
-    };
-
-    expect(skyLockedSubType(p.ecosystem, skyPos)).toBe("Soil");
-    expect(validateEcosystemWin(p).valid).toBe(true);
-  });
-
-  it("allows a Disaster when Sky is the missing fourth element via its adjacent animal type", () => {
+  it("Sky Creator never locks to a regular animal sub-type (skyLockedSubType is always null)", () => {
     const p = buildPlayer([
       [skyCreator(),
-        animal("soil-disaster-0", ["Fire", "Soil"]),
-        animal("soil-disaster-1", ["Ocean", "Soil"]),
-        animal("soil-disaster-2", ["Snow", "Soil"])],
+        skyCreature("myth-0"),
+        skyCreature("myth-1"),
+        skyCreature("myth-2")],
+    ]);
+    const skyPc = Array.from(p.ecosystem.placed.values()).find((pc) => pc.card.kind === "sky_creator")!;
+    expect(skyLockedSubType(p.ecosystem, skyPc.pos)).toBeNull();
+  });
+
+  it("allows a Disaster when Sky cluster fills the missing fourth element", () => {
+    const p = buildPlayer([
+      [skyCreator(),
+        skyCreature("myth-0"),
+        skyCreature("myth-1"),
+        skyCreature("myth-2")],
       [creator("Fire", "Fire"), animal("fire-disaster-0", ["Fire", "Sun"])],
       [creator("Snow", "Air"), animal("snow-disaster-0", ["Snow", "Lightning"])],
       [creator("Ocean", "Water"), animal("ocean-disaster-0", ["Ocean", "River"])],
     ], [creator("Lake", "Water")]);
-    const skyPc = Array.from(p.ecosystem.placed.values()).find((pc) => pc.card.kind === "sky_creator")!;
-    for (const pc of Array.from(p.ecosystem.placed.values())) {
-      if (!pc.card.types?.includes("Soil")) continue;
-      const dirToSky = NEI.findIndex((d) => pc.pos.q + d.q === skyPc.pos.q && pc.pos.r + d.r === skyPc.pos.r);
-      p.ecosystem.placed.set(`${pc.pos.q},${pc.pos.r}`, { ...pc, rotation: rotationFacing(dirToSky, "A") });
-    }
 
     const state: MatchState = {
       players: [p, buildPlayer([])], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
@@ -217,37 +182,20 @@ describe("classic ecosystem win validation", () => {
     expect(() => playDisaster(state, p.hand[0].uid)).not.toThrow();
   });
 
-  it("accepts the screenshot-style hand: Sky subbed as Fire, Snow Air, Mountain Earth, Lake Water with Golden Body", () => {
-    const p = buildPlayer([
-      [creator("Snow", "Air"),
-        animal("duck", ["Snow", "River"]),
-        animal("spider", ["Snow", "Tree"]),
-        animal("leopard", ["Snow", "Mountain"])],
-      [skyCreator(),
-        animal("fox", ["Lava", "Fire"]),
-        animal("cheetah", ["Fire", "Lightning"]),
-        animal("gorilla", ["Fire", "Mountain"]),
-        animal("mouse", ["Fire", "Snow"])],
-      [creator("Mountain", "Earth"),
-        animal("lynx", ["Mountain", "Snow"]),
-        animal("gorilla-2", ["Fire", "Mountain"]),
-        animal("leopard-2", ["Snow", "Mountain"])],
-      [creator("Lake", "Water"),
-        animal("panda", ["Fire", "Lake"]),
-        animal("swan", ["Snow", "Lake"]),
-        goldenBody("golden-body")],
-    ]);
-    const skyPc = Array.from(p.ecosystem.placed.values()).find((pc) => pc.card.kind === "sky_creator")!;
-    const skyAnimals = Array.from(p.ecosystem.placed.values()).filter((pc) => pc.pos.q >= 10 && pc.pos.q <= 11 && pc.pos.r >= 9 && pc.pos.r <= 11 && pc.card.kind === "animal");
-    skyAnimals.forEach((pc) => {
-      const dirToSky = NEI.findIndex((d) => pc.pos.q + d.q === skyPc.pos.q && pc.pos.r + d.r === skyPc.pos.r);
-      const fireIsSecondHalf = pc.card.types?.[1] === "Fire";
-      p.ecosystem.placed.set(`${pc.pos.q},${pc.pos.r}`, { ...pc, rotation: rotationFacing(dirToSky, fireIsSecondHalf ? "B" : "A") });
-    });
-
-    expect(skyLockedSubType(p.ecosystem, skyPc.pos)).toBe("Fire");
-    expect(validateEcosystemWin(p).valid).toBe(true);
+  it("rejects placing a regular animal adjacent to a Sky Creator", () => {
+    const sky = skyCreator();
+    const bear = animal("bear", ["Soil", "Tree"]);
+    const p: PlayerState = {
+      id: "p1", name: "Goldie", hand: [bear], hiveShield: false, score: 0, firstPickupDone: true,
+      ecosystem: { placed: new Map([["0,0", { card: sky, pos: { q: 0, r: 0 } }]]) },
+    };
+    const state: MatchState = {
+      players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
+      turnNumber: 1, finished: false, winnerId: null,
+    };
+    expect(() => placeOnEcosystem(state, bear.uid, { q: 1, r: 0 })).toThrowError(/Only Sky Creature/);
   });
+
 
   it("accepts a complete ecosystem even if a matching animal is visually mis-rotated", () => {
     const p = buildPlayer([
@@ -289,37 +237,22 @@ describe("classic ecosystem win validation", () => {
     expect(facingTypeLabel(bear, rotation, dirToCreator)).toBe("Soil");
   });
 
-  it("auto-pivots the third animal that makes a Sky Creator lock to a sub-type", () => {
+  it("allows placing a Sky Creature next to a Sky Creator (cells reserved for Sky Creatures)", () => {
     const sky = skyCreator();
-    const soilAnimalA = animal("soil-a", ["Fire", "Soil"]);
-    const soilAnimalB = animal("soil-b", ["Ocean", "Soil"]);
-    const soilAnimalC = animal("soil-c", ["Snow", "Soil"]);
+    const myth = skyCreature("griffin");
     const p: PlayerState = {
-      id: "p1",
-      name: "Goldie",
-      hand: [soilAnimalC],
-      hiveShield: false,
-      score: 0,
-      firstPickupDone: true,
-      ecosystem: {
-        placed: new Map([
-          ["0,0", { card: sky, pos: { q: 0, r: 0 } }],
-          ["1,0", { card: soilAnimalA, pos: { q: 1, r: 0 }, rotation: 0 }],
-          ["1,-1", { card: soilAnimalB, pos: { q: 1, r: -1 }, rotation: 0 }],
-        ]),
-      },
+      id: "p1", name: "Goldie", hand: [myth], hiveShield: false, score: 0, firstPickupDone: true,
+      ecosystem: { placed: new Map([["0,0", { card: sky, pos: { q: 0, r: 0 } }]]) },
     };
     const state: MatchState = {
       players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
       turnNumber: 1, finished: false, winnerId: null,
     };
-    const next = placeOnEcosystem(state, soilAnimalC.uid, { q: 0, r: -1 });
-    const placed = next.players[0].ecosystem.placed.get("0,-1")!;
-    const dirToSky = NEI.findIndex((d) => placed.pos.q + d.q === 0 && placed.pos.r + d.r === 0);
-
-    expect(skyLockedSubType(next.players[0].ecosystem, { q: 0, r: 0 })).toBe("Soil");
-    expect(facingTypeLabel(placed.card, placed.rotation ?? 0, dirToSky)).toBe("Soil");
+    const next = placeOnEcosystem(state, myth.uid, { q: 1, r: 0 });
+    expect(next.players[0].ecosystem.placed.has("1,0")).toBe(true);
   });
+
+
 
   it("rejects Sky Creator with no adjacent animals (no sub-type can lock)", () => {
     // Sky placed alone; the other 3 creators have their own clusters.
