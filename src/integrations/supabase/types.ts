@@ -1245,6 +1245,7 @@ export type Database = {
           avatar_url: string | null
           case_study_consent_at: string | null
           city: string | null
+          community_joined_at: string | null
           community_visible: boolean
           country: string | null
           created_at: string
@@ -1262,6 +1263,7 @@ export type Database = {
           location_lat: number | null
           location_lng: number | null
           medical_history: string | null
+          member_preferences: Json
           phone: string | null
           postal_code: string | null
           practitioner_code: string | null
@@ -1282,6 +1284,7 @@ export type Database = {
           avatar_url?: string | null
           case_study_consent_at?: string | null
           city?: string | null
+          community_joined_at?: string | null
           community_visible?: boolean
           country?: string | null
           created_at?: string
@@ -1301,6 +1304,7 @@ export type Database = {
           location_lat?: number | null
           location_lng?: number | null
           medical_history?: string | null
+          member_preferences?: Json
           phone?: string | null
           postal_code?: string | null
           practitioner_code?: string | null
@@ -1321,6 +1325,7 @@ export type Database = {
           avatar_url?: string | null
           case_study_consent_at?: string | null
           city?: string | null
+          community_joined_at?: string | null
           community_visible?: boolean
           country?: string | null
           created_at?: string
@@ -1340,6 +1345,7 @@ export type Database = {
           location_lat?: number | null
           location_lng?: number | null
           medical_history?: string | null
+          member_preferences?: Json
           phone?: string | null
           postal_code?: string | null
           practitioner_code?: string | null
