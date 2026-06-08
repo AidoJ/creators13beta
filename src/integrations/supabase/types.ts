@@ -1913,6 +1913,21 @@ export type Database = {
         }[]
       }
       get_match_state: { Args: { _match_id: string }; Returns: Json }
+      get_public_member_profile: {
+        Args: { _target_user_id: string }
+        Returns: {
+          avatar_url: string
+          bio_intriguing: string
+          bio_superpower: string
+          bio_where_i_live: string
+          community_joined_at: string
+          creator_types: Json
+          display_name: string
+          location_label: string
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          user_id: string
+        }[]
+      }
       get_public_player_stats: {
         Args: { _user_id: string }
         Returns: {
