@@ -30,6 +30,8 @@ type MatchRow = {
   display_name: string | null;
   avatar_url: string | null;
   location_label: string | null;
+  location_lat: number | null;
+  location_lng: number | null;
   tier: string | null;
   score: number;
   community_joined_at: string | null;
