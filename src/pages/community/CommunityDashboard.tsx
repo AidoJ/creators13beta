@@ -93,7 +93,7 @@ export default function CommunityDashboard() {
 
       if (cancelled) return;
 
-      const rows = ((matchesRes.data as MatchRow[] | null) ?? []).filter((r) => r.score > 0);
+      const rows = ((matchesRes.data as unknown as MatchRow[] | null) ?? []).filter((r) => r.score > 0);
       setMatches(rows);
 
       // Batch-sign avatars in a single storage round-trip. Skip absolute URLs.
