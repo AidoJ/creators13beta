@@ -1311,6 +1311,9 @@ export type Database = {
             | Database["public"]["Enums"]["practitioner_status"]
             | null
           profile_completed_at: string | null
+          project_dream: string | null
+          project_seek_me_for: string | null
+          project_top_skills: string | null
           pronouns: string | null
           shoe_size: string | null
           state: string | null
@@ -1357,6 +1360,9 @@ export type Database = {
             | Database["public"]["Enums"]["practitioner_status"]
             | null
           profile_completed_at?: string | null
+          project_dream?: string | null
+          project_seek_me_for?: string | null
+          project_top_skills?: string | null
           pronouns?: string | null
           shoe_size?: string | null
           state?: string | null
@@ -1403,6 +1409,9 @@ export type Database = {
             | Database["public"]["Enums"]["practitioner_status"]
             | null
           profile_completed_at?: string | null
+          project_dream?: string | null
+          project_seek_me_for?: string | null
+          project_top_skills?: string | null
           pronouns?: string | null
           shoe_size?: string | null
           state?: string | null
@@ -1970,6 +1979,8 @@ export type Database = {
           creator_types: Json
           display_name: string
           location_label: string
+          location_lat: number
+          location_lng: number
           score: number
           tier: Database["public"]["Enums"]["subscription_tier"]
           user_id: string
