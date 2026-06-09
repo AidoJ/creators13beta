@@ -40,10 +40,10 @@ export interface LotusProfileProps {
 }
 
 const SIZE_PX: Record<NonNullable<LotusProfileProps["size"]>, number> = {
-  sm: 80,
-  md: 110,
-  lg: 150,
-  xl: 200,
+  sm: 150,
+  md: 180,
+  lg: 210,
+  xl: 240,
 };
 
 const SKY_NEUTRAL = "#edd58a";
