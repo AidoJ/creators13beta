@@ -235,6 +235,17 @@ function createAvatarOverlay(opts: {
 
   let div: HTMLDivElement | null = null;
 
+  // Size bucket per Face View thresholds (xl/lg/md/sm). Mapped to marker
+  // diameters that read clearly on a map without overcrowding: spec calls for
+  // xl 200 / lg 150 / md 110 / sm 80. Anchor stays bottom-center via the
+  // translate(-50%, -100%) transform so the pin tail sits on the coord
+  // regardless of avatar diameter.
+  const SIZE =
+    member.score >= 8 ? 200 : member.score >= 5 ? 150 : member.score >= 3 ? 110 : 80;
+  const BADGE = Math.max(22, Math.round(SIZE * 0.22));
+  const BADGE_FONT = Math.max(12, Math.round(SIZE * 0.13));
+  const AVATAR_FONT = Math.max(18, Math.round(SIZE * 0.34));
+
   overlay.onAdd = function () {
     div = document.createElement("div");
     div.style.position = "absolute";
@@ -243,7 +254,6 @@ function createAvatarOverlay(opts: {
     div.style.zIndex = String(100 + Math.round(member.score));
     div.title = `${member.display_name ?? "Member"} — Match strength: ${member.score}`;
 
-    const SIZE = 56;
     const wrapper = document.createElement("div");
     wrapper.style.position = "relative";
     wrapper.style.width = `${SIZE}px`;
@@ -267,7 +277,7 @@ function createAvatarOverlay(opts: {
     inner.style.justifyContent = "center";
     inner.style.color = "#fff";
     inner.style.fontFamily = "'Questrial', sans-serif";
-    inner.style.fontSize = "18px";
+    inner.style.fontSize = `${AVATAR_FONT}px`;
 
     if (member.avatar_url) {
       const img = document.createElement("img");
@@ -290,13 +300,13 @@ function createAvatarOverlay(opts: {
     badge.style.position = "absolute";
     badge.style.right = "-4px";
     badge.style.bottom = "-4px";
-    badge.style.minWidth = "22px";
-    badge.style.height = "22px";
-    badge.style.padding = "0 6px";
+    badge.style.minWidth = `${BADGE}px`;
+    badge.style.height = `${BADGE}px`;
+    badge.style.padding = `0 ${Math.round(BADGE * 0.27)}px`;
     badge.style.borderRadius = "9999px";
     badge.style.background = "#111";
     badge.style.color = "#fff";
-    badge.style.fontSize = "12px";
+    badge.style.fontSize = `${BADGE_FONT}px`;
     badge.style.fontWeight = "600";
     badge.style.display = "flex";
     badge.style.alignItems = "center";
