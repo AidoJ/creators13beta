@@ -241,17 +241,7 @@ export default function CommunityDashboard() {
           <Tooltip>
             <TooltipTrigger asChild>
               <div
-                className="fixed top-20 left-3 z-20 w-16 h-16 flex items-center justify-center cursor-help"
-                style={{
-                  clipPath:
-                    "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
-                  background: featuredColor
-                    ? `linear-gradient(135deg, ${featuredColor}, ${featuredColor}aa)`
-                    : "hsl(var(--primary))",
-                  boxShadow: featuredColor
-                    ? `0 4px 12px ${featuredColor}55`
-                    : undefined,
-                }}
+                className="fixed top-20 left-3 z-20 w-20 h-20 flex items-center justify-center cursor-help"
                 aria-label={`Creator of the Month: ${capitaliseTypeName(featured.creator_type)}`}
               >
                 {(() => {
@@ -260,17 +250,23 @@ export default function CommunityDashboard() {
                     <img
                       src={g}
                       alt=""
-                      className="w-8 h-8 object-contain"
-                      style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))" }}
+                      className="w-full h-full object-contain"
+                      style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.25))" }}
                       draggable={false}
                     />
                   ) : (
-                    <span className="font-display text-xl text-white">
-                      {capitaliseTypeName(featured.creator_type).charAt(0)}
-                    </span>
+                    <div
+                      className="w-16 h-16 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: featuredColor }}
+                    >
+                      <span className="font-display text-xl text-white">
+                        {capitaliseTypeName(featured.creator_type).charAt(0)}
+                      </span>
+                    </div>
                   );
                 })()}
               </div>
+
             </TooltipTrigger>
             <TooltipContent side="right" className="max-w-xs">
               <p className="font-medium">
