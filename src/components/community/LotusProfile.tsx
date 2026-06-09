@@ -1,9 +1,9 @@
 /**
  * LotusProfile — Appendix 7 visual.
  *
- * Built on top of the gold-outline lotus PNG (8 petals). Only the 4 cardinal
- * petals are functional content slots; the 4 diagonal petals are always
- * transparent so the dashboard background shows through them.
+ * Native 8-petal SVG lotus (see LotusFrame). Only the 4 cardinal petals are
+ * functional content slots; the 4 diagonal petals are always transparent so
+ * the dashboard background shows through them.
  *
  * Fill order for 1–4 creator types:
  *   1 → right
@@ -13,17 +13,13 @@
  *
  * source = 'self_selected' → glyph at ~60% opacity with a thin outline ring
  * source = 'practitioner' | 'case_study' → glyph at full opacity, no ring
- *
- * Featured-Creator-of-the-Month highlight has two visual treatments —
- * 'glow' (soft outer drop-shadow in the featured colour) or
- * 'ring' (a subtle additional gold ring just outside the lotus).
  */
 import { CSSProperties, useMemo } from "react";
 import { User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { capitaliseTypeName, getCreatorTypeColor } from "@/lib/creatorTypes";
 import { glyphMarkForType } from "@/lib/game/glyphs";
-import lotusFrame from "@/assets/lotus-frame.png.asset.json";
+import LotusFrame, { PetalKey } from "@/components/community/LotusFrame";
 
 export type LotusCreatorType = {
   type: string;
@@ -53,18 +49,16 @@ const SIZE_PX: Record<NonNullable<LotusProfileProps["size"]>, number> = {
 const SKY_NEUTRAL = "#edd58a";
 const GOLD = "#c9a04a";
 
-// Cardinal petal centres as % of the lotus PNG bounding box.
-// Eyeballed from the 1024x1024 reference so each disc sits inside its petal outline.
-const CARDINALS = {
-  top:    { x: 50, y: 14 },
-  right:  { x: 86, y: 50 },
-  bottom: { x: 50, y: 86 },
-  left:   { x: 14, y: 50 },
-} as const;
+type CardinalKey = Extract<PetalKey, "top" | "right" | "bottom" | "left">;
 
-type CardinalKey = keyof typeof CARDINALS;
+// Position of each cardinal petal centre (for glyph placement), as % of bbox.
+const CARDINAL_POS: Record<CardinalKey, { x: number; y: number }> = {
+  top: { x: 50, y: 18 },
+  right: { x: 82, y: 50 },
+  bottom: { x: 50, y: 82 },
+  left: { x: 18, y: 50 },
+};
 
-// Fill order per spec.
 const FILL_ORDER: CardinalKey[][] = [
   [],
   ["right"],
@@ -91,7 +85,6 @@ export function LotusProfile({
   const px = SIZE_PX[size];
   const interactive = typeof onClick === "function";
 
-  // Map filled cardinals → creator type
   const slots = useMemo(() => {
     const types = creatorTypes.slice(0, 4);
     const order = FILL_ORDER[types.length] ?? [];
@@ -102,16 +95,20 @@ export function LotusProfile({
     return map;
   }, [creatorTypes]);
 
-  // Petal disc size as % of bounding box (slightly smaller than petal so the
-  // gold outline of the lotus PNG remains visible around the fill).
-  const petalDiscPct = 22;
-  // Avatar diameter as % of bounding box. Slightly oversized vs the inner
-  // circle of the lotus PNG to mask any sub-pixel gold ring at the edge.
-  const avatarPct = 44;
+  const petalFills = useMemo(() => {
+    const fills: Partial<Record<PetalKey, string>> = {};
+    (Object.keys(slots) as CardinalKey[]).forEach((key) => {
+      const slot = slots[key];
+      if (slot) fills[key] = petalColor(slot.type);
+    });
+    return fills;
+  }, [slots]);
+
+  const avatarPct = 22; // matches LotusFrame centre circle (r=22 on 200vb)
+  const glyphSizePct = 12;
 
   const outerStyle: CSSProperties = { width: px, height: px };
 
-  // Featured glow: soft outer drop-shadow using the featured colour.
   const glowFilter =
     featuredHighlight === "glow" && featuredColor
       ? `drop-shadow(0 0 ${px * 0.06}px ${featuredColor}cc) drop-shadow(0 0 ${px * 0.12}px ${featuredColor}66)`
@@ -140,7 +137,6 @@ export function LotusProfile({
       }
       aria-label={`${displayName} profile frame`}
     >
-      {/* Optional outer gold ring highlight */}
       {featuredHighlight === "ring" && (
         <div
           aria-hidden
@@ -154,74 +150,37 @@ export function LotusProfile({
         />
       )}
 
-      {/* Lotus + fills wrapper (the glow filter wraps the lotus so the
-          drop-shadow follows the actual petal outline). */}
       <div
         className="absolute inset-0"
         style={glowFilter ? { filter: glowFilter } : undefined}
       >
-        {/* Cardinal petal fills (behind the lotus PNG so its gold outline frames them) */}
-        {(Object.keys(CARDINALS) as CardinalKey[]).map((key) => {
-          const slot = slots[key];
-          if (!slot) return null;
-          const pos = CARDINALS[key];
-          const color = petalColor(slot.type);
-          return (
-            <div
-              key={`fill-${key}`}
-              aria-hidden
-              className="absolute rounded-full"
-              style={{
-                width: `${petalDiscPct}%`,
-                height: `${petalDiscPct}%`,
-                left: `${pos.x - petalDiscPct / 2}%`,
-                top: `${pos.y - petalDiscPct / 2}%`,
-                backgroundColor: color,
-              }}
-            />
-          );
-        })}
-
-        {/* Lotus gold-outline frame */}
-        <img
-          src={lotusFrame.url}
-          alt=""
-          aria-hidden
-          draggable={false}
-          className="absolute inset-0 w-full h-full pointer-events-none"
+        <LotusFrame
+          petalFills={petalFills}
+          className="absolute inset-0 w-full h-full"
         />
       </div>
 
-      {/* Cardinal glyphs — rendered above the lotus so they're crisp */}
-      {(Object.keys(CARDINALS) as CardinalKey[]).map((key) => {
+      {/* Cardinal glyphs */}
+      {(Object.keys(CARDINAL_POS) as CardinalKey[]).map((key) => {
         const slot = slots[key];
         if (!slot) return null;
-        const pos = CARDINALS[key];
+        const pos = CARDINAL_POS[key];
         const glyph = glyphMarkForType(capitaliseTypeName(slot.type));
         if (!glyph) return null;
-        const glyphSizePct = petalDiscPct * 0.65;
         const muted = slot.source === "self_selected";
-        const ringSize = petalDiscPct * 0.95;
+        const glyphPx = glyphSizePct * (px / 100);
+        const ringPx = glyphPx * 1.55;
         return (
-          <div key={`glyph-${key}`} className="pointer-events-none absolute">
-            {muted && (
-              <div
-                className="absolute rounded-full"
-                style={{
-                  width: `${ringSize / petalDiscPct * petalDiscPct}%`,
-                }}
-              />
-            )}
-            {/* Self-selected: outline ring around the glyph */}
+          <div key={`glyph-${key}`} className="pointer-events-none">
             {muted && (
               <div
                 aria-hidden
                 className="absolute rounded-full border"
                 style={{
-                  width: `${ringSize * (px / 100)}px`,
-                  height: `${ringSize * (px / 100)}px`,
-                  left: `${pos.x * (px / 100) - (ringSize * (px / 100)) / 2}px`,
-                  top: `${pos.y * (px / 100) - (ringSize * (px / 100)) / 2}px`,
+                  width: `${ringPx}px`,
+                  height: `${ringPx}px`,
+                  left: `${pos.x * (px / 100) - ringPx / 2}px`,
+                  top: `${pos.y * (px / 100) - ringPx / 2}px`,
                   borderColor: "rgba(255,255,255,0.85)",
                   borderWidth: Math.max(1, px * 0.008),
                 }}
@@ -234,10 +193,10 @@ export function LotusProfile({
               draggable={false}
               style={{
                 position: "absolute",
-                width: `${glyphSizePct * (px / 100)}px`,
-                height: `${glyphSizePct * (px / 100)}px`,
-                left: `${pos.x * (px / 100) - (glyphSizePct * (px / 100)) / 2}px`,
-                top: `${pos.y * (px / 100) - (glyphSizePct * (px / 100)) / 2}px`,
+                width: `${glyphPx}px`,
+                height: `${glyphPx}px`,
+                left: `${pos.x * (px / 100) - glyphPx / 2}px`,
+                top: `${pos.y * (px / 100) - glyphPx / 2}px`,
                 opacity: muted ? 0.6 : 0.95,
                 filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.3))",
               }}
@@ -246,7 +205,7 @@ export function LotusProfile({
         );
       })}
 
-      {/* Central avatar — oversized slightly to mask sub-pixel rounding */}
+      {/* Central avatar */}
       <div
         className="absolute rounded-full overflow-hidden bg-muted flex items-center justify-center"
         style={{
