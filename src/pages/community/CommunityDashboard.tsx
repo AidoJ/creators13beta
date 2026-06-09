@@ -235,98 +235,96 @@ export default function CommunityDashboard() {
         </nav>
       </TooltipProvider>
 
-      <main className="container mx-auto px-4 py-6 max-w-6xl space-y-6 pl-20">
-        {/* Top toolbar: view toggle + settings */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <TooltipProvider delayDuration={150}>
-            <div className="inline-flex items-center rounded-full border border-border bg-card p-1">
-              <button
-                type="button"
-                className="px-4 py-1.5 text-sm rounded-full bg-primary text-primary-foreground font-medium inline-flex items-center gap-2"
-                aria-pressed="true"
+      {/* Top-left: compact Creator of the Month hex badge */}
+      {featured && (
+        <TooltipProvider delayDuration={150}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                className="fixed top-20 left-3 z-20 w-16 h-16 flex items-center justify-center cursor-help"
+                style={{
+                  clipPath:
+                    "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
+                  background: featuredColor
+                    ? `linear-gradient(135deg, ${featuredColor}, ${featuredColor}aa)`
+                    : "hsl(var(--primary))",
+                  boxShadow: featuredColor
+                    ? `0 4px 12px ${featuredColor}55`
+                    : undefined,
+                }}
+                aria-label={`Creator of the Month: ${capitaliseTypeName(featured.creator_type)}`}
               >
-                <Users className="h-4 w-4" />
-                Faces
-              </button>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    disabled
-                    className="px-4 py-1.5 text-sm rounded-full text-muted-foreground inline-flex items-center gap-2 opacity-60 cursor-not-allowed"
-                  >
-                    <MapIcon className="h-4 w-4" />
-                    Map
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>Map view — coming soon</TooltipContent>
-              </Tooltip>
-            </div>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/settings/community")}
-              aria-label="Community settings"
-            >
-              <Settings className="h-5 w-5" />
-            </Button>
-          </TooltipProvider>
-        </div>
-
-
-        {/* Creator of the Month badge */}
-        {featured && (
-          <div
-            className="rounded-3xl border bg-card/70 backdrop-blur p-5 flex items-center gap-4 shadow-sm"
-            style={{
-              borderColor: featuredColor ? `${featuredColor}66` : undefined,
-              background: featuredColor
-                ? `linear-gradient(135deg, ${featuredColor}14, transparent 70%)`
-                : undefined,
-            }}
-          >
-            <div className="h-16 w-16 flex items-center justify-center flex-shrink-0" aria-hidden>
-              {(() => {
-                const g = glyphForType(capitaliseTypeName(featured.creator_type));
-                return g ? (
-                  <img
-                    src={g}
-                    alt=""
-                    className="w-full h-full object-contain"
-                    style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }}
-                    draggable={false}
-                  />
-                ) : (
-                  <div
-                    className="h-14 w-14 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: featuredColor }}
-                  >
-                    <span className="font-display text-2xl text-white">
+                {(() => {
+                  const g = glyphForType(capitaliseTypeName(featured.creator_type));
+                  return g ? (
+                    <img
+                      src={g}
+                      alt=""
+                      className="w-8 h-8 object-contain"
+                      style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))" }}
+                      draggable={false}
+                    />
+                  ) : (
+                    <span className="font-display text-xl text-white">
                       {capitaliseTypeName(featured.creator_type).charAt(0)}
                     </span>
-                  </div>
-                );
-              })()}
-            </div>
-            <div className="min-w-0">
-              <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
-                Creator of the Month · Season {featured.cycle_position} of 13
+                  );
+                })()}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="max-w-xs">
+              <p className="font-medium">
+                Creator of the Month · {capitaliseTypeName(featured.creator_type)}
               </p>
-              <p className="text-xl font-display">
-                {capitaliseTypeName(featured.creator_type)}
+              <p className="text-xs text-muted-foreground">
+                Season {featured.cycle_position} of 13
+                {cycleLabel ? ` · ${cycleLabel}` : ""}
               </p>
-              {cycleLabel && (
-                <p className="text-xs text-muted-foreground">{cycleLabel}</p>
-              )}
               {viewerShares && (
                 <p className="text-xs mt-1" style={{ color: featuredColor }}>
                   You're a {capitaliseTypeName(featured.creator_type)} Creator this month.
                 </p>
               )}
-            </div>
-          </div>
-        )}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+
+      {/* Top-right: Face/Map toggle + Settings */}
+      <TooltipProvider delayDuration={150}>
+        <div className="fixed top-20 right-4 z-20 flex items-center gap-3">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                role="switch"
+                aria-checked="false"
+                aria-label="Toggle Face / Map view (Map coming soon)"
+                disabled
+                className="relative inline-flex h-7 w-14 items-center rounded-full bg-primary/80 opacity-90 cursor-not-allowed"
+              >
+                <span className="absolute left-1 inline-flex items-center justify-center h-5 w-5 rounded-full bg-white shadow">
+                  <Users className="h-3 w-3 text-primary" />
+                </span>
+                <MapIcon className="absolute right-1.5 h-3.5 w-3.5 text-white/80" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Face view · Map coming soon</TooltipContent>
+          </Tooltip>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/settings/community")}
+            aria-label="Community settings"
+            className="rounded-full bg-card/80 backdrop-blur"
+          >
+            <Settings className="h-5 w-5" />
+          </Button>
+        </div>
+      </TooltipProvider>
+
+      <main className="container mx-auto px-4 py-6 max-w-6xl space-y-6 pl-20">
+
 
         {/* Lotus field */}
         {loading ? (
