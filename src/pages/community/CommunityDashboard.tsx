@@ -9,7 +9,7 @@
  * Avatars are batch-signed client-side via storage.createSignedUrls — one
  * round trip instead of N+1.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,12 +18,20 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, Map as MapIcon, Users, MessageCircle, Calendar, ShoppingBag, Copy, Check, LayoutDashboard } from "lucide-react";
+import { Settings, Map as MapIcon, Users, MessageCircle, Calendar, ShoppingBag, Copy, Check, LayoutDashboard, Menu, X } from "lucide-react";
 import { capitaliseTypeName, getCreatorTypeColor } from "@/lib/creatorTypes";
 import { glyphForType } from "@/lib/game/glyphs";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { backgroundForSeason } from "@/lib/seasonalBackgrounds";
+import { useIsMobile } from "@/hooks/use-mobile";
+import type { MapMember } from "@/components/community/CommunityMapView";
+
+// Lazy: Maps JS API only loads when the user actually toggles to Map view.
+const CommunityMapView = lazy(() => import("@/components/community/CommunityMapView"));
+
+type ViewMode = "face" | "map";
+const VIEW_STORAGE_KEY = "c13.community.viewMode";
 
 type MatchRow = {
   user_id: string;
