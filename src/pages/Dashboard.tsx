@@ -148,9 +148,6 @@ export default function Dashboard() {
     );
   }
 
-  const tierLabel = subscription?.tier
-    ? subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1)
-    : "Wren";
   const isPaidTier = !!subscription?.tier && subscription.tier !== "wren";
 
   return (
