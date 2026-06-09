@@ -195,107 +195,96 @@ export default function CommunityDashboard() {
       <div className="relative z-10">
       <DashboardHeader email={user?.email} onSignOut={signOut} />
 
-      {/* Left vertical rail: Events, Chat, Match (Dashboard), Shop —
-          each as its own circle tinted with the current season's
-          Creator-of-the-Month colour so the rail re-skins automatically
-          when the season changes. */}
-      <TooltipProvider delayDuration={150}>
-        <nav
-          aria-label="Community quick nav"
-          className="fixed left-4 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-4"
-        >
-          {[
-            { label: "Events", Icon: Calendar, soon: true, onClick: () => {} },
-            { label: "Chat", Icon: MessageCircle, soon: true, onClick: () => {} },
-            {
-              label: "Match (Dashboard)",
-              Icon: LayoutDashboard,
-              soon: false,
-              onClick: () => navigate("/dashboard"),
-            },
-            { label: "Shop", Icon: ShoppingBag, soon: true, onClick: () => {} },
-          ].map(({ label, Icon, soon, onClick }) => {
-            const bg = featuredColor ?? "hsl(var(--primary))";
-            return (
-              <Tooltip key={label}>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={onClick}
-                    disabled={soon}
-                    aria-label={label}
-                    className={cn(
-                      "h-12 w-12 rounded-full flex items-center justify-center transition-transform border-2 border-white/70 shadow-md backdrop-blur-sm",
-                      soon
-                        ? "opacity-70 cursor-not-allowed"
-                        : "hover:scale-110 active:scale-95"
-                    )}
-                    style={{
-                      background: `linear-gradient(135deg, ${bg}, ${bg}cc)`,
-                      boxShadow: `0 4px 14px ${bg}55`,
-                    }}
-                  >
-                    <Icon className="h-5 w-5 text-white drop-shadow-sm" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right">{soon ? `${label} — coming soon` : label}</TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </nav>
-      </TooltipProvider>
-
-
-      {/* Top-left: compact Creator of the Month hex badge */}
-      {featured && (
-        <TooltipProvider delayDuration={150}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div
-                className="fixed top-20 left-3 z-20 w-20 h-20 flex items-center justify-center cursor-help"
-                aria-label={`Creator of the Month: ${capitaliseTypeName(featured.creator_type)}`}
-              >
-                {(() => {
-                  const g = glyphForType(capitaliseTypeName(featured.creator_type));
-                  return g ? (
-                    <img
-                      src={g}
-                      alt=""
-                      className="w-full h-full object-contain"
-                      style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.25))" }}
-                      draggable={false}
-                    />
-                  ) : (
-                    <div
-                      className="w-16 h-16 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: featuredColor }}
-                    >
-                      <span className="font-display text-xl text-white">
-                        {capitaliseTypeName(featured.creator_type).charAt(0)}
-                      </span>
-                    </div>
-                  );
-                })()}
-              </div>
-
-            </TooltipTrigger>
-            <TooltipContent side="right" className="max-w-xs">
-              <p className="font-medium">
-                Creator of the Month · {capitaliseTypeName(featured.creator_type)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Season {featured.cycle_position} of 13
-                {cycleLabel ? ` · ${cycleLabel}` : ""}
-              </p>
-              {viewerShares && (
-                <p className="text-xs mt-1" style={{ color: featuredColor }}>
-                  You're a {capitaliseTypeName(featured.creator_type)} Creator this month.
+      {/* Top-left stack: Creator of the Month hex + quick-nav rail aligned beneath it */}
+      <div className="fixed top-20 left-3 z-20 flex flex-col items-center gap-4">
+        {featured && (
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className="w-20 h-20 flex items-center justify-center cursor-help"
+                  aria-label={`Creator of the Month: ${capitaliseTypeName(featured.creator_type)}`}
+                >
+                  {(() => {
+                    const g = glyphForType(capitaliseTypeName(featured.creator_type));
+                    return g ? (
+                      <img
+                        src={g}
+                        alt=""
+                        className="w-full h-full object-contain"
+                        style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.25))" }}
+                        draggable={false}
+                      />
+                    ) : (
+                      <div
+                        className="w-16 h-16 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: featuredColor }}
+                      >
+                        <span className="font-display text-xl text-white">
+                          {capitaliseTypeName(featured.creator_type).charAt(0)}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-xs">
+                <p className="font-medium">
+                  Creator of the Month · {capitaliseTypeName(featured.creator_type)}
                 </p>
-              )}
-            </TooltipContent>
-          </Tooltip>
+                <p className="text-xs text-muted-foreground">
+                  Season {featured.cycle_position} of 13
+                  {cycleLabel ? ` · ${cycleLabel}` : ""}
+                </p>
+                {viewerShares && (
+                  <p className="text-xs mt-1" style={{ color: featuredColor }}>
+                    You're a {capitaliseTypeName(featured.creator_type)} Creator this month.
+                  </p>
+                )}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
+        <TooltipProvider delayDuration={150}>
+          <nav aria-label="Community quick nav" className="flex flex-col items-center gap-3">
+            {[
+              { label: "Events", Icon: Calendar, soon: true, onClick: () => {} },
+              { label: "Chat", Icon: MessageCircle, soon: true, onClick: () => {} },
+              {
+                label: "Match (Dashboard)",
+                Icon: LayoutDashboard,
+                soon: false,
+                onClick: () => navigate("/dashboard"),
+              },
+              { label: "Shop", Icon: ShoppingBag, soon: true, onClick: () => {} },
+            ].map(({ label, Icon, soon, onClick }) => {
+              const color = featuredColor ?? "hsl(var(--primary))";
+              return (
+                <Tooltip key={label}>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={onClick}
+                      disabled={soon}
+                      aria-label={label}
+                      className={cn(
+                        "h-12 w-12 rounded-full flex items-center justify-center bg-transparent transition-transform",
+                        soon ? "opacity-70 cursor-not-allowed" : "hover:scale-110 active:scale-95"
+                      )}
+                      style={{ border: `2px solid ${color}`, color }}
+                    >
+                      <Icon className="h-5 w-5" style={{ color }} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{soon ? `${label} — coming soon` : label}</TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </nav>
         </TooltipProvider>
-      )}
+      </div>
+
 
       {/* Top-right: Face/Map toggle + Settings */}
       <TooltipProvider delayDuration={150}>
