@@ -325,6 +325,7 @@ export default function CommunityDashboard() {
           </div>
         )}
       </main>
+      </div>
     </div>
   );
 }
