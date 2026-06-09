@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
-import { Leaf } from "lucide-react";
+import { Leaf, Eye, EyeOff } from "lucide-react";
 import logoFull from "@/assets/13creators-logo-full.png";
 
 export default function Auth() {
