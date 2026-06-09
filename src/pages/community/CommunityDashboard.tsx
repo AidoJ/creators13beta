@@ -18,7 +18,7 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, Map as MapIcon, Users, MessageCircle, Calendar, ShoppingBag, Copy, Check, LayoutDashboard, Menu, X } from "lucide-react";
+import { Settings, Map as MapIcon, Users, MessageCircle, Calendar, ShoppingBag, Copy, Check, LayoutDashboard, Menu, X, EyeOff } from "lucide-react";
 import { capitaliseTypeName, getCreatorTypeColor } from "@/lib/creatorTypes";
 import { glyphForType } from "@/lib/game/glyphs";
 import { toast } from "@/hooks/use-toast";
@@ -89,6 +89,11 @@ export default function CommunityDashboard() {
   });
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [unplottable, setUnplottable] = useState(0);
+  const [isCommunityVisible, setIsCommunityVisible] = useState<boolean | null>(null);
+  const [visibilityBannerDismissed, setVisibilityBannerDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem("c13.community.visBanner.dismissed") === "1";
+  });
 
   useEffect(() => {
     try { localStorage.setItem(VIEW_STORAGE_KEY, view); } catch { /* ignore */ }
@@ -102,7 +107,7 @@ export default function CommunityDashboard() {
       const [matchesRes, featuredRes, codeRes, mineRes] = await Promise.all([
         supabase.rpc("get_my_top_matches", { _limit: 50 }),
         supabase.rpc("get_creator_of_the_month"),
-        supabase.from("profiles").select("invitation_code").eq("user_id", user.id).maybeSingle(),
+        supabase.from("profiles").select("invitation_code, community_visible").eq("user_id", user.id).maybeSingle(),
         supabase
           .from("creator_type_profiles")
           .select("primary_type, secondary_type, type_3, type_4")
@@ -134,6 +139,7 @@ export default function CommunityDashboard() {
 
       if (featuredRes.data) setFeatured(featuredRes.data as CreatorOfMonth);
       if (codeRes.data?.invitation_code) setMyCode(codeRes.data.invitation_code);
+      setIsCommunityVisible(codeRes.data?.community_visible ?? false);
       if (mineRes.data) {
         const t = [
           mineRes.data.primary_type,
