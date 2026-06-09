@@ -235,6 +235,17 @@ function createAvatarOverlay(opts: {
 
   let div: HTMLDivElement | null = null;
 
+  // Size bucket per Face View thresholds (xl/lg/md/sm). Mapped to marker
+  // diameters that read clearly on a map without overcrowding: spec calls for
+  // xl 200 / lg 150 / md 110 / sm 80. Anchor stays bottom-center via the
+  // translate(-50%, -100%) transform so the pin tail sits on the coord
+  // regardless of avatar diameter.
+  const SIZE =
+    member.score >= 8 ? 200 : member.score >= 5 ? 150 : member.score >= 3 ? 110 : 80;
+  const BADGE = Math.max(22, Math.round(SIZE * 0.22));
+  const BADGE_FONT = Math.max(12, Math.round(SIZE * 0.13));
+  const AVATAR_FONT = Math.max(18, Math.round(SIZE * 0.34));
+
   overlay.onAdd = function () {
     div = document.createElement("div");
     div.style.position = "absolute";
@@ -243,7 +254,6 @@ function createAvatarOverlay(opts: {
     div.style.zIndex = String(100 + Math.round(member.score));
     div.title = `${member.display_name ?? "Member"} — Match strength: ${member.score}`;
 
-    const SIZE = 56;
     const wrapper = document.createElement("div");
     wrapper.style.position = "relative";
     wrapper.style.width = `${SIZE}px`;
