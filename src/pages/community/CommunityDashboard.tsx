@@ -332,16 +332,13 @@ export default function CommunityDashboard() {
         ) : matches.length === 0 ? (
           <EmptyState code={myCode} onCopy={copyInvite} copied={copied} />
         ) : (
-          <div className="relative py-8 space-y-10">
-            <Ring members={rings.xl} size="xl" gap="gap-10" navigate={navigate}
-              resolveAvatar={resolveAvatar} isFeatured={isFeaturedMember} featuredColor={featuredColor} />
-            <Ring members={rings.lg} size="lg" gap="gap-8" navigate={navigate}
-              resolveAvatar={resolveAvatar} isFeatured={isFeaturedMember} featuredColor={featuredColor} />
-            <Ring members={rings.md} size="md" gap="gap-6" navigate={navigate}
-              resolveAvatar={resolveAvatar} isFeatured={isFeaturedMember} featuredColor={featuredColor} />
-            <Ring members={rings.sm} size="sm" gap="gap-4" navigate={navigate}
-              resolveAvatar={resolveAvatar} isFeatured={isFeaturedMember} featuredColor={featuredColor} />
-          </div>
+          <Honeycomb
+            members={matches}
+            navigate={navigate}
+            resolveAvatar={resolveAvatar}
+            isFeatured={isFeaturedMember}
+            featuredColor={featuredColor}
+          />
         )}
       </main>
       </div>
@@ -349,44 +346,63 @@ export default function CommunityDashboard() {
   );
 }
 
-function Ring({
+/**
+ * Organic honeycomb layout — all matches mixed together, sized by score,
+ * with alternating row offsets to evoke the game board's hex tiling rather
+ * than the previous concentric ring stack.
+ */
+function Honeycomb({
   members,
-  size,
-  gap,
   navigate,
   resolveAvatar,
   isFeatured,
   featuredColor,
 }: {
   members: MatchRow[];
-  size: "sm" | "md" | "lg" | "xl";
-  gap: string;
   navigate: (path: string) => void;
   resolveAvatar: (key: string | null) => string | null;
   isFeatured: (types: LotusCreatorType[] | null) => boolean;
   featuredColor?: string;
 }) {
-  if (members.length === 0) return null;
+  // Sort by score desc so the strongest matches land near the top/centre,
+  // but keep all sizes interleaved instead of grouped into rings.
+  const sorted = useMemo(
+    () => [...members].sort((a, b) => b.score - a.score),
+    [members]
+  );
+
   return (
-    <div className={cn("flex flex-wrap items-center justify-center", gap)}>
-      {members.map((m) => {
+    <div
+      className="relative py-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2"
+    >
+      {sorted.map((m, i) => {
         const highlight = isFeatured(m.creator_types);
+        const size = sizeFor(m.score);
+        // Honeycomb stagger: every other tile drops a half-row to mimic
+        // hex offset rows on the game board.
+        const yOffset = i % 2 === 0 ? 0 : 36;
         return (
-          <LotusProfile
+          <div
             key={m.user_id}
-            avatarUrl={resolveAvatar(m.avatar_url)}
-            displayName={m.display_name ?? "Member"}
-            creatorTypes={m.creator_types ?? []}
-            size={size}
-            featuredHighlight={highlight ? "glow" : null}
-            featuredColor={featuredColor}
-            onClick={() => navigate(`/member/${m.user_id}`)}
-          />
+            style={{ transform: `translateY(${yOffset}px)` }}
+            title={`${m.display_name ?? "Member"} — Match strength: ${m.score}`}
+          >
+            <LotusProfile
+              avatarUrl={resolveAvatar(m.avatar_url)}
+              displayName={m.display_name ?? "Member"}
+              creatorTypes={m.creator_types ?? []}
+              size={size}
+              featuredHighlight={highlight ? "glow" : null}
+              featuredColor={featuredColor}
+              onClick={() => navigate(`/member/${m.user_id}`)}
+            />
+          </div>
         );
       })}
     </div>
   );
 }
+
 
 function EmptyState({
   code,
