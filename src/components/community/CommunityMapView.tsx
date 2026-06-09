@@ -1,3 +1,4 @@
+/// <reference types="google.maps" />
 /**
  * CommunityMapView — Batch 8 (Phase 2.1 Map View).
  *
