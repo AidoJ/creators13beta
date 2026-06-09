@@ -30,6 +30,40 @@ import type { MapMember } from "@/components/community/CommunityMapView";
 // Lazy: Maps JS API only loads when the user actually toggles to Map view.
 const CommunityMapView = lazy(() => import("@/components/community/CommunityMapView"));
 
+// Warm up the Maps JS script + the MapView chunk in the background as soon as
+// the Community Dashboard mounts, so toggling to Map view is near-instant.
+// (No-op if the script is already in the page.)
+let __c13MapWarmedUp = false;
+function warmUpMaps() {
+  if (__c13MapWarmedUp || typeof window === "undefined") return;
+  __c13MapWarmedUp = true;
+  // Prefetch the lazy chunk.
+  import("@/components/community/CommunityMapView").catch(() => {});
+  // Preconnect + start downloading the Maps JS bundle.
+  const key = (import.meta as any).env?.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
+  if (!key) return;
+  if (document.getElementById("c13-google-maps-js")) return;
+  const pre = document.createElement("link");
+  pre.rel = "preconnect";
+  pre.href = "https://maps.googleapis.com";
+  pre.crossOrigin = "";
+  document.head.appendChild(pre);
+  const pre2 = document.createElement("link");
+  pre2.rel = "preconnect";
+  pre2.href = "https://maps.gstatic.com";
+  pre2.crossOrigin = "";
+  document.head.appendChild(pre2);
+  const s = document.createElement("script");
+  s.id = "c13-google-maps-js";
+  s.async = true;
+  s.defer = true;
+  (window as any).__c13MapsInitCallback = (window as any).__c13MapsInitCallback || (() => {});
+  s.src =
+    `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}` +
+    `&loading=async&callback=__c13MapsInitCallback`;
+  document.head.appendChild(s);
+}
+
 type ViewMode = "face" | "map";
 const VIEW_STORAGE_KEY = "c13.community.viewMode";
 
