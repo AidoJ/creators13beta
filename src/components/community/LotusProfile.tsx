@@ -80,13 +80,15 @@ export function LotusProfile({
   displayName,
   creatorTypes,
   size = "md",
+  sizePx,
   onClick,
   className,
   featuredHighlight = null,
   featuredColor,
 }: LotusProfileProps) {
-  const px = SIZE_PX[size];
+  const px = sizePx ?? SIZE_PX[size];
   const interactive = typeof onClick === "function";
+
 
   const slots = useMemo(() => {
     const types = creatorTypes.slice(0, 4);
