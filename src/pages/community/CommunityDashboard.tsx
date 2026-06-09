@@ -23,6 +23,7 @@ import { capitaliseTypeName, getCreatorTypeColor } from "@/lib/creatorTypes";
 import { glyphMarkForType } from "@/lib/game/glyphs";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import fernBg from "@/assets/fern-bg.webp.asset.json";
 
 type MatchRow = {
   user_id: string;
