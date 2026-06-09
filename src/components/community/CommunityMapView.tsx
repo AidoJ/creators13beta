@@ -298,6 +298,8 @@ function createAvatarOverlay(opts: {
       img.src = member.avatar_url;
       img.alt = member.display_name ?? "Member";
       img.referrerPolicy = "no-referrer";
+      img.loading = "lazy";
+      img.decoding = "async";
       img.style.width = "100%";
       img.style.height = "100%";
       img.style.objectFit = "cover";
