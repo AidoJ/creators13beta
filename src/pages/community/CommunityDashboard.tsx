@@ -244,6 +244,38 @@ export default function CommunityDashboard() {
       <div className="relative z-10">
       <DashboardHeader email={user?.email} onSignOut={signOut} />
 
+      {/* Visibility nudge — shown when the viewer's community_visible=false.
+          Session-only dismissal: reappears next visit until they enable. */}
+      {isCommunityVisible === false && !visibilityBannerDismissed && (
+        <div className="container mx-auto px-4 pt-3">
+          <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm">
+            <EyeOff className="h-4 w-4 text-primary flex-shrink-0" />
+            <p className="flex-1 text-foreground">
+              Your profile is private — other Creators can&apos;t see you in their matches.{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/settings/community")}
+                className="font-semibold text-primary hover:underline"
+              >
+                Enable visibility →
+              </button>
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setVisibilityBannerDismissed(true);
+                try { sessionStorage.setItem("c13.community.visBanner.dismissed", "1"); } catch { /* ignore */ }
+              }}
+              aria-label="Dismiss"
+              className="text-muted-foreground hover:text-foreground flex-shrink-0"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+
       {/* Top-left stack — collapses on mobile while Map view is active so the
           map gets the full viewport width. Desktop keeps the full rail. */}
       {(() => {
