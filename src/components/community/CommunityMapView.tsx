@@ -277,7 +277,7 @@ function createAvatarOverlay(opts: {
     inner.style.justifyContent = "center";
     inner.style.color = "#fff";
     inner.style.fontFamily = "'Questrial', sans-serif";
-    inner.style.fontSize = "18px";
+    inner.style.fontSize = `${AVATAR_FONT}px`;
 
     if (member.avatar_url) {
       const img = document.createElement("img");
