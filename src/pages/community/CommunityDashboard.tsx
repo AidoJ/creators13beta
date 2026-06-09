@@ -9,7 +9,7 @@
  * Avatars are batch-signed client-side via storage.createSignedUrls — one
  * round trip instead of N+1.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -347,9 +347,10 @@ export default function CommunityDashboard() {
 }
 
 /**
- * Organic honeycomb layout — all matches mixed together, sized by score,
- * with alternating row offsets to evoke the game board's hex tiling rather
- * than the previous concentric ring stack.
+ * Organic honeycomb layout — tiles dynamically resize to fill the available
+ * viewport. Few matches → larger tiles; many matches → smaller tiles. The
+ * top-scoring match always renders biggest so face size still encodes match
+ * strength, with the rest scaled proportionally to their score.
  */
 function Honeycomb({
   members,
@@ -364,23 +365,70 @@ function Honeycomb({
   isFeatured: (types: LotusCreatorType[] | null) => boolean;
   featuredColor?: string;
 }) {
-  // Sort by score desc so the strongest matches land near the top/centre,
-  // but keep all sizes interleaved instead of grouped into rings.
   const sorted = useMemo(
     () => [...members].sort((a, b) => b.score - a.score),
     [members]
   );
 
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [dims, setDims] = useState({ w: 0, h: 0 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => {
+      const rect = el.getBoundingClientRect();
+      // Reserve vertical space below the container for visual breathing room.
+      const vh = window.innerHeight;
+      const top = rect.top;
+      const h = Math.max(360, vh - top - 24);
+      setDims({ w: rect.width, h });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [sorted.length]);
+
+  // Compute base tile size from available area / count. Sqrt packing heuristic
+  // — each tile occupies ~ (base * 1.15)² of area on average. Clamped to keep
+  // single-match views from going absurdly huge and large lists from going
+  // unreadably tiny.
+  const sizes = useMemo(() => {
+    const count = sorted.length;
+    if (count === 0 || dims.w === 0) return [] as number[];
+    const area = dims.w * dims.h;
+    const ideal = Math.sqrt(area / count) * 0.78;
+    const base = Math.max(110, Math.min(340, ideal));
+
+    const maxScore = sorted[0].score || 1;
+    const minScore = sorted[sorted.length - 1].score || 1;
+    const span = Math.max(1, maxScore - minScore);
+
+    return sorted.map((m) => {
+      // Rank-relative factor: top match = 1.15x base, weakest = 0.7x base.
+      const rel = (m.score - minScore) / span; // 0..1
+      const factor = 0.7 + rel * 0.45;
+      return Math.round(base * factor);
+    });
+  }, [sorted, dims]);
+
   return (
     <div
-      className="relative py-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2"
+      ref={containerRef}
+      className="relative flex flex-wrap items-center justify-center gap-x-4 gap-y-2"
+      style={{ minHeight: dims.h || undefined }}
     >
       {sorted.map((m, i) => {
         const highlight = isFeatured(m.creator_types);
-        const size = sizeFor(m.score);
-        // Honeycomb stagger: every other tile drops a half-row to mimic
-        // hex offset rows on the game board.
-        const yOffset = i % 2 === 0 ? 0 : 36;
+        const px = sizes[i] ?? 180;
+        // Honeycomb stagger: every other tile drops by ~25% of its size to
+        // mimic offset hex rows on the game board.
+        const yOffset = i % 2 === 0 ? 0 : Math.round(px * 0.22);
         return (
           <div
             key={m.user_id}
@@ -391,7 +439,7 @@ function Honeycomb({
               avatarUrl={resolveAvatar(m.avatar_url)}
               displayName={m.display_name ?? "Member"}
               creatorTypes={m.creator_types ?? []}
-              size={size}
+              sizePx={px}
               featuredHighlight={highlight ? "glow" : null}
               featuredColor={featuredColor}
               onClick={() => navigate(`/member/${m.user_id}`)}
@@ -402,6 +450,8 @@ function Honeycomb({
     </div>
   );
 }
+
+
 
 
 function EmptyState({

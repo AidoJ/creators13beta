@@ -33,11 +33,14 @@ export interface LotusProfileProps {
   displayName: string;
   creatorTypes: LotusCreatorType[];
   size?: "sm" | "md" | "lg" | "xl";
+  /** Explicit pixel size; overrides the `size` bucket when provided. */
+  sizePx?: number;
   onClick?: () => void;
   className?: string;
   featuredHighlight?: FeaturedHighlight;
   featuredColor?: string;
 }
+
 
 const SIZE_PX: Record<NonNullable<LotusProfileProps["size"]>, number> = {
   sm: 150,
@@ -77,13 +80,15 @@ export function LotusProfile({
   displayName,
   creatorTypes,
   size = "md",
+  sizePx,
   onClick,
   className,
   featuredHighlight = null,
   featuredColor,
 }: LotusProfileProps) {
-  const px = SIZE_PX[size];
+  const px = sizePx ?? SIZE_PX[size];
   const interactive = typeof onClick === "function";
+
 
   const slots = useMemo(() => {
     const types = creatorTypes.slice(0, 4);
