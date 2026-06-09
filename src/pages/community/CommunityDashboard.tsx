@@ -23,6 +23,7 @@ import { capitaliseTypeName, getCreatorTypeColor } from "@/lib/creatorTypes";
 import { glyphMarkForType } from "@/lib/game/glyphs";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import fernBg from "@/assets/fern-bg.webp.asset.json";
 
 type MatchRow = {
   user_id: string;
@@ -183,8 +184,17 @@ export default function CommunityDashboard() {
     : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 relative">
+      {/* Fern backdrop — 20% opacity (80% transparent), fixed behind content */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 z-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${fernBg.url})`, opacity: 0.2 }}
+      />
+      <div className="relative z-10">
       <DashboardHeader email={user?.email} onSignOut={signOut} />
+
+
 
       <main className="container mx-auto px-4 py-6 max-w-6xl space-y-6">
         {/* Top toolbar: view toggle + settings */}
@@ -315,6 +325,7 @@ export default function CommunityDashboard() {
           </div>
         )}
       </main>
+      </div>
     </div>
   );
 }
