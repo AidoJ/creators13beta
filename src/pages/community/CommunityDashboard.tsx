@@ -171,16 +171,38 @@ export default function CommunityDashboard() {
     return { xl, lg, md, sm };
   }, [matches]);
 
-  const resolveAvatar = (key: string | null) => {
+  const resolveAvatar = useCallback((key: string | null) => {
     if (!key) return null;
     if (/^https?:\/\//i.test(key)) return key;
     return signedAvatars[key] ?? null;
-  };
+  }, [signedAvatars]);
 
-  const isFeaturedMember = (types: LotusCreatorType[] | null) => {
+  const isFeaturedMember = useCallback((types: LotusCreatorType[] | null) => {
     if (!featuredKey || !types) return false;
     return types.some((t) => t.type?.toLowerCase() === featuredKey);
-  };
+  }, [featuredKey]);
+
+  // Map-mode payload: pre-resolved avatar URLs + flattened featured / primary
+  // type so the MapView component stays a presentation layer.
+  const mapMembers: MapMember[] = useMemo(
+    () =>
+      matches.map((m) => ({
+        user_id: m.user_id,
+        display_name: m.display_name,
+        avatar_url: resolveAvatar(m.avatar_url),
+        location_lat: m.location_lat,
+        location_lng: m.location_lng,
+        score: m.score,
+        primary_type: m.creator_types?.[0]?.type?.toLowerCase() ?? null,
+        featured: isFeaturedMember(m.creator_types),
+      })),
+    [matches, resolveAvatar, isFeaturedMember]
+  );
+
+  const handleSelectMember = useCallback(
+    (userId: string) => navigate(`/member/${userId}`),
+    [navigate]
+  );
 
   const copyInvite = async () => {
     if (!myCode) return;
