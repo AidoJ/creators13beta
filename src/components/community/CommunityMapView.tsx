@@ -163,7 +163,10 @@ export default function CommunityMapView({
     for (const ov of overlaysRef.current) ov.setMap(null);
     overlaysRef.current = [];
 
-    if (plottable.length === 0) return;
+    if (plottable.length === 0) {
+      boundsKeyRef.current = "";
+      return;
+    }
 
     const bounds = new window.google.maps.LatLngBounds();
     for (const m of plottable) {
@@ -178,14 +181,24 @@ export default function CommunityMapView({
       overlay.setMap(map);
       overlaysRef.current.push(overlay);
     }
-    map.fitBounds(bounds, 64);
-    // Don't over-zoom on a single member.
-    const listener = window.google.maps.event.addListenerOnce(map, "idle", () => {
-      if (map.getZoom()! > 11) map.setZoom(11);
-    });
-    return () => {
-      window.google?.maps?.event.removeListener(listener);
-    };
+
+    // Only re-fit the viewport when the *set* of plotted positions actually
+    // changes — not when avatar URLs sign in or featuredColor flips. This
+    // avoids a jarring re-pan/re-zoom on every parent re-render.
+    const key = plottable
+      .map((m) => `${m.user_id}:${m.location_lat?.toFixed(4)},${m.location_lng?.toFixed(4)}`)
+      .sort()
+      .join("|");
+    if (key !== boundsKeyRef.current) {
+      boundsKeyRef.current = key;
+      map.fitBounds(bounds, 64);
+      const listener = window.google.maps.event.addListenerOnce(map, "idle", () => {
+        if (map.getZoom()! > 11) map.setZoom(11);
+      });
+      return () => {
+        window.google?.maps?.event.removeListener(listener);
+      };
+    }
   }, [ready, plottable, featuredColor, onSelect]);
 
   // Cleanup overlays on unmount.
