@@ -185,18 +185,57 @@ export default function CommunityDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 relative">
-      {/* Fern backdrop — 20% opacity (80% transparent), fixed behind content */}
+      {/* Seasonal backdrop — 10% opacity (90% transparent), swaps with the
+          current Creator-of-the-Month season. */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 z-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${fernBg.url})`, opacity: 0.2 }}
+        className="pointer-events-none fixed inset-0 z-0 bg-cover bg-center transition-[background-image] duration-700"
+        style={{ backgroundImage: `url(${backgroundForSeason(featured?.creator_type)})`, opacity: 0.1 }}
       />
       <div className="relative z-10">
       <DashboardHeader email={user?.email} onSignOut={signOut} />
 
+      {/* Left vertical rail: Events, Chat, Match (Dashboard), Shop */}
+      <TooltipProvider delayDuration={150}>
+        <nav
+          aria-label="Community quick nav"
+          className="fixed left-3 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-3 rounded-full border border-border bg-card/80 backdrop-blur px-2 py-3 shadow-sm"
+        >
+          {[
+            { label: "Events", Icon: Calendar, soon: true, onClick: () => {} },
+            { label: "Chat", Icon: MessageCircle, soon: true, onClick: () => {} },
+            {
+              label: "Match (Dashboard)",
+              Icon: LayoutDashboard,
+              soon: false,
+              onClick: () => navigate("/dashboard"),
+            },
+            { label: "Shop", Icon: ShoppingBag, soon: true, onClick: () => {} },
+          ].map(({ label, Icon, soon, onClick }) => (
+            <Tooltip key={label}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={onClick}
+                  disabled={soon}
+                  aria-label={label}
+                  className={cn(
+                    "h-10 w-10 rounded-full flex items-center justify-center transition-colors",
+                    soon
+                      ? "text-muted-foreground/70 opacity-70 cursor-not-allowed"
+                      : "text-foreground hover:bg-primary/10"
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{soon ? `${label} — coming soon` : label}</TooltipContent>
+            </Tooltip>
+          ))}
+        </nav>
+      </TooltipProvider>
 
-
-      <main className="container mx-auto px-4 py-6 max-w-6xl space-y-6">
+      <main className="container mx-auto px-4 py-6 max-w-6xl space-y-6 pl-20">
         {/* Top toolbar: view toggle + settings */}
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <TooltipProvider delayDuration={150}>
@@ -224,32 +263,17 @@ export default function CommunityDashboard() {
               </Tooltip>
             </div>
 
-            <div className="flex items-center gap-2">
-              {(["Events", "Chat", "Shop"] as const).map((label) => {
-                const Icon = label === "Events" ? Calendar : label === "Chat" ? MessageCircle : ShoppingBag;
-                return (
-                  <Tooltip key={label}>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full border border-dashed border-border text-muted-foreground bg-card/50">
-                        <Icon className="h-3.5 w-3.5" />
-                        {label}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Coming soon</TooltipContent>
-                  </Tooltip>
-                );
-              })}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate("/settings/community")}
-                aria-label="Community settings"
-              >
-                <Settings className="h-5 w-5" />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/settings/community")}
+              aria-label="Community settings"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
           </TooltipProvider>
         </div>
+
 
         {/* Creator of the Month badge */}
         {featured && (
