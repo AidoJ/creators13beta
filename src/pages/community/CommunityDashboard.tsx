@@ -18,7 +18,7 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, Map as MapIcon, Users, MessageCircle, Calendar, ShoppingBag, Copy, Check } from "lucide-react";
+import { Settings, Map as MapIcon, Users, MessageCircle, Calendar, ShoppingBag, Copy, Check, LayoutDashboard } from "lucide-react";
 import { capitaliseTypeName, getCreatorTypeColor } from "@/lib/creatorTypes";
 import { glyphMarkForType } from "@/lib/game/glyphs";
 import { toast } from "@/hooks/use-toast";
