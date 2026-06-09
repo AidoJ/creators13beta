@@ -20,7 +20,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Skeleton } from "@/components/ui/skeleton";
 import { Settings, Map as MapIcon, Users, MessageCircle, Calendar, ShoppingBag, Copy, Check, LayoutDashboard } from "lucide-react";
 import { capitaliseTypeName, getCreatorTypeColor } from "@/lib/creatorTypes";
-import { glyphMarkForType } from "@/lib/game/glyphs";
+import { glyphForType } from "@/lib/game/glyphs";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { backgroundForSeason } from "@/lib/seasonalBackgrounds";
@@ -47,7 +47,7 @@ type CreatorOfMonth = {
 // Tier order for size buckets. Compressed 2.5:1 range so smaller matches still
 // register as members rather than visual placeholders.
 function sizeFor(score: number): "sm" | "md" | "lg" | "xl" {
-  if (score >= 7) return "xl";
+  if (score >= 8) return "xl";
   if (score >= 5) return "lg";
   if (score >= 3) return "md";
   return "sm";
@@ -286,25 +286,26 @@ export default function CommunityDashboard() {
                 : undefined,
             }}
           >
-            <div
-              className="h-14 w-14 rounded-full flex items-center justify-center shadow-md flex-shrink-0 p-2"
-              style={{ backgroundColor: featuredColor }}
-              aria-hidden
-            >
+            <div className="h-16 w-16 flex items-center justify-center flex-shrink-0" aria-hidden>
               {(() => {
-                const g = glyphMarkForType(capitaliseTypeName(featured.creator_type));
+                const g = glyphForType(capitaliseTypeName(featured.creator_type));
                 return g ? (
                   <img
                     src={g}
                     alt=""
                     className="w-full h-full object-contain"
-                    style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.25))" }}
+                    style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }}
                     draggable={false}
                   />
                 ) : (
-                  <span className="font-display text-2xl text-white">
-                    {capitaliseTypeName(featured.creator_type).charAt(0)}
-                  </span>
+                  <div
+                    className="h-14 w-14 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: featuredColor }}
+                  >
+                    <span className="font-display text-2xl text-white">
+                      {capitaliseTypeName(featured.creator_type).charAt(0)}
+                    </span>
+                  </div>
                 );
               })()}
             </div>
@@ -377,24 +378,16 @@ function Ring({
       {members.map((m) => {
         const highlight = isFeatured(m.creator_types);
         return (
-          <div
+          <LotusProfile
             key={m.user_id}
-            className="relative rounded-full"
-            style={
-              highlight && featuredColor
-                ? { boxShadow: `0 0 0 3px ${featuredColor}, 0 0 24px ${featuredColor}80` }
-                : undefined
-            }
-          >
-            <LotusProfile
-              avatarUrl={resolveAvatar(m.avatar_url)}
-              displayName={m.display_name ?? "Member"}
-              creatorTypes={m.creator_types ?? []}
-              size={size}
-              matchScore={m.score}
-              onClick={() => navigate(`/member/${m.user_id}`)}
-            />
-          </div>
+            avatarUrl={resolveAvatar(m.avatar_url)}
+            displayName={m.display_name ?? "Member"}
+            creatorTypes={m.creator_types ?? []}
+            size={size}
+            featuredHighlight={highlight ? "glow" : null}
+            featuredColor={featuredColor}
+            onClick={() => navigate(`/member/${m.user_id}`)}
+          />
         );
       })}
     </div>
