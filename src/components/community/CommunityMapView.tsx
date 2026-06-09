@@ -99,6 +99,7 @@ export default function CommunityMapView({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const overlaysRef = useRef<google.maps.OverlayView[]>([]);
+  const boundsKeyRef = useRef<string>("");
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
