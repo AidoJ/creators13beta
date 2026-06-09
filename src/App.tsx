@@ -26,6 +26,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CardPreview from "./pages/CardPreview";
 import Play from "./pages/Play";
+import PlayDashboard from "./pages/PlayDashboard";
 import JoinMatch from "./pages/JoinMatch";
 import ProfileWizard from "./pages/onboarding/ProfileWizard";
 import CommunitySettings from "./pages/settings/CommunitySettings";
@@ -83,7 +84,8 @@ const App = () => (
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route path="/card-preview" element={<CardPreview />} />
-                <Route path="/play" element={<RequiresCompletedProfile><ErrorBoundary><Play /></ErrorBoundary></RequiresCompletedProfile>} />
+                <Route path="/play" element={<ProtectedRoute><RequiresCompletedProfile><PlayDashboard /></RequiresCompletedProfile></ProtectedRoute>} />
+                <Route path="/play/new" element={<RequiresCompletedProfile><ErrorBoundary><Play /></ErrorBoundary></RequiresCompletedProfile>} />
                 <Route path="/play/m/:matchId" element={<ProtectedRoute><RequiresCompletedProfile><ErrorBoundary><Play /></ErrorBoundary></RequiresCompletedProfile></ProtectedRoute>} />
                 <Route path="/play/join/:token" element={<JoinMatch />} />
                 <Route
