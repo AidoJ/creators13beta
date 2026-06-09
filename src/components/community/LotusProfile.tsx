@@ -109,7 +109,7 @@ export function LotusProfile({
     return fills;
   }, [slots]);
 
-  const avatarPct = 33; // central avatar enlarged 50% — focal point for matches
+  const avatarPct = 41; // central avatar — enlarged focal point for matches
   const glyphSizePct = 12;
 
   const outerStyle: CSSProperties = { width: px, height: px };
