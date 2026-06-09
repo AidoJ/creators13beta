@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 import DiscordLinkCard from "@/components/dashboard/DiscordLinkCard";
-import GameDashboardSection from "@/components/dashboard/game/GameDashboardSection";
 import PlayerProfileDiscountCTA from "@/components/dashboard/PlayerProfileDiscountCTA";
+import { Card } from "@/components/ui/card";
+import { Gamepad2, Globe, ArrowRight } from "lucide-react";
 
 interface Props {
   userId: string;
@@ -14,18 +16,17 @@ interface Props {
 }
 
 export default function PlayerDashboard({ userId, email, firstName, onSignOut }: Props) {
-  const [tierLabel, setTierLabel] = useState<string>("Player");
-  const [communityVisible, setCommunityVisible] = useState(false);
+  const navigate = useNavigate();
+  const [profileComplete, setProfileComplete] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const [{ data }, { data: prof }] = await Promise.all([
-        supabase.from("subscriptions").select("tier, signup_path").eq("user_id", userId).maybeSingle(),
-        supabase.from("profiles").select("community_visible, profile_completed_at").eq("user_id", userId).maybeSingle(),
-      ]);
-      if (data?.signup_path === "player") setTierLabel("Player");
-      else if (data?.tier) setTierLabel(data.tier.charAt(0).toUpperCase() + data.tier.slice(1));
-      setCommunityVisible(!!(prof?.community_visible && prof?.profile_completed_at));
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("profile_completed_at")
+        .eq("user_id", userId)
+        .maybeSingle();
+      setProfileComplete(!!prof?.profile_completed_at);
     })();
   }, [userId]);
 
@@ -33,22 +34,49 @@ export default function PlayerDashboard({ userId, email, firstName, onSignOut }:
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
       <DashboardHeader email={email} onSignOut={onSignOut} />
       <main className="container mx-auto px-4 py-8 max-w-5xl space-y-5">
-        {communityVisible && (
-          <div className="flex justify-end -mb-2">
-            <a
-              href="/community/dashboard"
-              className="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
-            >
-              Community Dashboard →
-            </a>
-          </div>
+        {firstName && (
+          <h1 className="font-display text-2xl text-foreground">Welcome, {firstName}.</h1>
         )}
-        <GameDashboardSection
-          userId={userId}
-          firstName={firstName}
-          tierLabel={tierLabel}
-          isPaidTier={false}
-        />
+
+        {/* Section teasers — Play & Community surfaces without duplicating
+            their content. Matches the paid-tier Me page for nav consistency. */}
+        <div className={`grid gap-4 ${profileComplete ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
+          <Card
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate("/play")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate("/play"); }}
+            className="cursor-pointer p-5 flex items-center gap-4 hover:border-primary/40 hover:bg-primary/5 transition-colors group"
+          >
+            <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Gamepad2 className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground">Play</p>
+              <p className="text-xs text-muted-foreground">Your game dashboard, recent matches & stats.</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+          </Card>
+          {profileComplete && (
+            <Card
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate("/community/dashboard")}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate("/community/dashboard"); }}
+              className="cursor-pointer p-5 flex items-center gap-4 hover:border-primary/40 hover:bg-primary/5 transition-colors group"
+            >
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Globe className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">Community</p>
+                <p className="text-xs text-muted-foreground">See your matches across the 13 Creator Types.</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+            </Card>
+          )}
+        </div>
+
         <DiscordLinkCard userId={userId} />
         <ClientFAQSection />
       </main>
