@@ -300,13 +300,13 @@ function createAvatarOverlay(opts: {
     badge.style.position = "absolute";
     badge.style.right = "-4px";
     badge.style.bottom = "-4px";
-    badge.style.minWidth = "22px";
-    badge.style.height = "22px";
-    badge.style.padding = "0 6px";
+    badge.style.minWidth = `${BADGE}px`;
+    badge.style.height = `${BADGE}px`;
+    badge.style.padding = `0 ${Math.round(BADGE * 0.27)}px`;
     badge.style.borderRadius = "9999px";
     badge.style.background = "#111";
     badge.style.color = "#fff";
-    badge.style.fontSize = "12px";
+    badge.style.fontSize = `${BADGE_FONT}px`;
     badge.style.fontWeight = "600";
     badge.style.display = "flex";
     badge.style.alignItems = "center";
