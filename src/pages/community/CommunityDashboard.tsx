@@ -195,11 +195,14 @@ export default function CommunityDashboard() {
       <div className="relative z-10">
       <DashboardHeader email={user?.email} onSignOut={signOut} />
 
-      {/* Left vertical rail: Events, Chat, Match (Dashboard), Shop */}
+      {/* Left vertical rail: Events, Chat, Match (Dashboard), Shop —
+          each as its own circle tinted with the current season's
+          Creator-of-the-Month colour so the rail re-skins automatically
+          when the season changes. */}
       <TooltipProvider delayDuration={150}>
         <nav
           aria-label="Community quick nav"
-          className="fixed left-3 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-3 rounded-full border border-border bg-card/80 backdrop-blur px-2 py-3 shadow-sm"
+          className="fixed left-4 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-4"
         >
           {[
             { label: "Events", Icon: Calendar, soon: true, onClick: () => {} },
@@ -211,29 +214,37 @@ export default function CommunityDashboard() {
               onClick: () => navigate("/dashboard"),
             },
             { label: "Shop", Icon: ShoppingBag, soon: true, onClick: () => {} },
-          ].map(({ label, Icon, soon, onClick }) => (
-            <Tooltip key={label}>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={onClick}
-                  disabled={soon}
-                  aria-label={label}
-                  className={cn(
-                    "h-10 w-10 rounded-full flex items-center justify-center transition-colors",
-                    soon
-                      ? "text-muted-foreground/70 opacity-70 cursor-not-allowed"
-                      : "text-foreground hover:bg-primary/10"
-                  )}
-                >
-                  <Icon className="h-5 w-5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right">{soon ? `${label} — coming soon` : label}</TooltipContent>
-            </Tooltip>
-          ))}
+          ].map(({ label, Icon, soon, onClick }) => {
+            const bg = featuredColor ?? "hsl(var(--primary))";
+            return (
+              <Tooltip key={label}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={onClick}
+                    disabled={soon}
+                    aria-label={label}
+                    className={cn(
+                      "h-12 w-12 rounded-full flex items-center justify-center transition-transform border-2 border-white/70 shadow-md backdrop-blur-sm",
+                      soon
+                        ? "opacity-70 cursor-not-allowed"
+                        : "hover:scale-110 active:scale-95"
+                    )}
+                    style={{
+                      background: `linear-gradient(135deg, ${bg}, ${bg}cc)`,
+                      boxShadow: `0 4px 14px ${bg}55`,
+                    }}
+                  >
+                    <Icon className="h-5 w-5 text-white drop-shadow-sm" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">{soon ? `${label} — coming soon` : label}</TooltipContent>
+              </Tooltip>
+            );
+          })}
         </nav>
       </TooltipProvider>
+
 
       {/* Top-left: compact Creator of the Month hex badge */}
       {featured && (
