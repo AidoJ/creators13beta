@@ -129,6 +129,12 @@ export default function CommunityDashboard() {
     return sessionStorage.getItem("c13.community.visBanner.dismissed") === "1";
   });
 
+  // Kick off Maps script + chunk preload in the background on first mount.
+  useEffect(() => {
+    const t = setTimeout(warmUpMaps, 250);
+    return () => clearTimeout(t);
+  }, []);
+
   useEffect(() => {
     try { localStorage.setItem(VIEW_STORAGE_KEY, view); } catch { /* ignore */ }
   }, [view]);
