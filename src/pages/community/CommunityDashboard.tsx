@@ -9,7 +9,7 @@
  * Avatars are batch-signed client-side via storage.createSignedUrls — one
  * round trip instead of N+1.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,12 +18,20 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, Map as MapIcon, Users, MessageCircle, Calendar, ShoppingBag, Copy, Check, LayoutDashboard } from "lucide-react";
+import { Settings, Map as MapIcon, Users, MessageCircle, Calendar, ShoppingBag, Copy, Check, LayoutDashboard, Menu, X } from "lucide-react";
 import { capitaliseTypeName, getCreatorTypeColor } from "@/lib/creatorTypes";
 import { glyphForType } from "@/lib/game/glyphs";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { backgroundForSeason } from "@/lib/seasonalBackgrounds";
+import { useIsMobile } from "@/hooks/use-mobile";
+import type { MapMember } from "@/components/community/CommunityMapView";
+
+// Lazy: Maps JS API only loads when the user actually toggles to Map view.
+const CommunityMapView = lazy(() => import("@/components/community/CommunityMapView"));
+
+type ViewMode = "face" | "map";
+const VIEW_STORAGE_KEY = "c13.community.viewMode";
 
 type MatchRow = {
   user_id: string;
@@ -67,6 +75,7 @@ function formatCycleDate(iso: string, includeYear: boolean) {
 export default function CommunityDashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [matches, setMatches] = useState<MatchRow[]>([]);
   const [signedAvatars, setSignedAvatars] = useState<Record<string, string>>({});
@@ -74,6 +83,16 @@ export default function CommunityDashboard() {
   const [myCode, setMyCode] = useState<string | null>(null);
   const [myTypes, setMyTypes] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
+  const [view, setView] = useState<ViewMode>(() => {
+    if (typeof window === "undefined") return "face";
+    return (localStorage.getItem(VIEW_STORAGE_KEY) as ViewMode) ?? "face";
+  });
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [unplottable, setUnplottable] = useState(0);
+
+  useEffect(() => {
+    try { localStorage.setItem(VIEW_STORAGE_KEY, view); } catch { /* ignore */ }
+  }, [view]);
 
   useEffect(() => {
     if (!user) return;
@@ -152,16 +171,38 @@ export default function CommunityDashboard() {
     return { xl, lg, md, sm };
   }, [matches]);
 
-  const resolveAvatar = (key: string | null) => {
+  const resolveAvatar = useCallback((key: string | null) => {
     if (!key) return null;
     if (/^https?:\/\//i.test(key)) return key;
     return signedAvatars[key] ?? null;
-  };
+  }, [signedAvatars]);
 
-  const isFeaturedMember = (types: LotusCreatorType[] | null) => {
+  const isFeaturedMember = useCallback((types: LotusCreatorType[] | null) => {
     if (!featuredKey || !types) return false;
     return types.some((t) => t.type?.toLowerCase() === featuredKey);
-  };
+  }, [featuredKey]);
+
+  // Map-mode payload: pre-resolved avatar URLs + flattened featured / primary
+  // type so the MapView component stays a presentation layer.
+  const mapMembers: MapMember[] = useMemo(
+    () =>
+      matches.map((m) => ({
+        user_id: m.user_id,
+        display_name: m.display_name,
+        avatar_url: resolveAvatar(m.avatar_url),
+        location_lat: m.location_lat,
+        location_lng: m.location_lng,
+        score: m.score,
+        primary_type: m.creator_types?.[0]?.type?.toLowerCase() ?? null,
+        featured: isFeaturedMember(m.creator_types),
+      })),
+    [matches, resolveAvatar, isFeaturedMember]
+  );
+
+  const handleSelectMember = useCallback(
+    (userId: string) => navigate(`/member/${userId}`),
+    [navigate]
+  );
 
   const copyInvite = async () => {
     if (!myCode) return;
@@ -197,117 +238,177 @@ export default function CommunityDashboard() {
       <div className="relative z-10">
       <DashboardHeader email={user?.email} onSignOut={signOut} />
 
-      {/* Top-left stack: Creator of the Month hex + quick-nav rail aligned beneath it */}
-      <div className="fixed top-20 left-3 z-20 flex flex-col items-center gap-4">
-        {featured && (
-          <TooltipProvider delayDuration={150}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div
-                  className="w-20 h-20 flex items-center justify-center cursor-help"
-                  aria-label={`Creator of the Month: ${capitaliseTypeName(featured.creator_type)}`}
-                >
-                  {(() => {
-                    const g = glyphForType(capitaliseTypeName(featured.creator_type));
-                    return g ? (
-                      <img
-                        src={g}
-                        alt=""
-                        className="w-full h-full object-contain"
-                        style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.25))" }}
-                        draggable={false}
-                      />
-                    ) : (
-                      <div
-                        className="w-16 h-16 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: featuredColor }}
-                      >
-                        <span className="font-display text-xl text-white">
-                          {capitaliseTypeName(featured.creator_type).charAt(0)}
-                        </span>
-                      </div>
-                    );
-                  })()}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="max-w-xs">
-                <p className="font-medium">
-                  Creator of the Month · {capitaliseTypeName(featured.creator_type)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Season {featured.cycle_position} of 13
-                  {cycleLabel ? ` · ${cycleLabel}` : ""}
-                </p>
-                {viewerShares && (
-                  <p className="text-xs mt-1" style={{ color: featuredColor }}>
-                    You're a {capitaliseTypeName(featured.creator_type)} Creator this month.
-                  </p>
-                )}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-
-        <TooltipProvider delayDuration={150}>
-          <nav aria-label="Community quick nav" className="flex flex-col items-center gap-3">
-            {[
-              { label: "Events", Icon: Calendar, soon: true, onClick: () => {} },
-              { label: "Chat", Icon: MessageCircle, soon: true, onClick: () => {} },
-              {
-                label: "Match (Dashboard)",
-                Icon: LayoutDashboard,
-                soon: false,
-                onClick: () => navigate("/dashboard"),
-              },
-              { label: "Shop", Icon: ShoppingBag, soon: true, onClick: () => {} },
-            ].map(({ label, Icon, soon, onClick }) => {
-              const color = featuredColor ?? "hsl(var(--primary))";
-              return (
-                <Tooltip key={label}>
+      {/* Top-left stack — collapses on mobile while Map view is active so the
+          map gets the full viewport width. Desktop keeps the full rail. */}
+      {(() => {
+        const collapsed = isMobile && view === "map" && !mobileNavOpen;
+        if (collapsed) {
+          return (
+            <div className="fixed top-20 left-3 z-30 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen(true)}
+                aria-label="Open community navigation"
+                className="h-10 w-10 rounded-full bg-card/90 backdrop-blur border border-border flex items-center justify-center shadow"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              {featured && (() => {
+                const g = glyphForType(capitaliseTypeName(featured.creator_type));
+                return g ? (
+                  <img
+                    src={g}
+                    alt={`Creator of the Month: ${capitaliseTypeName(featured.creator_type)}`}
+                    title={`Creator of the Month: ${capitaliseTypeName(featured.creator_type)}`}
+                    className="h-10 w-10 object-contain drop-shadow"
+                    draggable={false}
+                  />
+                ) : (
+                  <div
+                    className="h-9 w-9 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: featuredColor }}
+                    title={`Creator of the Month: ${capitaliseTypeName(featured.creator_type)}`}
+                  >
+                    <span className="font-display text-sm text-white">
+                      {capitaliseTypeName(featured.creator_type).charAt(0)}
+                    </span>
+                  </div>
+                );
+              })()}
+            </div>
+          );
+        }
+        return (
+          <div className="fixed top-20 left-3 z-30 flex flex-col items-center gap-4">
+            {isMobile && view === "map" && (
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen(false)}
+                aria-label="Close community navigation"
+                className="h-9 w-9 rounded-full bg-card/90 backdrop-blur border border-border flex items-center justify-center shadow self-end"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+            {featured && (
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
                   <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={onClick}
-                      disabled={soon}
-                      aria-label={label}
-                      className={cn(
-                        "h-12 w-12 rounded-full flex items-center justify-center bg-transparent transition-transform",
-                        soon ? "opacity-70 cursor-not-allowed" : "hover:scale-110 active:scale-95"
-                      )}
-                      style={{ border: `2px solid ${color}`, color }}
+                    <div
+                      className="w-20 h-20 flex items-center justify-center cursor-help"
+                      aria-label={`Creator of the Month: ${capitaliseTypeName(featured.creator_type)}`}
                     >
-                      <Icon className="h-5 w-5" style={{ color }} />
-                    </button>
+                      {(() => {
+                        const g = glyphForType(capitaliseTypeName(featured.creator_type));
+                        return g ? (
+                          <img
+                            src={g}
+                            alt=""
+                            className="w-full h-full object-contain"
+                            style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.25))" }}
+                            draggable={false}
+                          />
+                        ) : (
+                          <div
+                            className="w-16 h-16 rounded-full flex items-center justify-center"
+                            style={{ backgroundColor: featuredColor }}
+                          >
+                            <span className="font-display text-xl text-white">
+                              {capitaliseTypeName(featured.creator_type).charAt(0)}
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </div>
                   </TooltipTrigger>
-                  <TooltipContent side="right">{soon ? `${label} — coming soon` : label}</TooltipContent>
+                  <TooltipContent side="right" className="max-w-xs">
+                    <p className="font-medium">
+                      Creator of the Month · {capitaliseTypeName(featured.creator_type)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Season {featured.cycle_position} of 13
+                      {cycleLabel ? ` · ${cycleLabel}` : ""}
+                    </p>
+                    {viewerShares && (
+                      <p className="text-xs mt-1" style={{ color: featuredColor }}>
+                        You're a {capitaliseTypeName(featured.creator_type)} Creator this month.
+                      </p>
+                    )}
+                  </TooltipContent>
                 </Tooltip>
-              );
-            })}
-          </nav>
-        </TooltipProvider>
-      </div>
+              </TooltipProvider>
+            )}
+
+            <TooltipProvider delayDuration={150}>
+              <nav aria-label="Community quick nav" className="flex flex-col items-center gap-3">
+                {[
+                  { label: "Events", Icon: Calendar, soon: true, onClick: () => {} },
+                  { label: "Chat", Icon: MessageCircle, soon: true, onClick: () => {} },
+                  {
+                    label: "Match (Dashboard)",
+                    Icon: LayoutDashboard,
+                    soon: false,
+                    onClick: () => navigate("/dashboard"),
+                  },
+                  { label: "Shop", Icon: ShoppingBag, soon: true, onClick: () => {} },
+                ].map(({ label, Icon, soon, onClick }) => {
+                  const color = featuredColor ?? "hsl(var(--primary))";
+                  return (
+                    <Tooltip key={label}>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={() => { onClick(); if (isMobile && view === "map") setMobileNavOpen(false); }}
+                          disabled={soon}
+                          aria-label={label}
+                          className={cn(
+                            "h-12 w-12 rounded-full flex items-center justify-center bg-card/80 backdrop-blur transition-transform",
+                            soon ? "opacity-70 cursor-not-allowed" : "hover:scale-110 active:scale-95"
+                          )}
+                          style={{ border: `2px solid ${color}`, color }}
+                        >
+                          <Icon className="h-5 w-5" style={{ color }} />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">{soon ? `${label} — coming soon` : label}</TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </nav>
+            </TooltipProvider>
+          </div>
+        );
+      })()}
 
 
       {/* Top-right: Face/Map toggle + Settings */}
       <TooltipProvider delayDuration={150}>
-        <div className="fixed top-20 right-4 z-20 flex items-center gap-3">
+        <div className="fixed top-20 right-4 z-30 flex items-center gap-3">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 type="button"
                 role="switch"
-                aria-checked="false"
-                aria-label="Toggle Face / Map view (Map coming soon)"
-                disabled
-                className="relative inline-flex h-7 w-14 items-center rounded-full bg-primary/80 opacity-90 cursor-not-allowed"
+                aria-checked={view === "map"}
+                aria-label={view === "map" ? "Switch to Face view" : "Switch to Map view"}
+                onClick={() => setView((v) => (v === "map" ? "face" : "map"))}
+                className="relative inline-flex h-7 w-14 items-center rounded-full bg-primary/80 transition-colors"
               >
-                <span className="absolute left-1 inline-flex items-center justify-center h-5 w-5 rounded-full bg-white shadow">
-                  <Users className="h-3 w-3 text-primary" />
+                <span
+                  className={cn(
+                    "absolute inline-flex items-center justify-center h-5 w-5 rounded-full bg-white shadow transition-transform",
+                    view === "map" ? "translate-x-[34px]" : "translate-x-1"
+                  )}
+                >
+                  {view === "map"
+                    ? <MapIcon className="h-3 w-3 text-primary" />
+                    : <Users className="h-3 w-3 text-primary" />}
                 </span>
-                <MapIcon className="absolute right-1.5 h-3.5 w-3.5 text-white/80" />
+                <Users className={cn("absolute left-1.5 h-3.5 w-3.5", view === "map" ? "text-white/80" : "opacity-0")} />
+                <MapIcon className={cn("absolute right-1.5 h-3.5 w-3.5", view === "map" ? "opacity-0" : "text-white/80")} />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">Face view · Map coming soon</TooltipContent>
+            <TooltipContent side="bottom">{view === "map" ? "Map view · click for Face" : "Face view · click for Map"}</TooltipContent>
           </Tooltip>
           <Button
             variant="ghost"
@@ -321,10 +422,14 @@ export default function CommunityDashboard() {
         </div>
       </TooltipProvider>
 
-      <main className="container mx-auto px-4 py-6 max-w-6xl space-y-6 pl-20">
-
-
-        {/* Lotus field */}
+      <main
+        className={cn(
+          "container mx-auto py-6 space-y-4",
+          view === "map"
+            ? "max-w-none px-2 sm:px-4 sm:pl-20"
+            : "px-4 max-w-6xl pl-20"
+        )}
+      >
         {loading ? (
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
             {Array.from({ length: 10 }).map((_, i) => (
@@ -333,6 +438,27 @@ export default function CommunityDashboard() {
           </div>
         ) : matches.length === 0 ? (
           <EmptyState code={myCode} onCopy={copyInvite} copied={copied} />
+        ) : view === "map" ? (
+          <div className="space-y-2">
+            <div
+              className="rounded-2xl overflow-hidden border border-border"
+              style={{ height: "calc(100vh - 9rem)" }}
+            >
+              <Suspense fallback={<div className="w-full h-full grid place-items-center text-sm text-muted-foreground">Loading map…</div>}>
+                <CommunityMapView
+                  members={mapMembers}
+                  featuredColor={featuredColor}
+                  onSelect={handleSelectMember}
+                  onUnplottableCount={setUnplottable}
+                />
+              </Suspense>
+            </div>
+            {unplottable > 0 && (
+              <p className="text-xs text-muted-foreground text-center">
+                {unplottable} member{unplottable === 1 ? "" : "s"} don't appear on the map yet — location not set.
+              </p>
+            )}
+          </div>
         ) : (
           <Honeycomb
             members={matches}
