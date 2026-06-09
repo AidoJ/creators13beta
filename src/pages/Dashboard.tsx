@@ -16,7 +16,9 @@ import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
 import DiscordLinkCard from "@/components/dashboard/DiscordLinkCard";
 import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
-import GameDashboardSection from "@/components/dashboard/game/GameDashboardSection";
+import { Card } from "@/components/ui/card";
+import { Gamepad2, Globe, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 
 
@@ -49,6 +51,7 @@ interface SubData {
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const { ready: gateReady, state: gateState } = useEnrollmentGate();
   const isPlayerOnly = !!gateState?.isPlayerOnly;
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -59,7 +62,9 @@ export default function Dashboard() {
   const [creatorTypes, setCreatorTypes] = useState<string[]>([]);
   const [hasTrainerPractitioner, setHasTrainerPractitioner] = useState(false);
   const [photoCount, setPhotoCount] = useState(0);
-  const [communityVisible, setCommunityVisible] = useState(false);
+  /** Profile-complete gate for the Community teaser card (visibility is a
+   * "be seen" gate, not a "see" gate — so we only need profile_completed_at). */
+  const [profileComplete, setProfileComplete] = useState(false);
 
 
   useEffect(() => {
@@ -73,12 +78,12 @@ export default function Dashboard() {
         supabase.from("case_studies").select("id").eq("subject_user_id", user.id).limit(1),
         supabase.from("client_practitioner").select("practitioner_id").eq("client_id", user.id).eq("active", true),
         supabase.from("profiling_photos").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-        supabase.from("profiles").select("community_visible, profile_completed_at").eq("user_id", user.id).maybeSingle(),
+        supabase.from("profiles").select("profile_completed_at").eq("user_id", user.id).maybeSingle(),
       ]);
       if (profileRes.data) setProfile(profileRes.data);
       if (bookingRes.data) setBooking(bookingRes.data);
       setPhotoCount(photosRes.count || 0);
-      setCommunityVisible(!!(visRes.data?.community_visible && visRes.data?.profile_completed_at));
+      setProfileComplete(!!visRes.data?.profile_completed_at);
       if (subRes.data) setSubscription(subRes.data as SubData);
       const hasCsRecord = !!(csRes.data && csRes.data.length > 0);
       const hasConsent = !!profileRes.data?.case_study_consent_at;
@@ -153,25 +158,45 @@ export default function Dashboard() {
       <DashboardHeader email={user?.email} onSignOut={signOut} />
 
       <main className="container mx-auto px-4 py-8 max-w-5xl space-y-5">
-        {communityVisible && (
-          <div className="flex justify-end -mb-2">
-            <a
-              href="/community/dashboard"
-              className="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
+        {/* Section teasers — surface Play & Community without duplicating
+            their content here. Phase 2.1: simple label + arrow, no live data. */}
+        <div className={`grid gap-4 ${profileComplete ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
+          <Card
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate("/play")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate("/play"); }}
+            className="cursor-pointer p-5 flex items-center gap-4 hover:border-primary/40 hover:bg-primary/5 transition-colors group"
+          >
+            <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Gamepad2 className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground">Play</p>
+              <p className="text-xs text-muted-foreground">Your game dashboard, recent matches & stats.</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+          </Card>
+          {profileComplete && (
+            <Card
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate("/community/dashboard")}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate("/community/dashboard"); }}
+              className="cursor-pointer p-5 flex items-center gap-4 hover:border-primary/40 hover:bg-primary/5 transition-colors group"
             >
-              Community Dashboard →
-            </a>
-          </div>
-        )}
-        {/* GAME DASHBOARD — shown for every tier */}
-        {user && (
-          <GameDashboardSection
-            userId={user.id}
-            firstName={profile?.first_name ?? null}
-            tierLabel={tierLabel}
-            isPaidTier={isPaidTier}
-          />
-        )}
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Globe className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">Community</p>
+                <p className="text-xs text-muted-foreground">See your matches across the 13 Creator Types.</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+            </Card>
+          )}
+        </div>
+
 
         {/* PAID-TIER section: profile, photos, sessions, subscription, recordings */}
         {isPaidTier && (
