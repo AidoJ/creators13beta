@@ -200,7 +200,7 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
             <Button
               size="lg"
               className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/25"
-              onClick={() => navigate("/play")}
+              onClick={() => navigate("/play/new")}
             >
               <Gamepad2 className="mr-2 h-5 w-5" /> Play now
             </Button>
@@ -395,7 +395,7 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
             Active games ({activeGames.length + openInvites.length})
           </h3>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => navigate("/play")}>
+            <Button size="sm" variant="outline" onClick={() => navigate("/play/new")}>
               <Gamepad2 className="h-3.5 w-3.5 mr-1" /> New game
             </Button>
           </div>
