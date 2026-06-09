@@ -8,6 +8,7 @@
  * as new seasonal assets are uploaded — no other code changes required.
  */
 import fernBg from "@/assets/fern-bg.webp.asset.json";
+import whirlwindBg from "@/assets/whirlwind-bg.webp.asset.json";
 
 const FALLBACK = fernBg.url;
 
@@ -15,7 +16,7 @@ const FALLBACK = fernBg.url;
 const SEASONAL_BG: Record<string, string> = {
   lava: FALLBACK,
   fire: FALLBACK,
-  whirlwind: FALLBACK,
+  whirlwind: whirlwindBg.url,
   snow: FALLBACK,
   lightning: FALLBACK,
   sun: FALLBACK,
