@@ -405,14 +405,13 @@ function Honeycomb({
     const ideal = Math.sqrt(area / count) * 0.78;
     const base = Math.max(110, Math.min(340, ideal));
 
-    const maxScore = sorted[0].score || 1;
-    const minScore = sorted[sorted.length - 1].score || 1;
-    const span = Math.max(1, maxScore - minScore);
-
+    // Absolute-score scale (not rank-relative) so two low scorers (e.g. 1
+    // vs 2) still render visibly different. Sqrt curve expands the low end
+    // where most matches live; assumes a nominal max score of 10.
+    const NOMINAL_MAX = 10;
     return sorted.map((m) => {
-      // Rank-relative factor: top match = 1.15x base, weakest = 0.7x base.
-      const rel = (m.score - minScore) / span; // 0..1
-      const factor = 0.7 + rel * 0.45;
+      const norm = Math.min(1, Math.max(0, (m.score || 0) / NOMINAL_MAX));
+      const factor = 0.5 + Math.sqrt(norm) * 0.9; // ~0.5 .. 1.4
       return Math.round(base * factor);
     });
   }, [sorted, dims]);
