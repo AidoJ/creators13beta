@@ -75,6 +75,7 @@ function formatCycleDate(iso: string, includeYear: boolean) {
 export default function CommunityDashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [matches, setMatches] = useState<MatchRow[]>([]);
   const [signedAvatars, setSignedAvatars] = useState<Record<string, string>>({});
@@ -82,6 +83,16 @@ export default function CommunityDashboard() {
   const [myCode, setMyCode] = useState<string | null>(null);
   const [myTypes, setMyTypes] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
+  const [view, setView] = useState<ViewMode>(() => {
+    if (typeof window === "undefined") return "face";
+    return (localStorage.getItem(VIEW_STORAGE_KEY) as ViewMode) ?? "face";
+  });
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [unplottable, setUnplottable] = useState(0);
+
+  useEffect(() => {
+    try { localStorage.setItem(VIEW_STORAGE_KEY, view); } catch { /* ignore */ }
+  }, [view]);
 
   useEffect(() => {
     if (!user) return;
