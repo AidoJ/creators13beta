@@ -8,9 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Leaf, ArrowLeft, Check, Upload, User as UserIcon } from "lucide-react";
 import { CREATOR_TYPE_NAMES, CREATOR_TYPE_COLORS } from "@/lib/creatorTypes";
 import { resolveAvatarUrl, avatarStorageKey } from "@/lib/avatar";
+import type { ContactChannels } from "@/lib/contacts";
 
 export default function CommunitySettings() {
   const { user, loading: authLoading } = useAuth();
@@ -33,6 +35,17 @@ export default function CommunitySettings() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
+  // Batch C — contact preferences
+  const [openToContact, setOpenToContact] = useState(false);
+  const [ch, setCh] = useState<ContactChannels>({});
+  // Enabled flags per channel (master toggles independent from value retention)
+  const [enEmail, setEnEmail] = useState(false);
+  const [enPhone, setEnPhone] = useState(false);
+  const [enWhats, setEnWhats] = useState(false);
+  const [enMess, setEnMess] = useState(false);
+  const [enTele, setEnTele] = useState(false);
+  const [enOther, setEnOther] = useState(false);
+
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth?returnTo=/settings/community", { replace: true });
   }, [user, authLoading, navigate]);
@@ -44,7 +57,7 @@ export default function CommunitySettings() {
       const [profileRes, typeRes] = await Promise.all([
         supabase
           .from("profiles")
-          .select("display_name, location_label, bio_superpower, bio_where_i_live, bio_intriguing, community_visible, community_joined_at, member_preferences, avatar_url")
+          .select("display_name, location_label, bio_superpower, bio_where_i_live, bio_intriguing, community_visible, community_joined_at, member_preferences, avatar_url, open_to_contact, contact_channels")
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase
@@ -69,6 +82,16 @@ export default function CommunitySettings() {
           const url = await resolveAvatarUrl(p.avatar_url);
           if (!cancelled) setAvatarUrl(url);
         }
+        // Batch C — contact prefs
+        setOpenToContact(!!(p as any).open_to_contact);
+        const cc = (((p as any).contact_channels) as ContactChannels) ?? {};
+        setCh(cc);
+        setEnEmail(!!(cc.email && cc.email.trim().length > 0));
+        setEnPhone(!!(cc.phone_number && cc.phone_number.trim().length > 0));
+        setEnWhats(!!(cc.whatsapp && cc.whatsapp.trim().length > 0));
+        setEnMess(!!(cc.messenger && cc.messenger.trim().length > 0));
+        setEnTele(!!(cc.telegram && cc.telegram.trim().length > 0));
+        setEnOther(!!(cc.other && cc.other.trim().length > 0));
       }
       if (typeRes.data) {
         setPrimaryType((typeRes.data.primary_type ?? "").toLowerCase() || null);
@@ -91,7 +114,36 @@ export default function CommunitySettings() {
       toast({ title: "Bio fields capped at 500 characters", variant: "destructive" });
       return;
     }
+    // Batch C — phone validation. If phone is enabled and has a value, at
+    // least one of call_ok / sms_ok must be ticked (server also enforces).
+    if (openToContact && enPhone) {
+      const phoneVal = (ch.phone_number ?? "").trim();
+      if (phoneVal.length > 0 && !ch.phone_call_ok && !ch.phone_sms_ok) {
+        toast({
+          title: "Phone needs a permission",
+          description: "Tick at least one of 'OK to call' or 'OK to text (SMS)' for Phone.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setSaving(true);
+
+    // Build contact_channels object — RETAIN entered values even when the
+    // master toggle is off, so users can re-enable later without retyping.
+    // Channels that the user has unticked are written as null (not deleted)
+    // so the trigger's allowed-key check still passes.
+    const contactChannels: Record<string, unknown> = {
+      email: enEmail ? (ch.email ?? "").trim() || null : null,
+      phone_number: enPhone ? (ch.phone_number ?? "").trim() || null : null,
+      phone_call_ok: enPhone ? !!ch.phone_call_ok : false,
+      phone_sms_ok: enPhone ? !!ch.phone_sms_ok : false,
+      whatsapp: enWhats ? (ch.whatsapp ?? "").trim() || null : null,
+      messenger: enMess ? (ch.messenger ?? "").trim() || null : null,
+      telegram: enTele ? (ch.telegram ?? "").trim() || null : null,
+      other: enOther ? (ch.other ?? "").trim() || null : null,
+    };
 
     // Build the profile patch.
     const prefsPatch: Record<string, unknown> = { accepts_messages: acceptsMessages };
@@ -103,6 +155,8 @@ export default function CommunitySettings() {
       bio_intriguing: bioIntriguing.trim() || null,
       community_visible: visible,
       member_preferences: prefsPatch,
+      open_to_contact: openToContact,
+      contact_channels: contactChannels,
     };
     if (visible && !hadJoinedAt) {
       (update as Record<string, unknown>).community_joined_at = new Date().toISOString();
@@ -282,6 +336,128 @@ export default function CommunitySettings() {
           </div>
         </section>
 
+        {/* ---------- Batch C: Contact Preferences ---------- */}
+        <section className="bg-card border border-border rounded-2xl p-6 space-y-4">
+          <div className="space-y-1">
+            <h2 className="font-display font-semibold text-lg">Contact Preferences</h2>
+            <p className="text-xs text-muted-foreground">
+              Other Creators can request to connect with you. Your contact details are never shared
+              publicly — only revealed when you approve a specific request, and only on channels
+              you've both enabled.
+            </p>
+          </div>
+
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="font-medium">I'm open to receiving connection requests</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Channels below stay disabled until this is on. Your entered details are preserved
+                across toggles.
+              </p>
+            </div>
+            <Switch checked={openToContact} onCheckedChange={setOpenToContact} />
+          </div>
+
+          <div className={openToContact ? "space-y-4" : "space-y-4 opacity-50 pointer-events-none"}>
+            {/* Email */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Checkbox id="ch_email" checked={enEmail} onCheckedChange={(v) => setEnEmail(!!v)} disabled={!openToContact} />
+                <Label htmlFor="ch_email" className="cursor-pointer">Email</Label>
+              </div>
+              {enEmail && (
+                <Input
+                  type="email" placeholder="you@example.com"
+                  value={ch.email ?? ""}
+                  onChange={(e) => setCh((c) => ({ ...c, email: e.target.value }))}
+                />
+              )}
+            </div>
+
+            {/* Phone */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Checkbox id="ch_phone" checked={enPhone} onCheckedChange={(v) => setEnPhone(!!v)} disabled={!openToContact} />
+                <Label htmlFor="ch_phone" className="cursor-pointer">Phone</Label>
+              </div>
+              {enPhone && (
+                <div className="space-y-2 pl-6">
+                  <Input
+                    type="tel" placeholder="+61 400 000 000"
+                    value={ch.phone_number ?? ""}
+                    onChange={(e) => setCh((c) => ({ ...c, phone_number: e.target.value }))}
+                  />
+                  <div className="flex flex-wrap gap-4">
+                    <div className="flex items-center gap-2">
+                      <Checkbox id="ch_call" checked={!!ch.phone_call_ok}
+                        onCheckedChange={(v) => setCh((c) => ({ ...c, phone_call_ok: !!v }))} />
+                      <Label htmlFor="ch_call" className="cursor-pointer text-sm">OK to call</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox id="ch_sms" checked={!!ch.phone_sms_ok}
+                        onCheckedChange={(v) => setCh((c) => ({ ...c, phone_sms_ok: !!v }))} />
+                      <Label htmlFor="ch_sms" className="cursor-pointer text-sm">OK to text (SMS)</Label>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Tick at least one — others see your phone only via the permissions you grant.</p>
+                </div>
+              )}
+            </div>
+
+            {/* WhatsApp */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Checkbox id="ch_w" checked={enWhats} onCheckedChange={(v) => setEnWhats(!!v)} disabled={!openToContact} />
+                <Label htmlFor="ch_w" className="cursor-pointer">WhatsApp</Label>
+              </div>
+              {enWhats && (
+                <Input placeholder="+61 400 000 000 (can differ from Phone)"
+                  value={ch.whatsapp ?? ""}
+                  onChange={(e) => setCh((c) => ({ ...c, whatsapp: e.target.value }))} />
+              )}
+            </div>
+
+            {/* Messenger */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Checkbox id="ch_m" checked={enMess} onCheckedChange={(v) => setEnMess(!!v)} disabled={!openToContact} />
+                <Label htmlFor="ch_m" className="cursor-pointer">Messenger</Label>
+              </div>
+              {enMess && (
+                <Input placeholder="facebook.com/yourhandle"
+                  value={ch.messenger ?? ""}
+                  onChange={(e) => setCh((c) => ({ ...c, messenger: e.target.value }))} />
+              )}
+            </div>
+
+            {/* Telegram */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Checkbox id="ch_t" checked={enTele} onCheckedChange={(v) => setEnTele(!!v)} disabled={!openToContact} />
+                <Label htmlFor="ch_t" className="cursor-pointer">Telegram</Label>
+              </div>
+              {enTele && (
+                <Input placeholder="@yourhandle"
+                  value={ch.telegram ?? ""}
+                  onChange={(e) => setCh((c) => ({ ...c, telegram: e.target.value }))} />
+              )}
+            </div>
+
+            {/* Other */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Checkbox id="ch_o" checked={enOther} onCheckedChange={(v) => setEnOther(!!v)} disabled={!openToContact} />
+                <Label htmlFor="ch_o" className="cursor-pointer">Other</Label>
+              </div>
+              {enOther && (
+                <Input placeholder='e.g. "Signal: @creator"'
+                  value={ch.other ?? ""}
+                  onChange={(e) => setCh((c) => ({ ...c, other: e.target.value }))} />
+              )}
+            </div>
+          </div>
+        </section>
+
         <section className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <h2 className="font-display font-semibold text-lg">Discoverability</h2>
           <div className="flex items-start justify-between gap-4">
@@ -303,6 +479,7 @@ export default function CommunitySettings() {
             <Switch checked={acceptsMessages} onCheckedChange={setAcceptsMessages} />
           </div>
         </section>
+
 
         <div className="flex justify-end">
           <Button onClick={save} disabled={saving}>

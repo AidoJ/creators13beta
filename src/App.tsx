@@ -35,6 +35,7 @@ import GlobalFooter from "@/components/shared/GlobalFooter";
 import ErrorBoundary from "@/components/ErrorBoundary";
 const MemberProfile = lazy(() => import("./pages/member/MemberProfile"));
 const CommunityDashboard = lazy(() => import("./pages/community/CommunityDashboard"));
+const Connections = lazy(() => import("./pages/community/Connections"));
 const LotusPreview = import.meta.env.DEV
   ? lazy(() => import("./pages/_preview/LotusPreview"))
   : null;
@@ -73,6 +74,18 @@ const App = () => (
                       <RequiresCompletedProfile>
                         <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
                           <CommunityDashboard />
+                        </Suspense>
+                      </RequiresCompletedProfile>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/community/connections"
+                  element={
+                    <ProtectedRoute>
+                      <RequiresCompletedProfile>
+                        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
+                          <Connections />
                         </Suspense>
                       </RequiresCompletedProfile>
                     </ProtectedRoute>
