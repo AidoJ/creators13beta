@@ -182,7 +182,7 @@ describe("classic ecosystem win validation", () => {
     expect(() => playDisaster(state, p.hand[0].uid)).not.toThrow();
   });
 
-  it("rejects placing a regular animal adjacent to a Sky Creator", () => {
+  it("allows a regular animal adjacent to a Sky Creator (Sky Creator is a wildcard anchor)", () => {
     const sky = skyCreator();
     const bear = animal("bear", ["Soil", "Tree"]);
     const p: PlayerState = {
@@ -193,7 +193,8 @@ describe("classic ecosystem win validation", () => {
       players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
       turnNumber: 1, finished: false, winnerId: null,
     };
-    expect(() => placeOnEcosystem(state, bear.uid, { q: 1, r: 0 })).toThrowError(/Only Sky Creature/);
+    const after = placeOnEcosystem(state, bear.uid, { q: 1, r: 0 });
+    expect(after.players[0].ecosystem.placed.has("1,0")).toBe(true);
   });
 
   it("allows animal neighbours when they share a Creator Type anywhere on the card", () => {
@@ -334,7 +335,7 @@ describe("classic ecosystem win validation", () => {
       players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
       turnNumber: 1, finished: false, winnerId: null,
     };
-    expect(() => placeOnEcosystem(state, swordfish.uid, { q: 1, r: 0 })).toThrowError(/share a Creator Type/);
+    expect(() => placeOnEcosystem(state, swordfish.uid, { q: 1, r: 0 })).toThrowError(/at least one neighbour that shares/);
   });
 
   it("client scenario: Soil Creator → Alpaca legal on one side, Swordfish illegal on another side of the same Creator", () => {
@@ -354,7 +355,7 @@ describe("classic ecosystem win validation", () => {
     expect(afterAlpaca.players[0].ecosystem.placed.has("1,0")).toBe(true);
     // Swordfish on the opposite side of the same Soil Creator → no shared
     // type with Soil → still rejected (Creator is NOT a wildcard).
-    expect(() => placeOnEcosystem(afterAlpaca, swordfish.uid, { q: -1, r: 0 })).toThrowError(/share a Creator Type/);
+    expect(() => placeOnEcosystem(afterAlpaca, swordfish.uid, { q: -1, r: 0 })).toThrowError(/at least one neighbour that shares/);
   });
 
   it("creators may always sit beside other creators", () => {
