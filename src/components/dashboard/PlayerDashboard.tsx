@@ -6,7 +6,7 @@ import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 import DiscordLinkCard from "@/components/dashboard/DiscordLinkCard";
 import PlayerProfileDiscountCTA from "@/components/dashboard/PlayerProfileDiscountCTA";
 import { Card } from "@/components/ui/card";
-import { Gamepad2, Globe, ArrowRight } from "lucide-react";
+import { Gamepad2, Globe, ArrowRight, Mail } from "lucide-react";
 
 interface Props {
   userId: string;
