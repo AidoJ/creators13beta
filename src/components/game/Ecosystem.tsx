@@ -27,6 +27,13 @@ interface Props {
   /** When true, shrinks (and can grow up to `size`) so the whole board fits the
    *  parent container as the ecosystem expands. */
   autoFit?: boolean;
+  /** Optional per-cell predicate. When provided, cells that are board-legal
+   *  (adjacent + empty) but fail this predicate are rendered greyed-out and
+   *  cannot accept a drop — used to show adjacency-type-match illegal cells
+   *  for the currently selected hand card. */
+  legalForCard?: (pos: Axial) => boolean;
+  /** Tooltip shown on the greyed-out illegal cells. */
+  illegalReason?: string;
 }
 
 /** Show only the currently playable empty cells, matching the compact reference board. */
@@ -37,7 +44,7 @@ function buildScaffold(eco: EcoType, excludeKey?: string | null): Axial[] {
 export function Ecosystem({
   eco, size = 90, selectable, showEmpties = true,
   onPlace, onStealClick, onRotateClick, onMoveDragStart, onMoveDragEnd, minHeight = 300, moveFromKey = null,
-  autoFit = false,
+  autoFit = false, legalForCard, illegalReason,
 }: Props) {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -93,19 +100,22 @@ export function Ecosystem({
     if (!selectable || legal.length === 0) return;
     e.preventDefault();
     const rect = e.currentTarget.getBoundingClientRect();
-    // rect reflects the scaled (rendered) size, so divide by scale to get unscaled coords.
     const px = (e.clientX - rect.left) / scale;
     const py = (e.clientY - rect.top) / scale;
-    const nearest = legal.reduce((best, cell) => {
+    // Only snap to cells the selected card can actually occupy.
+    const candidates = legalForCard ? legal.filter(legalForCard) : legal;
+    if (candidates.length === 0) return; // nothing legal — let parent toast
+    const nearest = candidates.reduce((best, cell) => {
       const { x, y } = axialToPixel(cell.q, cell.r, size);
       const cx = x + offX + size / 2;
       const cy = y + offY + (size * 1.1547) / 2;
       const d = (cx - px) ** 2 + (cy - py) ** 2;
       return d < best.d ? { cell, d } : best;
-    }, { cell: legal[0], d: Number.POSITIVE_INFINITY });
+    }, { cell: candidates[0], d: Number.POSITIVE_INFINITY });
     setDragOverKey(null);
     onPlace?.(nearest.cell, e.dataTransfer.getData("text/plain") || undefined);
   };
+
 
   return (
     <div
@@ -128,8 +138,13 @@ export function Ecosystem({
           const { x, y } = axialToPixel(cell.q, cell.r, size);
           const k = keyOf(cell);
           const isLegal = legalKeys.has(k);
-          const canDrop = selectable && isLegal;
+          const passesCard = legalForCard ? legalForCard(cell) : true;
+          const isIllegalForCard = isLegal && legalForCard != null && !passesCard;
+          const canDrop = selectable && isLegal && passesCard;
           const isOver = dragOverKey === k;
+          const tooltip = isIllegalForCard
+            ? (illegalReason ?? "Doesn't share a Creator Type with this neighbour")
+            : undefined;
           return (
             <div
               key={`e-${k}`}
@@ -137,9 +152,17 @@ export function Ecosystem({
               aria-label={canDrop ? `Place selected card at hex ${k}` : `Empty board hex ${k}`}
               data-hex-key={k}
               data-legal-drop={canDrop ? "true" : "false"}
+              title={tooltip}
               tabIndex={canDrop ? 0 : -1}
               className="absolute"
-              style={{ left: x + offX, top: y + offY, transform: isOver ? "scale(1.08)" : undefined, transition: "transform 120ms" }}
+              style={{
+                left: x + offX,
+                top: y + offY,
+                transform: isOver ? "scale(1.08)" : undefined,
+                transition: "transform 120ms",
+                opacity: isIllegalForCard ? 0.35 : 1,
+                cursor: isIllegalForCard ? "not-allowed" : undefined,
+              }}
               onDragOver={canDrop ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverKey(k); } : undefined}
               onDragLeave={canDrop ? () => setDragOverKey((cur) => (cur === k ? null : cur)) : undefined}
               onDrop={canDrop ? (e) => {
@@ -147,15 +170,12 @@ export function Ecosystem({
                 setDragOverKey(null);
                 onPlace?.(cell, e.dataTransfer.getData("text/plain") || undefined);
               } : undefined}
-              // Wrapper-level click so synthetic .click() dispatched by touch
-              // drag-fallbacks (PlayerHand / BoardHexPiece) reaches the place
-              // handler — synthetic clicks on a parent do not propagate to children.
               onClick={canDrop ? () => onPlace?.(cell) : undefined}
             >
               <EmptyHexCell
                 size={size}
                 pulse={false}
-                active={canDrop || showEmpties}
+                active={canDrop || (showEmpties && !isIllegalForCard)}
                 hover={isOver}
                 onClick={canDrop ? () => onPlace?.(cell) : undefined}
               />
