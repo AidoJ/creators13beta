@@ -340,67 +340,76 @@ function findAdjacentDriverCreator(eco: Ecosystem, card: DeckCard, pos: Axial): 
 
 /* --------------------------- adjacency match rule --------------------------- */
 
-/** Updated rule set:
- *   - Creator cards (regular + Sky) can be placed anywhere; they need no
- *     type match with their neighbours.
- *   - Sky Creator reserves every adjacent cell for Sky Creature cards only —
- *     regular animals, Golden Body and Golden Hive cannot land there.
- *   - Golden Body is a wildcard animal; it can sit beside any non-Sky-Creator
- *     card.
- *   - Animals / Sky Creatures need AT LEAST ONE legal neighbour: a Creator
- *     (wildcard), a Golden card (wildcard), or another animal/sky-creature
- *     that shares at least one Creator Type. Non-matching animal neighbours
- *     on other sides do NOT block placement — they just aren't the anchor.
+/** Strict adjacency-type-match rule (client-confirmed):
+ *   - Each placed card must share at least one Creator Type with EVERY one of
+ *     its existing neighbours.
+ *   - Sky Creator and Golden Body are the only wildcards.
+ *   - Regular Creator cards contribute their own declared type and are NOT
+ *     wildcards (e.g. Soil Creator only matches Soil-typed animals).
+ *   - Sky Creator hard-vetoes any non-Sky-Creature neighbour, in either
+ *     direction.
+ *   - Golden Hive cannot be placed.
  */
+function cardWildcardForAdjacency(card: DeckCard): boolean {
+  return (
+    card.kind === "sky_creator" ||
+    card.kind === "golden_body" ||
+    card.kind === "golden_hive"
+  );
+}
+
+function cardAdjacencyTypes(card: DeckCard): string[] {
+  if (card.kind === "creator") {
+    if (card.displayType) return [card.displayType as string];
+    if (card.element) {
+      return Object.entries(TYPE_TO_ELEMENT)
+        .filter(([, e]) => e === card.element)
+        .map(([t]) => t);
+    }
+    return [];
+  }
+  if (card.kind === "animal" || card.kind === "sky_creature") {
+    return ((card.types ?? []) as string[]).filter(Boolean);
+  }
+  return [];
+}
+
+function typeSetsOverlap(a: string[], b: string[]): boolean {
+  if (a.length === 0 || b.length === 0) return false;
+  const setB = new Set(b.map((t) => t.toLowerCase()));
+  return a.some((t) => setB.has(t.toLowerCase()));
+}
+
 function adjacencyError(
   eco: Ecosystem,
   card: DeckCard,
   pos: Axial,
 ): string | null {
-  // Creators (incl. Sky Creator) place anywhere.
-  if (card.kind === "creator" || card.kind === "sky_creator") return null;
+  const myIsWildcard = cardWildcardForAdjacency(card);
+  const myTypes = myIsWildcard ? [] : cardAdjacencyTypes(card);
 
-  let sawNeighbour = false;
-  let hasAnchor = false;
   for (let dir = 0; dir < 6; dir++) {
     const d = NEIGHBOUR_DIRS[dir];
     const nKey = keyOf({ q: pos.q + d.q, r: pos.r + d.r });
     const pc = eco.placed.get(nKey);
     if (!pc) continue;
-    sawNeighbour = true;
 
-    // Hard veto: Sky Creator reserves its neighbour cells for Sky Creatures.
     if (pc.card.kind === "sky_creator") {
-      if (card.kind !== "sky_creature") {
-        return `Only Sky Creature cards can sit next to a Sky Creator.`;
-      }
-      hasAnchor = true;
-      continue;
+      if (card.kind === "sky_creature" || card.kind === "sky_creator") continue;
+      return `Only Sky Creature cards can sit next to a Sky Creator.`;
+    }
+    if (card.kind === "sky_creator") {
+      if (pc.card.kind === "sky_creature") continue;
+      return `Sky Creator can only sit beside Sky Creature cards.`;
     }
 
-    // Wildcard neighbours always count as an anchor.
-    if (
-      pc.card.kind === "creator" ||
-      pc.card.kind === "golden_body" ||
-      pc.card.kind === "golden_hive" ||
-      card.kind === "golden_body"
-    ) {
-      hasAnchor = true;
-      continue;
-    }
+    if (myIsWildcard) continue;
+    if (cardWildcardForAdjacency(pc.card)) continue;
 
-    // Animal/sky-creature neighbour: anchor iff they share a Creator Type.
-    if (card.kind === "animal" || card.kind === "sky_creature") {
-      const myTypes = ((card.types ?? []) as string[]).filter(Boolean);
-      const theirTypes = ((pc.card.types ?? []) as string[]).filter(Boolean);
-      if (myTypes.some((mine) => theirTypes.some((t) => mine.toLowerCase() === t.toLowerCase()))) {
-        hasAnchor = true;
-      }
+    const theirTypes = cardAdjacencyTypes(pc.card);
+    if (!typeSetsOverlap(myTypes, theirTypes)) {
+      return `${card.name} must share a Creator Type with neighbour ${pc.card.name}.`;
     }
-  }
-
-  if (sawNeighbour && !hasAnchor) {
-    return `${card.name} needs at least one neighbour that shares a Creator Type (or a Creator / Golden card).`;
   }
   return null;
 }
