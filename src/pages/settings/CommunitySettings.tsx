@@ -114,7 +114,36 @@ export default function CommunitySettings() {
       toast({ title: "Bio fields capped at 500 characters", variant: "destructive" });
       return;
     }
+    // Batch C — phone validation. If phone is enabled and has a value, at
+    // least one of call_ok / sms_ok must be ticked (server also enforces).
+    if (openToContact && enPhone) {
+      const phoneVal = (ch.phone_number ?? "").trim();
+      if (phoneVal.length > 0 && !ch.phone_call_ok && !ch.phone_sms_ok) {
+        toast({
+          title: "Phone needs a permission",
+          description: "Tick at least one of 'OK to call' or 'OK to text (SMS)' for Phone.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setSaving(true);
+
+    // Build contact_channels object — RETAIN entered values even when the
+    // master toggle is off, so users can re-enable later without retyping.
+    // Channels that the user has unticked are written as null (not deleted)
+    // so the trigger's allowed-key check still passes.
+    const contactChannels: Record<string, unknown> = {
+      email: enEmail ? (ch.email ?? "").trim() || null : null,
+      phone_number: enPhone ? (ch.phone_number ?? "").trim() || null : null,
+      phone_call_ok: enPhone ? !!ch.phone_call_ok : false,
+      phone_sms_ok: enPhone ? !!ch.phone_sms_ok : false,
+      whatsapp: enWhats ? (ch.whatsapp ?? "").trim() || null : null,
+      messenger: enMess ? (ch.messenger ?? "").trim() || null : null,
+      telegram: enTele ? (ch.telegram ?? "").trim() || null : null,
+      other: enOther ? (ch.other ?? "").trim() || null : null,
+    };
 
     // Build the profile patch.
     const prefsPatch: Record<string, unknown> = { accepts_messages: acceptsMessages };
@@ -126,6 +155,8 @@ export default function CommunitySettings() {
       bio_intriguing: bioIntriguing.trim() || null,
       community_visible: visible,
       member_preferences: prefsPatch,
+      open_to_contact: openToContact,
+      contact_channels: contactChannels,
     };
     if (visible && !hadJoinedAt) {
       (update as Record<string, unknown>).community_joined_at = new Date().toISOString();
