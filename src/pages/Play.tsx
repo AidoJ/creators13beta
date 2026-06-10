@@ -775,27 +775,9 @@ export default function Play() {
             onClick={onDrawOne}
             className="h-auto py-2.5 px-2 whitespace-normal text-xs leading-tight text-center font-semibold"
           >
-            Draw 1 from Draw Pile ({state.draw.length} left) — {2 - state.drawnThisTurn} pick{2 - state.drawnThisTurn === 1 ? "" : "s"} left{handAtLimit ? " — hand full (10 max)" : ""}
+            Draw 1 from Draw Pile ({state.draw.length} left) — {2 - state.drawnThisTurn} pick{2 - state.drawnThisTurn === 1 ? "" : "s"} left{handAtLimit ? " — hand full (5 max)" : ""}
           </Button>
         )}
-        <Button
-          size="sm"
-          variant="secondary"
-          disabled={!isYourTurn || state.phase !== "draw" || needsOpeningDraw}
-          onClick={onSkipDraws}
-          className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center"
-        >
-          Skip pick-up → play from hand
-        </Button>
-        <Button
-          size="sm"
-          variant="secondary"
-          disabled={!isYourTurn || state.phase !== "place" || state.placedThisTurn >= 2}
-          onClick={onEndTurn}
-          className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center"
-        >
-          End turn early
-        </Button>
         <Button size="sm" variant="secondary" disabled={!canDisaster} onClick={onDisaster}
           className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center">
           Play as Disaster
