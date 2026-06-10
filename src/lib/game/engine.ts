@@ -189,7 +189,7 @@ export function pickFromUsed(state: MatchState): MatchState {
   next.drawnThisTurn += 1;
   if (next.drawnThisTurn >= 2) next.phase = "place";
   next.lastEvent = `${next.players[next.turn].name} took ${card.name} from the used pile`;
-  if (card.kind === "golden_hive" && !card.spent) next.players[next.turn].hiveShield = true;
+  // Hive does NOT auto-arm — it stays passive in hand until used to block a disaster.
   return next;
 }
 
