@@ -13,12 +13,14 @@ import {
   animalLinksToCreator,
   discardCard,
   drawInitialFive,
+  endTurnEarly,
   legalEcoCells,
   pickFromDraw,
   pickFromUsed,
   placeOnEcosystem,
   ecosystemSummary,
   playDisaster,
+  skipDraws,
   skyLockedSubType,
   isSkyCluster,
   placementMatchesNeighbours,
@@ -41,14 +43,15 @@ export function botStep(state: MatchState, difficulty: BotDifficulty = "medium")
     }
     // Respect hand limit — if already full, skip drawing and go play.
     if (me.hand.length >= HAND_LIMIT) {
-      return { ...state, phase: "place" as const, lastEvent: `${me.name} hand is full — skipping pick-up` };
+      try { return skipDraws(state); } catch { /* fall through */ }
     }
     const top = state.used[state.used.length - 1];
     const wantUsed = top && !top.spent && (top.kind === "creator" || top.kind === "sky_creator" || top.kind === "golden_body" || top.kind === "golden_hive");
     if (wantUsed && state.used.length > 0) return pickFromUsed(state);
     if (state.draw.length > 0) return pickFromDraw(state);
     if (state.used.length > 0 && !top?.spent) return pickFromUsed(state);
-    return state;
+    // Nothing to draw — skip the pick-up phase so we move on to placement.
+    try { return skipDraws(state); } catch { return state; }
   }
 
   const player = state.players[state.turn];
@@ -159,8 +162,11 @@ export function botStep(state: MatchState, difficulty: BotDifficulty = "medium")
   }
 
 
-  // 5) Discard the first card.
-  const dump = player.hand[0];
-  if (dump) return discardCard(state, dump.uid);
-  return state;
+  // 5) Discard the first non-hive card (Golden Hive can't be discarded).
+  const dump = player.hand.find((c) => c.kind !== "golden_hive");
+  if (dump) {
+    try { return discardCard(state, dump.uid); } catch { /* fall through */ }
+  }
+  // 6) Nothing legal to do — end the turn so play advances.
+  try { return endTurnEarly(state); } catch { return state; }
 }
