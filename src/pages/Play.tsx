@@ -549,7 +549,7 @@ export default function Play() {
       placementMatchesNeighbours(selfPlayer.ecosystem, target.card, c),
     );
     if (!hasSpot) {
-      toast.error(`${target.card.name} has no legal spot on your board — it must share a Creator Type with every neighbour.`);
+      toast.error(`${target.card.name} has no legal spot on your board — it must share a Creator Type with at least one neighbour.`);
       return;
     }
     // Stage 2: player now picks where to place the stolen card on their board.
