@@ -57,7 +57,7 @@ export default function CommunitySettings() {
       const [profileRes, typeRes] = await Promise.all([
         supabase
           .from("profiles")
-          .select("display_name, location_label, bio_superpower, bio_where_i_live, bio_intriguing, community_visible, community_joined_at, member_preferences, avatar_url")
+          .select("display_name, location_label, bio_superpower, bio_where_i_live, bio_intriguing, community_visible, community_joined_at, member_preferences, avatar_url, open_to_contact, contact_channels")
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase
@@ -82,6 +82,16 @@ export default function CommunitySettings() {
           const url = await resolveAvatarUrl(p.avatar_url);
           if (!cancelled) setAvatarUrl(url);
         }
+        // Batch C — contact prefs
+        setOpenToContact(!!(p as any).open_to_contact);
+        const cc = (((p as any).contact_channels) as ContactChannels) ?? {};
+        setCh(cc);
+        setEnEmail(!!(cc.email && cc.email.trim().length > 0));
+        setEnPhone(!!(cc.phone_number && cc.phone_number.trim().length > 0));
+        setEnWhats(!!(cc.whatsapp && cc.whatsapp.trim().length > 0));
+        setEnMess(!!(cc.messenger && cc.messenger.trim().length > 0));
+        setEnTele(!!(cc.telegram && cc.telegram.trim().length > 0));
+        setEnOther(!!(cc.other && cc.other.trim().length > 0));
       }
       if (typeRes.data) {
         setPrimaryType((typeRes.data.primary_type ?? "").toLowerCase() || null);
