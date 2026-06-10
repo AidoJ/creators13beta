@@ -340,20 +340,16 @@ function findAdjacentDriverCreator(eco: Ecosystem, card: DeckCard, pos: Axial): 
 
 /* --------------------------- adjacency match rule --------------------------- */
 
-/** Strict adjacency-type-match rule (client-confirmed):
- *   - Each placed card must share at least one Creator Type with EVERY one of
- *     its existing neighbours. (Not just one anchor — every side that touches
- *     another card has to match.)
- *   - Sky Creator and Golden Body are the only wildcards: they match anything
- *     for adjacency purposes, both when placed and when sitting as a neighbour.
- *   - Regular Creator cards are NOT wildcards — they contribute their own
- *     declared type (displayType, or types derived from element when no
- *     displayType is set). Example: an Alpaca (Soil/Tree) next to a Soil
- *     Creator is legal; a Swordfish (Ocean/River) next to the same Soil
- *     Creator is illegal.
- *   - Sky Creator still hard-vetoes any non-Sky-Creature neighbour (its cells
- *     are reserved for Sky Creature cards); reciprocally, placing a Sky
- *     Creator next to a non-Sky-Creature is rejected.
+/** Relaxed adjacency rule:
+ *   - Each placed card must share at least ONE Creator Type with at least
+ *     one of its placed neighbours (not every neighbour). A card may sit
+ *     beside non-matching neighbours so long as another neighbour matches.
+ *   - Sky Creator, Golden Body and Golden Hive are wildcards for adjacency
+ *     (Sky Creator's element-wildcard nature mirrors here — its cells are
+ *     NOT reserved for Sky Creatures).
+ *   - Regular Creator cards are NOT wildcards: they contribute their
+ *     declared type (displayType, or types derived from element).
+ *   - Two Creators touching is always legal and satisfies the anchor.
  *   - Golden Hive cannot be placed at all (handled in placeOnEcosystem).
  */
 function cardWildcardForAdjacency(card: DeckCard): boolean {
@@ -393,71 +389,47 @@ function adjacencyError(
 ): string | null {
   const myIsWildcard = cardWildcardForAdjacency(card);
   const myTypes = myIsWildcard ? [] : cardAdjacencyTypes(card);
-  const placingCreator = card.kind === "creator";
-  // Soft rule for Creator cards: they anchor the board, so they only need
-  // at least ONE type-matching animal neighbour (a non-matching animal
-  // beside them does not veto the placement). Creators may always sit
-  // beside other Creators.
-  let creatorTypedNeighbours = 0;
-  let creatorTypedMatches = 0;
-  let creatorAdjacentCreators = 0;
-  let creatorFirstMismatch: string | null = null;
+  const placingCreator = card.kind === "creator" || card.kind === "sky_creator";
+
+  let neighbourCount = 0;
+  let matchCount = 0;
+  let firstMismatch: string | null = null;
 
   for (let dir = 0; dir < 6; dir++) {
     const d = NEIGHBOUR_DIRS[dir];
     const nKey = keyOf({ q: pos.q + d.q, r: pos.r + d.r });
     const pc = eco.placed.get(nKey);
     if (!pc) continue;
+    neighbourCount += 1;
 
-    // Hard veto: Sky Creator reserves its neighbour cells for Sky Creatures.
-    if (pc.card.kind === "sky_creator") {
-      if (card.kind === "sky_creature" || card.kind === "sky_creator" || card.kind === "creator") {
-        if (placingCreator) creatorAdjacentCreators += 1;
-        continue;
-      }
-      return `Only Sky Creature cards can sit next to a Sky Creator.`;
-    }
-    // Reciprocal: placing a Sky Creator next to a non-Sky-Creature animal is
-    // illegal, but Sky Creator may sit beside other Creators.
-    if (card.kind === "sky_creator") {
-      if (pc.card.kind === "sky_creature" || pc.card.kind === "creator") continue;
-      return `Sky Creator can only sit beside Sky Creature cards or other Creators.`;
+    // Wildcards on either side always count as a match.
+    if (myIsWildcard || cardWildcardForAdjacency(pc.card)) {
+      matchCount += 1;
+      continue;
     }
 
-    // Wildcards (Golden Body / Hive on either side) always match.
-    if (myIsWildcard) continue;
-    if (cardWildcardForAdjacency(pc.card)) continue;
+    const neighbourIsCreator =
+      pc.card.kind === "creator" || pc.card.kind === "sky_creator";
 
-    // Creator beside Creator is always legal and satisfies the anchor rule.
-    if (placingCreator && pc.card.kind === "creator") {
-      creatorAdjacentCreators += 1;
+    // Two Creators touching is always legal and satisfies the anchor.
+    if (placingCreator && neighbourIsCreator) {
+      matchCount += 1;
       continue;
     }
 
     const theirTypes = cardAdjacencyTypes(pc.card);
-    const overlap = typeSetsOverlap(myTypes, theirTypes);
-
-    if (placingCreator) {
-      creatorTypedNeighbours += 1;
-      if (overlap) creatorTypedMatches += 1;
-      else if (!creatorFirstMismatch) creatorFirstMismatch = pc.card.name;
-      continue;
-    }
-
-    if (!overlap) {
-      return `${card.name} must share a Creator Type with neighbour ${pc.card.name}.`;
+    if (typeSetsOverlap(myTypes, theirTypes)) {
+      matchCount += 1;
+    } else if (!firstMismatch) {
+      firstMismatch = pc.card.name;
     }
   }
 
-  // Creator anchor rule: needs ≥1 matching animal neighbour, BUT touching
-  // another Creator also satisfies the anchor (Creators ground each other).
-  if (
-    placingCreator &&
-    creatorTypedNeighbours > 0 &&
-    creatorTypedMatches === 0 &&
-    creatorAdjacentCreators === 0
-  ) {
-    return `${card.name} must share a Creator Type with at least one neighbouring animal (no match with ${creatorFirstMismatch ?? "its neighbours"}).`;
+  // First placement / no existing neighbours: nothing to match against.
+  if (neighbourCount === 0) return null;
+
+  if (matchCount === 0) {
+    return `${card.name} must share a Creator Type with at least one neighbour (no match with ${firstMismatch ?? "its neighbours"}).`;
   }
   return null;
 }
