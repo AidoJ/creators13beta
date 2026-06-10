@@ -8,9 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Leaf, ArrowLeft, Check, Upload, User as UserIcon } from "lucide-react";
 import { CREATOR_TYPE_NAMES, CREATOR_TYPE_COLORS } from "@/lib/creatorTypes";
 import { resolveAvatarUrl, avatarStorageKey } from "@/lib/avatar";
+import type { ContactChannels } from "@/lib/contacts";
 
 export default function CommunitySettings() {
   const { user, loading: authLoading } = useAuth();
@@ -32,6 +34,17 @@ export default function CommunitySettings() {
   const [acceptsMessages, setAcceptsMessages] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  // Batch C — contact preferences
+  const [openToContact, setOpenToContact] = useState(false);
+  const [ch, setCh] = useState<ContactChannels>({});
+  // Enabled flags per channel (master toggles independent from value retention)
+  const [enEmail, setEnEmail] = useState(false);
+  const [enPhone, setEnPhone] = useState(false);
+  const [enWhats, setEnWhats] = useState(false);
+  const [enMess, setEnMess] = useState(false);
+  const [enTele, setEnTele] = useState(false);
+  const [enOther, setEnOther] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth?returnTo=/settings/community", { replace: true });
