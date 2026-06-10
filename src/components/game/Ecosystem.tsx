@@ -135,8 +135,13 @@ export function Ecosystem({
           const { x, y } = axialToPixel(cell.q, cell.r, size);
           const k = keyOf(cell);
           const isLegal = legalKeys.has(k);
-          const canDrop = selectable && isLegal;
+          const passesCard = legalForCard ? legalForCard(cell) : true;
+          const isIllegalForCard = isLegal && legalForCard != null && !passesCard;
+          const canDrop = selectable && isLegal && passesCard;
           const isOver = dragOverKey === k;
+          const tooltip = isIllegalForCard
+            ? (illegalReason ?? "Doesn't share a Creator Type with this neighbour")
+            : undefined;
           return (
             <div
               key={`e-${k}`}
@@ -144,9 +149,17 @@ export function Ecosystem({
               aria-label={canDrop ? `Place selected card at hex ${k}` : `Empty board hex ${k}`}
               data-hex-key={k}
               data-legal-drop={canDrop ? "true" : "false"}
+              title={tooltip}
               tabIndex={canDrop ? 0 : -1}
               className="absolute"
-              style={{ left: x + offX, top: y + offY, transform: isOver ? "scale(1.08)" : undefined, transition: "transform 120ms" }}
+              style={{
+                left: x + offX,
+                top: y + offY,
+                transform: isOver ? "scale(1.08)" : undefined,
+                transition: "transform 120ms",
+                opacity: isIllegalForCard ? 0.35 : 1,
+                cursor: isIllegalForCard ? "not-allowed" : undefined,
+              }}
               onDragOver={canDrop ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverKey(k); } : undefined}
               onDragLeave={canDrop ? () => setDragOverKey((cur) => (cur === k ? null : cur)) : undefined}
               onDrop={canDrop ? (e) => {
@@ -154,15 +167,12 @@ export function Ecosystem({
                 setDragOverKey(null);
                 onPlace?.(cell, e.dataTransfer.getData("text/plain") || undefined);
               } : undefined}
-              // Wrapper-level click so synthetic .click() dispatched by touch
-              // drag-fallbacks (PlayerHand / BoardHexPiece) reaches the place
-              // handler — synthetic clicks on a parent do not propagate to children.
               onClick={canDrop ? () => onPlace?.(cell) : undefined}
             >
               <EmptyHexCell
                 size={size}
                 pulse={false}
-                active={canDrop || showEmpties}
+                active={canDrop || (showEmpties && !isIllegalForCard)}
                 hover={isOver}
                 onClick={canDrop ? () => onPlace?.(cell) : undefined}
               />
