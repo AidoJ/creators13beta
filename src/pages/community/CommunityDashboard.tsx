@@ -124,10 +124,28 @@ export default function CommunityDashboard() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [unplottable, setUnplottable] = useState(0);
   const [isCommunityVisible, setIsCommunityVisible] = useState<boolean | null>(null);
+  const [pendingCount, setPendingCount] = useState(0);
   const [visibilityBannerDismissed, setVisibilityBannerDismissed] = useState(() => {
     if (typeof window === "undefined") return false;
     return sessionStorage.getItem("c13.community.visBanner.dismissed") === "1";
   });
+
+  // Batch C — poll pending connection-request count for the badge. 60s,
+  // and only while the tab is visible to avoid background churn.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const tick = async () => {
+      if (document.hidden) return;
+      const { data } = await (supabase as any).rpc("get_pending_request_count");
+      if (!cancelled) setPendingCount(typeof data === "number" ? data : 0);
+    };
+    void tick();
+    const id = window.setInterval(tick, 60_000);
+    const onVis = () => { if (!document.hidden) void tick(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => { cancelled = true; window.clearInterval(id); document.removeEventListener("visibilitychange", onVis); };
+  }, [user]);
 
   // Kick off Maps script + chunk preload in the background on first mount.
   useEffect(() => {
