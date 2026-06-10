@@ -1107,11 +1107,14 @@ export default function Play() {
                 onMoveDragEnd={isYourTurn ? () => setMoveFromKey(null) : undefined}
                 minHeight={0}
                 moveFromKey={moveFromKey}
+                legalForCard={mode === "place" ? legalForSelectedCard : undefined}
+                illegalReason={selectedCard ? `${selectedCard.name} doesn't share a Creator Type with one of these neighbours` : undefined}
               />
 
             </div>
           </Card>
         </div>
+
 
         {/* Right column: Selected (top) → Card actions with Draw 2 (below) */}
         <div className="lg:col-start-3 min-w-0 min-h-0 overflow-y-auto flex flex-col gap-2">
