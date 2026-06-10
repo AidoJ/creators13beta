@@ -30,6 +30,7 @@ import PlayDashboard from "./pages/PlayDashboard";
 import JoinMatch from "./pages/JoinMatch";
 import ProfileWizard from "./pages/onboarding/ProfileWizard";
 import CommunitySettings from "./pages/settings/CommunitySettings";
+import ContactSettings from "./pages/settings/ContactSettings";
 import RequiresCompletedProfile from "@/components/RequiresCompletedProfile";
 import GlobalFooter from "@/components/shared/GlobalFooter";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -66,6 +67,7 @@ const App = () => (
                 <Route path="/enroll/booking" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
                 <Route path="/onboarding/profile" element={<ProtectedRoute><ProfileWizard /></ProtectedRoute>} />
                 <Route path="/settings/community" element={<ProtectedRoute><RequiresCompletedProfile><CommunitySettings /></RequiresCompletedProfile></ProtectedRoute>} />
+                <Route path="/settings/contact" element={<ProtectedRoute><ContactSettings /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><RequiresCompletedProfile><Dashboard /></RequiresCompletedProfile></ProtectedRoute>} />
                 <Route
                   path="/community/dashboard"
