@@ -13,7 +13,7 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
         <SheetHeader className="px-5 pt-5 pb-3 border-b border-border/60">
           <SheetTitle className="font-display text-xl">Rule Book</SheetTitle>
           <SheetDescription>
-            13 Creators Card Game — complete rules by game type.
+            BCreators Card Game — complete rules by game type.
           </SheetDescription>
         </SheetHeader>
 
@@ -22,8 +22,8 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
 
             <section>
               <p className="text-xs text-muted-foreground">
-                This is the canonical rule set used by both human players and bots inside the
-                13 Creators app. Section 1 covers the rules that apply to every match. Sections
+                This is the canonical rule set used by both human players and bots inside
+                BCreators. Section 1 covers the rules that apply to every match. Sections
                 2–4 cover the three available Game Types and how each one ends.
               </p>
             </section>
