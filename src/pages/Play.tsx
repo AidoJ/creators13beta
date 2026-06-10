@@ -285,7 +285,12 @@ export default function Play() {
       try {
         setState((s) => {
           if (!s) return s;
-          const next = botStep(s, botDifficultyRef.current);
+          let next = botStep(s, botDifficultyRef.current);
+          // Safety net: if the bot couldn't make any progress, force-end its
+          // turn so the game doesn't deadlock.
+          if (next === s) {
+            try { next = endTurnEarly(s); } catch { /* still stuck — leave as-is */ }
+          }
           schedulePersist(next);
           return next;
         });
