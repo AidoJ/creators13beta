@@ -445,6 +445,22 @@ export default function Play() {
   }
   function onPlace(pos: Axial, draggedUid?: string) {
     if (!state) return;
+    // Steal stage 2: a victim animal was chosen — this click picks where to
+    // place the stolen card on YOUR board.
+    if (mode === "steal" && stealVictimKey && opponent && selectedUid) {
+      const victimKey = stealVictimKey;
+      guarded(
+        () => playSkyCreatureSteal(state, selectedUid, opponent.id, victimKey, pos),
+        {
+          type: "play_sky_steal",
+          uid: selectedUid,
+          from_player_id: opponent.id,
+          victim_pos_key: victimKey,
+          place_at: pos,
+        },
+      );
+      return;
+    }
     const dragMoveKey = draggedUid?.startsWith("move:") ? draggedUid.slice(5) : null;
     // moveFromKey is set either by tap-to-move (mode === "move") or by an
     // active drag (HTML5 or touch fallback); honour either source.
@@ -516,19 +532,28 @@ export default function Play() {
   }
   function onStealHex(posKey: string) {
     if (!state || !selectedUid || !opponent || !selfPlayer) return;
+    const target = opponent.ecosystem.placed.get(posKey);
+    if (!target) return;
+    const k = target.card.kind;
+    if (k === "golden_body") {
+      toast.error("Golden Body is a wildcard treasure and cannot be stolen.");
+      return;
+    }
+    if (k !== "animal" && k !== "sky_creature") {
+      toast.error("Sky Creatures can only steal animals.");
+      return;
+    }
+    // Make sure the stolen card has at least one legal landing spot.
     const cells = legalEcoCells(selfPlayer.ecosystem);
-    const placeAt = cells[0] ?? { q: 0, r: 0 };
-    guarded(
-      () => playSkyCreatureSteal(state, selectedUid, opponent.id, posKey, placeAt),
-      {
-        type: "play_sky_steal",
-        uid: selectedUid,
-        from_player_id: opponent.id,
-        victim_pos_key: posKey,
-        place_at: placeAt,
-      },
+    const hasSpot = cells.some((c) =>
+      placementMatchesNeighbours(selfPlayer.ecosystem, target.card, c),
     );
-    setMode("place");
+    if (!hasSpot) {
+      toast.error(`${target.card.name} has no legal spot on your board — it must share a Creator Type with every neighbour.`);
+      return;
+    }
+    // Stage 2: player now picks where to place the stolen card on their board.
+    setStealVictimKey(posKey);
   }
 
 
