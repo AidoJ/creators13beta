@@ -88,6 +88,7 @@ export default function Play() {
   const [lobbyOpen, setLobbyOpen] = useState(false);
   const [waitingForGuest, setWaitingForGuest] = useState(false);
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
+  const [stealVictimKey, setStealVictimKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { settings: gameSettings } = useGameSettings();
   // (turnStartedAtRef declared below, alongside other refs.)
@@ -417,6 +418,7 @@ export default function Play() {
       schedulePersist(next, move);
       setSelectedUid(null);
       setMode("place");
+      setStealVictimKey(null);
     } catch (e: any) {
       toast.error(e?.message ?? "Illegal move");
     }
