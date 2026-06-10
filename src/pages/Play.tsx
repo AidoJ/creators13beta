@@ -861,7 +861,10 @@ export default function Play() {
         </Button>
         <Button size="sm" variant={mode === "steal" ? "default" : "secondary"}
           disabled={!canSteal}
-          onClick={() => setMode(mode === "steal" ? "place" : "steal")}
+          onClick={() => {
+            setStealVictimKey(null);
+            setMode(mode === "steal" ? "place" : "steal");
+          }}
           className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center">
           {mode === "steal" ? "Cancel steal" : "Steal with Sky Creature"}
         </Button>
@@ -878,7 +881,14 @@ export default function Play() {
 
   const selectedBlock = mode === "steal" ? (
     <Card className="p-2">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Click an animal to steal</div>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+        {stealVictimKey ? "Stealing — pick a hex on YOUR board" : "Click an animal to steal"}
+      </div>
+      {stealVictimKey && stolenPendingCard && (
+        <div className="mb-1.5 text-[11px] text-foreground/90 text-center">
+          Stealing <strong>{stolenPendingCard.name}</strong> — click a glowing hex on your board to place it.
+        </div>
+      )}
       <Ecosystem eco={opponent.ecosystem} size={isMobile ? 27 : 42} showEmpties={false}
         onStealClick={onStealHex} minHeight={isMobile ? 150 : 225} />
     </Card>
