@@ -130,7 +130,8 @@ export function drawInitialFive(state: MatchState): MatchState {
   for (let i = 0; i < dealCount; i++) {
     const card = next.draw.shift()!;
     player.hand.push(card);
-    if (card.kind === "golden_hive" && !card.spent) player.hiveShield = true;
+    // Golden Hive does NOT auto-arm on pickup — per the rule book the shield
+    // only fires when the victim chooses to use it during a Disaster prompt.
   }
   player.firstPickupDone = true;
   next.drawnThisTurn = 2; // force advance to place phase
