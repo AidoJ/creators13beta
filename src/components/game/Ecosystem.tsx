@@ -27,7 +27,13 @@ interface Props {
   /** When true, shrinks (and can grow up to `size`) so the whole board fits the
    *  parent container as the ecosystem expands. */
   autoFit?: boolean;
-}
+  /** Optional per-cell predicate. When provided, cells that are board-legal
+   *  (adjacent + empty) but fail this predicate are rendered greyed-out and
+   *  cannot accept a drop — used to show adjacency-type-match illegal cells
+   *  for the currently selected hand card. */
+  legalForCard?: (pos: Axial) => boolean;
+  /** Tooltip shown on the greyed-out illegal cells. */
+  illegalReason?: string;
 
 /** Show only the currently playable empty cells, matching the compact reference board. */
 function buildScaffold(eco: EcoType, excludeKey?: string | null): Axial[] {
