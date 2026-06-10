@@ -34,6 +34,7 @@ interface Props {
   legalForCard?: (pos: Axial) => boolean;
   /** Tooltip shown on the greyed-out illegal cells. */
   illegalReason?: string;
+}
 
 /** Show only the currently playable empty cells, matching the compact reference board. */
 function buildScaffold(eco: EcoType, excludeKey?: string | null): Axial[] {
@@ -43,7 +44,7 @@ function buildScaffold(eco: EcoType, excludeKey?: string | null): Axial[] {
 export function Ecosystem({
   eco, size = 90, selectable, showEmpties = true,
   onPlace, onStealClick, onRotateClick, onMoveDragStart, onMoveDragEnd, minHeight = 300, moveFromKey = null,
-  autoFit = false,
+  autoFit = false, legalForCard, illegalReason,
 }: Props) {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
