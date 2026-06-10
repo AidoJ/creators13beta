@@ -420,16 +420,23 @@ export default function CommunityDashboard() {
             <TooltipProvider delayDuration={150}>
               <nav aria-label="Community quick nav" className="flex flex-col items-center gap-3">
                 {[
-                  { label: "Events", Icon: Calendar, soon: true, onClick: () => {} },
-                  { label: "Chat", Icon: MessageCircle, soon: true, onClick: () => {} },
+                  { label: "Events", Icon: Calendar, soon: true, onClick: () => {}, badge: 0 },
+                  {
+                    label: "Connections",
+                    Icon: MessageCircle,
+                    soon: false,
+                    onClick: () => navigate("/community/connections"),
+                    badge: pendingCount,
+                  },
                   {
                     label: "Match (Dashboard)",
                     Icon: LayoutDashboard,
                     soon: false,
                     onClick: () => navigate("/dashboard"),
+                    badge: 0,
                   },
-                  { label: "Shop", Icon: ShoppingBag, soon: true, onClick: () => {} },
-                ].map(({ label, Icon, soon, onClick }) => {
+                  { label: "Shop", Icon: ShoppingBag, soon: true, onClick: () => {}, badge: 0 },
+                ].map(({ label, Icon, soon, onClick, badge }) => {
                   const color = featuredColor ?? "hsl(var(--primary))";
                   return (
                     <Tooltip key={label}>
@@ -440,12 +447,20 @@ export default function CommunityDashboard() {
                           disabled={soon}
                           aria-label={label}
                           className={cn(
-                            "h-12 w-12 rounded-full flex items-center justify-center bg-card/80 backdrop-blur transition-transform",
+                            "relative h-12 w-12 rounded-full flex items-center justify-center bg-card/80 backdrop-blur transition-transform",
                             soon ? "opacity-70 cursor-not-allowed" : "hover:scale-110 active:scale-95"
                           )}
                           style={{ border: `2px solid ${color}`, color }}
                         >
                           <Icon className="h-5 w-5" style={{ color }} />
+                          {badge > 0 && (
+                            <span
+                              aria-label={`${badge} pending`}
+                              className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 rounded-full text-[10px] font-bold flex items-center justify-center bg-destructive text-destructive-foreground shadow"
+                            >
+                              {badge > 99 ? "99+" : badge}
+                            </span>
+                          )}
                         </button>
                       </TooltipTrigger>
                       <TooltipContent side="right">{soon ? `${label} — coming soon` : label}</TooltipContent>
@@ -454,6 +469,7 @@ export default function CommunityDashboard() {
                 })}
               </nav>
             </TooltipProvider>
+
           </div>
         );
       })()}
