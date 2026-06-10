@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { placeOnEcosystem, playDisaster, skyLockedSubType, validateEcosystemWin } from "./engine";
+import { moveMyPlacedHex, placeOnEcosystem, playDisaster, skyLockedSubType, validateEcosystemWin } from "./engine";
 import { bestRotationForPlacement, facingTypeLabel } from "./rotation";
 import type { DeckCard, MatchState, PlayerState } from "./types";
 import type { Element } from "./elements";
@@ -355,5 +355,80 @@ describe("classic ecosystem win validation", () => {
     // Swordfish on the opposite side of the same Soil Creator → no shared
     // type with Soil → still rejected (Creator is NOT a wildcard).
     expect(() => placeOnEcosystem(afterAlpaca, swordfish.uid, { q: -1, r: 0 })).toThrowError(/share a Creator Type/);
+  });
+
+  it("creators may always sit beside other creators", () => {
+    const soil = creator("Soil", "Earth");
+    const fire = creator("Fire", "Fire");
+    const p: PlayerState = {
+      id: "p1", name: "Goldie", hand: [fire], hiveShield: false, score: 0, firstPickupDone: true,
+      ecosystem: { placed: new Map([["0,0", { card: soil, pos: { q: 0, r: 0 } }]]) },
+    };
+    const state: MatchState = {
+      players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
+      turnNumber: 1, finished: false, winnerId: null,
+    };
+    const after = placeOnEcosystem(state, fire.uid, { q: 1, r: 0 });
+    expect(after.players[0].ecosystem.placed.has("1,0")).toBe(true);
+  });
+
+  it("a Creator only needs ONE matching animal neighbour (client: River creator between otter and mouse)", () => {
+    // Otter (Fire/River) at 1,-1 and Mouse (Fire/Snow) at 0,-1 are both
+    // adjacent to 0,0. A River Creator placed at 0,0 matches the otter
+    // (River) but not the mouse — that must still be LEGAL.
+    const river = creator("River", "Water");
+    const otter = animal("otter", ["Fire", "River"]);
+    const mouse = animal("mouse", ["Fire", "Snow"]);
+    const p: PlayerState = {
+      id: "p1", name: "Goldie", hand: [river], hiveShield: false, score: 0, firstPickupDone: true,
+      ecosystem: {
+        placed: new Map([
+          ["1,-1", { card: otter, pos: { q: 1, r: -1 } }],
+          ["0,-1", { card: mouse, pos: { q: 0, r: -1 } }],
+        ]),
+      },
+    };
+    const state: MatchState = {
+      players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
+      turnNumber: 1, finished: false, winnerId: null,
+    };
+    const after = placeOnEcosystem(state, river.uid, { q: 0, r: 0 });
+    expect(after.players[0].ecosystem.placed.has("0,0")).toBe(true);
+  });
+
+  it("moving a Creator next to one matching and one non-matching animal is legal", () => {
+    const river = creator("River", "Water");
+    const otter = animal("otter", ["Fire", "River"]);
+    const mouse = animal("mouse", ["Fire", "Snow"]);
+    const p: PlayerState = {
+      id: "p1", name: "Goldie", hand: [], hiveShield: false, score: 0, firstPickupDone: true,
+      ecosystem: {
+        placed: new Map([
+          ["1,-1", { card: otter, pos: { q: 1, r: -1 } }],
+          ["0,-1", { card: mouse, pos: { q: 0, r: -1 } }],
+          ["2,-1", { card: river, pos: { q: 2, r: -1 } }],
+        ]),
+      },
+    };
+    const state: MatchState = {
+      players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 0, placedThisTurn: 0,
+      turnNumber: 1, finished: false, winnerId: null,
+    };
+    const after = moveMyPlacedHex(state, "p1", "2,-1", { q: 0, r: 0 });
+    expect(after.players[0].ecosystem.placed.has("0,0")).toBe(true);
+  });
+
+  it("a Creator with ONLY non-matching animal neighbours is still rejected", () => {
+    const river = creator("River", "Water");
+    const mouse = animal("mouse", ["Fire", "Snow"]);
+    const p: PlayerState = {
+      id: "p1", name: "Goldie", hand: [river], hiveShield: false, score: 0, firstPickupDone: true,
+      ecosystem: { placed: new Map([["0,-1", { card: mouse, pos: { q: 0, r: -1 } }]]) },
+    };
+    const state: MatchState = {
+      players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
+      turnNumber: 1, finished: false, winnerId: null,
+    };
+    expect(() => placeOnEcosystem(state, river.uid, { q: 0, r: 0 })).toThrowError(/at least one neighbouring animal/);
   });
 });
