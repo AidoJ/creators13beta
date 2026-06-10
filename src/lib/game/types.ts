@@ -1,5 +1,5 @@
 /**
- * Core types for the 13 Creators "B Creators" ecosystem-building card game.
+ * Core types for the BCreators ecosystem-building card game.
  *
  * Each player builds their OWN honeycomb ecosystem of 16 cards:
  *   - 4 Creator Cards (one of each element: Earth / Fire / Air / Water,
