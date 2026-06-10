@@ -1170,8 +1170,20 @@ export default function Play() {
                 onMoveDragEnd={isYourTurn ? () => setMoveFromKey(null) : undefined}
                 minHeight={0}
                 moveFromKey={moveFromKey}
-                legalForCard={mode === "place" ? legalForSelectedCard : undefined}
-                illegalReason={selectedCard ? `${selectedCard.name} doesn't share a Creator Type with one of these neighbours` : undefined}
+                legalForCard={
+                  mode === "place"
+                    ? legalForSelectedCard
+                    : stolenPendingCard
+                      ? (pos: Axial) => placementMatchesNeighbours(selfPlayer.ecosystem, stolenPendingCard, pos)
+                      : undefined
+                }
+                illegalReason={
+                  stolenPendingCard
+                    ? `${stolenPendingCard.name} doesn't share a Creator Type with one of these neighbours`
+                    : selectedCard
+                      ? `${selectedCard.name} doesn't share a Creator Type with one of these neighbours`
+                      : undefined
+                }
               />
 
             </div>
