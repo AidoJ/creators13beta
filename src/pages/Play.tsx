@@ -708,7 +708,11 @@ export default function Play() {
     <Card
       className={
         "p-3 transition-colors data-[drop-target=true]:ring-2 data-[drop-target=true]:ring-destructive/60 " +
-        (canTapDiscard ? "ring-2 ring-destructive/50 cursor-pointer hover:bg-destructive/5" : "")
+        (isStuck
+          ? "ring-2 ring-destructive bg-destructive/10 animate-pulse cursor-pointer "
+          : canTapDiscard
+            ? "ring-2 ring-destructive/50 cursor-pointer hover:bg-destructive/5"
+            : "")
       }
       role={canTapDiscard ? "button" : undefined}
       aria-label={canTapDiscard ? "Discard selected card" : undefined}
@@ -728,7 +732,14 @@ export default function Play() {
         if (uid) onDiscardUid(uid);
       }}
     >
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Used/Discarded Pile</div>
+      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+        Used/Discarded Pile
+        {isStuck && (
+          <span className="ml-2 text-destructive font-bold normal-case tracking-normal">
+            · No legal placement — discard here
+          </span>
+        )}
+      </div>
       <Button variant="outline" size="sm" className="w-full text-xs"
         disabled={!isYourTurn || state.phase !== "draw" || state.used.length === 0}
         onClick={(e) => { e.stopPropagation(); onPickUsed(); }}>
@@ -750,12 +761,15 @@ export default function Play() {
             Empty — nothing discarded yet
           </div>
         )}
-        <div className="text-[10px] text-muted-foreground italic text-center mt-1">
-          {canTapDiscard ? "Tap here to discard the selected card" : "Tap a card, then tap here to discard (or drag)"}
+        <div className={"text-[10px] italic text-center mt-1 " + (isStuck ? "text-destructive font-semibold" : "text-muted-foreground")}>
+          {isStuck
+            ? "Tap a card in your hand, then tap here to discard — it still counts as one of your 2 plays."
+            : canTapDiscard ? "Tap here to discard the selected card" : "Tap a card, then tap here to discard (or drag)"}
         </div>
       </div>
     </Card>
   );
+
 
   const actionsBlock = (
     <Card className="p-2">
