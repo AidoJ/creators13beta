@@ -606,6 +606,10 @@ export function discardCard(state: MatchState, cardUid: string): MatchState {
   const player = next.players[next.turn];
   const idx = player.hand.findIndex((c) => c.uid === cardUid);
   if (idx < 0) throw new Error("Card not in hand");
+  const target = player.hand[idx];
+  if (target.kind === "golden_hive") {
+    throw new Error("Golden Hive can't be discarded — it can only leave your hand by blocking an incoming Disaster.");
+  }
   const [card] = player.hand.splice(idx, 1);
   next.used.push(card);
   next.placedThisTurn += 1;
