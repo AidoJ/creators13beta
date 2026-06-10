@@ -135,10 +135,12 @@ export function playerTotalScore(player: PlayerState): number {
 }
 
 export const HAND_SIZE = 5;
-/** Maximum cards a player may hold. Pick-up is blocked once hit; disasters
- *  may temporarily exceed this (no cards are lost), and the holder must
- *  play / discard down before drawing again. */
-export const HAND_LIMIT = 10;
+/** Maximum cards a player may hold AFTER their turn. Per the rule book a
+ *  player draws 2 and places 2 every turn, so their hand never exceeds 5
+ *  at end-of-turn. Disasters may temporarily push the hand above this
+ *  (no cards are lost), and the holder must play / discard down before
+ *  drawing again. */
+export const HAND_LIMIT = 5;
 export const ECOSYSTEM_TARGET = 16; // 4 creators + 12 animals
 export const CREATORS_NEEDED = 4;
 export const ANIMALS_PER_CREATOR = 3;
