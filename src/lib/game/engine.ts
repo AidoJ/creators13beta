@@ -1,5 +1,5 @@
 /**
- * Turn engine for "B Creators". Pure functions — never mutate input.
+ * Turn engine for BCreators. Pure functions — never mutate input.
  *
  * Turn flow per the rule book:
  *   1. Pick up 2 cards (any combination of draw-pile top or used-pile top).
