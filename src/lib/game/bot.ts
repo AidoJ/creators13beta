@@ -162,8 +162,11 @@ export function botStep(state: MatchState, difficulty: BotDifficulty = "medium")
   }
 
 
-  // 5) Discard the first card.
-  const dump = player.hand[0];
-  if (dump) return discardCard(state, dump.uid);
-  return state;
+  // 5) Discard the first non-hive card (Golden Hive can't be discarded).
+  const dump = player.hand.find((c) => c.kind !== "golden_hive");
+  if (dump) {
+    try { return discardCard(state, dump.uid); } catch { /* fall through */ }
+  }
+  // 6) Nothing legal to do — end the turn so play advances.
+  try { return endTurnEarly(state); } catch { return state; }
 }
