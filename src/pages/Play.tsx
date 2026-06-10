@@ -380,6 +380,29 @@ export default function Play() {
   );
   const usedTop = state?.used[state.used.length - 1];
 
+  /** Per-cell predicate used by the board to grey out cells where the
+   *  selected card cannot legally be placed (adjacency-type mismatch). */
+  const legalForSelectedCard = useMemo(() => {
+    if (!selectedCard || !selfPlayer) return undefined;
+    return (pos: Axial) => placementMatchesNeighbours(selfPlayer.ecosystem, selectedCard, pos);
+  }, [selectedCard, selfPlayer]);
+
+  /** True when the player has placements to make but no card in hand can
+   *  legally land on any board cell — discard is the only path forward. */
+  const isStuck = useMemo(() => {
+    if (!state || !selfPlayer) return false;
+    if (state.finished) return false;
+    if (state.phase !== "place") return false;
+    if (state.players[state.turn].id !== selfSlot) return false;
+    const playable = selfPlayer.hand.filter((c) => c.kind !== "golden_hive");
+    if (playable.length === 0) return false;
+    const cells = legalEcoCells(selfPlayer.ecosystem);
+    if (cells.length === 0) return false;
+    return !playable.some((c) =>
+      cells.some((cell) => placementMatchesNeighbours(selfPlayer.ecosystem, c, cell)),
+    );
+  }, [state, selfPlayer, selfSlot]);
+
   const guarded = (fn: () => MatchState, move?: ServerMove) => {
     try {
       const snap = state;
