@@ -687,7 +687,9 @@ export default function Play() {
   } else if (state.phase === "draw") {
     phaseHint = `Pick up ${2 - state.drawnThisTurn} more card${2 - state.drawnThisTurn === 1 ? "" : "s"} (draw 1 at a time from either pile).`;
   } else if (mode === "steal") {
-    phaseHint = `Click an animal in ${opponent.name}'s ecosystem to steal it.`;
+    phaseHint = stealVictimKey
+      ? "Now click a glowing hex on YOUR board to place the stolen animal."
+      : `Click an animal in ${opponent.name}'s ecosystem to steal it.`;
   } else if (mode === "move") {
     phaseHint = moveFromKey
       ? "Drop onto a glowing hex or anywhere on your board to snap it in place — cards can't leave your ecosystem."
@@ -699,6 +701,11 @@ export default function Play() {
   }
 
   const canUseBoard = !!isYourTurn && state.phase === "place" && mode === "place";
+  // Stage 2 of a steal: the stolen card waiting to be placed on your board.
+  const stolenPendingCard: DeckCard | undefined =
+    mode === "steal" && stealVictimKey
+      ? opponent.ecosystem.placed.get(stealVictimKey)?.card
+      : undefined;
   const canDiscard = isYourTurn && state.phase === "place" && !!selectedCard;
   const canDisaster = isYourTurn && state.phase === "place" && !!selectedCard
     && (selectedCard.kind === "creator" || selectedCard.kind === "sky_creator");
