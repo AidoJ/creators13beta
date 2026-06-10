@@ -88,6 +88,7 @@ export default function Play() {
   const [lobbyOpen, setLobbyOpen] = useState(false);
   const [waitingForGuest, setWaitingForGuest] = useState(false);
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
+  const [stealVictimKey, setStealVictimKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { settings: gameSettings } = useGameSettings();
   // (turnStartedAtRef declared below, alongside other refs.)
@@ -417,6 +418,7 @@ export default function Play() {
       schedulePersist(next, move);
       setSelectedUid(null);
       setMode("place");
+      setStealVictimKey(null);
     } catch (e: any) {
       toast.error(e?.message ?? "Illegal move");
     }
@@ -443,6 +445,22 @@ export default function Play() {
   }
   function onPlace(pos: Axial, draggedUid?: string) {
     if (!state) return;
+    // Steal stage 2: a victim animal was chosen — this click picks where to
+    // place the stolen card on YOUR board.
+    if (mode === "steal" && stealVictimKey && opponent && selectedUid) {
+      const victimKey = stealVictimKey;
+      guarded(
+        () => playSkyCreatureSteal(state, selectedUid, opponent.id, victimKey, pos),
+        {
+          type: "play_sky_steal",
+          uid: selectedUid,
+          from_player_id: opponent.id,
+          victim_pos_key: victimKey,
+          place_at: pos,
+        },
+      );
+      return;
+    }
     const dragMoveKey = draggedUid?.startsWith("move:") ? draggedUid.slice(5) : null;
     // moveFromKey is set either by tap-to-move (mode === "move") or by an
     // active drag (HTML5 or touch fallback); honour either source.
@@ -514,19 +532,28 @@ export default function Play() {
   }
   function onStealHex(posKey: string) {
     if (!state || !selectedUid || !opponent || !selfPlayer) return;
+    const target = opponent.ecosystem.placed.get(posKey);
+    if (!target) return;
+    const k = target.card.kind;
+    if (k === "golden_body") {
+      toast.error("Golden Body is a wildcard treasure and cannot be stolen.");
+      return;
+    }
+    if (k !== "animal" && k !== "sky_creature") {
+      toast.error("Sky Creatures can only steal animals.");
+      return;
+    }
+    // Make sure the stolen card has at least one legal landing spot.
     const cells = legalEcoCells(selfPlayer.ecosystem);
-    const placeAt = cells[0] ?? { q: 0, r: 0 };
-    guarded(
-      () => playSkyCreatureSteal(state, selectedUid, opponent.id, posKey, placeAt),
-      {
-        type: "play_sky_steal",
-        uid: selectedUid,
-        from_player_id: opponent.id,
-        victim_pos_key: posKey,
-        place_at: placeAt,
-      },
+    const hasSpot = cells.some((c) =>
+      placementMatchesNeighbours(selfPlayer.ecosystem, target.card, c),
     );
-    setMode("place");
+    if (!hasSpot) {
+      toast.error(`${target.card.name} has no legal spot on your board — it must share a Creator Type with every neighbour.`);
+      return;
+    }
+    // Stage 2: player now picks where to place the stolen card on their board.
+    setStealVictimKey(posKey);
   }
 
 
@@ -660,7 +687,9 @@ export default function Play() {
   } else if (state.phase === "draw") {
     phaseHint = `Pick up ${2 - state.drawnThisTurn} more card${2 - state.drawnThisTurn === 1 ? "" : "s"} (draw 1 at a time from either pile).`;
   } else if (mode === "steal") {
-    phaseHint = `Click an animal in ${opponent.name}'s ecosystem to steal it.`;
+    phaseHint = stealVictimKey
+      ? "Now click a glowing hex on YOUR board to place the stolen animal."
+      : `Click an animal in ${opponent.name}'s ecosystem to steal it.`;
   } else if (mode === "move") {
     phaseHint = moveFromKey
       ? "Drop onto a glowing hex or anywhere on your board to snap it in place — cards can't leave your ecosystem."
@@ -672,6 +701,11 @@ export default function Play() {
   }
 
   const canUseBoard = !!isYourTurn && state.phase === "place" && mode === "place";
+  // Stage 2 of a steal: the stolen card waiting to be placed on your board.
+  const stolenPendingCard: DeckCard | undefined =
+    mode === "steal" && stealVictimKey
+      ? opponent.ecosystem.placed.get(stealVictimKey)?.card
+      : undefined;
   const canDiscard = isYourTurn && state.phase === "place" && !!selectedCard;
   const canDisaster = isYourTurn && state.phase === "place" && !!selectedCard
     && (selectedCard.kind === "creator" || selectedCard.kind === "sky_creator");
@@ -827,7 +861,10 @@ export default function Play() {
         </Button>
         <Button size="sm" variant={mode === "steal" ? "default" : "secondary"}
           disabled={!canSteal}
-          onClick={() => setMode(mode === "steal" ? "place" : "steal")}
+          onClick={() => {
+            setStealVictimKey(null);
+            setMode(mode === "steal" ? "place" : "steal");
+          }}
           className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center">
           {mode === "steal" ? "Cancel steal" : "Steal with Sky Creature"}
         </Button>
@@ -844,7 +881,14 @@ export default function Play() {
 
   const selectedBlock = mode === "steal" ? (
     <Card className="p-2">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Click an animal to steal</div>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+        {stealVictimKey ? "Stealing — pick a hex on YOUR board" : "Click an animal to steal"}
+      </div>
+      {stealVictimKey && stolenPendingCard && (
+        <div className="mb-1.5 text-[11px] text-foreground/90 text-center">
+          Stealing <strong>{stolenPendingCard.name}</strong> — click a glowing hex on your board to place it.
+        </div>
+      )}
       <Ecosystem eco={opponent.ecosystem} size={isMobile ? 27 : 42} showEmpties={false}
         onStealClick={onStealHex} minHeight={isMobile ? 150 : 225} />
     </Card>
@@ -1126,8 +1170,20 @@ export default function Play() {
                 onMoveDragEnd={isYourTurn ? () => setMoveFromKey(null) : undefined}
                 minHeight={0}
                 moveFromKey={moveFromKey}
-                legalForCard={mode === "place" ? legalForSelectedCard : undefined}
-                illegalReason={selectedCard ? `${selectedCard.name} doesn't share a Creator Type with one of these neighbours` : undefined}
+                legalForCard={
+                  mode === "place"
+                    ? legalForSelectedCard
+                    : stolenPendingCard
+                      ? (pos: Axial) => placementMatchesNeighbours(selfPlayer.ecosystem, stolenPendingCard, pos)
+                      : undefined
+                }
+                illegalReason={
+                  stolenPendingCard
+                    ? `${stolenPendingCard.name} doesn't share a Creator Type with one of these neighbours`
+                    : selectedCard
+                      ? `${selectedCard.name} doesn't share a Creator Type with one of these neighbours`
+                      : undefined
+                }
               />
 
             </div>
