@@ -398,6 +398,7 @@ function adjacencyError(
   // beside other Creators.
   let creatorTypedNeighbours = 0;
   let creatorTypedMatches = 0;
+  let creatorAdjacentCreators = 0;
   let creatorFirstMismatch: string | null = null;
 
   for (let dir = 0; dir < 6; dir++) {
@@ -408,7 +409,10 @@ function adjacencyError(
 
     // Hard veto: Sky Creator reserves its neighbour cells for Sky Creatures.
     if (pc.card.kind === "sky_creator") {
-      if (card.kind === "sky_creature" || card.kind === "sky_creator" || card.kind === "creator") continue;
+      if (card.kind === "sky_creature" || card.kind === "sky_creator" || card.kind === "creator") {
+        if (placingCreator) creatorAdjacentCreators += 1;
+        continue;
+      }
       return `Only Sky Creature cards can sit next to a Sky Creator.`;
     }
     // Reciprocal: placing a Sky Creator next to a non-Sky-Creature animal is
@@ -422,8 +426,11 @@ function adjacencyError(
     if (myIsWildcard) continue;
     if (cardWildcardForAdjacency(pc.card)) continue;
 
-    // Creator beside Creator is always legal.
-    if (placingCreator && pc.card.kind === "creator") continue;
+    // Creator beside Creator is always legal and satisfies the anchor rule.
+    if (placingCreator && pc.card.kind === "creator") {
+      creatorAdjacentCreators += 1;
+      continue;
+    }
 
     const theirTypes = cardAdjacencyTypes(pc.card);
     const overlap = typeSetsOverlap(myTypes, theirTypes);
@@ -440,7 +447,14 @@ function adjacencyError(
     }
   }
 
-  if (placingCreator && creatorTypedNeighbours > 0 && creatorTypedMatches === 0) {
+  // Creator anchor rule: needs ≥1 matching animal neighbour, BUT touching
+  // another Creator also satisfies the anchor (Creators ground each other).
+  if (
+    placingCreator &&
+    creatorTypedNeighbours > 0 &&
+    creatorTypedMatches === 0 &&
+    creatorAdjacentCreators === 0
+  ) {
     return `${card.name} must share a Creator Type with at least one neighbouring animal (no match with ${creatorFirstMismatch ?? "its neighbours"}).`;
   }
   return null;
