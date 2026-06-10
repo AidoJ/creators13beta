@@ -100,19 +100,22 @@ export function Ecosystem({
     if (!selectable || legal.length === 0) return;
     e.preventDefault();
     const rect = e.currentTarget.getBoundingClientRect();
-    // rect reflects the scaled (rendered) size, so divide by scale to get unscaled coords.
     const px = (e.clientX - rect.left) / scale;
     const py = (e.clientY - rect.top) / scale;
-    const nearest = legal.reduce((best, cell) => {
+    // Only snap to cells the selected card can actually occupy.
+    const candidates = legalForCard ? legal.filter(legalForCard) : legal;
+    if (candidates.length === 0) return; // nothing legal — let parent toast
+    const nearest = candidates.reduce((best, cell) => {
       const { x, y } = axialToPixel(cell.q, cell.r, size);
       const cx = x + offX + size / 2;
       const cy = y + offY + (size * 1.1547) / 2;
       const d = (cx - px) ** 2 + (cy - py) ** 2;
       return d < best.d ? { cell, d } : best;
-    }, { cell: legal[0], d: Number.POSITIVE_INFINITY });
+    }, { cell: candidates[0], d: Number.POSITIVE_INFINITY });
     setDragOverKey(null);
     onPlace?.(nearest.cell, e.dataTransfer.getData("text/plain") || undefined);
   };
+
 
   return (
     <div
