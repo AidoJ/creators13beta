@@ -94,9 +94,10 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
               <ul className="list-disc pl-5 space-y-1 text-xs text-muted-foreground">
                 <li>The first card may be placed on the central hex.</li>
                 <li>Every other card must go on an <strong>empty hex adjacent to your ecosystem</strong> — the only exception is animals dropped on your board from a Disaster, which can land disconnected.</li>
-                <li><strong>Adjacency-type match:</strong> every placed card must share at least one Creator Type with <em>every</em> neighbour it touches. Example: an Alpaca (Soil / Tree) can sit next to a Soil Creator, but a Swordfish (Ocean / River) cannot — even on a different side of the same Creator.</li>
-                <li><strong>Wildcards:</strong> <strong>Sky Creator</strong> and <strong>Golden Body</strong> match anything for adjacency. Every other card (regular animals, Sky Creatures, and the four element Creators) must match their declared types.</li>
-                <li><strong>Sky Creator</strong> additionally reserves all of its neighbouring cells for Sky Creature cards only.</li>
+                <li><strong>Adjacency-type match (animals):</strong> every placed animal must share at least one Creator Type with <em>every</em> neighbour it touches. Example: an Alpaca (Soil / Tree) can sit next to a Soil Creator, but a Swordfish (Ocean / River) cannot — even on a different side of the same Creator.</li>
+                <li><strong>Creator cards are anchors:</strong> Creators may always sit beside other Creators, and only need to share a type with <em>at least one</em> neighbouring animal (a non-matching animal beside a Creator does not block its placement or move).</li>
+                <li><strong>Wildcards:</strong> <strong>Sky Creator</strong> and <strong>Golden Body</strong> match anything for adjacency. Regular animals and Sky Creatures must match their declared types.</li>
+                <li><strong>Sky Creator</strong> additionally reserves its neighbouring cells for Sky Creature cards and other Creators only.</li>
                 <li><strong>Animals must be touching their matching Creator to count toward the win.</strong> A scattered matching animal still sits on the board but does not satisfy the 3-per-Creator requirement until it is adjacent to that Creator's hex.</li>
                 <li><strong>If you have no legal placement</strong> for any card in your hand, you can always <strong>discard to the Used Pile</strong> to satisfy your 2 placements per turn — discarding is never blocked by the adjacency rule.</li>
               </ul>
