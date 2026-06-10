@@ -320,4 +320,40 @@ describe("classic ecosystem win validation", () => {
     };
     expect(validateEcosystemWin(p).valid).toBe(false);
   });
+
+  it("strict adjacency: rejects an animal next to a Creator whose type the animal does not share", () => {
+    // Soil Creator at origin. Swordfish (Ocean/River) tries to land next to it
+    // → no shared type with Soil → illegal.
+    const soil = creator("Soil", "Earth");
+    const swordfish = animal("swordfish", ["Ocean", "River"]);
+    const p: PlayerState = {
+      id: "p1", name: "Goldie", hand: [swordfish], hiveShield: false, score: 0, firstPickupDone: true,
+      ecosystem: { placed: new Map([["0,0", { card: soil, pos: { q: 0, r: 0 } }]]) },
+    };
+    const state: MatchState = {
+      players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
+      turnNumber: 1, finished: false, winnerId: null,
+    };
+    expect(() => placeOnEcosystem(state, swordfish.uid, { q: 1, r: 0 })).toThrowError(/share a Creator Type/);
+  });
+
+  it("client scenario: Soil Creator → Alpaca legal on one side, Swordfish illegal on another side of the same Creator", () => {
+    const soil = creator("Soil", "Earth");
+    const alpaca = animal("alpaca", ["Soil", "Tree"]);
+    const swordfish = animal("swordfish", ["Ocean", "River"]);
+    const p: PlayerState = {
+      id: "p1", name: "Goldie", hand: [alpaca, swordfish], hiveShield: false, score: 0, firstPickupDone: true,
+      ecosystem: { placed: new Map([["0,0", { card: soil, pos: { q: 0, r: 0 } }]]) },
+    };
+    const state: MatchState = {
+      players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
+      turnNumber: 1, finished: false, winnerId: null,
+    };
+    // Alpaca touches Soil Creator's east side → shares Soil → legal.
+    const afterAlpaca = placeOnEcosystem(state, alpaca.uid, { q: 1, r: 0 });
+    expect(afterAlpaca.players[0].ecosystem.placed.has("1,0")).toBe(true);
+    // Swordfish on the opposite side of the same Soil Creator → no shared
+    // type with Soil → still rejected (Creator is NOT a wildcard).
+    expect(() => placeOnEcosystem(afterAlpaca, swordfish.uid, { q: -1, r: 0 })).toThrowError(/share a Creator Type/);
+  });
 });
