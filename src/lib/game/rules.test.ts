@@ -431,4 +431,86 @@ describe("classic ecosystem win validation", () => {
     };
     expect(() => placeOnEcosystem(state, river.uid, { q: 0, r: 0 })).toThrowError(/at least one neighbouring animal/);
   });
+
+  // --- Refined adjacency: Creators never block animal placements ---
+
+  it("playtest: Peacock (Snow+Sun) placed beside Snow + Fire + Sky Creators → legal", () => {
+    const snow = creator("Snow", "Water");
+    const fire = creator("Fire", "Fire");
+    const sky = skyCreator();
+    const peacock = animal("peacock", ["Snow", "Sun"]);
+    const p: PlayerState = {
+      id: "p1", name: "Goldie", hand: [peacock], hiveShield: false, score: 0, firstPickupDone: true,
+      ecosystem: { placed: new Map([
+        ["1,0", { card: snow, pos: { q: 1, r: 0 } }],
+        ["0,-1", { card: fire, pos: { q: 0, r: -1 } }],
+        ["-1,0", { card: sky, pos: { q: -1, r: 0 } }],
+      ]) },
+    };
+    const state: MatchState = {
+      players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
+      turnNumber: 1, finished: false, winnerId: null,
+    };
+    const after = placeOnEcosystem(state, peacock.uid, { q: 0, r: 0 });
+    expect(after.players[0].ecosystem.placed.has("0,0")).toBe(true);
+  });
+
+  it("playtest: Peacock beside Fire + Lava + Lightning Creators (no anchor) → rejected", () => {
+    const fire = creator("Fire", "Fire");
+    const lava = creator("Lava", "Fire");
+    const lightning = creator("Lightning", "Air");
+    const peacock = animal("peacock", ["Snow", "Sun"]);
+    const p: PlayerState = {
+      id: "p1", name: "Goldie", hand: [peacock], hiveShield: false, score: 0, firstPickupDone: true,
+      ecosystem: { placed: new Map([
+        ["1,0", { card: fire, pos: { q: 1, r: 0 } }],
+        ["0,-1", { card: lava, pos: { q: 0, r: -1 } }],
+        ["-1,0", { card: lightning, pos: { q: -1, r: 0 } }],
+      ]) },
+    };
+    const state: MatchState = {
+      players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
+      turnNumber: 1, finished: false, winnerId: null,
+    };
+    expect(() => placeOnEcosystem(state, peacock.uid, { q: 0, r: 0 })).toThrowError(/at least one neighbour that shares/);
+  });
+
+  it("playtest: Peacock beside Snow Creator + Lava-Mountain animal → rejected (strict animal-to-animal)", () => {
+    const snow = creator("Snow", "Water");
+    const lavaMountain = animal("lavaMountain", ["Lava", "Mountain"]);
+    const peacock = animal("peacock", ["Snow", "Sun"]);
+    const p: PlayerState = {
+      id: "p1", name: "Goldie", hand: [peacock], hiveShield: false, score: 0, firstPickupDone: true,
+      ecosystem: { placed: new Map([
+        ["1,0", { card: snow, pos: { q: 1, r: 0 } }],
+        ["-1,0", { card: lavaMountain, pos: { q: -1, r: 0 } }],
+      ]) },
+    };
+    const state: MatchState = {
+      players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
+      turnNumber: 1, finished: false, winnerId: null,
+    };
+    expect(() => placeOnEcosystem(state, peacock.uid, { q: 0, r: 0 })).toThrowError(/share a Creator Type with neighbour/);
+  });
+
+  it("playtest: Peacock beside Snow Creator + Fire Creator + Lava-Snow animal → legal", () => {
+    const snow = creator("Snow", "Water");
+    const fire = creator("Fire", "Fire");
+    const lavaSnow = animal("lavaSnow", ["Lava", "Snow"]);
+    const peacock = animal("peacock", ["Snow", "Sun"]);
+    const p: PlayerState = {
+      id: "p1", name: "Goldie", hand: [peacock], hiveShield: false, score: 0, firstPickupDone: true,
+      ecosystem: { placed: new Map([
+        ["1,0", { card: snow, pos: { q: 1, r: 0 } }],
+        ["0,-1", { card: fire, pos: { q: 0, r: -1 } }],
+        ["-1,0", { card: lavaSnow, pos: { q: -1, r: 0 } }],
+      ]) },
+    };
+    const state: MatchState = {
+      players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
+      turnNumber: 1, finished: false, winnerId: null,
+    };
+    const after = placeOnEcosystem(state, peacock.uid, { q: 0, r: 0 });
+    expect(after.players[0].ecosystem.placed.has("0,0")).toBe(true);
+  });
 });
