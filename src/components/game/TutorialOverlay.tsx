@@ -6,20 +6,20 @@ const STORAGE_KEY = "creators13.play.tutorial-seen.v2";
 
 const STEPS: { title: string; body: string }[] = [
   {
-    title: "Welcome to 13 Creators",
+    title: "Welcome to BCreators",
     body: "Build a honeycomb ecosystem of 16 cards — 4 Creators (one per element: Earth, Fire, Air, Water) + 12 matching Animals (3 per Creator). To win you must ensure that you are NOT holding any Creator Cards in your hand.",
   },
   {
     title: "Step 1 — Pick up 2",
-    body: "Each turn, draw 2 cards from any mix of the Draw Pile and the top of the Used Pile. Your hand is capped at 5 — play or discard 2 cards before drawing again.",
+    body: "Each turn you MUST draw 2 cards (any combination of the Draw Pile and the top of the Used Pile). Your hand is capped at 5 — you'll always end your turn holding 5 or fewer cards.",
   },
   {
     title: "Step 2 — Play 2",
-    body: "You must take 2 placement actions every turn: place a card on a glowing hex next to your ecosystem, or drag a card onto the Used Pile to discard it. You can't end your turn early.",
+    body: "You MUST take 2 placement actions every turn: place a card on a glowing hex next to your ecosystem, or drag a card onto the Used Pile to discard it. You can't end your turn early or skip placements.",
   },
   {
     title: "Disasters & specials",
-    body: "Once all 4 of your own Creators are on the board, any Creator in your hand can be played as a Disaster — it wipes every matching Animal from rivals straight onto your board. A Sky Creator Disaster only wipes Sky Mystical Creatures. Sky Creatures can also steal an Animal. Golden Hive shields one Disaster. Golden Body is a wildcard Animal.",
+    body: "Once all 4 of your own Creators are on the board, any Creator in your hand can be played as a Disaster — it wipes every matching Animal from rivals straight onto your board. A Sky Creator Disaster only wipes Sky Mystical Creatures. Sky Creatures can also steal an Animal. Golden Hive sits passively in your hand and can only leave it by blocking an incoming Disaster — you choose whether to spend it when the prompt appears. Golden Body is a wildcard Animal.",
   },
   {
     title: "Free actions & tips",
