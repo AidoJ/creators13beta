@@ -157,7 +157,7 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-8 max-w-5xl space-y-5">
         {/* Section teasers — surface Play & Community without duplicating
             their content here. Phase 2.1: simple label + arrow, no live data. */}
-        <div className={`grid gap-4 ${profileComplete ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
+        <div className={`grid gap-4 ${(profileComplete || gateState?.isStaff) ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
           <Card
             role="button"
             tabIndex={0}
@@ -174,7 +174,7 @@ export default function Dashboard() {
             </div>
             <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
           </Card>
-          {profileComplete && (
+          {(profileComplete || gateState?.isStaff) && (
             <Card
               role="button"
               tabIndex={0}
