@@ -349,6 +349,42 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_requests: {
+        Row: {
+          created_at: string
+          decline_comment: string | null
+          from_user_id: string
+          id: string
+          reason: string
+          responded_at: string | null
+          revoked_at: string | null
+          status: string
+          to_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decline_comment?: string | null
+          from_user_id: string
+          id?: string
+          reason: string
+          responded_at?: string | null
+          revoked_at?: string | null
+          status?: string
+          to_user_id: string
+        }
+        Update: {
+          created_at?: string
+          decline_comment?: string | null
+          from_user_id?: string
+          id?: string
+          reason?: string
+          responded_at?: string | null
+          revoked_at?: string | null
+          status?: string
+          to_user_id?: string
+        }
+        Relationships: []
+      }
       courses: {
         Row: {
           created_at: string
@@ -1286,6 +1322,7 @@ export type Database = {
           city: string | null
           community_joined_at: string | null
           community_visible: boolean
+          contact_channels: Json
           country: string | null
           created_at: string
           date_of_birth: string | null
@@ -1304,6 +1341,7 @@ export type Database = {
           location_lng: number | null
           medical_history: string | null
           member_preferences: Json
+          open_to_contact: boolean
           phone: string | null
           postal_code: string | null
           practitioner_code: string | null
@@ -1333,6 +1371,7 @@ export type Database = {
           city?: string | null
           community_joined_at?: string | null
           community_visible?: boolean
+          contact_channels?: Json
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -1353,6 +1392,7 @@ export type Database = {
           location_lng?: number | null
           medical_history?: string | null
           member_preferences?: Json
+          open_to_contact?: boolean
           phone?: string | null
           postal_code?: string | null
           practitioner_code?: string | null
@@ -1382,6 +1422,7 @@ export type Database = {
           city?: string | null
           community_joined_at?: string | null
           community_visible?: boolean
+          contact_channels?: Json
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -1402,6 +1443,7 @@ export type Database = {
           location_lng?: number | null
           medical_history?: string | null
           member_preferences?: Json
+          open_to_contact?: boolean
           phone?: string | null
           postal_code?: string | null
           practitioner_code?: string | null
@@ -1865,6 +1907,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      approve_contact_request: {
+        Args: { _request_id: string }
+        Returns: undefined
+      }
       bump_bot_match_stats: {
         Args: { _difficulty: string; _perfect_eco?: boolean; _won: boolean }
         Returns: {
@@ -1948,6 +1994,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      decline_contact_request: {
+        Args: { _comment?: string; _request_id: string }
+        Returns: undefined
+      }
       finalise_ranked_match: { Args: { _match_id: string }; Returns: undefined }
       generate_invitation_code: { Args: never; Returns: string }
       generate_practitioner_code:
@@ -1964,6 +2014,18 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_incoming_contact_requests: {
+        Args: never
+        Returns: {
+          created_at: string
+          from_avatar_url: string
+          from_display_name: string
+          from_user_id: string
+          id: string
+          reason: string
+          status: string
+        }[]
+      }
       get_inviting_practitioners_for_current_user: {
         Args: never
         Returns: {
@@ -1971,6 +2033,16 @@ export type Database = {
         }[]
       }
       get_match_state: { Args: { _match_id: string }; Returns: Json }
+      get_my_approved_contacts: {
+        Args: never
+        Returns: {
+          approved_at: string
+          channels: Json
+          other_avatar_url: string
+          other_display_name: string
+          other_user_id: string
+        }[]
+      }
       get_my_top_matches: {
         Args: { _limit?: number }
         Returns: {
@@ -1986,6 +2058,22 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_outgoing_contact_requests: {
+        Args: never
+        Returns: {
+          created_at: string
+          decline_comment: string
+          id: string
+          reason: string
+          responded_at: string
+          revoked_at: string
+          status: string
+          to_avatar_url: string
+          to_display_name: string
+          to_user_id: string
+        }[]
+      }
+      get_pending_request_count: { Args: never; Returns: number }
       get_public_member_profile: {
         Args: { _target_user_id: string }
         Returns: {
@@ -1996,7 +2084,9 @@ export type Database = {
           community_joined_at: string
           creator_types: Json
           display_name: string
+          enabled_channels: string[]
           location_label: string
+          open_to_contact: boolean
           tier: Database["public"]["Enums"]["subscription_tier"]
           user_id: string
         }[]
@@ -2036,7 +2126,19 @@ export type Database = {
         Returns: undefined
       }
       resolve_invitation_code: { Args: { _code: string }; Returns: string }
+      revoke_contact_request: {
+        Args: { _request_id: string }
+        Returns: undefined
+      }
+      send_contact_request: {
+        Args: { _reason: string; _to_user_id: string }
+        Returns: string
+      }
       update_creator_of_the_month: { Args: never; Returns: Json }
+      withdraw_contact_request: {
+        Args: { _request_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role:
