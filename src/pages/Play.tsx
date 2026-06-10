@@ -20,6 +20,7 @@ import {
   playDisaster,
   playSkyCreatureSteal,
   legalEcoCells,
+  placementMatchesNeighbours,
 
   resolveDisaster,
   botStep,
