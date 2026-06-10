@@ -629,7 +629,7 @@ export default function Play() {
   } else if (!isYourTurn) {
     phaseHint = `${opponent.name} is ${isPvp ? "thinking" : "thinking…"}`;
   } else if (state.phase === "draw") {
-    phaseHint = `Pick up to ${2 - state.drawnThisTurn} card${2 - state.drawnThisTurn === 1 ? "" : "s"} (draw 1 at a time from either pile) — or skip pick-up and play straight from your hand.`;
+    phaseHint = `Pick up ${2 - state.drawnThisTurn} more card${2 - state.drawnThisTurn === 1 ? "" : "s"} (draw 1 at a time from either pile).`;
   } else if (mode === "steal") {
     phaseHint = `Click an animal in ${opponent.name}'s ecosystem to steal it.`;
   } else if (mode === "move") {
@@ -649,7 +649,7 @@ export default function Play() {
   const canSteal = isYourTurn && state.phase === "place" && !!selectedCard
     && selectedCard.kind === "sky_creature";
 
-  const handAtLimit = selfPlayer.hand.length >= 10; // HAND_LIMIT
+  const handAtLimit = selfPlayer.hand.length >= 5; // HAND_LIMIT
   const needsOpeningDraw = !selfPlayer.firstPickupDone && state.phase === "draw" && isYourTurn;
   const canDrawOne = isYourTurn && state.phase === "draw" && selfPlayer.firstPickupDone && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2 && !handAtLimit;
 
@@ -775,27 +775,9 @@ export default function Play() {
             onClick={onDrawOne}
             className="h-auto py-2.5 px-2 whitespace-normal text-xs leading-tight text-center font-semibold"
           >
-            Draw 1 from Draw Pile ({state.draw.length} left) — {2 - state.drawnThisTurn} pick{2 - state.drawnThisTurn === 1 ? "" : "s"} left{handAtLimit ? " — hand full (10 max)" : ""}
+            Draw 1 from Draw Pile ({state.draw.length} left) — {2 - state.drawnThisTurn} pick{2 - state.drawnThisTurn === 1 ? "" : "s"} left{handAtLimit ? " — hand full (5 max)" : ""}
           </Button>
         )}
-        <Button
-          size="sm"
-          variant="secondary"
-          disabled={!isYourTurn || state.phase !== "draw" || needsOpeningDraw}
-          onClick={onSkipDraws}
-          className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center"
-        >
-          Skip pick-up → play from hand
-        </Button>
-        <Button
-          size="sm"
-          variant="secondary"
-          disabled={!isYourTurn || state.phase !== "place" || state.placedThisTurn >= 2}
-          onClick={onEndTurn}
-          className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center"
-        >
-          End turn early
-        </Button>
         <Button size="sm" variant="secondary" disabled={!canDisaster} onClick={onDisaster}
           className="h-auto py-2 px-2 whitespace-normal text-xs leading-tight text-center">
           Play as Disaster

@@ -13,7 +13,7 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
         <SheetHeader className="px-5 pt-5 pb-3 border-b border-border/60">
           <SheetTitle className="font-display text-xl">Rule Book</SheetTitle>
           <SheetDescription>
-            13 Creators Card Game — complete rules by game type.
+            BCreators Card Game — complete rules by game type.
           </SheetDescription>
         </SheetHeader>
 
@@ -22,8 +22,8 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
 
             <section>
               <p className="text-xs text-muted-foreground">
-                This is the canonical rule set used by both human players and bots inside the
-                13 Creators app. Section 1 covers the rules that apply to every match. Sections
+                This is the canonical rule set used by both human players and bots inside
+                BCreators. Section 1 covers the rules that apply to every match. Sections
                 2–4 cover the three available Game Types and how each one ends.
               </p>
             </section>
@@ -62,9 +62,10 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
             <section>
               <h4 className="font-semibold text-sm mb-1">Hand limit</h4>
               <ul className="list-disc pl-5 space-y-1 text-xs text-muted-foreground">
-                <li>Hand cap is <strong>5 cards</strong>. You should never end your turn holding more than 10.</li>
-                <li>You must play or discard 2 cards each turn before drawing 2 new ones or play from your hand.</li>
+                <li>Hand cap is <strong>5 cards</strong> at end-of-turn. Drawing 2 + placing 2 every turn keeps the count steady.</li>
+                <li>You must place or discard 2 cards every turn — no skipping, no ending early.</li>
                 <li>Animals gained from a Disaster go <strong>straight onto your board</strong>, never into your hand. If they don't connect to your ecosystem they still go on the board (visible, but as a removed/empty space that future cards can fill).</li>
+                <li><strong>Golden Hive</strong> cannot be discarded — it stays in your hand until you choose to spend it to block an incoming Disaster.</li>
               </ul>
             </section>
 

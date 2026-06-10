@@ -1,5 +1,5 @@
 /**
- * Turn engine for "B Creators". Pure functions — never mutate input.
+ * Turn engine for BCreators. Pure functions — never mutate input.
  *
  * Turn flow per the rule book:
  *   1. Pick up 2 cards (any combination of draw-pile top or used-pile top).
@@ -130,7 +130,8 @@ export function drawInitialFive(state: MatchState): MatchState {
   for (let i = 0; i < dealCount; i++) {
     const card = next.draw.shift()!;
     player.hand.push(card);
-    if (card.kind === "golden_hive" && !card.spent) player.hiveShield = true;
+    // Golden Hive does NOT auto-arm on pickup — per the rule book the shield
+    // only fires when the victim chooses to use it during a Disaster prompt.
   }
   player.firstPickupDone = true;
   next.drawnThisTurn = 2; // force advance to place phase
@@ -158,7 +159,7 @@ export function pickFromDraw(state: MatchState): MatchState {
   next.drawnThisTurn += 1;
   if (next.drawnThisTurn >= 2) next.phase = "place";
   next.lastEvent = `${next.players[next.turn].name} drew a card`;
-  if (card.kind === "golden_hive" && !card.spent) next.players[next.turn].hiveShield = true;
+  // Hive does NOT auto-arm — it stays passive in hand until used to block a disaster.
   return next;
 }
 
@@ -188,7 +189,7 @@ export function pickFromUsed(state: MatchState): MatchState {
   next.drawnThisTurn += 1;
   if (next.drawnThisTurn >= 2) next.phase = "place";
   next.lastEvent = `${next.players[next.turn].name} took ${card.name} from the used pile`;
-  if (card.kind === "golden_hive" && !card.spent) next.players[next.turn].hiveShield = true;
+  // Hive does NOT auto-arm — it stays passive in hand until used to block a disaster.
   return next;
 }
 
@@ -605,6 +606,10 @@ export function discardCard(state: MatchState, cardUid: string): MatchState {
   const player = next.players[next.turn];
   const idx = player.hand.findIndex((c) => c.uid === cardUid);
   if (idx < 0) throw new Error("Card not in hand");
+  const target = player.hand[idx];
+  if (target.kind === "golden_hive") {
+    throw new Error("Golden Hive can't be discarded — it can only leave your hand by blocking an incoming Disaster.");
+  }
   const [card] = player.hand.splice(idx, 1);
   next.used.push(card);
   next.placedThisTurn += 1;
