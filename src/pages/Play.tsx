@@ -1246,7 +1246,22 @@ export default function Play() {
               })}
             </div>
 
-            {/* Right (60%): my ecosystem */}
+            {/* Draggable split divider */}
+            <div
+              ref={splitDragRef}
+              role="separator"
+              aria-orientation="vertical"
+              aria-label={`Resize opponents area (${Math.round(opponentPct)}%)`}
+              onPointerDown={onSplitPointerDown}
+              onDoubleClick={() => setOpponentPct(40)}
+              className="group relative h-full cursor-col-resize flex items-center justify-center"
+              title={`Drag to resize · double-click to reset (${Math.round(opponentPct)}%)`}
+            >
+              <div className="w-[2px] h-full bg-border/60 group-hover:bg-primary/60 transition-colors" />
+              <div className="absolute w-2 h-10 rounded-full bg-border group-hover:bg-primary/70 transition-colors" />
+            </div>
+
+
             <Card className="p-1 flex flex-col min-h-0 min-w-0 bg-transparent border-0 shadow-none">
               <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1">Your ecosystem</div>
               <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center">
