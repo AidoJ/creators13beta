@@ -88,6 +88,7 @@ export default function Play() {
   const [showPiles, setShowPiles] = useState(false);
   const [ribbonHidden, setRibbonHidden] = useState(false);
   const [opponentPanelOpen, setOpponentPanelOpen] = useState(false);
+  const [expandedOpponentId, setExpandedOpponentId] = useState<string | null>(null);
   const [ruleBookOpen, setRuleBookOpen] = useState(false);
   const [lobbyOpen, setLobbyOpen] = useState(false);
   const [waitingForGuest, setWaitingForGuest] = useState(false);
