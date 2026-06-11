@@ -88,7 +88,12 @@ export default function Play() {
   const [error, setError] = useState<string | null>(null);
   
   const [showPiles, setShowPiles] = useState(false);
-  const [ribbonHidden, setRibbonHidden] = useState(false);
+  const [ribbonHidden, setRibbonHidden] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    // Auto-hide ribbon on small screens so the board has room.
+    return window.matchMedia?.("(max-width: 768px)").matches ?? false;
+  });
+
   const [opponentPanelOpen, setOpponentPanelOpen] = useState(false);
   const [expandedOpponentId, setExpandedOpponentId] = useState<string | null>(null);
   // Resizable opponents-rail width (% of stage). Persisted across sessions.
