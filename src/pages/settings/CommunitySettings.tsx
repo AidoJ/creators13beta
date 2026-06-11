@@ -34,6 +34,7 @@ export default function CommunitySettings() {
   const [acceptsMessages, setAcceptsMessages] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [hideAvatar, setHideAvatar] = useState(false);
 
   // Batch C — contact preferences
   const [openToContact, setOpenToContact] = useState(false);
