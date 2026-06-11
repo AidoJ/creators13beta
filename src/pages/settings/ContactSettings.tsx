@@ -67,7 +67,19 @@ export default function ContactSettings() {
     if (!user) return;
     if (openToContact && enPhone) {
       const phoneVal = (ch.phone_number ?? "").trim();
-      if (phoneVal.length > 0 && !ch.phone_call_ok && !ch.phone_sms_ok) {
+      const digits = phoneVal.replace(/[^\d]/g, "");
+      // Required so we can SMS connection-request notifications via Twilio.
+      // Accept international format: 8–15 digits, optional leading + and spaces/dashes.
+      const valid = /^\+?[0-9\s\-()]{8,}$/.test(phoneVal) && digits.length >= 8 && digits.length <= 15;
+      if (!valid) {
+        toast({
+          title: "Valid phone number required",
+          description: "Enter a phone number in international format (e.g. +61 400 000 000) so we can text you when someone requests to connect.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!ch.phone_call_ok && !ch.phone_sms_ok) {
         toast({
           title: "Phone needs a permission",
           description: "Tick at least one of 'OK to call' or 'OK to text (SMS)' for Phone.",
@@ -174,7 +186,7 @@ export default function ContactSettings() {
                       <Label htmlFor="ch_sms" className="cursor-pointer text-sm">OK to text (SMS)</Label>
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">Tick at least one — others see your phone only via the permissions you grant.</p>
+                  <p className="text-xs text-muted-foreground">A valid phone number is required so we can SMS you when another Creator requests to connect. Tick at least one — others see your phone only via the permissions you grant.</p>
                 </div>
               )}
             </div>

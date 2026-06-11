@@ -14,7 +14,7 @@ import AnimalMatchesCard from "@/components/dashboard/AnimalMatchesCard";
 import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
-import DiscordLinkCard from "@/components/dashboard/DiscordLinkCard";
+
 import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
 import { Card } from "@/components/ui/card";
 import { Gamepad2, Globe, ArrowRight, Mail } from "lucide-react";
@@ -254,8 +254,6 @@ export default function Dashboard() {
           </section>
         )}
 
-        {/* Discord — all tiers */}
-        {user && <DiscordLinkCard userId={user.id} />}
 
         {/* Account settings */}
         <section className="pt-6 mt-4 border-t border-dashed border-border">

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
-import DiscordLinkCard from "@/components/dashboard/DiscordLinkCard";
+
 import PlayerProfileDiscountCTA from "@/components/dashboard/PlayerProfileDiscountCTA";
 import { Card } from "@/components/ui/card";
 import { Gamepad2, Globe, ArrowRight, Mail } from "lucide-react";
@@ -77,7 +77,7 @@ export default function PlayerDashboard({ userId, email, firstName, onSignOut }:
           )}
         </div>
 
-        <DiscordLinkCard userId={userId} />
+        
 
         {/* Account settings */}
         <section className="pt-6 mt-4 border-t border-dashed border-border">

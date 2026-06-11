@@ -38,7 +38,7 @@ export interface GameSettings {
   bot_hard_enabled: boolean;
   // UI / UX
   show_tutorial_overlay: boolean;
-  show_discord_chat: boolean;
+  
   show_review_boards: boolean;
   prompt_player_name: boolean;
   show_score_panel: boolean;
@@ -91,7 +91,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   bot_medium_enabled: true,
   bot_hard_enabled: true,
   show_tutorial_overlay: true,
-  show_discord_chat: true,
+  
   show_review_boards: true,
   prompt_player_name: true,
   show_score_panel: true,
