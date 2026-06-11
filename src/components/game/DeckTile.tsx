@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-
 interface DeckTileProps {
   count: number;
   active: boolean;
@@ -7,17 +5,11 @@ interface DeckTileProps {
   onClick: () => void;
 }
 
-/** Bottom-dock Deck pile. When `active` (your turn to draw), the central
- *  slot alternates between the deck count and the action label so it's
- *  obvious it's the player's draw. When inactive, just shows the count. */
+/** Bottom-dock Deck pile.
+ *  - Inactive (not your draw): shows the deck count, muted.
+ *  - Active (your draw): replaces the count with the draw action label
+ *    (e.g. "Draw 1") and glows — no flicker. */
 export function DeckTile({ count, active, label, onClick }: DeckTileProps) {
-  const [showLabel, setShowLabel] = useState(false);
-  useEffect(() => {
-    if (!active) { setShowLabel(false); return; }
-    const id = setInterval(() => setShowLabel((s) => !s), 750);
-    return () => clearInterval(id);
-  }, [active]);
-
   return (
     <button
       type="button"
@@ -29,21 +21,22 @@ export function DeckTile({ count, active, label, onClick }: DeckTileProps) {
           ? "border-primary bg-primary/15 ring-2 ring-primary/60 shadow-[0_0_14px_hsl(var(--primary)/0.5)] hover:bg-primary/25 cursor-pointer "
           : "border-border/60 bg-card/60 opacity-70 cursor-not-allowed ")
       }
-      aria-label={active ? label : "Draw pile (not your draw)"}
+      aria-label={active ? label : `Draw pile (${count} cards)`}
     >
       <span className="uppercase tracking-wider text-muted-foreground">Deck</span>
       <span
-        key={showLabel ? "label" : "count"}
         className={
-          "flex-1 flex items-center justify-center text-center transition-opacity " +
-          (active && showLabel
-            ? "font-semibold text-[11px] leading-tight text-primary animate-in fade-in"
-            : "font-display text-2xl leading-none " + (active ? "text-primary" : "text-foreground/80"))
+          "flex-1 flex items-center justify-center text-center " +
+          (active
+            ? "font-semibold text-[11px] leading-tight text-primary px-0.5"
+            : "font-display text-2xl leading-none text-foreground/80")
         }
       >
-        {active && showLabel ? label : count}
+        {active ? label : count}
       </span>
-      <span className="h-[1px]" />
+      <span className={"text-[9px] " + (active ? "text-primary/80" : "text-muted-foreground")}>
+        {active ? `${count} left` : "\u00A0"}
+      </span>
     </button>
   );
 }
