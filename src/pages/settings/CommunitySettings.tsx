@@ -221,7 +221,7 @@ export default function CommunitySettings() {
           <h2 className="font-display font-semibold text-lg">Profile</h2>
           <div className="flex items-center gap-4">
             <div className="h-20 w-20 rounded-full overflow-hidden border border-border bg-muted flex items-center justify-center flex-shrink-0">
-              {avatarUrl ? (
+              {avatarUrl && !hideAvatar ? (
                 <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
               ) : (
                 <UserIcon className="h-9 w-9 text-muted-foreground/70" strokeWidth={1.75} />
@@ -282,6 +282,15 @@ export default function CommunitySettings() {
               />
               <p className="text-xs text-muted-foreground">JPEG, PNG or WebP. Max 5MB. Square works best.</p>
             </div>
+          </div>
+          <div className="flex items-start justify-between gap-4 pt-2 border-t border-border/60">
+            <div>
+              <p className="font-medium">Hide my photo from other members</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Other members see a generic avatar instead. Your uploaded photo is kept so you can re-show it any time.
+              </p>
+            </div>
+            <Switch checked={hideAvatar} onCheckedChange={setHideAvatar} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="display_name">Display name</Label>
