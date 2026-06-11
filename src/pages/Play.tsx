@@ -383,6 +383,12 @@ export default function Play() {
 
   const selfPlayer = state?.players.find((p) => p.id === selfSlot);
   const opponent = state?.players.find((p) => p.id !== selfSlot);
+  const opponents = useMemo(
+    () => state?.players.filter((p) => p.id !== selfSlot) ?? [],
+    [state, selfSlot],
+  );
+  const expandedOpponent =
+    opponents.find((p) => p.id === expandedOpponentId) ?? opponent ?? null;
   const isYourTurn =
     !!state && !state.finished && state.players[state.turn].id === selfSlot && !waitingForGuest;
   const selectedCard: DeckCard | undefined = useMemo(
