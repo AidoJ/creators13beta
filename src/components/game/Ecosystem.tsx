@@ -150,9 +150,12 @@ export function Ecosystem({
           const isIllegalForCard = isLegal && legalForCard != null && !passesCard;
           const canDrop = selectable && isLegal && passesCard;
           const isOver = dragOverKey === k;
-          const tooltip = isIllegalForCard
-            ? (illegalReason ?? "Doesn't share a Creator Type with this neighbour")
-            : undefined;
+          const perCellTip = tooltipForCell?.(cell);
+          const tooltip = perCellTip
+            ?? (isIllegalForCard
+              ? (illegalReason ?? "Doesn't share a Creator Type with this neighbour")
+              : undefined);
+
           return (
             <div
               key={`e-${k}`}
