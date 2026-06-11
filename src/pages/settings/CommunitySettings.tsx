@@ -159,6 +159,7 @@ export default function CommunitySettings() {
       member_preferences: prefsPatch,
       open_to_contact: openToContact,
       contact_channels: contactChannels,
+      hide_avatar: hideAvatar,
     };
     if (visible && !hadJoinedAt) {
       (update as Record<string, unknown>).community_joined_at = new Date().toISOString();
