@@ -1179,9 +1179,9 @@ export default function Play() {
                 }
                 illegalReason={
                   stolenPendingCard
-                    ? `${stolenPendingCard.name} doesn't share a Creator Type with one of these neighbours`
+                    ? `${stolenPendingCard.name} needs at least one neighbour that shares a Creator Type`
                     : selectedCard
-                      ? `${selectedCard.name} doesn't share a Creator Type with one of these neighbours`
+                      ? `${selectedCard.name} needs at least one neighbour that shares a Creator Type`
                       : undefined
                 }
               />
