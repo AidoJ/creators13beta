@@ -1471,10 +1471,10 @@ export default function Play() {
       <OpponentPanel
         open={opponentPanelOpen}
         onClose={() => setOpponentPanelOpen(false)}
-        player={opponent}
+        player={expandedOpponent}
         opponentUserId={
-          matchRow && matchRow.mode === "pvp"
-            ? (selfSlot === "host" ? matchRow.guest_user_id : matchRow.host_user_id)
+          matchRow && matchRow.mode === "pvp" && expandedOpponent
+            ? (expandedOpponent.id === "host" ? matchRow.host_user_id : matchRow.guest_user_id)
             : null
         }
       />
