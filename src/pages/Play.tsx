@@ -1202,11 +1202,10 @@ export default function Play() {
         /* ============ DESKTOP SPLIT LAYOUT (60/40) ============ */
         <>
           <div
-            className={
-              "flex-1 grid gap-2 p-2 min-h-0 overflow-hidden " +
-              "grid-cols-[2fr_3fr]"
-            }
+            className="flex-1 grid gap-2 p-2 min-h-0 overflow-hidden"
+            style={{ gridTemplateColumns: `${opponentPct}fr 6px ${100 - opponentPct}fr` }}
           >
+
             {/* Left rail (40%): opponents */}
             <div
               className={
