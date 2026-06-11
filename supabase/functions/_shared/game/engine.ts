@@ -404,6 +404,14 @@ function adjacencyError(
       continue;
     }
 
+    const placingCreator = card.kind === "creator" || card.kind === "sky_creator";
+    const neighbourIsCreator = pc.card.kind === "creator" || pc.card.kind === "sky_creator";
+    // Two Creators touching is always legal and satisfies the anchor.
+    if (placingCreator && neighbourIsCreator) {
+      anchorMatches += 1;
+      continue;
+    }
+
     if (typeSetsOverlap(myTypes, cardAdjacencyTypes(pc.card))) {
       anchorMatches += 1;
     }
