@@ -26,7 +26,7 @@ type Bool = keyof Pick<GameSettings,
   | "enable_disasters" | "enable_golden_hive" | "enable_sky_creator" | "enable_golden_body" | "enable_sky_creature_steal"
   | "allow_guest_play" | "allow_solo_vs_bot"
   | "bot_easy_enabled" | "bot_medium_enabled" | "bot_hard_enabled"
-  | "show_tutorial_overlay" | "show_discord_chat" | "show_review_boards" | "prompt_player_name" | "show_score_panel"
+  | "show_tutorial_overlay" | "show_review_boards" | "prompt_player_name" | "show_score_panel"
   | "maintenance_banner_enabled" | "play_disabled" | "profile_discount_enabled">;
 
 export default function GameSettingsPanel() {
