@@ -91,6 +91,35 @@ export default function Play() {
   const [ribbonHidden, setRibbonHidden] = useState(false);
   const [opponentPanelOpen, setOpponentPanelOpen] = useState(false);
   const [expandedOpponentId, setExpandedOpponentId] = useState<string | null>(null);
+  // Resizable opponents-rail width (% of stage). Persisted across sessions.
+  const [opponentPct, setOpponentPct] = useState<number>(() => {
+    if (typeof window === "undefined") return 40;
+    const v = Number(window.localStorage.getItem("play.opponentPct"));
+    return Number.isFinite(v) && v >= 20 && v <= 55 ? v : 40;
+  });
+  useEffect(() => {
+    try { window.localStorage.setItem("play.opponentPct", String(opponentPct)); } catch { /* ignore */ }
+  }, [opponentPct]);
+  const splitDragRef = useRef<HTMLDivElement | null>(null);
+  const onSplitPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const container = splitDragRef.current?.parentElement;
+    if (!container) return;
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    const rect = container.getBoundingClientRect();
+    const move = (ev: PointerEvent) => {
+      const pct = ((ev.clientX - rect.left) / rect.width) * 100;
+      setOpponentPct(Math.max(20, Math.min(55, pct)));
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      document.body.style.userSelect = "";
+    };
+    document.body.style.userSelect = "none";
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }, []);
+
   const [ruleBookOpen, setRuleBookOpen] = useState(false);
   const [lobbyOpen, setLobbyOpen] = useState(false);
   const [waitingForGuest, setWaitingForGuest] = useState(false);
