@@ -396,8 +396,30 @@ export default function Play() {
     return (pos: Axial) => placementMatchesNeighbours(selfPlayer.ecosystem, selectedCard, pos);
   }, [selectedCard, selfPlayer]);
 
-  /** True when the player has placements to make but no card in hand can
-   *  legally land on any board cell — discard is the only path forward. */
+  /** Per-cell tooltip text (positive confirmation on legal cells, rejection
+   *  reason on illegal ones). Uses the same canonical phrasing as the rule
+   *  book: "share a Creator Type". */
+  const tooltipForSelectedCard = useMemo(() => {
+    const cardForTooltip = mode === "place" ? selectedCard : stolenPendingCard;
+    if (!cardForTooltip || !selfPlayer) return undefined;
+    return (pos: Axial) => placementReason(selfPlayer.ecosystem, cardForTooltip, pos).text;
+    // stolenPendingCard is declared a few lines down — recomputed via deps below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCard, selfPlayer, mode]);
+
+  /** Hand-card uids whose only legal action this turn is discard. Pure
+   *  function of state — never cached as its own piece of state. */
+  const stuckUids = useMemo(() => {
+    const out = new Set<string>();
+    if (!state || !selfPlayer || state.finished || state.phase !== "place") return out;
+    if (state.players[state.turn].id !== selfSlot) return out;
+    for (const c of selfPlayer.hand) {
+      if (!hasAnyLegalAction(state, selfSlot, c)) out.add(c.uid);
+    }
+    return out;
+  }, [state, selfPlayer, selfSlot]);
+
+  /** True when EVERY hand card has only discard available (legacy banner). */
   const isStuck = useMemo(() => {
     if (!state || !selfPlayer) return false;
     if (state.finished) return false;
@@ -411,6 +433,7 @@ export default function Play() {
       cells.some((cell) => placementMatchesNeighbours(selfPlayer.ecosystem, c, cell)),
     );
   }, [state, selfPlayer, selfSlot]);
+
 
   const guarded = (fn: () => MatchState, move?: ServerMove) => {
     try {
