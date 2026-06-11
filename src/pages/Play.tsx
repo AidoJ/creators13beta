@@ -894,13 +894,6 @@ export default function Play() {
           {mode === "steal" ? "Cancel steal" : "Steal with Sky Creature"}
         </Button>
       </div>
-      <button
-        type="button"
-        onClick={() => setRuleBookOpen(true)}
-        className="text-[10px] text-primary hover:underline mt-3 inline-flex items-center gap-1"
-      >
-        <BookOpen className="w-3 h-3" /> Open Rule Book
-      </button>
     </Card>
   );
 
