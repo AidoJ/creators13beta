@@ -58,7 +58,7 @@ export default function CommunitySettings() {
       const [profileRes, typeRes] = await Promise.all([
         supabase
           .from("profiles")
-          .select("display_name, location_label, bio_superpower, bio_where_i_live, bio_intriguing, community_visible, community_joined_at, member_preferences, avatar_url, open_to_contact, contact_channels")
+          .select("display_name, location_label, bio_superpower, bio_where_i_live, bio_intriguing, community_visible, community_joined_at, member_preferences, avatar_url, hide_avatar, open_to_contact, contact_channels")
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase
