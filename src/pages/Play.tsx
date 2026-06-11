@@ -21,6 +21,9 @@ import {
   playSkyCreatureSteal,
   legalEcoCells,
   placementMatchesNeighbours,
+  placementReason,
+  hasAnyLegalAction,
+
 
   resolveDisaster,
   botStep,
