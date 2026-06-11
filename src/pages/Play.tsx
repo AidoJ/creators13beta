@@ -1366,9 +1366,10 @@ export default function Play() {
               </div>
 
               {/* Actions panel */}
-              <div className="shrink-0 w-[200px]">
+              <div className="shrink-0 w-[160px]">
                 {actionsBlock}
               </div>
+
             </div>
           </div>
         </>
