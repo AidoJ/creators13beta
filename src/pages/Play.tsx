@@ -21,6 +21,9 @@ import {
   playSkyCreatureSteal,
   legalEcoCells,
   placementMatchesNeighbours,
+  placementReason,
+  hasAnyLegalAction,
+
 
   resolveDisaster,
   botStep,
@@ -393,8 +396,21 @@ export default function Play() {
     return (pos: Axial) => placementMatchesNeighbours(selfPlayer.ecosystem, selectedCard, pos);
   }, [selectedCard, selfPlayer]);
 
-  /** True when the player has placements to make but no card in hand can
-   *  legally land on any board cell — discard is the only path forward. */
+  /** Hand-card uids whose only legal action this turn is discard. Pure
+   *  function of state — never cached as its own piece of state. */
+  const stuckUids = useMemo(() => {
+    const out = new Set<string>();
+    if (!state || !selfPlayer || state.finished || state.phase !== "place") return out;
+    if (state.players[state.turn].id !== selfSlot) return out;
+    for (const c of selfPlayer.hand) {
+      if (!hasAnyLegalAction(state, selfSlot, c)) out.add(c.uid);
+    }
+    return out;
+  }, [state, selfPlayer, selfSlot]);
+
+
+
+  /** True when EVERY hand card has only discard available (legacy banner). */
   const isStuck = useMemo(() => {
     if (!state || !selfPlayer) return false;
     if (state.finished) return false;
@@ -408,6 +424,7 @@ export default function Play() {
       cells.some((cell) => placementMatchesNeighbours(selfPlayer.ecosystem, c, cell)),
     );
   }, [state, selfPlayer, selfSlot]);
+
 
   const guarded = (fn: () => MatchState, move?: ServerMove) => {
     try {
@@ -1184,6 +1201,13 @@ export default function Play() {
                       ? `${selectedCard.name} needs at least one neighbour that shares a Creator Type`
                       : undefined
                 }
+                tooltipForCell={(() => {
+                  const cardForTip =
+                    mode === "place" ? selectedCard : stolenPendingCard;
+                  if (!cardForTip) return undefined;
+                  return (pos: Axial) =>
+                    placementReason(selfPlayer.ecosystem, cardForTip, pos).text;
+                })()}
               />
 
             </div>
@@ -1205,7 +1229,9 @@ export default function Play() {
         onSelect={(uid) => setSelectedUid(uid)}
         disabled={!isYourTurn || state.phase !== "place"}
         size={isMobile ? 65 : 95}
+        stuckUids={stuckUids}
       />
+
 
       <MatchOverDialog state={state} onPlayAgain={onNewGame} />
       {gameSettings.prompt_player_name && <NamePrompt />}

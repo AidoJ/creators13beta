@@ -12,7 +12,11 @@ interface Props {
   onDragEnd?: () => void;
   disabled?: boolean;
   size?: number;
+  /** Hand-card uids whose only legal action this turn is discard. Rendered
+   *  muted with a tooltip explaining that discard is the only path. */
+  stuckUids?: Set<string>;
 }
+
 
 // Distance (px) the finger must travel before a press becomes a drag.
 // Mirrors BoardHexPiece so behaviour is consistent across the app.
@@ -26,7 +30,7 @@ interface PointerTrack {
   suppressClick: boolean;
 }
 
-export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd, disabled, size = 104 }: Props) {
+export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd, disabled, size = 104, stuckUids }: Props) {
   const coarse = useCoarsePointer();
   // Track which card uids have completed their draw-in animation.
   const revealedRef = useRef<Set<string>>(new Set());
@@ -115,10 +119,13 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
           const stagger = animIdx >= 0 ? animIdx * 140 : 0;
 
           const height = size * 1.35;
+          const stuck = !!stuckUids?.has(card.uid);
 
           return (
             <div
               key={card.uid}
+              title={stuck ? "No legal placement — you can discard it to satisfy the 2-placement rule." : undefined}
+
               draggable={!disabled && !isAnimating && !coarse}
               onClick={(e) => {
                 if (disabled || isAnimating) return;
@@ -194,7 +201,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                 dropTarget?.click();
                 onDragEnd?.();
               }}
-              className="cursor-grab active:cursor-grabbing select-none"
+              className={`cursor-grab active:cursor-grabbing select-none ${stuck ? "opacity-60 saturate-50" : ""}`}
               style={{
                 touchAction: "none",
                 WebkitTouchCallout: "none",
@@ -206,6 +213,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                     }
                   : {}),
               }}
+
             >
               {isAnimating ? (
                 <div

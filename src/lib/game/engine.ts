@@ -447,6 +447,166 @@ export function cardsShareCreatorType(a: DeckCard, b: DeckCard): boolean {
   return ta.some((t) => tb.has(t));
 }
 
+/* ----------- Per-cell placement explanation (UI tooltip) ----------- */
+
+export interface PlacementReason {
+  legal: boolean;
+  /** Short single-sentence explanation, safe to drop into a tooltip. */
+  text: string;
+}
+
+/** Explain whether `card` may be placed at `pos`, with copy that mirrors the
+ *  canonical phrasing: "share a Creator Type". Used for the per-cell tooltip
+ *  on the board. Cells that aren't adjacent to the ecosystem at all are not
+ *  rendered, so we don't try to explain that case here. */
+export function placementReason(
+  eco: Ecosystem,
+  card: DeckCard,
+  pos: Axial,
+): PlacementReason {
+  if (eco.placed.has(keyOf(pos))) {
+    return { legal: false, text: "This hex already has a card." };
+  }
+
+  const myIsWildcard = cardWildcardForAdjacency(card);
+  const myTypes = myIsWildcard ? [] : cardAdjacencyTypes(card);
+
+  let neighbourCount = 0;
+  let firstMatch: { reason: string } | null = null;
+
+  for (let dir = 0; dir < 6; dir++) {
+    const d = NEIGHBOUR_DIRS[dir];
+    const nKey = keyOf({ q: pos.q + d.q, r: pos.r + d.r });
+    const pc = eco.placed.get(nKey);
+    if (!pc) continue;
+    neighbourCount += 1;
+    if (firstMatch) continue;
+
+    const neighbourName = pc.card.name;
+    const neighbourIsWildcard = cardWildcardForAdjacency(pc.card);
+
+    if (myIsWildcard) {
+      firstMatch = { reason: `${card.name} is a wildcard — anchors to ${neighbourName}.` };
+      continue;
+    }
+    if (neighbourIsWildcard) {
+      firstMatch = { reason: `${neighbourName} is a wildcard — matches any card.` };
+      continue;
+    }
+
+    const placingCreator = card.kind === "creator" || card.kind === "sky_creator";
+    const neighbourIsCreator = pc.card.kind === "creator" || pc.card.kind === "sky_creator";
+    if (placingCreator && neighbourIsCreator) {
+      firstMatch = { reason: `Creators anchor to other Creators — matches ${neighbourName}.` };
+      continue;
+    }
+
+    const otherTypes = cardAdjacencyTypes(pc.card);
+    const shared = myTypes.find((t) =>
+      otherTypes.some((o) => o.toLowerCase() === t.toLowerCase()),
+    );
+    if (shared) {
+      firstMatch = { reason: `Shares ${shared} with ${neighbourName}.` };
+    }
+  }
+
+  if (neighbourCount === 0) {
+    return { legal: true, text: `${card.name} — first card on the board.` };
+  }
+  if (firstMatch) {
+    return { legal: true, text: firstMatch.reason };
+  }
+  const typeList = myTypes.length ? myTypes.join(" or ") : "any Creator Type";
+  return {
+    legal: false,
+    text: `Can't place ${card.name} here — none of the neighbours share ${typeList}.`,
+  };
+}
+
+/* ----------- Disaster eligibility (also used by stuck-card check) ----------- */
+
+/** True iff this ecosystem covers all four elements (Earth/Fire/Air/Water),
+ *  satisfying the prerequisite to unleash a Disaster. Mirrors the gate
+ *  enforced inside `playDisaster`. */
+export function playerCanUnleashDisaster(eco: Ecosystem): boolean {
+  const myElements = new Set<Element>();
+  let hasWildcardSky = false;
+  for (const pc of eco.placed.values()) {
+    if (pc.card.kind === "creator" && pc.card.element) {
+      myElements.add(pc.card.element);
+    } else if (pc.card.kind === "sky_creator") {
+      if (isSkyCluster(eco, pc.pos)) {
+        hasWildcardSky = true;
+        continue;
+      }
+      for (const n of neighbours(pc.pos)) {
+        const nb = eco.placed.get(keyOf(n));
+        if (!nb) continue;
+        if (nb.card.kind === "creator" && nb.card.element) {
+          myElements.add(nb.card.element);
+        } else if (nb.card.kind === "animal" || nb.card.kind === "sky_creature") {
+          for (const t of nb.card.types ?? []) {
+            if (!t || t === "Sky") continue;
+            const el = TYPE_TO_ELEMENT[t as keyof typeof TYPE_TO_ELEMENT];
+            if (el && el !== "Sky") myElements.add(el as Element);
+          }
+        }
+      }
+    }
+  }
+  if (hasWildcardSky && myElements.size >= ELEMENTS.length - 1) {
+    for (const e of ELEMENTS) myElements.add(e);
+  }
+  return ELEMENTS.every((e) => myElements.has(e));
+}
+
+/** True iff `card`, currently held by `playerId`, has at least one legal
+ *  action available this turn beyond the always-available discard:
+ *   - a legal board placement, OR
+ *   - a Disaster (Creator/Sky Creator + all 4 elements placed + not spent), OR
+ *   - a Sky-Creature steal (an opponent has a stealable animal + the player
+ *     has at least one empty adjacent cell on their board to land it).
+ *  Golden Hive is always considered "ready" (never board-placed, never stuck).
+ *  Pure function of `state` — never cache the result. */
+export function hasAnyLegalAction(
+  state: MatchState,
+  playerId: string,
+  card: DeckCard,
+): boolean {
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return false;
+  if (card.kind === "golden_hive") return true;
+
+  const cells = legalEcoCells(player.ecosystem);
+  if (cells.some((c) => placementMatchesNeighbours(player.ecosystem, card, c))) {
+    return true;
+  }
+  if (
+    (card.kind === "creator" || card.kind === "sky_creator") &&
+    !card.pickedUpThisTurn &&
+    !card.disasterSpent &&
+    playerCanUnleashDisaster(player.ecosystem)
+  ) {
+    return true;
+  }
+  if (card.kind === "sky_creature" && cells.length > 0) {
+    const stealable = state.players.some(
+      (p) =>
+        p.id !== playerId &&
+        Array.from(p.ecosystem.placed.values()).some(
+          (pc) =>
+            pc.card.kind === "animal" ||
+            pc.card.kind === "sky_creature" ||
+            pc.card.kind === "golden_body",
+        ),
+    );
+    if (stealable) return true;
+  }
+  return false;
+}
+
+
+
 
 
 

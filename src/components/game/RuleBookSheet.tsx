@@ -94,12 +94,14 @@ export function RuleBookSheet({ open, onOpenChange }: RuleBookSheetProps) {
               <ul className="list-disc pl-5 space-y-1 text-xs text-muted-foreground">
                 <li>The first card may be placed on the central hex.</li>
                 <li>Every other card must go on an <strong>empty hex adjacent to your ecosystem</strong> — the only exception is animals dropped on your board from a Disaster, which can land disconnected.</li>
-                <li><strong>Adjacency-type match:</strong> a card just needs to share at least one Creator Type with <em>at least one</em> neighbour (Creator or animal) — only one side has to match. Non-matching neighbours are simply ignored, they never block a placement.</li>
+                <li><strong>Adjacency:</strong> <em>at least one neighbour must share a Creator Type</em> with the card you're placing — only one side has to match. Non-matching neighbours are simply ignored and never block a placement.</li>
                 <li><strong>Creator cards are anchors:</strong> Creators may always sit beside other Creators, and never block an incoming animal regardless of element.</li>
-                <li><strong>Wildcards:</strong> <strong>Sky Creator</strong> and <strong>Golden Body</strong> match anything for adjacency. Regular animals and Sky Creatures still need to share a type with one neighbour to anchor.</li>
-                <li><strong>Animals must be touching their matching Creator to count toward the win.</strong> A scattered matching animal still sits on the board but does not satisfy the 3-per-Creator requirement until it is adjacent to that Creator's hex.</li>
-                <li><strong>If you have no legal placement</strong> for any card in your hand, you can always <strong>discard to the Used Pile</strong> to satisfy your 2 placements per turn — discarding is never blocked by the adjacency rule.</li>
+                <li><strong>Wildcards:</strong> <strong>Sky Creator</strong> and <strong>Golden Body</strong> match anything for adjacency. Regular animals and Sky Creatures still need to share a type with at least one neighbour.</li>
+                <li><strong>Animals must be touching their matching Creator to count toward the win.</strong> A scattered matching animal still sits on the board but does not satisfy the 3-per-Creator requirement until it's adjacent to that Creator's hex.</li>
+                <li><strong>Hover a hex</strong> while a card is selected to see why a placement is legal ("Shares Snow with Snow Creator") or illegal ("None of the neighbours share Snow or Sun").</li>
+                <li><strong>Stuck cards in your hand</strong> are shown muted — they have no legal board play, Disaster, or steal available this turn, so your only action with them is to discard. Discarding is never blocked by the adjacency rule.</li>
               </ul>
+
             </section>
 
             <section className="space-y-4">

@@ -32,9 +32,17 @@ interface Props {
    *  cannot accept a drop — used to show adjacency-type-match illegal cells
    *  for the currently selected hand card. */
   legalForCard?: (pos: Axial) => boolean;
-  /** Tooltip shown on the greyed-out illegal cells. */
+  /** Tooltip shown on the greyed-out illegal cells (fallback when
+   *  `tooltipForCell` isn't provided). */
   illegalReason?: string;
+  /** Per-cell tooltip text. When provided, takes precedence over
+   *  `illegalReason` and also surfaces on legal cells (positive confirmation
+   *  like "Shares Snow with Snow Creator"). */
+  tooltipForCell?: (pos: Axial) => string | undefined;
 }
+
+
+
 
 /** Show only the currently playable empty cells, matching the compact reference board. */
 function buildScaffold(eco: EcoType, excludeKey?: string | null): Axial[] {
@@ -44,7 +52,7 @@ function buildScaffold(eco: EcoType, excludeKey?: string | null): Axial[] {
 export function Ecosystem({
   eco, size = 90, selectable, showEmpties = true,
   onPlace, onStealClick, onRotateClick, onMoveDragStart, onMoveDragEnd, minHeight = 300, moveFromKey = null,
-  autoFit = false, legalForCard, illegalReason,
+  autoFit = false, legalForCard, illegalReason, tooltipForCell,
 }: Props) {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -142,9 +150,12 @@ export function Ecosystem({
           const isIllegalForCard = isLegal && legalForCard != null && !passesCard;
           const canDrop = selectable && isLegal && passesCard;
           const isOver = dragOverKey === k;
-          const tooltip = isIllegalForCard
-            ? (illegalReason ?? "Doesn't share a Creator Type with this neighbour")
-            : undefined;
+          const perCellTip = tooltipForCell?.(cell);
+          const tooltip = perCellTip
+            ?? (isIllegalForCard
+              ? (illegalReason ?? "Doesn't share a Creator Type with this neighbour")
+              : undefined);
+
           return (
             <div
               key={`e-${k}`}
