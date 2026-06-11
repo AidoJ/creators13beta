@@ -12,7 +12,11 @@ interface Props {
   onDragEnd?: () => void;
   disabled?: boolean;
   size?: number;
+  /** Hand-card uids whose only legal action this turn is discard. Rendered
+   *  muted with a tooltip explaining that discard is the only path. */
+  stuckUids?: Set<string>;
 }
+
 
 // Distance (px) the finger must travel before a press becomes a drag.
 // Mirrors BoardHexPiece so behaviour is consistent across the app.
