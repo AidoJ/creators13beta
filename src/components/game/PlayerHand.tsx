@@ -201,7 +201,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                 dropTarget?.click();
                 onDragEnd?.();
               }}
-              className="cursor-grab active:cursor-grabbing select-none"
+              className={`cursor-grab active:cursor-grabbing select-none ${stuck ? "opacity-60 saturate-50" : ""}`}
               style={{
                 touchAction: "none",
                 WebkitTouchCallout: "none",
@@ -213,6 +213,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                     }
                   : {}),
               }}
+
             >
               {isAnimating ? (
                 <div
