@@ -1,7 +1,13 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import logo from "@/assets/13creators-logo.png";
 
 export default function GlobalFooter() {
+  const { pathname } = useLocation();
+  // Hide the global footer on the immersive game routes so the play surface
+  // gets the full viewport (especially on mobile, where the footer otherwise
+  // forces page-level scrolling on top of the 100dvh board).
+  if (pathname.startsWith("/play/")) return null;
+
   return (
     <footer className="border-t border-border bg-card">
       <div className="container mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
