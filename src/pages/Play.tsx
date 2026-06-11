@@ -410,18 +410,6 @@ export default function Play() {
 
 
 
-  /** Hand-card uids whose only legal action this turn is discard. Pure
-   *  function of state — never cached as its own piece of state. */
-  const stuckUids = useMemo(() => {
-    const out = new Set<string>();
-    if (!state || !selfPlayer || state.finished || state.phase !== "place") return out;
-    if (state.players[state.turn].id !== selfSlot) return out;
-    for (const c of selfPlayer.hand) {
-      if (!hasAnyLegalAction(state, selfSlot, c)) out.add(c.uid);
-    }
-    return out;
-  }, [state, selfPlayer, selfSlot]);
-
   /** True when EVERY hand card has only discard available (legacy banner). */
   const isStuck = useMemo(() => {
     if (!state || !selfPlayer) return false;
