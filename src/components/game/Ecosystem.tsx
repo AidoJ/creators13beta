@@ -39,6 +39,9 @@ interface Props {
    *  `illegalReason` and also surfaces on legal cells (positive confirmation
    *  like "Shares Snow with Snow Creator"). */
   tooltipForCell?: (pos: Axial) => string | undefined;
+}
+
+
 
 
 /** Show only the currently playable empty cells, matching the compact reference board. */
