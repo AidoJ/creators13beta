@@ -1332,6 +1332,7 @@ export type Database = {
           first_name: string | null
           gender: string | null
           height_cm: number | null
+          hide_avatar: boolean
           id: string
           invitation_code: string
           invited_by_user_id: string | null
@@ -1383,6 +1384,7 @@ export type Database = {
           first_name?: string | null
           gender?: string | null
           height_cm?: number | null
+          hide_avatar?: boolean
           id?: string
           invitation_code?: string
           invited_by_user_id?: string | null
@@ -1434,6 +1436,7 @@ export type Database = {
           first_name?: string | null
           gender?: string | null
           height_cm?: number | null
+          hide_avatar?: boolean
           id?: string
           invitation_code?: string
           invited_by_user_id?: string | null

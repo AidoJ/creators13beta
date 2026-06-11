@@ -34,6 +34,7 @@ export default function CommunitySettings() {
   const [acceptsMessages, setAcceptsMessages] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [hideAvatar, setHideAvatar] = useState(false);
 
   // Batch C — contact preferences
   const [openToContact, setOpenToContact] = useState(false);
@@ -57,7 +58,7 @@ export default function CommunitySettings() {
       const [profileRes, typeRes] = await Promise.all([
         supabase
           .from("profiles")
-          .select("display_name, location_label, bio_superpower, bio_where_i_live, bio_intriguing, community_visible, community_joined_at, member_preferences, avatar_url, open_to_contact, contact_channels")
+          .select("display_name, location_label, bio_superpower, bio_where_i_live, bio_intriguing, community_visible, community_joined_at, member_preferences, avatar_url, hide_avatar, open_to_contact, contact_channels")
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase
@@ -78,6 +79,7 @@ export default function CommunitySettings() {
         setHadJoinedAt(!!p.community_joined_at);
         const prefs = (p.member_preferences as Record<string, unknown>) ?? {};
         setAcceptsMessages(prefs?.accepts_messages === true);
+        setHideAvatar(!!(p as any).hide_avatar);
         if (p.avatar_url) {
           const url = await resolveAvatarUrl(p.avatar_url);
           if (!cancelled) setAvatarUrl(url);
@@ -157,6 +159,7 @@ export default function CommunitySettings() {
       member_preferences: prefsPatch,
       open_to_contact: openToContact,
       contact_channels: contactChannels,
+      hide_avatar: hideAvatar,
     };
     if (visible && !hadJoinedAt) {
       (update as Record<string, unknown>).community_joined_at = new Date().toISOString();
@@ -218,7 +221,7 @@ export default function CommunitySettings() {
           <h2 className="font-display font-semibold text-lg">Profile</h2>
           <div className="flex items-center gap-4">
             <div className="h-20 w-20 rounded-full overflow-hidden border border-border bg-muted flex items-center justify-center flex-shrink-0">
-              {avatarUrl ? (
+              {avatarUrl && !hideAvatar ? (
                 <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
               ) : (
                 <UserIcon className="h-9 w-9 text-muted-foreground/70" strokeWidth={1.75} />
@@ -279,6 +282,15 @@ export default function CommunitySettings() {
               />
               <p className="text-xs text-muted-foreground">JPEG, PNG or WebP. Max 5MB. Square works best.</p>
             </div>
+          </div>
+          <div className="flex items-start justify-between gap-4 pt-2 border-t border-border/60">
+            <div>
+              <p className="font-medium">Hide my photo from other members</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Other members see a generic avatar instead. Your uploaded photo is kept so you can re-show it any time.
+              </p>
+            </div>
+            <Switch checked={hideAvatar} onCheckedChange={setHideAvatar} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="display_name">Display name</Label>
