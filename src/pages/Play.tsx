@@ -1201,6 +1201,13 @@ export default function Play() {
                       ? `${selectedCard.name} needs at least one neighbour that shares a Creator Type`
                       : undefined
                 }
+                tooltipForCell={(() => {
+                  const cardForTip =
+                    mode === "place" ? selectedCard : stolenPendingCard;
+                  if (!cardForTip) return undefined;
+                  return (pos: Axial) =>
+                    placementReason(selfPlayer.ecosystem, cardForTip, pos).text;
+                })()}
               />
 
             </div>
@@ -1222,7 +1229,9 @@ export default function Play() {
         onSelect={(uid) => setSelectedUid(uid)}
         disabled={!isYourTurn || state.phase !== "place"}
         size={isMobile ? 65 : 95}
+        stuckUids={stuckUids}
       />
+
 
       <MatchOverDialog state={state} onPlayAgain={onNewGame} />
       {gameSettings.prompt_player_name && <NamePrompt />}
