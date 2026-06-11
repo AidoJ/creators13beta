@@ -91,6 +91,35 @@ export default function Play() {
   const [ribbonHidden, setRibbonHidden] = useState(false);
   const [opponentPanelOpen, setOpponentPanelOpen] = useState(false);
   const [expandedOpponentId, setExpandedOpponentId] = useState<string | null>(null);
+  // Resizable opponents-rail width (% of stage). Persisted across sessions.
+  const [opponentPct, setOpponentPct] = useState<number>(() => {
+    if (typeof window === "undefined") return 40;
+    const v = Number(window.localStorage.getItem("play.opponentPct"));
+    return Number.isFinite(v) && v >= 20 && v <= 55 ? v : 40;
+  });
+  useEffect(() => {
+    try { window.localStorage.setItem("play.opponentPct", String(opponentPct)); } catch { /* ignore */ }
+  }, [opponentPct]);
+  const splitDragRef = useRef<HTMLDivElement | null>(null);
+  const onSplitPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const container = splitDragRef.current?.parentElement;
+    if (!container) return;
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    const rect = container.getBoundingClientRect();
+    const move = (ev: PointerEvent) => {
+      const pct = ((ev.clientX - rect.left) / rect.width) * 100;
+      setOpponentPct(Math.max(20, Math.min(55, pct)));
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      document.body.style.userSelect = "";
+    };
+    document.body.style.userSelect = "none";
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }, []);
+
   const [ruleBookOpen, setRuleBookOpen] = useState(false);
   const [lobbyOpen, setLobbyOpen] = useState(false);
   const [waitingForGuest, setWaitingForGuest] = useState(false);
@@ -1173,11 +1202,10 @@ export default function Play() {
         /* ============ DESKTOP SPLIT LAYOUT (60/40) ============ */
         <>
           <div
-            className={
-              "flex-1 grid gap-2 p-2 min-h-0 overflow-hidden " +
-              "grid-cols-[2fr_3fr]"
-            }
+            className="flex-1 grid gap-2 p-2 min-h-0 overflow-hidden"
+            style={{ gridTemplateColumns: `${opponentPct}fr 6px ${100 - opponentPct}fr` }}
           >
+
             {/* Left rail (40%): opponents */}
             <div
               className={
@@ -1218,7 +1246,22 @@ export default function Play() {
               })}
             </div>
 
-            {/* Right (60%): my ecosystem */}
+            {/* Draggable split divider */}
+            <div
+              ref={splitDragRef}
+              role="separator"
+              aria-orientation="vertical"
+              aria-label={`Resize opponents area (${Math.round(opponentPct)}%)`}
+              onPointerDown={onSplitPointerDown}
+              onDoubleClick={() => setOpponentPct(40)}
+              className="group relative h-full cursor-col-resize flex items-center justify-center"
+              title={`Drag to resize · double-click to reset (${Math.round(opponentPct)}%)`}
+            >
+              <div className="w-[2px] h-full bg-border/60 group-hover:bg-primary/60 transition-colors" />
+              <div className="absolute w-2 h-10 rounded-full bg-border group-hover:bg-primary/70 transition-colors" />
+            </div>
+
+
             <Card className="p-1 flex flex-col min-h-0 min-w-0 bg-transparent border-0 shadow-none">
               <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1">Your ecosystem</div>
               <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center">
@@ -1259,12 +1302,21 @@ export default function Play() {
             </Card>
           </div>
 
-          {/* Bottom DOCK: left (40%) = selected card · right (60%) = hand + piles + actions */}
-          <div className="grid grid-cols-[2fr_3fr] gap-2 px-2 pb-2 border-t border-border/40 pt-2 bg-card/30">
+          {/* Bottom DOCK: left = selected card (matches opponents width) · right = hand + piles + actions */}
+          <div
+            className="grid gap-2 px-2 pb-2 border-t border-border/40 pt-2 bg-card/30"
+            style={{ gridTemplateColumns: `${opponentPct}fr 6px ${100 - opponentPct}fr` }}
+          >
+
             {/* Dock-left: selected card preview (sits under opponents column) */}
             <div className="min-w-0">
               {selectedBlock}
             </div>
+
+            {/* Spacer aligned with the stage divider */}
+            <div aria-hidden className="h-full" />
+
+
 
             {/* Dock-right: hand · piles · actions */}
             <div className="flex items-stretch gap-2 min-w-0">
