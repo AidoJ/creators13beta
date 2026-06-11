@@ -1302,8 +1302,12 @@ export default function Play() {
             </Card>
           </div>
 
-          {/* Bottom DOCK: left (40%) = selected card · right (60%) = hand + piles + actions */}
-          <div className="grid grid-cols-[2fr_3fr] gap-2 px-2 pb-2 border-t border-border/40 pt-2 bg-card/30">
+          {/* Bottom DOCK: left = selected card (matches opponents width) · right = hand + piles + actions */}
+          <div
+            className="grid gap-2 px-2 pb-2 border-t border-border/40 pt-2 bg-card/30"
+            style={{ gridTemplateColumns: `${opponentPct}fr 6px ${100 - opponentPct}fr` }}
+          >
+
             {/* Dock-left: selected card preview (sits under opponents column) */}
             <div className="min-w-0">
               {selectedBlock}
