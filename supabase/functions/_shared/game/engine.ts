@@ -340,16 +340,15 @@ function findAdjacentDriverCreator(eco: Ecosystem, card: DeckCard, pos: Axial): 
 
 /* --------------------------- adjacency match rule --------------------------- */
 
-/** Adjacency-match rule (refined):
- *   - Animal-to-animal is STRICT: every adjacent animal / sky_creature must
- *     share at least one Creator Type with the placed card.
- *   - Creator neighbours (creator / sky_creator) NEVER block an incoming
- *     card — Creators are foundational anchors, not gates.
- *   - At least one neighbour overall (Creator or animal) must share a type
- *     with the placed card so it still anchors somewhere.
+/** Adjacency-match rule (loose — per client):
+ *   - At least ONE neighbour (Creator or animal) must share a Creator Type
+ *     with the placed card. Only one side needs to match.
+ *   - No neighbour ever "vetoes" a placement based on element — non-matching
+ *     neighbours are simply ignored. Creators are foundational anchors.
  *   - Wildcards (Sky Creator, Golden Body, Golden Hive) match anything,
  *     both as placed card and as neighbour.
  *   - Two Creators touching is always legal and satisfies the anchor.
+ *   - The very first card on an empty board has no neighbours → legal.
  *   - Golden Hive cannot be placed at all (handled in placeOnEcosystem).
  */
 function cardWildcardForAdjacency(card: DeckCard): boolean {
@@ -389,13 +388,9 @@ function adjacencyError(
 ): string | null {
   const myIsWildcard = cardWildcardForAdjacency(card);
   const myTypes = myIsWildcard ? [] : cardAdjacencyTypes(card);
-  const placingCreator = card.kind === "creator" || card.kind === "sky_creator";
-  const placingAnimal = card.kind === "animal" || card.kind === "sky_creature";
 
   let neighbourCount = 0;
   let anchorMatches = 0;
-  let adjacentCreators = 0;
-  let creatorFirstAnimalMismatch: string | null = null;
 
   for (let dir = 0; dir < 6; dir++) {
     const d = NEIGHBOUR_DIRS[dir];
@@ -404,55 +399,19 @@ function adjacencyError(
     if (!pc) continue;
     neighbourCount += 1;
 
-    const neighbourIsCreator =
-      pc.card.kind === "creator" || pc.card.kind === "sky_creator";
-
-    // Wildcards (either side) always match.
     if (myIsWildcard || cardWildcardForAdjacency(pc.card)) {
       anchorMatches += 1;
-      if (placingCreator && neighbourIsCreator) adjacentCreators += 1;
       continue;
     }
 
-    const theirTypes = cardAdjacencyTypes(pc.card);
-    const overlap = typeSetsOverlap(myTypes, theirTypes);
-
-    if (neighbourIsCreator) {
-      // Creators never block an incoming card. For a Creator placement,
-      // Creator-vs-Creator is always legal and counts as an anchor.
-      if (placingCreator) {
-        adjacentCreators += 1;
-        anchorMatches += 1;
-      } else if (overlap) {
-        anchorMatches += 1;
-      }
-      continue;
-    }
-
-    // Neighbour is an animal / sky_creature.
-    if (placingAnimal) {
-      // Strict animal-to-animal: must share a type.
-      if (!overlap) {
-        return `${card.name} must share a Creator Type with neighbour ${pc.card.name}.`;
-      }
+    if (typeSetsOverlap(myTypes, cardAdjacencyTypes(pc.card))) {
       anchorMatches += 1;
-      continue;
-    }
-
-    if (placingCreator) {
-      if (overlap) anchorMatches += 1;
-      else if (!creatorFirstAnimalMismatch) creatorFirstAnimalMismatch = pc.card.name;
-      continue;
     }
   }
 
   if (neighbourCount === 0) return null;
-
-  if (placingAnimal && anchorMatches === 0) {
+  if (anchorMatches === 0) {
     return `${card.name} needs at least one neighbour that shares a Creator Type.`;
-  }
-  if (placingCreator && anchorMatches === 0 && adjacentCreators === 0) {
-    return `${card.name} must share a Creator Type with at least one neighbouring animal (no match with ${creatorFirstAnimalMismatch ?? "its neighbours"}).`;
   }
   return null;
 }
