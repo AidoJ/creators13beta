@@ -43,13 +43,28 @@ type Outgoing = {
   revoked_at: string | null;
 };
 
+type ApprovedChannelValue =
+  | string
+  | { number?: string | null; call_ok?: boolean; sms_ok?: boolean }
+  | null;
 type Approved = {
   other_user_id: string;
   other_display_name: string | null;
   other_avatar_url: string | null;
   approved_at: string | null;
-  channels: Record<string, string | null> | null;
+  channels: Record<string, ApprovedChannelValue> | null;
 };
+
+function formatChannelValue(key: string, val: ApprovedChannelValue): string {
+  if (val == null) return "";
+  if (typeof val === "string") return val;
+  if (key === "phone" && typeof val === "object") {
+    const num = (val.number ?? "").toString();
+    const tags = [val.call_ok ? "call OK" : null, val.sms_ok ? "SMS OK" : null].filter(Boolean);
+    return tags.length ? `${num} (${tags.join(", ")})` : num;
+  }
+  return String((val as any).number ?? "");
+}
 
 const TAB_KEYS = ["pending", "approved", "sent"] as const;
 type TabKey = (typeof TAB_KEYS)[number];
@@ -291,7 +306,8 @@ export default function Connections() {
                       </p>
                       <ul className="space-y-1">
                         {keys.map((k) => {
-                          const val = channels[k] ?? "";
+                          const val = formatChannelValue(k, channels[k]);
+                          if (!val) return null;
                           const ckey = `${r.other_user_id}:${k}`;
                           return (
                             <li key={k} className="flex items-center justify-between gap-2 text-sm rounded-md bg-muted/40 px-3 py-2">
