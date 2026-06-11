@@ -476,7 +476,7 @@ describe("classic ecosystem win validation", () => {
     expect(() => placeOnEcosystem(state, peacock.uid, { q: 0, r: 0 })).toThrowError(/at least one neighbour that shares/);
   });
 
-  it("playtest: Peacock beside Snow Creator + Lava-Mountain animal → rejected (strict animal-to-animal)", () => {
+  it("playtest: Peacock beside Snow Creator + Lava-Mountain animal → legal (only one side needs to match)", () => {
     const snow = creator("Snow", "Water");
     const lavaMountain = animal("lavaMountain", ["Lava", "Mountain"]);
     const peacock = animal("peacock", ["Snow", "Sun"]);
@@ -491,7 +491,8 @@ describe("classic ecosystem win validation", () => {
       players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
       turnNumber: 1, finished: false, winnerId: null,
     };
-    expect(() => placeOnEcosystem(state, peacock.uid, { q: 0, r: 0 })).toThrowError(/share a Creator Type with neighbour/);
+    const after = placeOnEcosystem(state, peacock.uid, { q: 0, r: 0 });
+    expect(after.players[0].ecosystem.placed.has("0,0")).toBe(true);
   });
 
   it("playtest: Peacock beside Snow Creator + Fire Creator + Lava-Snow animal → legal", () => {
