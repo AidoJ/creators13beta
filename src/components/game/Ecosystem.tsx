@@ -32,9 +32,14 @@ interface Props {
    *  cannot accept a drop — used to show adjacency-type-match illegal cells
    *  for the currently selected hand card. */
   legalForCard?: (pos: Axial) => boolean;
-  /** Tooltip shown on the greyed-out illegal cells. */
+  /** Tooltip shown on the greyed-out illegal cells (fallback when
+   *  `tooltipForCell` isn't provided). */
   illegalReason?: string;
-}
+  /** Per-cell tooltip text. When provided, takes precedence over
+   *  `illegalReason` and also surfaces on legal cells (positive confirmation
+   *  like "Shares Snow with Snow Creator"). */
+  tooltipForCell?: (pos: Axial) => string | undefined;
+
 
 /** Show only the currently playable empty cells, matching the compact reference board. */
 function buildScaffold(eco: EcoType, excludeKey?: string | null): Axial[] {
