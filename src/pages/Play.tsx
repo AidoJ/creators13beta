@@ -1288,33 +1288,20 @@ export default function Play() {
                       ? `Draw 1 (${picksLeft} left)`
                       : handAtLimit
                         ? "Hand full"
-                        : isYourTurn && state.phase === "draw"
-                          ? "0 picks left"
-                          : "Deck";
+                        : "Deck";
                   return (
-                    <button
-                      type="button"
+                    <DeckTile
+                      count={state.draw.length}
+                      active={active}
+                      label={label}
                       onClick={() => {
                         if (needsOpeningDraw) onDrawOpening();
                         else if (canDrawOne) onDrawOne();
                       }}
-                      disabled={!active}
-                      className={
-                        "flex flex-col items-center justify-between gap-1 w-[72px] h-[112px] rounded-md border px-1.5 py-1.5 text-[10px] transition " +
-                        (active
-                          ? "border-primary bg-primary/15 ring-2 ring-primary/50 shadow-[0_0_14px_hsl(var(--primary)/0.45)] animate-pulse hover:bg-primary/25 cursor-pointer "
-                          : "border-border/60 bg-card/60 opacity-70 cursor-not-allowed ")
-                      }
-                      aria-label={active ? label : "Draw pile (not your draw)"}
-                    >
-                      <span className="uppercase tracking-wider text-muted-foreground">Deck</span>
-                      <span className="font-display text-2xl leading-none">{state.draw.length}</span>
-                      <span className={"font-semibold text-center leading-tight " + (active ? "text-primary" : "text-muted-foreground")}>
-                        {label}
-                      </span>
-                    </button>
+                    />
                   );
                 })()}
+
 
 
                 <Popover>
