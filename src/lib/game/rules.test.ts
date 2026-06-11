@@ -430,7 +430,7 @@ describe("classic ecosystem win validation", () => {
       players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
       turnNumber: 1, finished: false, winnerId: null,
     };
-    expect(() => placeOnEcosystem(state, river.uid, { q: 0, r: 0 })).toThrowError(/at least one neighbouring animal/);
+    expect(() => placeOnEcosystem(state, river.uid, { q: 0, r: 0 })).toThrowError(/at least one neighbour that shares/);
   });
 
   // --- Refined adjacency: Creators never block animal placements ---
