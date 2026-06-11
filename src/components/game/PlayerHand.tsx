@@ -119,10 +119,13 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
           const stagger = animIdx >= 0 ? animIdx * 140 : 0;
 
           const height = size * 1.35;
+          const stuck = !!stuckUids?.has(card.uid);
 
           return (
             <div
               key={card.uid}
+              title={stuck ? "No legal placement — you can discard it to satisfy the 2-placement rule." : undefined}
+
               draggable={!disabled && !isAnimating && !coarse}
               onClick={(e) => {
                 if (disabled || isAnimating) return;
