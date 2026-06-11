@@ -741,31 +741,6 @@ export default function Play() {
   const needsOpeningDraw = !selfPlayer.firstPickupDone && state.phase === "draw" && isYourTurn;
   const canDrawOne = isYourTurn && state.phase === "draw" && selfPlayer.firstPickupDone && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2 && !handAtLimit;
 
-  const opponentBlock = (
-    <Card className="p-3">
-      <button
-        type="button"
-        onClick={() => setOpponentPanelOpen(true)}
-        className="w-full flex items-center justify-between gap-2 mb-2 group"
-        aria-label={`Pop out ${opponent.name}'s ecosystem`}
-      >
-        <span className="text-xs uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
-          {opponent.name}
-        </span>
-        <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground group-hover:text-foreground transition-colors">
-          Pop out <Maximize2 className="w-3 h-3" />
-        </span>
-      </button>
-      <button
-        type="button"
-        onClick={() => setOpponentPanelOpen(true)}
-        className="block w-full rounded-md hover:ring-2 hover:ring-primary/40 transition-all"
-        aria-label="Pop out opponent ecosystem"
-      >
-        <Ecosystem eco={opponent.ecosystem} size={isMobile ? 28 : 36} minHeight={isMobile ? 140 : 180} showEmpties={false} />
-      </button>
-    </Card>
-  );
 
   const canTapDiscard = isYourTurn && state.phase === "place" && !!selectedUid;
   const pilesBlock = (
