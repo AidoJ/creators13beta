@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { HelpCircle, Loader2, Users, BookOpen, Maximize2, ChevronUp, ChevronDown, LayoutDashboard, MessageCircle, X, Plus, Swords, Clock } from "lucide-react";
+import { HelpCircle, Loader2, Users, BookOpen, Maximize2, ChevronUp, ChevronDown, LayoutDashboard, X, Plus, Swords, Clock } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -47,7 +47,7 @@ import { useMatchRealtime } from "@/hooks/useMatchRealtime";
 import { usePvpReconcile } from "@/hooks/usePvpReconcile";
 import { useBeatTheClockTimer } from "@/hooks/useBeatTheClockTimer";
 import { useAuth } from "@/contexts/AuthContext";
-import { DISCORD_INVITE_URL } from "@/config/discordChat";
+
 import type { Axial, DeckCard, GameConfig, GameMode, MatchState } from "@/lib/game/types";
 import { Ecosystem } from "@/components/game/Ecosystem";
 import { PlayerHand } from "@/components/game/PlayerHand";
@@ -1059,16 +1059,6 @@ export default function Play() {
               <TooltipContent>Close &amp; abandon</TooltipContent>
             </Tooltip>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button size="icon" variant="outline" className="h-8 w-8" asChild aria-label="Discord">
-                  <a href={DISCORD_INVITE_URL} target="_blank" rel="noopener noreferrer">
-                    <MessageCircle className="w-4 h-4" />
-                  </a>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Open Discord chat</TooltipContent>
-            </Tooltip>
 
             {isPvp ? (
               <Tooltip>

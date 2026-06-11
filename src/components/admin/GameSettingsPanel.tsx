@@ -254,7 +254,7 @@ export default function GameSettingsPanel() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
           <BoolField k="show_tutorial_overlay" label="Tutorial overlay" hint="First-time onboarding tips" />
-          <BoolField k="show_discord_chat" label="Discord chat panel" hint="In-game Discord widget" />
+          
           <BoolField k="show_review_boards" label="Review opponents dialog" hint="End-of-match tabbed boards" />
           <BoolField k="prompt_player_name" label="Prompt player name" hint="Ask new players for a display name" />
           <BoolField k="show_score_panel" label="Score panel" hint="Live in-match score widget" />
