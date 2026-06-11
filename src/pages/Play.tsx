@@ -1309,23 +1309,15 @@ export default function Play() {
 
             {/* Dock-right: hand · piles · actions */}
             <div className="flex items-stretch gap-2 min-w-0">
-              <div className="flex-1 min-w-0 rounded-lg border border-border/40 bg-card/40 backdrop-blur overflow-x-auto">
-                <div className="flex items-end gap-2 p-2 justify-center min-h-full">
-                  {selfPlayer.hand.length === 0 ? (
-                    <div className="text-sm text-muted-foreground italic self-center">No cards in hand.</div>
-                  ) : null}
-                  {/* Reuse PlayerHand visually by rendering it inline with tighter padding via wrapper */}
-                </div>
-                <div className="-mt-[1px]">
-                  <PlayerHand
-                    hand={selfPlayer.hand}
-                    selectedUid={selectedUid}
-                    onSelect={(uid) => setSelectedUid(uid)}
-                    disabled={!isYourTurn || state.phase !== "place"}
-                    size={76}
-                    stuckUids={stuckUids}
-                  />
-                </div>
+              <div className="flex-1 min-w-0 rounded-lg border border-border/40 bg-card/40 backdrop-blur overflow-x-auto self-end">
+                <PlayerHand
+                  hand={selfPlayer.hand}
+                  selectedUid={selectedUid}
+                  onSelect={(uid) => setSelectedUid(uid)}
+                  disabled={!isYourTurn || state.phase !== "place"}
+                  size={76}
+                  stuckUids={stuckUids}
+                />
               </div>
 
               {/* Piles: Deck + Discard inline */}
