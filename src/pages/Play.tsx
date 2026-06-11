@@ -1313,6 +1313,11 @@ export default function Play() {
               {selectedBlock}
             </div>
 
+            {/* Spacer aligned with the stage divider */}
+            <div aria-hidden className="h-full" />
+
+
+
             {/* Dock-right: hand · piles · actions */}
             <div className="flex items-stretch gap-2 min-w-0">
               <div className="flex-1 min-w-0 rounded-lg border border-border/40 bg-card/40 backdrop-blur overflow-x-auto self-end">
