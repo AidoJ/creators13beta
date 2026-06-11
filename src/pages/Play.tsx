@@ -1131,97 +1131,300 @@ export default function Play() {
       </button>
 
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[220px_1fr_200px] gap-2 p-2 min-h-0 overflow-hidden">
-        {/* Mobile compact bar: opponent + piles toggles */}
-        <div className="lg:hidden flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            onClick={() => setOpponentPanelOpen(true)}
-          >
-            <Maximize2 className="w-3.5 h-3.5 mr-1" /> {opponent.name}
-          </Button>
-          <Collapsible open={showPiles} onOpenChange={setShowPiles} className="flex-1">
-            <CollapsibleTrigger asChild>
-              <Button variant="outline" size="sm" className="w-full">
-                {showPiles ? "Hide" : "Show"} piles
+      {/* ============ MOBILE LAYOUT ============ */}
+      {isMobile ? (
+        <>
+          <div className="flex-1 grid grid-cols-1 gap-2 p-2 min-h-0 overflow-hidden">
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => { setExpandedOpponentId(opponent.id); setOpponentPanelOpen(true); }}
+              >
+                <Maximize2 className="w-3.5 h-3.5 mr-1" /> {opponent.name}
               </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 space-y-2">
-              {pilesBlock}
-            </CollapsibleContent>
-          </Collapsible>
-        </div>
-
-        {/* Left column (desktop): opponent + piles */}
-        <div className="hidden lg:flex lg:flex-col lg:gap-2 lg:col-start-1 lg:min-h-0 lg:overflow-y-auto">
-          {opponentBlock}
-          {pilesBlock}
-        </div>
-
-        {/* Centre: board */}
-        <div className="flex flex-col min-w-0 min-h-0 lg:col-start-2">
-          <Card className="flex-1 p-1 flex flex-col min-h-0 bg-transparent border-0 shadow-none">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1">Your ecosystem</div>
-            <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center">
-              <Ecosystem
-                eco={selfPlayer.ecosystem}
-                size={isMobile ? 64 : 110}
-                autoFit
-                selectable={isYourTurn || canUseBoard}
-                onPlace={onPlace}
-                showEmpties
-                onStealClick={undefined}
-                onRotateClick={isYourTurn ? onPlacedHexClick : undefined}
-                onMoveDragStart={isYourTurn ? (posKey) => setMoveFromKey(posKey) : undefined}
-                onMoveDragEnd={isYourTurn ? () => setMoveFromKey(null) : undefined}
-                minHeight={0}
-                moveFromKey={moveFromKey}
-                legalForCard={
-                  mode === "place"
-                    ? legalForSelectedCard
-                    : stolenPendingCard
-                      ? (pos: Axial) => placementMatchesNeighbours(selfPlayer.ecosystem, stolenPendingCard, pos)
-                      : undefined
-                }
-                illegalReason={
-                  stolenPendingCard
-                    ? `${stolenPendingCard.name} needs at least one neighbour that shares a Creator Type`
-                    : selectedCard
-                      ? `${selectedCard.name} needs at least one neighbour that shares a Creator Type`
-                      : undefined
-                }
-                tooltipForCell={(() => {
-                  const cardForTip =
-                    mode === "place" ? selectedCard : stolenPendingCard;
-                  if (!cardForTip) return undefined;
-                  return (pos: Axial) =>
-                    placementReason(selfPlayer.ecosystem, cardForTip, pos).text;
-                })()}
-              />
-
+              <Collapsible open={showPiles} onOpenChange={setShowPiles} className="flex-1">
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full">
+                    {showPiles ? "Hide" : "Show"} piles
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2 space-y-2">
+                  {pilesBlock}
+                </CollapsibleContent>
+              </Collapsible>
             </div>
-          </Card>
-        </div>
 
+            <Card className="p-1 flex flex-col min-h-0 bg-transparent border-0 shadow-none">
+              <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1">Your ecosystem</div>
+              <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center">
+                <Ecosystem
+                  eco={selfPlayer.ecosystem}
+                  size={64}
+                  autoFit
+                  selectable={isYourTurn || canUseBoard}
+                  onPlace={onPlace}
+                  showEmpties
+                  onRotateClick={isYourTurn ? onPlacedHexClick : undefined}
+                  onMoveDragStart={isYourTurn ? (posKey) => setMoveFromKey(posKey) : undefined}
+                  onMoveDragEnd={isYourTurn ? () => setMoveFromKey(null) : undefined}
+                  minHeight={0}
+                  moveFromKey={moveFromKey}
+                  legalForCard={
+                    mode === "place"
+                      ? legalForSelectedCard
+                      : stolenPendingCard
+                        ? (pos: Axial) => placementMatchesNeighbours(selfPlayer.ecosystem, stolenPendingCard, pos)
+                        : undefined
+                  }
+                  illegalReason={
+                    stolenPendingCard
+                      ? `${stolenPendingCard.name} needs at least one neighbour that shares a Creator Type`
+                      : selectedCard
+                        ? `${selectedCard.name} needs at least one neighbour that shares a Creator Type`
+                        : undefined
+                  }
+                  tooltipForCell={(() => {
+                    const cardForTip = mode === "place" ? selectedCard : stolenPendingCard;
+                    if (!cardForTip) return undefined;
+                    return (pos: Axial) =>
+                      placementReason(selfPlayer.ecosystem, cardForTip, pos).text;
+                  })()}
+                />
+              </div>
+            </Card>
 
-        {/* Right column: Selected (top) → Card actions with Draw 2 (below) */}
-        <div className="lg:col-start-3 min-w-0 min-h-0 overflow-y-auto flex flex-col gap-2">
-          {selectedBlock}
-          {actionsBlock}
-        </div>
+            <div className="flex flex-col gap-2">
+              {selectedBlock}
+              {actionsBlock}
+            </div>
+          </div>
 
-      </div>
+          <PlayerHand
+            hand={selfPlayer.hand}
+            selectedUid={selectedUid}
+            onSelect={(uid) => setSelectedUid(uid)}
+            disabled={!isYourTurn || state.phase !== "place"}
+            size={65}
+            stuckUids={stuckUids}
+          />
+        </>
+      ) : (
+        /* ============ DESKTOP SPLIT LAYOUT (60/40) ============ */
+        <>
+          <div
+            className={
+              "flex-1 grid gap-2 p-2 min-h-0 overflow-hidden " +
+              "grid-cols-[2fr_3fr]"
+            }
+          >
+            {/* Left rail (40%): opponents */}
+            <div
+              className={
+                "min-h-0 min-w-0 " +
+                (opponents.length >= 4
+                  ? "grid grid-cols-2 grid-rows-2 gap-2"
+                  : "flex flex-col gap-2")
+              }
+            >
+              {opponents.map((op) => {
+                const isMulti = opponents.length >= 2;
+                const hexSize = opponents.length >= 4 ? 36 : opponents.length === 3 ? 44 : isMulti ? 52 : 60;
+                return (
+                  <Card key={op.id} className="p-2 flex flex-col min-h-0 min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => { setExpandedOpponentId(op.id); setOpponentPanelOpen(true); }}
+                      className="w-full flex items-center justify-between gap-2 mb-1 group text-left"
+                      aria-label={`Pop out ${op.name}'s ecosystem`}
+                    >
+                      <span className="font-display text-sm truncate group-hover:text-foreground transition-colors">
+                        {op.name}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
+                        {op.ecosystem.placed.size}/16 · {op.hand.length}h <Maximize2 className="w-3 h-3" />
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setExpandedOpponentId(op.id); setOpponentPanelOpen(true); }}
+                      className="flex-1 min-h-0 rounded-md hover:ring-2 hover:ring-primary/40 transition-all flex items-center justify-center overflow-hidden"
+                      aria-label={`Expand ${op.name}'s ecosystem`}
+                    >
+                      <Ecosystem eco={op.ecosystem} size={hexSize} autoFit minHeight={0} showEmpties={false} />
+                    </button>
+                  </Card>
+                );
+              })}
+            </div>
 
-      <PlayerHand
-        hand={selfPlayer.hand}
-        selectedUid={selectedUid}
-        onSelect={(uid) => setSelectedUid(uid)}
-        disabled={!isYourTurn || state.phase !== "place"}
-        size={isMobile ? 65 : 95}
-        stuckUids={stuckUids}
-      />
+            {/* Right (60%): my ecosystem */}
+            <Card className="p-1 flex flex-col min-h-0 min-w-0 bg-transparent border-0 shadow-none">
+              <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1">Your ecosystem</div>
+              <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center">
+                <Ecosystem
+                  eco={selfPlayer.ecosystem}
+                  size={110}
+                  autoFit
+                  selectable={isYourTurn || canUseBoard}
+                  onPlace={onPlace}
+                  showEmpties
+                  onRotateClick={isYourTurn ? onPlacedHexClick : undefined}
+                  onMoveDragStart={isYourTurn ? (posKey) => setMoveFromKey(posKey) : undefined}
+                  onMoveDragEnd={isYourTurn ? () => setMoveFromKey(null) : undefined}
+                  minHeight={0}
+                  moveFromKey={moveFromKey}
+                  legalForCard={
+                    mode === "place"
+                      ? legalForSelectedCard
+                      : stolenPendingCard
+                        ? (pos: Axial) => placementMatchesNeighbours(selfPlayer.ecosystem, stolenPendingCard, pos)
+                        : undefined
+                  }
+                  illegalReason={
+                    stolenPendingCard
+                      ? `${stolenPendingCard.name} needs at least one neighbour that shares a Creator Type`
+                      : selectedCard
+                        ? `${selectedCard.name} needs at least one neighbour that shares a Creator Type`
+                        : undefined
+                  }
+                  tooltipForCell={(() => {
+                    const cardForTip = mode === "place" ? selectedCard : stolenPendingCard;
+                    if (!cardForTip) return undefined;
+                    return (pos: Axial) =>
+                      placementReason(selfPlayer.ecosystem, cardForTip, pos).text;
+                  })()}
+                />
+              </div>
+            </Card>
+          </div>
+
+          {/* Bottom DOCK: left (40%) = selected card · right (60%) = hand + piles + actions */}
+          <div className="grid grid-cols-[2fr_3fr] gap-2 px-2 pb-2 border-t border-border/40 pt-2 bg-card/30">
+            {/* Dock-left: selected card preview (sits under opponents column) */}
+            <div className="min-w-0">
+              {selectedBlock}
+            </div>
+
+            {/* Dock-right: hand · piles · actions */}
+            <div className="flex items-stretch gap-2 min-w-0">
+              <div className="flex-1 min-w-0 rounded-lg border border-border/40 bg-card/40 backdrop-blur overflow-x-auto">
+                <div className="flex items-end gap-2 p-2 justify-center min-h-full">
+                  {selfPlayer.hand.length === 0 ? (
+                    <div className="text-sm text-muted-foreground italic self-center">No cards in hand.</div>
+                  ) : null}
+                  {/* Reuse PlayerHand visually by rendering it inline with tighter padding via wrapper */}
+                </div>
+                <div className="-mt-[1px]">
+                  <PlayerHand
+                    hand={selfPlayer.hand}
+                    selectedUid={selectedUid}
+                    onSelect={(uid) => setSelectedUid(uid)}
+                    disabled={!isYourTurn || state.phase !== "place"}
+                    size={76}
+                    stuckUids={stuckUids}
+                  />
+                </div>
+              </div>
+
+              {/* Piles: Deck + Discard inline */}
+              <div className="flex items-end gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (needsOpeningDraw) onDrawOpening();
+                    else if (canDrawOne) onDrawOne();
+                  }}
+                  disabled={!needsOpeningDraw && !canDrawOne}
+                  className={
+                    "flex flex-col items-center justify-between gap-1 w-[72px] h-[112px] rounded-md border " +
+                    "border-border/60 bg-card/60 px-1.5 py-1.5 text-[10px] " +
+                    "hover:ring-2 hover:ring-primary/40 transition disabled:opacity-50 disabled:hover:ring-0 disabled:cursor-not-allowed"
+                  }
+                  aria-label="Draw from deck"
+                >
+                  <span className="uppercase tracking-wider text-muted-foreground">Deck</span>
+                  <span className="font-display text-2xl leading-none">{state.draw.length}</span>
+                  <span className="font-semibold text-primary">
+                    {needsOpeningDraw ? "Draw 5" : "Draw 1"}
+                  </span>
+                </button>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      onContextMenu={(e) => { e.preventDefault(); if (canTapDiscard && selectedUid) onDiscardUid(selectedUid); }}
+                      onDragOver={(e) => {
+                        if (!isYourTurn || state.phase !== "place") return;
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "move";
+                        (e.currentTarget as HTMLElement).dataset.dropTarget = "true";
+                      }}
+                      onDragLeave={(e) => { delete (e.currentTarget as HTMLElement).dataset.dropTarget; }}
+                      onDrop={(e) => {
+                        delete (e.currentTarget as HTMLElement).dataset.dropTarget;
+                        const uid = e.dataTransfer.getData("text/plain");
+                        if (uid) onDiscardUid(uid);
+                      }}
+                      className={
+                        "flex flex-col items-center justify-between gap-1 w-[72px] h-[112px] rounded-md border " +
+                        "px-1.5 py-1.5 text-[10px] transition " +
+                        "data-[drop-target=true]:ring-2 data-[drop-target=true]:ring-destructive/60 " +
+                        (isStuck
+                          ? "border-destructive bg-destructive/10 animate-pulse "
+                          : canTapDiscard
+                            ? "border-destructive/50 bg-destructive/5 hover:bg-destructive/10 "
+                            : "border-border/60 bg-card/60 hover:bg-card/80 ")
+                      }
+                      aria-label="Discard pile — click to peek top card"
+                    >
+                      <span className="uppercase tracking-wider text-muted-foreground">Discard</span>
+                      <span className="font-display text-2xl leading-none">{state.used.length}</span>
+                      <span className={"font-semibold " + (canTapDiscard ? "text-destructive" : "text-muted-foreground")}>
+                        {canTapDiscard ? "Drop here" : "Peek"}
+                      </span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent side="top" className="w-auto p-2">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 text-center">
+                      Top of discard pile
+                    </div>
+                    {usedTop ? (
+                      <div className="flex flex-col items-center gap-1">
+                        <BoardHexPiece card={usedTop} size={84} />
+                        <div className="text-xs text-foreground/90 max-w-[120px] truncate text-center">
+                          {usedTop.name}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-1 h-7 text-[11px]"
+                          disabled={!isYourTurn || state.phase !== "draw" || state.used.length === 0}
+                          onClick={onPickUsed}
+                        >
+                          Take top card
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-muted-foreground italic px-3 py-2">
+                        Empty — nothing discarded yet
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Actions panel */}
+              <div className="shrink-0 w-[200px]">
+                {actionsBlock}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
 
 
       <MatchOverDialog state={state} onPlayAgain={onNewGame} />
