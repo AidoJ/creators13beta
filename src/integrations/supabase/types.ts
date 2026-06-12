@@ -1356,6 +1356,7 @@ export type Database = {
           pronouns: string | null
           shoe_size: string | null
           state: string | null
+          stock_avatar: string | null
           timezone: string | null
           training_started_at: string | null
           updated_at: string
@@ -1408,6 +1409,7 @@ export type Database = {
           pronouns?: string | null
           shoe_size?: string | null
           state?: string | null
+          stock_avatar?: string | null
           timezone?: string | null
           training_started_at?: string | null
           updated_at?: string
@@ -1460,6 +1462,7 @@ export type Database = {
           pronouns?: string | null
           shoe_size?: string | null
           state?: string | null
+          stock_avatar?: string | null
           timezone?: string | null
           training_started_at?: string | null
           updated_at?: string
