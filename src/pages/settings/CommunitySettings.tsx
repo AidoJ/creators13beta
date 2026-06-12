@@ -211,7 +211,7 @@ export default function CommunitySettings() {
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-display font-bold">Community settings</h1>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/community/dashboard")}>
+          <Button variant="secondary" size="sm" className="rounded-full shadow-sm" onClick={() => navigate("/community/dashboard")}>
             <ArrowLeft className="mr-1 h-4 w-4" /> Community
           </Button>
 

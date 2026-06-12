@@ -124,7 +124,7 @@ export default function ContactSettings() {
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-display font-bold">Contact Preferences</h1>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
+          <Button variant="secondary" size="sm" className="rounded-full shadow-sm" onClick={() => navigate("/dashboard")}>
             <ArrowLeft className="mr-1 h-4 w-4" /> Me
           </Button>
         </div>
