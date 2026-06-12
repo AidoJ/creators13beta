@@ -70,7 +70,9 @@ const TAB_KEYS = ["pending", "approved", "sent"] as const;
 type TabKey = (typeof TAB_KEYS)[number];
 
 async function signAvatars(keys: (string | null)[]): Promise<Record<string, string>> {
-  const filtered = Array.from(new Set(keys.filter((k): k is string => !!k && !/^https?:\/\//i.test(k))));
+  const filtered = Array.from(
+    new Set(keys.filter((k): k is string => !!k && !/^https?:\/\//i.test(k) && !isStockAvatarRef(k)))
+  );
   if (filtered.length === 0) return {};
   const { data } = await supabase.storage.from("profile-avatars").createSignedUrls(filtered, 60 * 60);
   const out: Record<string, string> = {};
@@ -80,6 +82,7 @@ async function signAvatars(keys: (string | null)[]): Promise<Record<string, stri
 
 function resolveAvatar(key: string | null, signed: Record<string, string>): string | null {
   if (!key) return null;
+  if (isStockAvatarRef(key)) return stockAvatarUrl(key);
   if (/^https?:\/\//i.test(key)) return key;
   return signed[key] ?? null;
 }

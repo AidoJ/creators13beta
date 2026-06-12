@@ -178,10 +178,11 @@ export default function CommunityDashboard() {
       const rows = ((matchesRes.data as unknown as MatchRow[] | null) ?? []).filter((r) => r.score > 0);
       setMatches(rows);
 
-      // Batch-sign avatars in a single storage round-trip. Skip absolute URLs.
+      // Batch-sign avatars in a single storage round-trip. Skip absolute URLs
+      // and stock-avatar refs (resolved locally).
       const keys = rows
         .map((r) => r.avatar_url)
-        .filter((v): v is string => !!v && !/^https?:\/\//i.test(v));
+        .filter((v): v is string => !!v && !/^https?:\/\//i.test(v) && !isStockAvatarRef(v));
       if (keys.length > 0) {
         const { data: signed } = await supabase.storage
           .from("profile-avatars")
@@ -237,6 +238,7 @@ export default function CommunityDashboard() {
 
   const resolveAvatar = useCallback((key: string | null) => {
     if (!key) return null;
+    if (isStockAvatarRef(key)) return stockAvatarUrl(key);
     if (/^https?:\/\//i.test(key)) return key;
     return signedAvatars[key] ?? null;
   }, [signedAvatars]);
