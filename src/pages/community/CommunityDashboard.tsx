@@ -20,6 +20,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Skeleton } from "@/components/ui/skeleton";
 import { Settings, Map as MapIcon, Users, MessageCircle, Calendar, ShoppingBag, Copy, Check, LayoutDashboard, Menu, X, EyeOff } from "lucide-react";
 import { capitaliseTypeName, getCreatorTypeColor } from "@/lib/creatorTypes";
+import { isStockAvatarRef, stockAvatarUrl } from "@/lib/avatar";
 import { glyphForType } from "@/lib/game/glyphs";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";

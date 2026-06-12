@@ -19,6 +19,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { CHANNEL_LABEL, formatAuDate, formatAuDateTime, relativeFromNow, RequestStatus } from "@/lib/contacts";
+import { isStockAvatarRef, stockAvatarUrl } from "@/lib/avatar";
 
 type Incoming = {
   id: string;
