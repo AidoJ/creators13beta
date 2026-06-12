@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Leaf, ArrowLeft, Check, Upload, User as UserIcon } from "lucide-react";
 import { CREATOR_TYPE_NAMES, CREATOR_TYPE_COLORS } from "@/lib/creatorTypes";
-import { resolveAvatarUrl, avatarStorageKey } from "@/lib/avatar";
+import { resolveAvatarUrl, avatarStorageKey, stockAvatarUrl } from "@/lib/avatar";
 import type { ContactChannels } from "@/lib/contacts";
 
 export default function CommunitySettings() {
@@ -35,6 +35,7 @@ export default function CommunitySettings() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [hideAvatar, setHideAvatar] = useState(false);
+  const [stockAvatar, setStockAvatar] = useState<string | null>(null);
 
   // Batch C — contact preferences
   const [openToContact, setOpenToContact] = useState(false);
@@ -58,7 +59,7 @@ export default function CommunitySettings() {
       const [profileRes, typeRes] = await Promise.all([
         supabase
           .from("profiles")
-          .select("display_name, location_label, bio_superpower, bio_where_i_live, bio_intriguing, community_visible, community_joined_at, member_preferences, avatar_url, hide_avatar, open_to_contact, contact_channels")
+          .select("display_name, location_label, bio_superpower, bio_where_i_live, bio_intriguing, community_visible, community_joined_at, member_preferences, avatar_url, hide_avatar, stock_avatar, open_to_contact, contact_channels")
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase
@@ -80,6 +81,7 @@ export default function CommunitySettings() {
         const prefs = (p.member_preferences as Record<string, unknown>) ?? {};
         setAcceptsMessages(prefs?.accepts_messages === true);
         setHideAvatar(!!(p as any).hide_avatar);
+        setStockAvatar(((p as any).stock_avatar as string | null) ?? null);
         if (p.avatar_url) {
           const url = await resolveAvatarUrl(p.avatar_url);
           if (!cancelled) setAvatarUrl(url);
@@ -160,6 +162,7 @@ export default function CommunitySettings() {
       open_to_contact: openToContact,
       contact_channels: contactChannels,
       hide_avatar: hideAvatar,
+      stock_avatar: stockAvatar,
     };
     if (visible && !hadJoinedAt) {
       (update as Record<string, unknown>).community_joined_at = new Date().toISOString();
@@ -221,7 +224,13 @@ export default function CommunitySettings() {
           <h2 className="font-display font-semibold text-lg">Profile</h2>
           <div className="flex items-center gap-4">
             <div className="h-20 w-20 rounded-full overflow-hidden border border-border bg-muted flex items-center justify-center flex-shrink-0">
-              {avatarUrl && !hideAvatar ? (
+              {hideAvatar ? (
+                stockAvatar ? (
+                  <img src={stockAvatarUrl(stockAvatar)} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <UserIcon className="h-9 w-9 text-muted-foreground/70" strokeWidth={1.75} />
+                )
+              ) : avatarUrl ? (
                 <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
               ) : (
                 <UserIcon className="h-9 w-9 text-muted-foreground/70" strokeWidth={1.75} />
@@ -283,14 +292,70 @@ export default function CommunitySettings() {
               <p className="text-xs text-muted-foreground">JPEG, PNG or WebP. Max 5MB. Square works best.</p>
             </div>
           </div>
-          <div className="flex items-start justify-between gap-4 pt-2 border-t border-border/60">
-            <div>
-              <p className="font-medium">Hide my photo from other members</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Other members see a generic avatar instead. Your uploaded photo is kept so you can re-show it any time.
-              </p>
+          <div className="space-y-3 pt-2 border-t border-border/60">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="font-medium">Hide my photo from other members</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Other members see an avatar of your choice instead. Your uploaded photo is kept so you can re-show it any time.
+                </p>
+              </div>
+              <Switch checked={hideAvatar} onCheckedChange={setHideAvatar} />
             </div>
-            <Switch checked={hideAvatar} onCheckedChange={setHideAvatar} />
+            {hideAvatar && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Choose the avatar other members see</p>
+                <div className="grid grid-cols-5 sm:grid-cols-7 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setStockAvatar(null)}
+                    title="Generic avatar"
+                    aria-label="Generic avatar"
+                    className={`relative aspect-square rounded-full border-2 bg-muted flex items-center justify-center transition-all ${
+                      stockAvatar === null ? "border-foreground scale-105" : "border-border hover:border-foreground/40"
+                    }`}
+                  >
+                    <UserIcon className="h-1/2 w-1/2 text-muted-foreground/70" strokeWidth={1.75} />
+                    {stockAvatar === null && (
+                      <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-foreground text-background flex items-center justify-center">
+                        <Check className="h-3 w-3" />
+                      </span>
+                    )}
+                  </button>
+                  {CREATOR_TYPE_NAMES.map((name) => {
+                    const key = name.toLowerCase();
+                    const selected = stockAvatar === key;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setStockAvatar(key)}
+                        title={name}
+                        aria-label={`${name} avatar`}
+                        className={`relative aspect-square rounded-full border-2 overflow-visible transition-all ${
+                          selected ? "border-foreground scale-105" : "border-border hover:border-foreground/40"
+                        }`}
+                      >
+                        <img
+                          src={stockAvatarUrl(key)}
+                          alt={`${name} avatar`}
+                          className="h-full w-full rounded-full object-cover"
+                          loading="lazy"
+                        />
+                        {selected && (
+                          <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-foreground text-background flex items-center justify-center">
+                            <Check className="h-3 w-3" />
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Pick one of the 13 Creator Type avatars, or the generic silhouette.
+                </p>
+              </div>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="display_name">Display name</Label>
