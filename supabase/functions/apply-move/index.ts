@@ -340,15 +340,22 @@ Deno.serve(async (req) => {
   let winnerUserId: string | null = null;
   if (finished && nextState.winnerId) {
     const winnerSlot = nextState.players.findIndex((p) => p.id === nextState.winnerId);
-    winnerUserId =
-      winnerSlot === 0 ? match.host_user_id : winnerSlot === 1 ? match.guest_user_id : null;
+    if (winnerSlot >= 0) winnerUserId = userIdForSlot(winnerSlot);
   }
 
   const serialisedNext = serialise(nextState);
   const publicStateForCaller = redactFor(serialisedNext, callerPlayerId);
-  // public_state stored on the row is the OPPONENT's redaction — that's the
-  // payload the realtime listener on the other side picks up.
-  const publicStateForRow = redactFor(serialisedNext, otherPlayerId);
+
+  // Build per-player redacted states (A.1: still 2; A.2 generalises to N).
+  // Solo bot matches won't have a user_id for the bot slot — skip those.
+  const playerStates: Array<{ user_id: string; state: any }> = [];
+  for (let slot = 0; slot < nextState.players.length; slot++) {
+    const uid = userIdForSlot(slot);
+    if (!uid) continue;
+    const pid = nextState.players[slot]?.id;
+    if (!pid) continue;
+    playerStates.push({ user_id: uid, state: redactFor(serialisedNext, pid) });
+  }
 
   const { error: commitErr } = await svc.rpc("commit_move", {
     _match_id: body.match_id,
@@ -356,15 +363,11 @@ Deno.serve(async (req) => {
     _actor: userId,
     _move: body.move as any,
     _new_state: serialisedNext,
-    _public_state: publicStateForRow,
+    _player_states: playerStates as any,
     _winner: winnerUserId,
     _finished: finished,
   });
   if (commitErr) {
-    // PG serialization-failure code (40001) is what commit_move RAISEs when
-    // _expected_seq drifts. Match on code first, then fall back to substring
-    // because supabase-js doesn't always surface .code cleanly through
-    // functions.invoke.
     const code = (commitErr as any).code ?? "";
     const msg = String(commitErr.message ?? "");
     if (code === "40001" || msg.includes("stale seq")) {
