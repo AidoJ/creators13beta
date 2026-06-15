@@ -306,12 +306,18 @@ Deno.serve(async (req) => {
   ]);
   if (!NON_TURN_MOVES.has(body.move.type)) {
     if (state.turn !== callerSlot) {
-      return jsonResponse({ error: "not your turn" }, 400);
+      console.warn("[apply-move] not your turn", {
+        match_id: body.match_id,
+        move: body.move.type,
+        callerSlot,
+        stateTurn: state.turn,
+      });
+      return jsonResponse({ error: "not your turn", message: "Not your turn yet" }, 400);
     }
   }
   if (body.move.type === "resolve_disaster") {
     if (state.pendingDisaster?.victimId !== callerPlayerId) {
-      return jsonResponse({ error: "you are not the disaster victim" }, 400);
+      return jsonResponse({ error: "you are not the disaster victim", message: "You are not the disaster victim" }, 400);
     }
   }
 
@@ -329,6 +335,13 @@ Deno.serve(async (req) => {
     try {
       nextState = applyMove(state, body.move, callerPlayerId);
     } catch (e) {
+      console.warn("[apply-move] illegal move", {
+        match_id: body.match_id,
+        move: body.move,
+        callerSlot,
+        stateTurn: state.turn,
+        message: (e as Error).message,
+      });
       return jsonResponse(
         { error: "illegal move", message: (e as Error).message },
         400,
