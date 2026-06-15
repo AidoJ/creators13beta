@@ -202,8 +202,9 @@ export default function Dashboard() {
         </div>
 
 
-        {/* PAID-TIER section: profile, photos, sessions, subscription, recordings */}
-        {isPaidTier && (
+        {/* PROFILE section: visible for paid tiers AND case-study subscribers */}
+        {showProfileSection && (
+
           <section className="pt-6 mt-4 border-t border-dashed border-border space-y-5">
             <p className="text-xs uppercase tracking-widest text-primary font-semibold">Your profile</p>
 
