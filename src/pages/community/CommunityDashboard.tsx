@@ -25,6 +25,9 @@ import { glyphForType } from "@/lib/game/glyphs";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { backgroundForSeason } from "@/lib/seasonalBackgrounds";
+import eventsIcon from "@/assets/icon-Events_icon.png.asset.json";
+import memberMatchIcon from "@/assets/icon-Member_Matcxh_icon.png.asset.json";
+import shopIcon from "@/assets/icon-Shop_icon.png.asset.json";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { MapMember } from "@/components/community/CommunityMapView";
 
