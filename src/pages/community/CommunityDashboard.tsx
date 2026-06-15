@@ -439,19 +439,22 @@ export default function CommunityDashboard() {
                     <p className="font-medium">
                       Creator of the Month · {capitaliseTypeName(featured.creator_type)}
                     </p>
-                    {(featuredMeta?.family || featuredMeta?.team_role) && (
-                      <p className="text-xs mt-0.5" style={{ color: featuredColor }}>
-                        {featuredMeta?.family ? `${featuredMeta.family} Family` : ""}
-                        {featuredMeta?.family && featuredMeta?.team_role ? " · " : ""}
-                        {featuredMeta?.team_role ? `${featuredMeta.team_role}` : ""}
+                    {featuredMeta?.family && (
+                      <p className="text-xs mt-1" style={{ color: "#c9a84c" }}>
+                        <span className="font-semibold">Family:</span> {featuredMeta.family}
                       </p>
                     )}
-                    <p className="text-xs text-muted-foreground">
-                      Season {featured.cycle_position} of 13
+                    {featuredMeta?.team_role && (
+                      <p className="text-xs" style={{ color: "#c9a84c" }}>
+                        <span className="font-semibold">Team Role:</span> {featuredMeta.team_role}
+                      </p>
+                    )}
+                    <p className="text-xs mt-1" style={{ color: "#c9a84c" }}>
+                      <span className="font-semibold">Season:</span> {featured.cycle_position} of 13
                       {cycleLabel ? ` · ${cycleLabel}` : ""}
                     </p>
                     {viewerShares && (
-                      <p className="text-xs mt-1" style={{ color: featuredColor }}>
+                      <p className="text-xs mt-1" style={{ color: "#c9a84c" }}>
                         You're a {capitaliseTypeName(featured.creator_type)} Creator this month.
                       </p>
                     )}
