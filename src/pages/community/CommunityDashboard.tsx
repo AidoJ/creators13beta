@@ -92,6 +92,8 @@ type CreatorOfMonth = {
   computed_at: string;
 };
 
+type FeaturedMeta = { family: string | null; team_role: string | null };
+
 // Tier order for size buckets. Compressed 2.5:1 range so smaller matches still
 // register as members rather than visual placeholders.
 function sizeFor(score: number): "sm" | "md" | "lg" | "xl" {
@@ -118,6 +120,7 @@ export default function CommunityDashboard() {
   const [matches, setMatches] = useState<MatchRow[]>([]);
   const [signedAvatars, setSignedAvatars] = useState<Record<string, string>>({});
   const [featured, setFeatured] = useState<CreatorOfMonth | null>(null);
+  const [featuredMeta, setFeaturedMeta] = useState<FeaturedMeta | null>(null);
   const [myCode, setMyCode] = useState<string | null>(null);
   const [myTypes, setMyTypes] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
@@ -200,7 +203,16 @@ export default function CommunityDashboard() {
         }
       }
 
-      if (featuredRes.data) setFeatured(featuredRes.data as CreatorOfMonth);
+      if (featuredRes.data) {
+        const f = featuredRes.data as CreatorOfMonth;
+        setFeatured(f);
+        const { data: metaRow } = await supabase
+          .from("creator_types")
+          .select("family, team_role")
+          .ilike("name", f.creator_type)
+          .maybeSingle();
+        if (!cancelled) setFeaturedMeta((metaRow as FeaturedMeta) ?? null);
+      }
       if (codeRes.data?.invitation_code) setMyCode(codeRes.data.invitation_code);
       setIsCommunityVisible(codeRes.data?.community_visible ?? false);
       if (mineRes.data) {
@@ -303,7 +315,7 @@ export default function CommunityDashboard() {
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 z-0 bg-cover bg-center transition-[background-image] duration-700"
-        style={{ backgroundImage: `url(${backgroundForSeason(featured?.creator_type)})`, opacity: 0.1 }}
+        style={{ backgroundImage: `url(${backgroundForSeason(featured?.creator_type)})`, opacity: 0.45 }}
       />
       <div className="relative z-10">
       <DashboardHeader email={user?.email} onSignOut={signOut} />
@@ -427,6 +439,13 @@ export default function CommunityDashboard() {
                     <p className="font-medium">
                       Creator of the Month · {capitaliseTypeName(featured.creator_type)}
                     </p>
+                    {(featuredMeta?.family || featuredMeta?.team_role) && (
+                      <p className="text-xs mt-0.5" style={{ color: featuredColor }}>
+                        {featuredMeta?.family ? `${featuredMeta.family} Family` : ""}
+                        {featuredMeta?.family && featuredMeta?.team_role ? " · " : ""}
+                        {featuredMeta?.team_role ? `${featuredMeta.team_role}` : ""}
+                      </p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       Season {featured.cycle_position} of 13
                       {cycleLabel ? ` · ${cycleLabel}` : ""}
