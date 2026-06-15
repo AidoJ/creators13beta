@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { applyMoveServer, type ServerMove } from "@/lib/game/serverMoves";
 import { loadMatch, type GameMatchRow } from "@/lib/game/persistence";
+import { deserializeMatch, type SerializedMatchState } from "@/lib/game/serialize";
 import type { MatchState } from "@/lib/game/types";
 
 interface Args {
