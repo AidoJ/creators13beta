@@ -723,6 +723,88 @@ export type Database = {
           },
         ]
       }
+      game_match_player_states: {
+        Row: {
+          match_id: string
+          seq: number
+          state: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          match_id: string
+          seq?: number
+          state: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          match_id?: string
+          seq?: number
+          state?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_match_player_states_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "game_matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      game_match_players: {
+        Row: {
+          disconnect_reason: string | null
+          disconnected_at: string | null
+          display_name: string
+          finalised_at: string | null
+          joined_at: string
+          last_seen_at: string | null
+          match_id: string
+          rank: number | null
+          slot: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          disconnect_reason?: string | null
+          disconnected_at?: string | null
+          display_name: string
+          finalised_at?: string | null
+          joined_at?: string
+          last_seen_at?: string | null
+          match_id: string
+          rank?: number | null
+          slot: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          disconnect_reason?: string | null
+          disconnected_at?: string | null
+          display_name?: string
+          finalised_at?: string | null
+          joined_at?: string
+          last_seen_at?: string | null
+          match_id?: string
+          rank?: number | null
+          slot?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_match_players_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "game_matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_matches: {
         Row: {
           created_at: string
@@ -735,7 +817,7 @@ export type Database = {
           is_ranked: boolean
           last_action_by: string | null
           mode: Database["public"]["Enums"]["match_mode"]
-          public_state: Json | null
+          player_count: number
           rng_seed: number
           seq: number
           state: Json
@@ -754,7 +836,7 @@ export type Database = {
           is_ranked?: boolean
           last_action_by?: string | null
           mode?: Database["public"]["Enums"]["match_mode"]
-          public_state?: Json | null
+          player_count?: number
           rng_seed?: number
           seq?: number
           state: Json
@@ -773,7 +855,7 @@ export type Database = {
           is_ranked?: boolean
           last_action_by?: string | null
           mode?: Database["public"]["Enums"]["match_mode"]
-          public_state?: Json | null
+          player_count?: number
           rng_seed?: number
           seq?: number
           state?: Json
@@ -1974,7 +2056,7 @@ export type Database = {
           _match_id: string
           _move: Json
           _new_state: Json
-          _public_state: Json
+          _player_states: Json
           _winner?: string
         }
         Returns: Json
@@ -2004,7 +2086,10 @@ export type Database = {
         Args: { _comment?: string; _request_id: string }
         Returns: undefined
       }
-      finalise_ranked_match: { Args: { _match_id: string }; Returns: undefined }
+      finalise_ranked_match: {
+        Args: { _match_id: string; _reason?: string }
+        Returns: undefined
+      }
       generate_invitation_code: { Args: never; Returns: string }
       generate_practitioner_code:
         | { Args: never; Returns: string }
@@ -2115,6 +2200,34 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      list_my_active_matches: {
+        Args: never
+        Returns: {
+          created_at: string
+          guest_name: string | null
+          guest_user_id: string | null
+          host_name: string
+          host_user_id: string
+          id: string
+          invite_token: string | null
+          is_ranked: boolean
+          last_action_by: string | null
+          mode: Database["public"]["Enums"]["match_mode"]
+          player_count: number
+          rng_seed: number
+          seq: number
+          state: Json
+          status: Database["public"]["Enums"]["match_status"]
+          updated_at: string
+          winner_user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "game_matches"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       lookup_practitioner_by_code: {
         Args: { _code: string }
