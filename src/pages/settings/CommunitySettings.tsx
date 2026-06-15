@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Leaf, ArrowLeft, Check, Upload, User as UserIcon } from "lucide-react";
 import { CREATOR_TYPE_NAMES, CREATOR_TYPE_COLORS } from "@/lib/creatorTypes";
-import { resolveAvatarUrl, avatarStorageKey, stockAvatarUrl } from "@/lib/avatar";
+import { resolveAvatarUrl, avatarStorageKey, stockAvatarUrl, PEOPLE_STOCK_AVATARS } from "@/lib/avatar";
 import type { ContactChannels } from "@/lib/contacts";
 
 export default function CommunitySettings() {
@@ -322,23 +322,22 @@ export default function CommunitySettings() {
                       </span>
                     )}
                   </button>
-                  {CREATOR_TYPE_NAMES.map((name) => {
-                    const key = name.toLowerCase();
+                  {PEOPLE_STOCK_AVATARS.map(({ key, label }) => {
                     const selected = stockAvatar === key;
                     return (
                       <button
                         key={key}
                         type="button"
                         onClick={() => setStockAvatar(key)}
-                        title={name}
-                        aria-label={`${name} avatar`}
-                        className={`relative aspect-square rounded-full border-2 overflow-visible transition-all ${
+                        title={label}
+                        aria-label={`${label} avatar`}
+                        className={`relative aspect-square rounded-full border-2 overflow-hidden bg-muted transition-all ${
                           selected ? "border-foreground scale-105" : "border-border hover:border-foreground/40"
                         }`}
                       >
                         <img
                           src={stockAvatarUrl(key)}
-                          alt={`${name} avatar`}
+                          alt={`${label} avatar`}
                           className="h-full w-full rounded-full object-cover"
                           loading="lazy"
                         />
@@ -352,7 +351,7 @@ export default function CommunitySettings() {
                   })}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Pick one of the 13 Creator Type avatars, or the generic silhouette.
+                  Pick an illustrated avatar, or the generic silhouette.
                 </p>
               </div>
             )}
