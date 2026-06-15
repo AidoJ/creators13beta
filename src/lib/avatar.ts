@@ -8,13 +8,28 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export const STOCK_AVATAR_PREFIX = "stock:";
 
+/** Curated "people" stock avatars (illustrations). Keyed by slug → PNG file. */
+export const PEOPLE_STOCK_AVATARS: { key: string; label: string }[] = [
+  { key: "woman-blue-scarf", label: "Woman with blue scarf" },
+  { key: "man-glasses", label: "Man with glasses" },
+  { key: "man-brown-hair", label: "Man with brown hair" },
+  { key: "woman-teacher", label: "Woman with reading glasses" },
+  { key: "anime-boy", label: "Anime-style young man" },
+  { key: "girl-buns", label: "Girl with space buns" },
+  { key: "teddy-bear", label: "Purple teddy bear" },
+  { key: "penguin", label: "Penguin" },
+];
+
+const PEOPLE_KEYS = new Set(PEOPLE_STOCK_AVATARS.map((a) => a.key));
+
 export function isStockAvatarRef(value: string | null | undefined): boolean {
   return typeof value === "string" && value.startsWith(STOCK_AVATAR_PREFIX);
 }
 
-/** Accepts either a bare key ("fire") or a ref ("stock:fire"). */
+/** Accepts either a bare key ("fire", "penguin") or a ref ("stock:penguin"). */
 export function stockAvatarUrl(keyOrRef: string): string {
   const key = keyOrRef.replace(/^stock:/, "").toLowerCase();
+  if (PEOPLE_KEYS.has(key)) return `/stock-avatars/people/${key}.png`;
   return `/stock-avatars/${key}.svg`;
 }
 
