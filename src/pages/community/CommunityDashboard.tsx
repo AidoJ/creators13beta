@@ -25,6 +25,9 @@ import { glyphForType } from "@/lib/game/glyphs";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { backgroundForSeason } from "@/lib/seasonalBackgrounds";
+import eventsIcon from "@/assets/icon-Events_icon.png.asset.json";
+import memberMatchIcon from "@/assets/icon-Member_Matcxh_icon.png.asset.json";
+import shopIcon from "@/assets/icon-Shop_icon.png.asset.json";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { MapMember } from "@/components/community/CommunityMapView";
 
@@ -441,7 +444,7 @@ export default function CommunityDashboard() {
             <TooltipProvider delayDuration={150}>
               <nav aria-label="Community quick nav" className="flex flex-col items-center gap-3">
                 {[
-                  { label: "Events", Icon: Calendar, soon: true, onClick: () => {}, badge: 0 },
+                  { label: "Events", img: eventsIcon.url, soon: true, onClick: () => {}, badge: 0 },
                   {
                     label: "Connections",
                     Icon: MessageCircle,
@@ -451,14 +454,15 @@ export default function CommunityDashboard() {
                   },
                   {
                     label: "Match (Dashboard)",
-                    Icon: LayoutDashboard,
+                    img: memberMatchIcon.url,
                     soon: false,
                     onClick: () => navigate("/dashboard"),
                     badge: 0,
                   },
-                  { label: "Shop", Icon: ShoppingBag, soon: true, onClick: () => {}, badge: 0 },
-                ].map(({ label, Icon, soon, onClick, badge }) => {
-                  const color = featuredColor ?? "hsl(var(--primary))";
+                  { label: "Shop", img: shopIcon.url, soon: true, onClick: () => {}, badge: 0 },
+                ].map(({ label, Icon, img, soon, onClick, badge }) => {
+                  // Gold to match the enrollment "Case Study Volunteer / Paying Client" cards.
+                  const color = "#c9a84c";
                   return (
                     <Tooltip key={label}>
                       <TooltipTrigger asChild>
@@ -468,12 +472,26 @@ export default function CommunityDashboard() {
                           disabled={soon}
                           aria-label={label}
                           className={cn(
-                            "relative h-12 w-12 rounded-full flex items-center justify-center bg-card/80 backdrop-blur transition-transform",
+                            "relative h-14 w-14 rounded-full flex items-center justify-center bg-card/80 backdrop-blur transition-transform",
                             soon ? "opacity-70 cursor-not-allowed" : "hover:scale-110 active:scale-95"
                           )}
-                          style={{ border: `2px solid ${color}`, color }}
+                          style={{ border: `2.5px solid ${color}`, color }}
                         >
-                          <Icon className="h-5 w-5" style={{ color }} />
+                          {img ? (
+                            <img
+                              src={img}
+                              alt=""
+                              aria-hidden
+                              className="h-8 w-8 object-contain"
+                              style={{
+                                // Recolour the PNG to the gold accent so it sits cleanly on every family background.
+                                filter:
+                                  "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)",
+                              }}
+                            />
+                          ) : Icon ? (
+                            <Icon className="h-7 w-7" strokeWidth={2.25} style={{ color }} />
+                          ) : null}
                           {badge > 0 && (
                             <span
                               aria-label={`${badge} pending`}
