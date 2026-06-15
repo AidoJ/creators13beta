@@ -48,17 +48,35 @@ export async function applyMoveServer(
       body: { match_id: matchId, expected_seq: expectedSeq, move },
     });
     if (error) {
-      const status = (error as any)?.context?.status ?? 0;
+      const ctx: any = (error as any)?.context;
+      const status = ctx?.status ?? 0;
+      // supabase-js swallows the response body into a generic "non-2xx"
+      // message. Recover the real server error so toasts/logs are useful.
+      let serverMessage: string | undefined;
+      try {
+        if (ctx && typeof ctx.json === "function") {
+          const body = await ctx.clone().json();
+          serverMessage = body?.message ?? body?.error;
+        }
+      } catch {
+        try {
+          if (ctx && typeof ctx.text === "function") {
+            serverMessage = await ctx.clone().text();
+          }
+        } catch { /* ignore */ }
+      }
+      const message = serverMessage || error.message;
+      console.warn("[apply-move] rejected", { status, message, moveType: move.type });
       if (status === 409) {
-        return { ok: false, rejected: true, reason: "stale", message: error.message };
+        return { ok: false, rejected: true, reason: "stale", message };
       }
       if (status === 401 || status === 403) {
-        return { ok: false, rejected: true, reason: "auth", message: error.message };
+        return { ok: false, rejected: true, reason: "auth", message };
       }
       if (status === 501) {
-        return { ok: false, rejected: true, reason: "not_implemented", message: error.message };
+        return { ok: false, rejected: true, reason: "not_implemented", message };
       }
-      return { ok: false, rejected: true, reason: "server", message: error.message };
+      return { ok: false, rejected: true, reason: "server", message };
     }
     if (!data?.ok) {
       return { ok: false, rejected: true, reason: "server", message: "no ok flag" };
