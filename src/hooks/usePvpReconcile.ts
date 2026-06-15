@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { applyMoveServer, type ServerMove } from "@/lib/game/serverMoves";
 import { loadMatch, type GameMatchRow } from "@/lib/game/persistence";
+import { deserializeMatch, type SerializedMatchState } from "@/lib/game/serialize";
 import type { MatchState } from "@/lib/game/types";
 
 interface Args {
@@ -53,6 +54,19 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
         const result = await applyMoveServer(matchId, expected, move);
         if (result.ok === true) {
           serverSeqRef.current = result.seq;
+          // CRITICAL: replace the client's optimistic state with the server's
+          // authoritative redacted view. The client engine uses local
+          // randomness for draws, so without this re-hydration our hand
+          // diverges from the server's after the first draw and every
+          // subsequent move fails "Card not in hand".
+          if (result.publicState) {
+            try {
+              const canonical = deserializeMatch(result.publicState as SerializedMatchState);
+              setState(canonical);
+            } catch (e) {
+              console.error("[apply-move] could not hydrate publicState", e);
+            }
+          }
           return;
         }
         const rejected = result as Extract<typeof result, { ok: false }>;
