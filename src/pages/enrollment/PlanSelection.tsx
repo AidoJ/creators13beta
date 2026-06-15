@@ -394,8 +394,8 @@ export default function PlanSelection() {
                   : "border-border hover:border-primary/40 hover:shadow-md"
               )}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10" />
-              <div className="absolute inset-0 bg-card/40" />
+              <img src="/__l5e/assets-v1/7e22c886-e01b-4ea2-92dd-0b897ba48a0a/Golden_Honeycomb_Background.png" alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
+              <div className="absolute inset-0 bg-card/60" />
               <div className="relative w-20 h-20 flex items-center justify-center">
                 <img src={goldRing} alt="" className="absolute inset-0 w-full h-full object-contain" />
                 <Gamepad2 className="h-8 w-8" style={{ color: "#c5992a" }} />
