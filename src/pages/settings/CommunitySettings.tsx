@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Leaf, ArrowLeft, Check, Upload, User as UserIcon } from "lucide-react";
 import { CREATOR_TYPE_NAMES, CREATOR_TYPE_COLORS } from "@/lib/creatorTypes";
-import { resolveAvatarUrl, avatarStorageKey, stockAvatarUrl } from "@/lib/avatar";
+import { resolveAvatarUrl, avatarStorageKey, stockAvatarUrl, PEOPLE_STOCK_AVATARS } from "@/lib/avatar";
 import type { ContactChannels } from "@/lib/contacts";
 
 export default function CommunitySettings() {
