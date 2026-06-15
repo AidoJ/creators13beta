@@ -215,7 +215,23 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (matchErr || !match) return jsonResponse({ error: "match not found" }, 404);
 
-  if (match.host_user_id !== userId && match.guest_user_id !== userId) {
+  // A.1: roster lookup. PvP membership now comes from game_match_players.
+  // Solo bot matches (is_ranked=false) have no roster row for the bot — fall
+  // back to the legacy host_user_id check for the human side.
+  const { data: roster, error: rosterErr } = await svc
+    .from("game_match_players")
+    .select("user_id, slot, display_name")
+    .eq("match_id", body.match_id)
+    .order("slot", { ascending: true });
+  if (rosterErr) {
+    console.error("[apply-move] roster fetch failed", rosterErr);
+    return jsonResponse({ error: "roster fetch failed" }, 500);
+  }
+
+  const rosterRows = (roster ?? []) as Array<{ user_id: string; slot: number; display_name: string }>;
+  const callerRosterRow = rosterRows.find((r) => r.user_id === userId);
+  const isLegacyHost = match.host_user_id === userId && rosterRows.length === 0;
+  if (!callerRosterRow && !isLegacyHost) {
     return jsonResponse({ error: "not a player in this match" }, 403);
   }
 
@@ -226,8 +242,14 @@ Deno.serve(async (req) => {
     );
   }
 
-  // Resolve caller's player slot.
-  const callerSlot = match.host_user_id === userId ? 0 : 1;
+  // Slot resolution: prefer roster.slot; fall back to host/guest for
+  // pre-A.1 rows without a roster.
+  const callerSlot = callerRosterRow
+    ? callerRosterRow.slot
+    : match.host_user_id === userId
+      ? 0
+      : 1;
+  // A.1 stays 2-player; A.2 generalises this to N opponents.
   const otherSlot = callerSlot === 0 ? 1 : 0;
 
   let state: MatchState;
@@ -247,23 +269,31 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "player slot empty" }, 500);
   }
 
-  // Name sync: keep player display names aligned with the row's host_name /
-  // guest_name (the join flow updates those columns; clients are no longer
-  // allowed to overwrite `state` directly to patch them).
-  const rowHostName = (match.host_name ?? "").toString();
-  const rowGuestName = (match.guest_name ?? "").toString();
+  // Name sync: prefer roster display_name; fall back to legacy host/guest_name.
+  const nameForSlot = (slot: number): string => {
+    const r = rosterRows.find((x) => x.slot === slot);
+    if (r?.display_name) return r.display_name;
+    return slot === 0 ? (match.host_name ?? "") : (match.guest_name ?? "");
+  };
   let namesPatched = false;
   state.players = state.players.map((p, i) => {
-    const rowName = i === 0 ? rowHostName : rowGuestName;
+    const rowName = nameForSlot(i);
     if (rowName && p.name !== rowName) {
       namesPatched = true;
       return { ...p, name: rowName };
     }
     return p;
   });
-  if (namesPatched) {
-    console.log("[apply-move] patched player names from row", { rowHostName, rowGuestName });
-  }
+  if (namesPatched) console.log("[apply-move] patched player names from roster");
+
+  // Build a map of slot → user_id for per-player state writes.
+  const userIdForSlot = (slot: number): string | null => {
+    const r = rosterRows.find((x) => x.slot === slot);
+    if (r) return r.user_id;
+    if (slot === 0) return match.host_user_id ?? null;
+    if (slot === 1) return match.guest_user_id ?? null;
+    return null;
+  };
 
   // Turn check (skipped for non-turn-bound actions).
   // rotate_hex is purely presentational on the caller's own ecosystem, so
