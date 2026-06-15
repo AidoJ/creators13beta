@@ -1,9 +1,12 @@
 /**
  * Supabase persistence for game matches.
  *
- * Single match row per game; we upsert the whole serialized state on every
- * action. For the volume this game ever sees (one row updated per turn)
- * that's perfectly fine.
+ * A.1 (N-player schema foundations): match rosters now live in
+ * `game_match_players` and per-player redacted views in
+ * `game_match_player_states`. The legacy `host_user_id` / `guest_user_id` /
+ * `host_name` / `guest_name` columns on `game_matches` are kept readable
+ * for backwards compatibility but new code should not depend on them; they
+ * are scheduled for removal in a later batch.
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -17,9 +20,13 @@ export interface GameMatchRow {
   id: string;
   mode: MatchMode;
   status: MatchStatus;
+  /** @deprecated A.1 — use game_match_players. Kept for readback only. */
   host_user_id: string;
+  /** @deprecated A.1 — use game_match_players.display_name. */
   host_name: string;
+  /** @deprecated A.1 — use game_match_players. */
   guest_user_id: string | null;
+  /** @deprecated A.1 — use game_match_players.display_name. */
   guest_name: string | null;
   invite_token: string | null;
   state: SerializedMatchState;
@@ -27,8 +34,8 @@ export interface GameMatchRow {
   seq: number;
   /** True for pvp matches with ELO impact. Solo bot matches set this false. */
   is_ranked: boolean;
-  /** Opponent-redacted copy of `state` written by the server. */
-  public_state: SerializedMatchState | null;
+  /** Number of players in the match (2..4). Defaults to 2 for legacy rows. */
+  player_count: number;
   winner_user_id: string | null;
   last_action_by: string | null;
   created_at: string;
@@ -36,7 +43,6 @@ export interface GameMatchRow {
 }
 
 function makeToken(): string {
-  // 24-char URL-safe token. Good enough as a non-guessable invite secret.
   const bytes = new Uint8Array(18);
   crypto.getRandomValues(bytes);
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -60,7 +66,6 @@ export async function createMatchRow(args: {
       host_name: args.hostName,
       guest_name: args.guestName ?? null,
       invite_token: inviteToken,
-      // Solo bot matches are non-ranked — kept client-authoritative.
       is_ranked: args.mode === "pvp",
       state: serializeMatch(args.state) as any,
       last_action_by: args.hostUserId,
@@ -68,15 +73,29 @@ export async function createMatchRow(args: {
     .select("*")
     .single();
   if (error) throw error;
+
+  // Seed the host roster row for PvP matches. Solo bot matches don't get a
+  // roster (the bot has no user_id); the apply-move path is bypassed for
+  // them entirely.
+  if (args.mode === "pvp") {
+    const { error: rosterErr } = await supabase
+      .from("game_match_players")
+      .insert({
+        match_id: (data as any).id,
+        user_id: args.hostUserId,
+        slot: 0,
+        display_name: args.hostName,
+      });
+    if (rosterErr) console.error("[createMatchRow] roster insert failed", rosterErr);
+  }
+
   return data as unknown as GameMatchRow;
 }
 
 const NON_STATE_COLS =
-  "id, mode, status, host_user_id, host_name, guest_user_id, guest_name, invite_token, seq, is_ranked, public_state, winner_user_id, last_action_by, created_at, updated_at";
+  "id, mode, status, host_user_id, host_name, guest_user_id, guest_name, invite_token, seq, is_ranked, player_count, winner_user_id, last_action_by, created_at, updated_at";
 
 export async function loadMatch(matchId: string): Promise<{ row: GameMatchRow; state: MatchState }> {
-  // `state` is no longer in the SELECT grant for `authenticated`; fetch the
-  // row (sans state) and resolve the caller's redacted view via RPC.
   const [rowRes, stateRes] = await Promise.all([
     supabase.from("game_matches").select(NON_STATE_COLS).eq("id", matchId).single(),
     supabase.rpc("get_match_state", { _match_id: matchId }),
@@ -87,11 +106,6 @@ export async function loadMatch(matchId: string): Promise<{ row: GameMatchRow; s
   return { row, state: deserializeMatch(stateRes.data as unknown as SerializedMatchState) };
 }
 
-// saveMatchState was the legacy client-authoritative writer for game_matches.
-// PvP now goes through the apply-move edge function; solo bot matches persist
-// via localStorage. Clients no longer have UPDATE privilege on
-// game_matches.state, so any call here would throw RLS. Removed.
-
 export async function acceptInvite(token: string, guestName: string): Promise<string> {
   const { data, error } = await supabase.rpc("accept_game_invite", {
     _token: token,
@@ -101,16 +115,15 @@ export async function acceptInvite(token: string, guestName: string): Promise<st
   return data as string;
 }
 
-export async function listMyActiveMatches(userId: string): Promise<GameMatchRow[]> {
-  const { data, error } = await supabase
-    .from("game_matches")
-    .select(NON_STATE_COLS)
-    .or(`host_user_id.eq.${userId},guest_user_id.eq.${userId}`)
-    .neq("status", "finished")
-    .order("updated_at", { ascending: false })
-    .limit(10);
+export async function listMyActiveMatches(_userId: string): Promise<GameMatchRow[]> {
+  // Uses the new roster-aware RPC (A.1). `_userId` is ignored — the RPC
+  // derives the caller from auth.uid().
+  const { data, error } = await supabase.rpc("list_my_active_matches");
   if (error) throw error;
-  return (data ?? []) as unknown as GameMatchRow[];
+  return ((data ?? []) as unknown as GameMatchRow[]).map((r) => ({
+    ...r,
+    player_count: r.player_count ?? 2,
+  }));
 }
 
 export function inviteUrl(token: string): string {
