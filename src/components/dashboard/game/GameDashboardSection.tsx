@@ -158,7 +158,17 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
   return (
     <div className="space-y-5">
       {/* HERO */}
-      <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card/95 to-secondary/10 p-6 sm:p-8 shadow-md">
+      <div
+        className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card/95 to-secondary/10 p-6 sm:p-8 shadow-md"
+        style={{
+          backgroundImage:
+            "linear-gradient(to bottom right, hsl(var(--primary) / 0.12), hsl(var(--card) / 0.92), hsl(var(--secondary) / 0.12)), url('/__l5e/assets-v1/7e22c886-e01b-4ea2-92dd-0b897ba48a0a/Golden_Honeycomb_Background.png')",
+          backgroundSize: "cover, 380px",
+          backgroundRepeat: "no-repeat, repeat",
+          backgroundBlendMode: "normal, multiply",
+        }}
+      >
+
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-1">{tierLabel}</p>

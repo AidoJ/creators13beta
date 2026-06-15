@@ -137,7 +137,12 @@ export default function Dashboard() {
     );
   }
 
-  if (isPlayerOnly && user) {
+  // Case-study subjects (referral_code) and anyone who has uploaded profiling
+  // photos should see the full client dashboard even if their subscription
+  // tier is still "wren" — otherwise their profile/photos never surface.
+  const hasProfilingFootprint = isCaseStudySubject || photoCount > 0 || creatorTypes.length > 0;
+
+  if (isPlayerOnly && !hasProfilingFootprint && user) {
     return (
       <PlayerDashboard
         userId={user.id}
@@ -149,6 +154,8 @@ export default function Dashboard() {
   }
 
   const isPaidTier = !!subscription?.tier && subscription.tier !== "wren";
+  const showProfileSection = isPaidTier || hasProfilingFootprint;
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
@@ -195,8 +202,9 @@ export default function Dashboard() {
         </div>
 
 
-        {/* PAID-TIER section: profile, photos, sessions, subscription, recordings */}
-        {isPaidTier && (
+        {/* PROFILE section: visible for paid tiers AND case-study subscribers */}
+        {showProfileSection && (
+
           <section className="pt-6 mt-4 border-t border-dashed border-border space-y-5">
             <p className="text-xs uppercase tracking-widest text-primary font-semibold">Your profile</p>
 
