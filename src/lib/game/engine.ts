@@ -97,6 +97,12 @@ export function createMatch(opts: CreateMatchOptions): MatchState {
     hiveShield: false,
     score: 0,
     firstPickupDone: false,
+    // A.2 — N-player lifecycle fields. Default everyone to 'active' with
+    // no rank assigned yet. For 2-player matches these behave invisibly
+    // (single completer ends the game exactly as before).
+    rank: null,
+    status: "active",
+    finalisedAt: null,
   }));
 
   return {
@@ -113,6 +119,11 @@ export function createMatch(opts: CreateMatchOptions): MatchState {
     pendingDisaster: null,
     gameMode: opts.gameMode ?? "end_of_days",
     gameConfig: opts.gameConfig ?? {},
+    // A.2 — N-player rotation/placements. Default rotation is sequential
+    // [0..N-1]; A.3/B may pass a randomised permutation. `placements` fills
+    // as players are finalised.
+    placements: [],
+    turnOrder: opts.players.map((_, i) => i),
   };
 }
 
