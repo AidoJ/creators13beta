@@ -7,6 +7,7 @@
  */
 import { describe, expect, it } from "vitest";
 import {
+  endTurnEarly,
   createMatch,
   finaliseByScore,
   playDisaster,
@@ -166,8 +167,8 @@ describe("A.2 — advanceTurn skips non-active players", () => {
     // finaliseByScore would end match — use `endTurnEarly` instead.
     // We exercise advanceTurn through the public surface by importing
     // endTurnEarly.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { endTurnEarly } = require("./engine");
+    
+    // using imported endTurnEarly
     const next = endTurnEarly(state);
     expect(next.turn).toBe(2); // skipped finalised slot 1
   });
@@ -183,8 +184,8 @@ describe("A.2 — advanceTurn skips non-active players", () => {
       { playerId: "p1", rank: 1 },
       { playerId: "p2", rank: 2 },
     ];
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { endTurnEarly } = require("./engine");
+    
+    // using imported endTurnEarly
     const next = endTurnEarly(state);
     expect(next.finished).toBe(true);
     expect(next.placements?.find((p) => p.playerId === "p0")?.rank).toBe(3);
@@ -242,8 +243,8 @@ describe("A.2 — pile exhaustion in N=4 ranks remaining actives by score", () =
     state.used = [];
     // No hands. Trigger end-of-turn detection.
     state.placedThisTurn = 2;
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { endTurnEarly } = require("./engine");
+    
+    // using imported endTurnEarly
     const next = endTurnEarly(state);
     expect(next.finished).toBe(true);
     // Pure-stalemate (no prior completer) end_of_days draws with empty
@@ -259,8 +260,8 @@ describe("A.2 — 2-player stalemate behaviour preserved", () => {
     const state = baseState(players);
     state.gameMode = "end_of_days";
     state.placedThisTurn = 2;
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { endTurnEarly } = require("./engine");
+    
+    // using imported endTurnEarly
     const next = endTurnEarly(state);
     expect(next.finished).toBe(true);
     expect(next.winnerId).toBeNull();
