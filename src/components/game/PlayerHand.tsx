@@ -195,11 +195,15 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                 onSelect(card.uid);
                 onDragStart?.(card.uid);
               }}
-              onDragEnd={(e) => {
-                const dropTarget = document
-                  .elementFromPoint(e.clientX, e.clientY)
-                  ?.closest('[data-legal-drop="true"]') as HTMLElement | null;
-                dropTarget?.click();
+              onDragEnd={() => {
+                // Native HTML5 drop already fired onPlace on the target cell
+                // (or the Ecosystem container's onDrop). Do NOT synthesize a
+                // click here — that produced a duplicate placement which, in
+                // PvP, was serialised through the submit mutex and arrived
+                // ~500ms later as a phantom "Card not in hand" / "Not your
+                // turn" rejection. The pointer fallback (onPointerUp above)
+                // still synthesises a click because touch never fires
+                // native drop events.
                 onDragEnd?.();
               }}
               className={`cursor-grab active:cursor-grabbing select-none ${stuck ? "opacity-60 saturate-50" : ""}`}
