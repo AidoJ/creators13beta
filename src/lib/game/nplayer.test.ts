@@ -93,66 +93,113 @@ describe("A.2 — createMatch defaults for N players", () => {
   });
 });
 
-describe("A.2 — Disaster wipe collects multiple Hive-holders (N=3)", () => {
-  it("queues victimIds across all opponents who hold an unspent Hive", () => {
-    const players = makePlayers(3);
-    // Attacker has the disaster Creator; both opponents have a Hive.
-    const fire = creator("Fire", "Fire");
-    players[0].hand = [fire];
-    players[1].hand = [hive("hive-1")];
-    players[2].hand = [hive("hive-2")];
-    // Attacker's ecosystem must cover all four elements to legally play a
-    // Disaster. We bypass that gate by NOT calling playDisaster's real
-    // path — instead test the resolveDisaster queue directly.
-    // Stub a pendingDisaster as if playDisaster had set it.
-    const state = baseState(players);
-    state.pendingDisaster = {
-      attackerId: "p0",
-      victimIds: ["p1", "p2"],
-      victimId: "p1",
-      blockedBy: [],
-      creator: fire,
-    };
+describe("A.2 — Disaster wipe in N=4 with single Hive-holder (single-Hive invariant)", () => {
+  // Single-Hive invariant: the deck contains exactly ONE Golden Hive across
+  // the entire match, regardless of player count. So at any point at most
+  // one opponent can be a Hive-holder. These tests exercise the realistic
+  // highest-complexity scenario: 4 players, attacker + 3 victims, one of
+  // the three victims holds the only Hive, the other two cannot block.
 
-    // P1 chooses to block.
-    let next = resolveDisaster(state, true);
-    expect(next.pendingDisaster).not.toBeNull();
-    expect(next.pendingDisaster!.victimIds).toEqual(["p2"]);
-    expect(next.pendingDisaster!.blockedBy).toEqual(["p1"]);
-
-    // P2 declines.
-    next = resolveDisaster(next, false);
-    expect(next.pendingDisaster).toBeNull();
-    // Wipe ran — placedThisTurn incremented exactly once across the whole
-    // disaster resolution (not once per victim).
-    expect(next.placedThisTurn).toBe(1);
-  });
-
-  it("playDisaster sets victimIds across multiple hive-holders", () => {
-    const players = makePlayers(3);
-    // Build a covered ecosystem for the attacker.
+  function n4DisasterFixture(blockerHasHive: boolean) {
+    const players = makePlayers(4);
+    // P0 attacks; P1, P2, P3 are all victims. P2 holds the only Hive.
     const fire = creator("Fire", "Fire");
     const earth = creator("Soil", "Earth");
     const air = creator("Snow", "Air");
     const water = creator("Ocean", "Water");
-    const placed = new Map();
-    placed.set("0,0", { card: fire, pos: { q: 0, r: 0 } });
-    placed.set("1,0", { card: earth, pos: { q: 1, r: 0 } });
-    placed.set("0,1", { card: air, pos: { q: 0, r: 1 } });
-    placed.set("-1,1", { card: water, pos: { q: -1, r: 1 } });
-    players[0].ecosystem = { placed } as any;
+    // Attacker covers all four elements so playDisaster is legal.
+    const attackerEco = new Map();
+    attackerEco.set("0,0", { card: fire, pos: { q: 0, r: 0 } });
+    attackerEco.set("1,0", { card: earth, pos: { q: 1, r: 0 } });
+    attackerEco.set("0,1", { card: air, pos: { q: 0, r: 1 } });
+    attackerEco.set("-1,1", { card: water, pos: { q: -1, r: 1 } });
+    players[0].ecosystem = { placed: attackerEco } as any;
     const lava = creator("Lava", "Fire");
     players[0].hand = [lava];
-    players[1].hand = [hive("hive-1")];
-    players[2].hand = [hive("hive-2")];
+    // Each victim has one wipeable animal on their board so we can verify
+    // the wipe actually reached them (or didn't, if they blocked).
+    for (let i = 1; i <= 3; i++) {
+      const a = animal(`a${i}`, ["Lava", "Fire"]);
+      const eco = new Map();
+      eco.set("0,0", { card: a, pos: { q: 0, r: 0 } });
+      players[i].ecosystem = { placed: eco } as any;
+    }
+    // P2 is the sole Hive-holder; P1 and P3 have no Hive and cannot block.
+    players[2].hand = [hive("the-only-hive")];
+    if (!blockerHasHive) {
+      // Variant: even the Hive-holder will decline to block. Hand stays the
+      // same — `useHive=false` in the resolve call drives the behaviour.
+    }
+    return { players, lava };
+  }
 
+  it("queues the single Hive-holder; non-Hive victims wiped regardless; blocker spared; placedThisTurn++ exactly once", () => {
+    const { players, lava } = n4DisasterFixture(true);
     const state = baseState(players);
-    const next = playDisaster(state, lava.uid);
-    expect(next.pendingDisaster).not.toBeNull();
-    expect(next.pendingDisaster!.victimIds.sort()).toEqual(["p1", "p2"]);
-    expect(next.pendingDisaster!.victimId).toBe(next.pendingDisaster!.victimIds[0]);
+
+    // playDisaster should queue exactly P2 (the only Hive-holder), not P1/P3.
+    const queued = playDisaster(state, lava.uid);
+    expect(queued.pendingDisaster).not.toBeNull();
+    expect(queued.pendingDisaster!.victimIds).toEqual(["p2"]);
+    expect(queued.pendingDisaster!.victimIds.length).toBeLessThanOrEqual(1);
+    expect(queued.pendingDisaster!.victimId).toBe("p2");
+    // No wipe yet — slot not consumed until resolution.
+    expect(queued.placedThisTurn).toBe(0);
+    expect(queued.players[1].ecosystem.placed.size).toBe(1);
+    expect(queued.players[3].ecosystem.placed.size).toBe(1);
+
+    // P2 blocks. Queue empties → wipe runs.
+    const resolved = resolveDisaster(queued, true);
+    expect(resolved.pendingDisaster).toBeNull();
+    // Non-Hive victims (P1, P3) wiped regardless of P2's choice.
+    expect(resolved.players[1].ecosystem.placed.size).toBe(0);
+    expect(resolved.players[3].ecosystem.placed.size).toBe(0);
+    // P2 blocked → board untouched, Hive marked spent.
+    expect(resolved.players[2].ecosystem.placed.size).toBe(1);
+    expect(resolved.players[2].hand.some((c) => c.kind === "golden_hive" && !c.spent)).toBe(false);
+    // Attacker (P0) is never wiped.
+    expect(resolved.players[0].ecosystem.placed.size).toBe(4);
+    // placedThisTurn incremented exactly ONCE across the whole disaster
+    // resolution — not once per victim.
+    expect(resolved.placedThisTurn).toBe(1);
+  });
+
+  it("Hive-holder declines: wipe hits all three victims; placedThisTurn++ exactly once", () => {
+    const { players, lava } = n4DisasterFixture(false);
+    const state = baseState(players);
+    const queued = playDisaster(state, lava.uid);
+    expect(queued.pendingDisaster!.victimIds).toEqual(["p2"]);
+
+    // P2 declines to block (saves Hive for later).
+    const resolved = resolveDisaster(queued, false);
+    expect(resolved.pendingDisaster).toBeNull();
+    // All three victims wiped (including P2 — they didn't block).
+    expect(resolved.players[1].ecosystem.placed.size).toBe(0);
+    expect(resolved.players[2].ecosystem.placed.size).toBe(0);
+    expect(resolved.players[3].ecosystem.placed.size).toBe(0);
+    // P2's Hive is unspent (saved for later).
+    expect(resolved.players[2].hand.some((c) => c.kind === "golden_hive" && !c.spent)).toBe(true);
+    // Attacker untouched.
+    expect(resolved.players[0].ecosystem.placed.size).toBe(4);
+    // Slot consumed exactly once.
+    expect(resolved.placedThisTurn).toBe(1);
+  });
+
+  it("no Hive in play (N=4): wipe runs immediately on playDisaster; placedThisTurn++ exactly once", () => {
+    const { players, lava } = n4DisasterFixture(true);
+    // Remove the Hive entirely — no victim can block.
+    players[2].hand = [];
+    const state = baseState(players);
+    const resolved = playDisaster(state, lava.uid);
+    expect(resolved.pendingDisaster).toBeNull();
+    // All three victims wiped immediately, no prompt.
+    expect(resolved.players[1].ecosystem.placed.size).toBe(0);
+    expect(resolved.players[2].ecosystem.placed.size).toBe(0);
+    expect(resolved.players[3].ecosystem.placed.size).toBe(0);
+    expect(resolved.placedThisTurn).toBe(1);
   });
 });
+
 
 describe("A.2 — advanceTurn skips non-active players", () => {
   it("rotates through turnOrder skipping finalised/conceded players", () => {
