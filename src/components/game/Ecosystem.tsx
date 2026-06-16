@@ -178,6 +178,7 @@ export function Ecosystem({
               onDragLeave={canDrop ? () => setDragOverKey((cur) => (cur === k ? null : cur)) : undefined}
               onDrop={canDrop ? (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 setDragOverKey(null);
                 onPlace?.(cell, e.dataTransfer.getData("text/plain") || undefined);
               } : undefined}
@@ -188,7 +189,7 @@ export function Ecosystem({
                 pulse={false}
                 active={canDrop || (showEmpties && !isIllegalForCard)}
                 hover={isOver}
-                onClick={canDrop ? () => onPlace?.(cell) : undefined}
+                onClick={undefined}
               />
             </div>
           );
