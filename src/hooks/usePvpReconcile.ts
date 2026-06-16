@@ -50,6 +50,14 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
     (move: ServerMove): Promise<void> => {
       if (!matchRow) return Promise.resolve();
       const matchId = matchRow.id;
+      const currentSeq = serverSeqRef.current;
+      const cardUid = "uid" in move ? move.uid : undefined;
+      console.warn("[apply-move CALL]", {
+        seq: currentSeq,
+        moveType: move.type,
+        cardUid,
+        stack: new Error().stack,
+      });
       const run = async () => {
         const expected = serverSeqRef.current;
         const result = await applyMoveServer(matchId, expected, move);
