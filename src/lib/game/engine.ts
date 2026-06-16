@@ -1357,6 +1357,8 @@ function canAssignAdjacentAnimalsToCreators(
 
 function checkWin(state: MatchState): void {
   // First-to-N points game mode wins as soon as anyone hits target.
+  // Winner-takes-all — collapses to today's 2-player behaviour. (N>2 first-
+  // to-N is not generalised further in A.2 by design; pending product call.)
   if (state.gameMode === "first_to_50") {
     const target = state.gameConfig?.targetScore ?? 50;
     let bestId: string | null = null;
@@ -1374,17 +1376,53 @@ function checkWin(state: MatchState): void {
     }
   }
 
-  // Classic ecosystem-complete win (end_of_days, also a valid early win for first_to_50).
-  // Rule: the placed ecosystem must contain AT LEAST one Creator covering each
-  // of the four elements (Earth / Fire / Air / Water — Sky Creator is a wildcard),
-  // and there must exist a way to assign 3 placed animals to each of those four
-  // chosen Creators matching its Creator Type. Extra Creators / animals on the
-  // board beyond that selection are allowed.
+  // Classic ecosystem-complete win. For 2-player the first completer wins
+  // the match outright (rank 1, opponent rank 2). For N>2 the first
+  // completer finalises their OWN position only (next available rank, also
+  // 1 for the first); the match continues for the remaining actives until
+  // only one active player remains — at which point `advanceTurn` triggers
+  // `finalise` to close the match out with score-ranked placements.
   for (const p of state.players) {
+    if ((p.status ?? "active") !== "active") continue;
     if (!validateEcosystemWin(p).valid) continue;
-    finalise(state, p.id);
-    return;
+
+    const totalPlayers = state.players.length;
+    if (totalPlayers <= 2) {
+      // N=2 fast path — preserves existing behaviour exactly (immediate end).
+      finalise(state, p.id);
+      return;
+    }
+
+    // N>2 — partial finalise. Assign next rank, mark status, leave match
+    // running. If finalising this player leaves ≤1 active, `advanceTurn`
+    // (called by `afterAction`) will detect that and end the match.
+    partiallyFinalisePlayer(state, p.id, "completed");
   }
+}
+
+/** A.2 helper — finalise a single player (mid-match completion in N>2)
+ *  without ending the match. Pure mutation. */
+function partiallyFinalisePlayer(
+  state: MatchState,
+  playerId: string,
+  reason: "completed" | "conceded" | "forfeit" = "completed",
+): void {
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return;
+  if ((player.status ?? "active") !== "active") return;
+  const placements = state.placements ?? [];
+  const rank = placements.length + 1;
+  player.status =
+    reason === "conceded" ? "conceded" : reason === "forfeit" ? "forfeit" : "finalised";
+  player.rank = rank;
+  player.finalisedAt = Date.now();
+  state.placements = [...placements, { playerId, rank }];
+  state.lastEvent =
+    reason === "completed"
+      ? `${player.name} completed their ecosystem — finished #${rank}.`
+      : reason === "conceded"
+      ? `${player.name} conceded — finished #${rank}.`
+      : `${player.name} forfeited — finished #${rank}.`;
 }
 
 /** Return all 4-creator subsets of `creators` such that each of the 4 elements
@@ -1419,27 +1457,98 @@ function enumerateElementCoveringQuartets(
   return out;
 }
 
-/** Force-finalise (e.g. Beat-the-Clock timer expiry). Highest total score wins. */
+/** Force-finalise (e.g. Beat-the-Clock timer expiry). All players are
+ *  ranked by total score (desc). Ties share the higher rank — since every
+ *  non-winner currently earns the same points regardless of exact
+ *  loser-rank position (winner-takes-all rule), exact ordering among ties
+ *  does not affect progress. */
 export function finaliseByScore(state: MatchState): MatchState {
   if (state.finished) return state;
   const next = cloneState(state);
-  const top = next.players.reduce((a, b) =>
-    playerTotalScore(b) > playerTotalScore(a) ? b : a,
-  );
-  finalise(next, top.id);
-  next.lastEvent = `Time's up — ${top.name} wins on points!`;
+  finalise(next);
+  const winner = next.placements?.[0]
+    ? next.players.find((p) => p.id === next.placements![0].playerId)
+    : null;
+  next.lastEvent = winner
+    ? `Time's up — ${winner.name} wins on points!`
+    : "Time's up — match ranked by score.";
   return next;
 }
 
+/** A.2 — assign ranks to every player and populate `placements`.
+ *
+ *  Behaviour:
+ *    - Any player already finalised mid-match (status !== 'active') keeps
+ *      the rank assigned at the time of their partial finalisation.
+ *    - If `winnerId` is supplied AND that player is still active, they
+ *      take the next available rank (1 in the standard 2-player case).
+ *    - Remaining active players are sorted by `playerTotalScore` desc and
+ *      assigned the remaining ranks. Tied players share the higher rank
+ *      (e.g. two players tied for 2nd both get rank 2; the next gets 4).
+ *    - `winnerId` (state-level, backwards-compat) = the playerId at rank 1.
+ *
+ *  For 2-player end-of-game this collapses to exactly today's behaviour:
+ *  the called-out winner gets rank 1, the opponent rank 2. */
 function finalise(state: MatchState, winnerId?: string): void {
   state.finished = true;
-  if (winnerId) {
-    state.winnerId = winnerId;
-  } else {
-    const top = state.players.reduce((a, b) => (b.score > a.score ? b : a));
-    state.winnerId = top.id;
+  const placements = (state.placements ?? []).slice();
+  const ranked = new Set(placements.map((pl) => pl.playerId));
+
+  const assignRank = (
+    playerId: string,
+    rank: number,
+    reason: "completed" | "scored" = "scored",
+  ) => {
+    const p = state.players.find((x) => x.id === playerId);
+    if (!p) return;
+    p.status = "finalised";
+    p.rank = rank;
+    p.finalisedAt = Date.now();
+    placements.push({ playerId, rank });
+    ranked.add(playerId);
+    void reason;
+  };
+
+  // Step 1: honour an explicit winner if they're still active.
+  if (winnerId && !ranked.has(winnerId)) {
+    const winnerPlayer = state.players.find((p) => p.id === winnerId);
+    if (winnerPlayer && (winnerPlayer.status ?? "active") === "active") {
+      assignRank(winnerId, placements.length + 1, "completed");
+    }
   }
-  state.lastEvent = `Match over — winner: ${
-    state.players.find((p) => p.id === state.winnerId)?.name ?? "—"
-  }`;
+
+  // Step 2: rank remaining active players by total score (desc), ties share
+  // the higher rank.
+  const remaining = state.players
+    .filter((p) => !ranked.has(p.id))
+    .sort((a, b) => playerTotalScore(b) - playerTotalScore(a));
+
+  let i = 0;
+  while (i < remaining.length) {
+    const rank = placements.length + 1;
+    const score = playerTotalScore(remaining[i]);
+    // Collect every player tied at this score (they share `rank`).
+    let j = i;
+    while (j < remaining.length && playerTotalScore(remaining[j]) === score) {
+      const p = remaining[j];
+      p.status = "finalised";
+      p.rank = rank;
+      p.finalisedAt = Date.now();
+      placements.push({ playerId: p.id, rank });
+      ranked.add(p.id);
+      j += 1;
+    }
+    i = j;
+  }
+
+  state.placements = placements;
+  // Backwards-compat: winnerId mirrors the rank-1 placement.
+  const top = placements.find((pl) => pl.rank === 1);
+  state.winnerId = top?.playerId ?? null;
+  const topName = top
+    ? state.players.find((p) => p.id === top.playerId)?.name ?? "—"
+    : "—";
+  state.lastEvent = state.winnerId
+    ? `Match over — winner: ${topName}`
+    : "Match over — no outright winner";
 }
