@@ -926,14 +926,21 @@ export function playDisaster(
   return afterAction(next);
 }
 
-/** Victim's response to a pending disaster prompt. */
+/** Victim's response to a pending disaster prompt. Processes the head of
+ *  `pendingDisaster.victimIds` (the only candidate in 2-player matches; one
+ *  of several queued Hive-holders in N>2 matches). When the queue empties
+ *  the wipe is applied against every active opponent except attackers who
+ *  blocked with their Hive. */
 export function resolveDisaster(state: MatchState, useHive: boolean): MatchState {
   if (state.finished) return state;
   if (!state.pendingDisaster) throw new Error("No disaster pending");
   const next = cloneState(state);
   const pd = next.pendingDisaster!;
   const attacker = next.players.find((p) => p.id === pd.attackerId)!;
-  const victim = next.players.find((p) => p.id === pd.victimId)!;
+  const queue = pd.victimIds && pd.victimIds.length > 0 ? pd.victimIds.slice() : [pd.victimId];
+  const currentVictimId = queue[0];
+  const victim = next.players.find((p) => p.id === currentVictimId)!;
+  const blockedBy = (pd.blockedBy ?? []).slice();
 
   if (useHive) {
     // Move the victim's Hive from hand to the used pile, flagged spent so
@@ -943,14 +950,27 @@ export function resolveDisaster(state: MatchState, useHive: boolean): MatchState
     const [hive] = victim.hand.splice(hIdx, 1);
     next.used.push({ ...hive, spent: true });
     victim.hiveShield = false;
+    blockedBy.push(victim.id);
     next.lastEvent = `${victim.name} activated their Golden Hive — the ${pd.creator.name} Disaster was blocked!`;
-    // Other victims (if any 3+ player matches ever exist) still get hit.
-    applyDisasterWipe(next, attacker.id, pd.creator, victim.id);
   } else {
     next.lastEvent = `${victim.name} saved their Golden Hive for later — the Disaster hits.`;
-    applyDisasterWipe(next, attacker.id, pd.creator);
   }
 
+  const remaining = queue.slice(1);
+  if (remaining.length > 0) {
+    // More Hive-holders still to decide. Keep the pause in place.
+    next.pendingDisaster = {
+      ...pd,
+      victimIds: remaining,
+      victimId: remaining[0],
+      blockedBy,
+    };
+    return next;
+  }
+
+  // All Hive decisions are in → execute the wipe against every active
+  // non-attacker except those who blocked.
+  applyDisasterWipe(next, attacker.id, pd.creator, blockedBy);
   next.pendingDisaster = null;
   next.placedThisTurn += 1;
   return afterAction(next);
