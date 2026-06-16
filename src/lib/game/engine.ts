@@ -976,20 +976,23 @@ export function resolveDisaster(state: MatchState, useHive: boolean): MatchState
   return afterAction(next);
 }
 
-/** Internal: apply the wipe for every victim except `skipVictimId` (used when
- *  one victim's hive blocks them out of the wipe). */
+/** Internal: apply the wipe for every active non-attacker except victims
+ *  in `skipVictimIds` (those who blocked with a Hive). Also skips already-
+ *  finalised / conceded / forfeited players. */
 function applyDisasterWipe(
   next: MatchState,
   attackerId: string,
   creator: DeckCard,
-  skipVictimId?: string,
+  skipVictimIds: string[] = [],
 ): void {
   const player = next.players.find((p) => p.id === attackerId)!;
+  const skipSet = new Set(skipVictimIds);
   let wiped = 0;
   let placedOnBoard = 0;
   for (const victim of next.players) {
     if (victim.id === attackerId) continue;
-    if (skipVictimId && victim.id === skipVictimId) continue;
+    if (skipSet.has(victim.id)) continue;
+    if ((victim.status ?? "active") !== "active") continue;
     if (victim.hiveShield) {
       victim.hiveShield = false;
       next.lastEvent = `Hive shield absorbed the ${creator.name} disaster!`;
