@@ -895,15 +895,19 @@ export function playDisaster(
   player.hand.splice(idx, 1);
   next.used.push(spentCreator);
 
-  // A.2 — Collect ALL active other players who hold an unspent Hive. For
-  // 2-player this is at most one (identical to today's behaviour); for N>2
-  // every Hive-holder gets to choose before the wipe finalises.
+  // Find the (at most one) active opponent holding an unspent Golden Hive.
+  // Single-Hive invariant: the deck contains exactly ONE Golden Hive across
+  // the whole match regardless of player count, so this filter always
+  // produces 0 or 1 results — never more. The result is wrapped in an array
+  // purely for queue-shape consistency with `resolveDisaster`; it is NOT
+  // evidence that multi-Hive play is supported (it isn't).
   const hiveVictims = next.players.filter(
     (p) =>
       p.id !== player.id &&
       (p.status ?? "active") === "active" &&
       p.hand.some((c) => c.kind === "golden_hive" && !c.spent),
   );
+
   if (hiveVictims.length > 0) {
     const victimIds = hiveVictims.map((p) => p.id);
     next.pendingDisaster = {
@@ -926,11 +930,14 @@ export function playDisaster(
   return afterAction(next);
 }
 
-/** Victim's response to a pending disaster prompt. Processes the head of
- *  `pendingDisaster.victimIds` (the only candidate in 2-player matches; one
- *  of several queued Hive-holders in N>2 matches). When the queue empties
- *  the wipe is applied against every active opponent except attackers who
+/** Victim's response to a pending disaster prompt. Processes the (only)
+ *  Hive-holder at the head of `pendingDisaster.victimIds` — by the
+ *  single-Hive invariant the queue length is always ≤ 1, so this resolves
+ *  in a single call. The remaining-queue branch below is dead code in real
+ *  play but is retained as a structural safety net. After the decision the
+ *  wipe is applied against every active opponent except attackers who
  *  blocked with their Hive. */
+
 export function resolveDisaster(state: MatchState, useHive: boolean): MatchState {
   if (state.finished) return state;
   if (!state.pendingDisaster) throw new Error("No disaster pending");

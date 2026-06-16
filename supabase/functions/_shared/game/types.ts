@@ -111,17 +111,25 @@ export interface GameConfig {
   turnSeconds?: number;
 }
 
-/** A disaster waiting on one or more victims' Golden Hive decisions before
- *  it resolves. In a 2-player match there is only ever a single candidate
- *  victim, so `victimIds` collapses to a single-element array and
- *  `victimId` mirrors it for backwards-compat. In N>2 matches every other
- *  player who holds an unspent Hive is queued in `victimIds`; each one's
- *  decision is processed in order via `resolveDisaster`, then the wipe
- *  executes against everyone who didn't block. */
+/** A disaster waiting on the (at most one) Hive-holding victim's decision
+ *  before it resolves.
+ *
+ *  IMPORTANT — single-Hive invariant: the deck contains exactly ONE Golden
+ *  Hive card across the entire game (this does not scale with player
+ *  count). Therefore at any moment at most one player can hold an unspent
+ *  Hive, and `victimIds.length` is ALWAYS ≤ 1 in real play (0 when no
+ *  opponent holds the Hive, 1 when exactly one does). The array machinery
+ *  is retained for structural clarity — `resolveDisaster` shifts the head
+ *  off the queue and the wipe applies to every non-blocking opponent — but
+ *  it must NOT be read as evidence the engine supports multiple Hives. It
+ *  does not. If you find yourself constructing a state with two
+ *  Hive-holders, that state is unreachable from any legal play sequence.
+ */
 export interface PendingDisaster {
   attackerId: string;
-  /** All candidate Hive-holders still to decide. Head of the queue is the
-   *  one whose decision `resolveDisaster` will process next. */
+  /** The single Hive-holding victim still to decide, wrapped in an array
+   *  for queue-shape consistency. Length is 0 or 1 — never more (see
+   *  single-Hive invariant above). */
   victimIds: string[];
   /** Backwards-compat alias for `victimIds[0]`. New code should prefer
    *  `victimIds`; this field is kept so existing 2-player call sites
@@ -132,6 +140,7 @@ export interface PendingDisaster {
   blockedBy?: string[];
   creator: DeckCard;
 }
+
 
 export interface MatchState {
   players: PlayerState[];
