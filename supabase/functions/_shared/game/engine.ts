@@ -897,15 +897,19 @@ export function playDisaster(
   player.hand.splice(idx, 1);
   next.used.push(spentCreator);
 
-  // A.2 — Collect ALL active other players who hold an unspent Hive. For
-  // 2-player this is at most one (identical to today's behaviour); for N>2
-  // every Hive-holder gets to choose before the wipe finalises.
+  // Find the (at most one) active opponent holding an unspent Golden Hive.
+  // Single-Hive invariant: the deck contains exactly ONE Golden Hive across
+  // the whole match regardless of player count, so this filter always
+  // produces 0 or 1 results — never more. The result is wrapped in an array
+  // purely for queue-shape consistency with `resolveDisaster`; it is NOT
+  // evidence that multi-Hive play is supported (it isn't).
   const hiveVictims = next.players.filter(
     (p) =>
       p.id !== player.id &&
       (p.status ?? "active") === "active" &&
       p.hand.some((c) => c.kind === "golden_hive" && !c.spent),
   );
+
   if (hiveVictims.length > 0) {
     const victimIds = hiveVictims.map((p) => p.id);
     next.pendingDisaster = {
