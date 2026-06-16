@@ -67,6 +67,8 @@ export interface Ecosystem {
   placed: Map<string, PlacedCard>;
 }
 
+export type PlayerStatus = "active" | "finalised" | "forfeit" | "conceded";
+
 export interface PlayerState {
   id: string;
   name: string;
@@ -79,6 +81,13 @@ export interface PlayerState {
   /** True once the player has done their opening 5-card pick-up. Before then
    *  the only legal pick-up action is `drawInitialFive`. */
   firstPickupDone?: boolean;
+  /** A.2 — final placement (1 = winner, N = last). Null until finalised. */
+  rank?: number | null;
+  /** A.2 — lifecycle status. 'active' is the default; once finalised /
+   *  forfeited / conceded the player's turns are skipped. */
+  status?: PlayerStatus;
+  /** A.2 — epoch ms when this player was finalised. */
+  finalisedAt?: number | null;
 }
 
 export type TurnPhase = "draw" | "place";
@@ -100,12 +109,25 @@ export interface GameConfig {
   turnSeconds?: number;
 }
 
-/** A disaster that is waiting for a victim's Golden Hive decision before it
- *  resolves. While this is set the match is paused for everyone — only the
- *  victim can act. */
+/** A disaster waiting on one or more victims' Golden Hive decisions before
+ *  it resolves. In a 2-player match there is only ever a single candidate
+ *  victim, so `victimIds` collapses to a single-element array and
+ *  `victimId` mirrors it for backwards-compat. In N>2 matches every other
+ *  player who holds an unspent Hive is queued in `victimIds`; each one's
+ *  decision is processed in order via `resolveDisaster`, then the wipe
+ *  executes against everyone who didn't block. */
 export interface PendingDisaster {
   attackerId: string;
+  /** All candidate Hive-holders still to decide. Head of the queue is the
+   *  one whose decision `resolveDisaster` will process next. */
+  victimIds: string[];
+  /** Backwards-compat alias for `victimIds[0]`. New code should prefer
+   *  `victimIds`; this field is kept so existing 2-player call sites
+   *  (apply-move, Play.tsx, useBeatTheClockTimer) continue to compile. */
   victimId: string;
+  /** Player IDs that have already chosen "Activate Now" — they are exempted
+   *  from the wipe when it finally resolves. */
+  blockedBy?: string[];
   creator: DeckCard;
 }
 
@@ -119,12 +141,22 @@ export interface MatchState {
   placedThisTurn: number;
   turnNumber: number;
   finished: boolean;
+  /** Backwards-compat: equals `placements[0]?.playerId` once finalised.
+   *  `placements` is the source of truth for N-player matches. */
   winnerId: string | null;
   lastEvent?: string;
   pendingDisaster?: PendingDisaster | null;
   /** Game mode + config. Older saves omit these → treated as end_of_days. */
   gameMode?: GameMode;
   gameConfig?: GameConfig;
+  /** A.2 — final ranked placements for the match. Populated as each player
+   *  is finalised; ordered by rank ascending (rank 1 first). For a 2-player
+   *  match this has exactly two entries. */
+  placements?: Array<{ playerId: string; rank: number }>;
+  /** A.2 — turn rotation indices into `players`. If absent the engine uses
+   *  `[0, 1, …, N-1]`. A.3/B will populate this with a randomised
+   *  permutation; A.2 just reads it. */
+  turnOrder?: number[];
 }
 
 /** Total score used for First-to-50 / Beat-the-Clock leaderboards.

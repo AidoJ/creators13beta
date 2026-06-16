@@ -80,11 +80,19 @@ function goldenHive(): DeckCard {
  * Expected synthesised-card counts. The animal/sky-creature totals are
  * derived from whatever's in `game_cards` (mythical=true => sky_creature),
  * so adding more hand-drawn cards later does NOT require touching this file.
+ *
+ * A.2 — N-PLAYER NOTE: deck quantities deliberately do NOT scale with
+ * player_count. 3- and 4-player matches share the same single deck, so they
+ * deplete faster than 2-player matches BY DESIGN — confirmed by the
+ * product owner. Do not "fix" this by multiplying counts.
+ *
+ * EXPECTED_GOLDEN_HIVE = 1 is likewise an intentional scarcity constant —
+ * there is exactly ONE Hive in the entire match regardless of player count.
  */
 const EXPECTED_CREATORS = 24;  // 12 non-Sky types × 2
 const EXPECTED_SKY_CREATORS = 2;
 const EXPECTED_GOLDEN_BODY = 8;
-const EXPECTED_GOLDEN_HIVE = 1;
+const EXPECTED_GOLDEN_HIVE = 1; // intentional — never scale by player count
 
 export function buildDeck(allCards: GameCard[], specials: SpecialCard[] = []): DeckCard[] {
   _seq = 0;

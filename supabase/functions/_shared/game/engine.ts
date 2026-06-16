@@ -99,6 +99,12 @@ export function createMatch(opts: CreateMatchOptions): MatchState {
     hiveShield: false,
     score: 0,
     firstPickupDone: false,
+    // A.2 — N-player lifecycle fields. Default everyone to 'active' with
+    // no rank assigned yet. For 2-player matches these behave invisibly
+    // (single completer ends the game exactly as before).
+    rank: null,
+    status: "active",
+    finalisedAt: null,
   }));
 
   return {
@@ -115,6 +121,11 @@ export function createMatch(opts: CreateMatchOptions): MatchState {
     pendingDisaster: null,
     gameMode: opts.gameMode ?? "end_of_days",
     gameConfig: opts.gameConfig ?? {},
+    // A.2 — N-player rotation/placements. Default rotation is sequential
+    // [0..N-1]; A.3/B may pass a randomised permutation. `placements` fills
+    // as players are finalised.
+    placements: [],
+    turnOrder: opts.players.map((_, i) => i),
   };
 }
 
@@ -449,6 +460,166 @@ export function cardsShareCreatorType(a: DeckCard, b: DeckCard): boolean {
   return ta.some((t) => tb.has(t));
 }
 
+/* ----------- Per-cell placement explanation (UI tooltip) ----------- */
+
+export interface PlacementReason {
+  legal: boolean;
+  /** Short single-sentence explanation, safe to drop into a tooltip. */
+  text: string;
+}
+
+/** Explain whether `card` may be placed at `pos`, with copy that mirrors the
+ *  canonical phrasing: "share a Creator Type". Used for the per-cell tooltip
+ *  on the board. Cells that aren't adjacent to the ecosystem at all are not
+ *  rendered, so we don't try to explain that case here. */
+export function placementReason(
+  eco: Ecosystem,
+  card: DeckCard,
+  pos: Axial,
+): PlacementReason {
+  if (eco.placed.has(keyOf(pos))) {
+    return { legal: false, text: "This hex already has a card." };
+  }
+
+  const myIsWildcard = cardWildcardForAdjacency(card);
+  const myTypes = myIsWildcard ? [] : cardAdjacencyTypes(card);
+
+  let neighbourCount = 0;
+  let firstMatch: { reason: string } | null = null;
+
+  for (let dir = 0; dir < 6; dir++) {
+    const d = NEIGHBOUR_DIRS[dir];
+    const nKey = keyOf({ q: pos.q + d.q, r: pos.r + d.r });
+    const pc = eco.placed.get(nKey);
+    if (!pc) continue;
+    neighbourCount += 1;
+    if (firstMatch) continue;
+
+    const neighbourName = pc.card.name;
+    const neighbourIsWildcard = cardWildcardForAdjacency(pc.card);
+
+    if (myIsWildcard) {
+      firstMatch = { reason: `${card.name} is a wildcard — anchors to ${neighbourName}.` };
+      continue;
+    }
+    if (neighbourIsWildcard) {
+      firstMatch = { reason: `${neighbourName} is a wildcard — matches any card.` };
+      continue;
+    }
+
+    const placingCreator = card.kind === "creator" || card.kind === "sky_creator";
+    const neighbourIsCreator = pc.card.kind === "creator" || pc.card.kind === "sky_creator";
+    if (placingCreator && neighbourIsCreator) {
+      firstMatch = { reason: `Creators anchor to other Creators — matches ${neighbourName}.` };
+      continue;
+    }
+
+    const otherTypes = cardAdjacencyTypes(pc.card);
+    const shared = myTypes.find((t) =>
+      otherTypes.some((o) => o.toLowerCase() === t.toLowerCase()),
+    );
+    if (shared) {
+      firstMatch = { reason: `Shares ${shared} with ${neighbourName}.` };
+    }
+  }
+
+  if (neighbourCount === 0) {
+    return { legal: true, text: `${card.name} — first card on the board.` };
+  }
+  if (firstMatch) {
+    return { legal: true, text: firstMatch.reason };
+  }
+  const typeList = myTypes.length ? myTypes.join(" or ") : "any Creator Type";
+  return {
+    legal: false,
+    text: `Can't place ${card.name} here — none of the neighbours share ${typeList}.`,
+  };
+}
+
+/* ----------- Disaster eligibility (also used by stuck-card check) ----------- */
+
+/** True iff this ecosystem covers all four elements (Earth/Fire/Air/Water),
+ *  satisfying the prerequisite to unleash a Disaster. Mirrors the gate
+ *  enforced inside `playDisaster`. */
+export function playerCanUnleashDisaster(eco: Ecosystem): boolean {
+  const myElements = new Set<Element>();
+  let hasWildcardSky = false;
+  for (const pc of eco.placed.values()) {
+    if (pc.card.kind === "creator" && pc.card.element) {
+      myElements.add(pc.card.element);
+    } else if (pc.card.kind === "sky_creator") {
+      if (isSkyCluster(eco, pc.pos)) {
+        hasWildcardSky = true;
+        continue;
+      }
+      for (const n of neighbours(pc.pos)) {
+        const nb = eco.placed.get(keyOf(n));
+        if (!nb) continue;
+        if (nb.card.kind === "creator" && nb.card.element) {
+          myElements.add(nb.card.element);
+        } else if (nb.card.kind === "animal" || nb.card.kind === "sky_creature") {
+          for (const t of nb.card.types ?? []) {
+            if (!t || t === "Sky") continue;
+            const el = TYPE_TO_ELEMENT[t as keyof typeof TYPE_TO_ELEMENT];
+            if (el && el !== "Sky") myElements.add(el as Element);
+          }
+        }
+      }
+    }
+  }
+  if (hasWildcardSky && myElements.size >= ELEMENTS.length - 1) {
+    for (const e of ELEMENTS) myElements.add(e);
+  }
+  return ELEMENTS.every((e) => myElements.has(e));
+}
+
+/** True iff `card`, currently held by `playerId`, has at least one legal
+ *  action available this turn beyond the always-available discard:
+ *   - a legal board placement, OR
+ *   - a Disaster (Creator/Sky Creator + all 4 elements placed + not spent), OR
+ *   - a Sky-Creature steal (an opponent has a stealable animal + the player
+ *     has at least one empty adjacent cell on their board to land it).
+ *  Golden Hive is always considered "ready" (never board-placed, never stuck).
+ *  Pure function of `state` — never cache the result. */
+export function hasAnyLegalAction(
+  state: MatchState,
+  playerId: string,
+  card: DeckCard,
+): boolean {
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return false;
+  if (card.kind === "golden_hive") return true;
+
+  const cells = legalEcoCells(player.ecosystem);
+  if (cells.some((c) => placementMatchesNeighbours(player.ecosystem, card, c))) {
+    return true;
+  }
+  if (
+    (card.kind === "creator" || card.kind === "sky_creator") &&
+    !card.pickedUpThisTurn &&
+    !card.disasterSpent &&
+    playerCanUnleashDisaster(player.ecosystem)
+  ) {
+    return true;
+  }
+  if (card.kind === "sky_creature" && cells.length > 0) {
+    const stealable = state.players.some(
+      (p) =>
+        p.id !== playerId &&
+        Array.from(p.ecosystem.placed.values()).some(
+          (pc) =>
+            pc.card.kind === "animal" ||
+            pc.card.kind === "sky_creature" ||
+            pc.card.kind === "golden_body",
+        ),
+    );
+    if (stealable) return true;
+  }
+  return false;
+}
+
+
+
 
 
 
@@ -726,19 +897,26 @@ export function playDisaster(
   player.hand.splice(idx, 1);
   next.used.push(spentCreator);
 
-  // Find a victim who can intercept with a Golden Hive in hand.
-  const hiveVictim = next.players.find(
+  // A.2 — Collect ALL active other players who hold an unspent Hive. For
+  // 2-player this is at most one (identical to today's behaviour); for N>2
+  // every Hive-holder gets to choose before the wipe finalises.
+  const hiveVictims = next.players.filter(
     (p) =>
       p.id !== player.id &&
+      (p.status ?? "active") === "active" &&
       p.hand.some((c) => c.kind === "golden_hive" && !c.spent),
   );
-  if (hiveVictim) {
+  if (hiveVictims.length > 0) {
+    const victimIds = hiveVictims.map((p) => p.id);
     next.pendingDisaster = {
       attackerId: player.id,
-      victimId: hiveVictim.id,
+      victimIds,
+      victimId: victimIds[0],
+      blockedBy: [],
       creator,
     };
-    next.lastEvent = `${player.name} played a ${creator.name} Disaster — waiting on ${hiveVictim.name}'s Golden Hive…`;
+    const waitingNames = hiveVictims.map((p) => p.name).join(", ");
+    next.lastEvent = `${player.name} played a ${creator.name} Disaster — waiting on ${waitingNames}'s Golden Hive…`;
     // Disaster has been played but does not consume the placement slot until
     // resolved — that way the attacker can't sneak in another action while
     // the victim decides.
@@ -750,14 +928,21 @@ export function playDisaster(
   return afterAction(next);
 }
 
-/** Victim's response to a pending disaster prompt. */
+/** Victim's response to a pending disaster prompt. Processes the head of
+ *  `pendingDisaster.victimIds` (the only candidate in 2-player matches; one
+ *  of several queued Hive-holders in N>2 matches). When the queue empties
+ *  the wipe is applied against every active opponent except attackers who
+ *  blocked with their Hive. */
 export function resolveDisaster(state: MatchState, useHive: boolean): MatchState {
   if (state.finished) return state;
   if (!state.pendingDisaster) throw new Error("No disaster pending");
   const next = cloneState(state);
   const pd = next.pendingDisaster!;
   const attacker = next.players.find((p) => p.id === pd.attackerId)!;
-  const victim = next.players.find((p) => p.id === pd.victimId)!;
+  const queue = pd.victimIds && pd.victimIds.length > 0 ? pd.victimIds.slice() : [pd.victimId];
+  const currentVictimId = queue[0];
+  const victim = next.players.find((p) => p.id === currentVictimId)!;
+  const blockedBy = (pd.blockedBy ?? []).slice();
 
   if (useHive) {
     // Move the victim's Hive from hand to the used pile, flagged spent so
@@ -767,33 +952,49 @@ export function resolveDisaster(state: MatchState, useHive: boolean): MatchState
     const [hive] = victim.hand.splice(hIdx, 1);
     next.used.push({ ...hive, spent: true });
     victim.hiveShield = false;
+    blockedBy.push(victim.id);
     next.lastEvent = `${victim.name} activated their Golden Hive — the ${pd.creator.name} Disaster was blocked!`;
-    // Other victims (if any 3+ player matches ever exist) still get hit.
-    applyDisasterWipe(next, attacker.id, pd.creator, victim.id);
   } else {
     next.lastEvent = `${victim.name} saved their Golden Hive for later — the Disaster hits.`;
-    applyDisasterWipe(next, attacker.id, pd.creator);
   }
 
+  const remaining = queue.slice(1);
+  if (remaining.length > 0) {
+    // More Hive-holders still to decide. Keep the pause in place.
+    next.pendingDisaster = {
+      ...pd,
+      victimIds: remaining,
+      victimId: remaining[0],
+      blockedBy,
+    };
+    return next;
+  }
+
+  // All Hive decisions are in → execute the wipe against every active
+  // non-attacker except those who blocked.
+  applyDisasterWipe(next, attacker.id, pd.creator, blockedBy);
   next.pendingDisaster = null;
   next.placedThisTurn += 1;
   return afterAction(next);
 }
 
-/** Internal: apply the wipe for every victim except `skipVictimId` (used when
- *  one victim's hive blocks them out of the wipe). */
+/** Internal: apply the wipe for every active non-attacker except victims
+ *  in `skipVictimIds` (those who blocked with a Hive). Also skips already-
+ *  finalised / conceded / forfeited players. */
 function applyDisasterWipe(
   next: MatchState,
   attackerId: string,
   creator: DeckCard,
-  skipVictimId?: string,
+  skipVictimIds: string[] = [],
 ): void {
   const player = next.players.find((p) => p.id === attackerId)!;
+  const skipSet = new Set(skipVictimIds);
   let wiped = 0;
   let placedOnBoard = 0;
   for (const victim of next.players) {
     if (victim.id === attackerId) continue;
-    if (skipVictimId && victim.id === skipVictimId) continue;
+    if (skipSet.has(victim.id)) continue;
+    if ((victim.status ?? "active") !== "active") continue;
     if (victim.hiveShield) {
       victim.hiveShield = false;
       next.lastEvent = `Hive shield absorbed the ${creator.name} disaster!`;
@@ -927,27 +1128,64 @@ function advanceTurn(state: MatchState): void {
   for (const p of state.players) {
     p.hand = p.hand.map((c) => (c.pickedUpThisTurn ? { ...c, pickedUpThisTurn: false } : c));
   }
-  // Skip to next player.
-  state.turn = (state.turn + 1) % state.players.length;
+
+  // A.2 — N-player rotation. Walk `turnOrder` from the current player and
+  // pick the next slot whose player is still 'active'. If only one active
+  // player remains, finalise the match (they take the next available rank).
+  const order =
+    state.turnOrder && state.turnOrder.length === state.players.length
+      ? state.turnOrder
+      : state.players.map((_, i) => i);
+  const isActive = (slot: number) => (state.players[slot]?.status ?? "active") === "active";
+
+  const activeSlots = order.filter(isActive);
+  if (activeSlots.length <= 1) {
+    finalise(state);
+    return;
+  }
+
+  const currentOrderIdx = order.indexOf(state.turn);
+  const startFrom = currentOrderIdx < 0 ? 0 : currentOrderIdx;
+  let nextSlot = state.turn;
+  for (let step = 1; step <= order.length; step++) {
+    const candidate = order[(startFrom + step) % order.length];
+    if (isActive(candidate)) {
+      nextSlot = candidate;
+      break;
+    }
+  }
+  state.turn = nextSlot;
   state.phase = "draw";
   state.drawnThisTurn = 0;
   state.placedThisTurn = 0;
   state.turnNumber += 1;
 
 
-  // Both piles empty AND no player can play any more cards.
+  // Both piles empty AND no active player can play any more cards.
   if (state.draw.length === 0 && state.used.length === 0) {
-    const anyCardsLeft = state.players.some((p) => p.hand.length > 0);
+    const activesLeft = state.players.filter((p) => (p.status ?? "active") === "active");
+    const anyCardsLeft = activesLeft.some((p) => p.hand.length > 0);
     if (!anyCardsLeft) {
-      // End of Days is ecosystem-only — no "highest score wins" fallback.
-      // If nobody has assembled a valid ecosystem the match is a DRAW
-      // (winnerId = null). Progress awards half points to each player.
-      // Top Score / Beat the Clock still resolve by score.
+      // End of Days is ecosystem-only — no "highest score wins" fallback
+      // among still-active players (they're stalemated). Anyone already
+      // finalised keeps their existing rank. If NOBODY has been finalised
+      // yet (no completer), the match is a DRAW; otherwise the remaining
+      // active players share the next rank slot below the last completer.
+      // N=2 collapses to today's behaviour (single draw, winnerId=null).
       if ((state.gameMode ?? "end_of_days") === "end_of_days") {
-        state.finished = true;
-        state.winnerId = null;
-        state.lastEvent =
-          "Both piles are empty and no one completed a valid ecosystem — match ends in a draw. Each player earns half points.";
+        if ((state.placements?.length ?? 0) === 0) {
+          state.finished = true;
+          state.winnerId = null;
+          state.placements = [];
+          state.lastEvent =
+            "Both piles are empty and no one completed a valid ecosystem — match ended ranked by score.";
+        } else {
+          // Some players already finalised by completion; resolve the rest
+          // by score and close out.
+          finalise(state);
+          state.lastEvent =
+            "Both piles are empty — remaining players ranked by score.";
+        }
       } else {
         finalise(state);
       }
@@ -1121,6 +1359,8 @@ function canAssignAdjacentAnimalsToCreators(
 
 function checkWin(state: MatchState): void {
   // First-to-N points game mode wins as soon as anyone hits target.
+  // Winner-takes-all — collapses to today's 2-player behaviour. (N>2 first-
+  // to-N is not generalised further in A.2 by design; pending product call.)
   if (state.gameMode === "first_to_50") {
     const target = state.gameConfig?.targetScore ?? 50;
     let bestId: string | null = null;
@@ -1138,17 +1378,53 @@ function checkWin(state: MatchState): void {
     }
   }
 
-  // Classic ecosystem-complete win (end_of_days, also a valid early win for first_to_50).
-  // Rule: the placed ecosystem must contain AT LEAST one Creator covering each
-  // of the four elements (Earth / Fire / Air / Water — Sky Creator is a wildcard),
-  // and there must exist a way to assign 3 placed animals to each of those four
-  // chosen Creators matching its Creator Type. Extra Creators / animals on the
-  // board beyond that selection are allowed.
+  // Classic ecosystem-complete win. For 2-player the first completer wins
+  // the match outright (rank 1, opponent rank 2). For N>2 the first
+  // completer finalises their OWN position only (next available rank, also
+  // 1 for the first); the match continues for the remaining actives until
+  // only one active player remains — at which point `advanceTurn` triggers
+  // `finalise` to close the match out with score-ranked placements.
   for (const p of state.players) {
+    if ((p.status ?? "active") !== "active") continue;
     if (!validateEcosystemWin(p).valid) continue;
-    finalise(state, p.id);
-    return;
+
+    const totalPlayers = state.players.length;
+    if (totalPlayers <= 2) {
+      // N=2 fast path — preserves existing behaviour exactly (immediate end).
+      finalise(state, p.id);
+      return;
+    }
+
+    // N>2 — partial finalise. Assign next rank, mark status, leave match
+    // running. If finalising this player leaves ≤1 active, `advanceTurn`
+    // (called by `afterAction`) will detect that and end the match.
+    partiallyFinalisePlayer(state, p.id, "completed");
   }
+}
+
+/** A.2 helper — finalise a single player (mid-match completion in N>2)
+ *  without ending the match. Pure mutation. */
+function partiallyFinalisePlayer(
+  state: MatchState,
+  playerId: string,
+  reason: "completed" | "conceded" | "forfeit" = "completed",
+): void {
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return;
+  if ((player.status ?? "active") !== "active") return;
+  const placements = state.placements ?? [];
+  const rank = placements.length + 1;
+  player.status =
+    reason === "conceded" ? "conceded" : reason === "forfeit" ? "forfeit" : "finalised";
+  player.rank = rank;
+  player.finalisedAt = Date.now();
+  state.placements = [...placements, { playerId, rank }];
+  state.lastEvent =
+    reason === "completed"
+      ? `${player.name} completed their ecosystem — finished #${rank}.`
+      : reason === "conceded"
+      ? `${player.name} conceded — finished #${rank}.`
+      : `${player.name} forfeited — finished #${rank}.`;
 }
 
 /** Return all 4-creator subsets of `creators` such that each of the 4 elements
@@ -1183,27 +1459,98 @@ function enumerateElementCoveringQuartets(
   return out;
 }
 
-/** Force-finalise (e.g. Beat-the-Clock timer expiry). Highest total score wins. */
+/** Force-finalise (e.g. Beat-the-Clock timer expiry). All players are
+ *  ranked by total score (desc). Ties share the higher rank — since every
+ *  non-winner currently earns the same points regardless of exact
+ *  loser-rank position (winner-takes-all rule), exact ordering among ties
+ *  does not affect progress. */
 export function finaliseByScore(state: MatchState): MatchState {
   if (state.finished) return state;
   const next = cloneState(state);
-  const top = next.players.reduce((a, b) =>
-    playerTotalScore(b) > playerTotalScore(a) ? b : a,
-  );
-  finalise(next, top.id);
-  next.lastEvent = `Time's up — ${top.name} wins on points!`;
+  finalise(next);
+  const winner = next.placements?.[0]
+    ? next.players.find((p) => p.id === next.placements![0].playerId)
+    : null;
+  next.lastEvent = winner
+    ? `Time's up — ${winner.name} wins on points!`
+    : "Time's up — match ranked by score.";
   return next;
 }
 
+/** A.2 — assign ranks to every player and populate `placements`.
+ *
+ *  Behaviour:
+ *    - Any player already finalised mid-match (status !== 'active') keeps
+ *      the rank assigned at the time of their partial finalisation.
+ *    - If `winnerId` is supplied AND that player is still active, they
+ *      take the next available rank (1 in the standard 2-player case).
+ *    - Remaining active players are sorted by `playerTotalScore` desc and
+ *      assigned the remaining ranks. Tied players share the higher rank
+ *      (e.g. two players tied for 2nd both get rank 2; the next gets 4).
+ *    - `winnerId` (state-level, backwards-compat) = the playerId at rank 1.
+ *
+ *  For 2-player end-of-game this collapses to exactly today's behaviour:
+ *  the called-out winner gets rank 1, the opponent rank 2. */
 function finalise(state: MatchState, winnerId?: string): void {
   state.finished = true;
-  if (winnerId) {
-    state.winnerId = winnerId;
-  } else {
-    const top = state.players.reduce((a, b) => (b.score > a.score ? b : a));
-    state.winnerId = top.id;
+  const placements = (state.placements ?? []).slice();
+  const ranked = new Set(placements.map((pl) => pl.playerId));
+
+  const assignRank = (
+    playerId: string,
+    rank: number,
+    reason: "completed" | "scored" = "scored",
+  ) => {
+    const p = state.players.find((x) => x.id === playerId);
+    if (!p) return;
+    p.status = "finalised";
+    p.rank = rank;
+    p.finalisedAt = Date.now();
+    placements.push({ playerId, rank });
+    ranked.add(playerId);
+    void reason;
+  };
+
+  // Step 1: honour an explicit winner if they're still active.
+  if (winnerId && !ranked.has(winnerId)) {
+    const winnerPlayer = state.players.find((p) => p.id === winnerId);
+    if (winnerPlayer && (winnerPlayer.status ?? "active") === "active") {
+      assignRank(winnerId, placements.length + 1, "completed");
+    }
   }
-  state.lastEvent = `Match over — winner: ${
-    state.players.find((p) => p.id === state.winnerId)?.name ?? "—"
-  }`;
+
+  // Step 2: rank remaining active players by total score (desc), ties share
+  // the higher rank.
+  const remaining = state.players
+    .filter((p) => !ranked.has(p.id))
+    .sort((a, b) => playerTotalScore(b) - playerTotalScore(a));
+
+  let i = 0;
+  while (i < remaining.length) {
+    const rank = placements.length + 1;
+    const score = playerTotalScore(remaining[i]);
+    // Collect every player tied at this score (they share `rank`).
+    let j = i;
+    while (j < remaining.length && playerTotalScore(remaining[j]) === score) {
+      const p = remaining[j];
+      p.status = "finalised";
+      p.rank = rank;
+      p.finalisedAt = Date.now();
+      placements.push({ playerId: p.id, rank });
+      ranked.add(p.id);
+      j += 1;
+    }
+    i = j;
+  }
+
+  state.placements = placements;
+  // Backwards-compat: winnerId mirrors the rank-1 placement.
+  const top = placements.find((pl) => pl.rank === 1);
+  state.winnerId = top?.playerId ?? null;
+  const topName = top
+    ? state.players.find((p) => p.id === top.playerId)?.name ?? "—"
+    : "—";
+  state.lastEvent = state.winnerId
+    ? `Match over — winner: ${topName}`
+    : "Match over — no outright winner";
 }
