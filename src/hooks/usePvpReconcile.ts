@@ -84,6 +84,7 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
         try {
           const { row, state: canonical } = await loadMatch(matchId);
           setMatchRow(row);
+          logClientStateChange("move_response", Number(row.seq ?? 0), canonical);
           setState(canonical);
           serverSeqRef.current = Number(row.seq ?? 0);
         } catch (e) {

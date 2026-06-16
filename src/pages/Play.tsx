@@ -484,7 +484,7 @@ export default function Play() {
       const snap = state;
       const next = fn();
       pushUndo(snap);
-      setState(next);
+      setLoggedState(next, "optimistic_engine");
       schedulePersist(next, move);
       setSelectedUid(null);
       setMode("place");
@@ -541,7 +541,7 @@ export default function Play() {
         const snap = state;
         const next = moveMyPlacedHex(state, selfSlot, fromKey, pos);
         pushUndo(snap);
-        setState(next);
+        setLoggedState(next, "optimistic_engine");
         schedulePersist(next, { type: "move_hex", from_key: fromKey, to_pos: pos });
         setMoveFromKey(null);
         armQuickUndo();
@@ -591,6 +591,7 @@ export default function Play() {
       if (!s) return s;
       pushUndo(s);
       const next = rotateMyPlacedHex(s, selfSlot, posKey);
+      if (isPvp) logClientStateChange("optimistic_engine", serverSeqRef.current, next);
       schedulePersist(next, { type: "rotate_hex", pos_key: posKey });
       return next;
     });
