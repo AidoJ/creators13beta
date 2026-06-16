@@ -360,6 +360,20 @@ Deno.serve(async (req) => {
     }
   }
 
+  const preStateSeq = Number(match.seq ?? 0);
+  const preStateUids = allStateUids(state);
+  const preCallerHandUids = state.players[callerSlot]?.hand.map((card) => card.uid) ?? [];
+  const payloadUids = movePayloadUids(body.move);
+  console.log(
+    `[server] apply-move received\n` +
+      `  match_id: ${body.match_id}\n` +
+      `  caller_slot: ${callerSlot}\n` +
+      `  move_type: ${body.move.type}\n` +
+      `  move_payload_uids: ${JSON.stringify(payloadUids)}\n` +
+      `  pre_state_seq: ${preStateSeq}\n` +
+      `  pre_state_caller_hand_uids: ${JSON.stringify(preCallerHandUids)}`,
+  );
+
   // ----- apply -----
   let nextState: MatchState;
   if (body.move.type === "concede") {
@@ -387,6 +401,15 @@ Deno.serve(async (req) => {
       );
     }
   }
+
+  const postStateSeq = body.expected_seq + 1;
+  const postStateUids = allStateUids(nextState);
+  const anyUidDrift = Array.from(postStateUids).some((uid) => !preStateUids.has(uid));
+  console.log(
+    `[server] engine result\n` +
+      `  post_state_seq: ${postStateSeq}\n` +
+      `  any_uid_drift: ${anyUidDrift}`,
+  );
 
   const finished = !!nextState.finished;
   let winnerUserId: string | null = null;
