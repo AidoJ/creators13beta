@@ -932,11 +932,14 @@ export function playDisaster(
   return afterAction(next);
 }
 
-/** Victim's response to a pending disaster prompt. Processes the head of
- *  `pendingDisaster.victimIds` (the only candidate in 2-player matches; one
- *  of several queued Hive-holders in N>2 matches). When the queue empties
- *  the wipe is applied against every active opponent except attackers who
+/** Victim's response to a pending disaster prompt. Processes the (only)
+ *  Hive-holder at the head of `pendingDisaster.victimIds` — by the
+ *  single-Hive invariant the queue length is always ≤ 1, so this resolves
+ *  in a single call. The remaining-queue branch below is dead code in real
+ *  play but is retained as a structural safety net. After the decision the
+ *  wipe is applied against every active opponent except attackers who
  *  blocked with their Hive. */
+
 export function resolveDisaster(state: MatchState, useHive: boolean): MatchState {
   if (state.finished) return state;
   if (!state.pendingDisaster) throw new Error("No disaster pending");
