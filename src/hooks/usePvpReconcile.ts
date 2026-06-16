@@ -36,9 +36,11 @@ export interface PvpReconcile {
 
 export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpReconcile {
   const serverSeqRef = useRef(0);
-  /** Promise-chain mutex so only one apply-move request is in flight per
-   *  match at a time. */
-  const inFlightMoveRef = useRef<Promise<void> | null>(null);
+  /** HARD in-flight guard. While true, any further submitServerMove call is
+   *  a no-op (logged and dropped). This makes double-submit structurally
+   *  impossible regardless of how many gesture/timer paths fire. The flag
+   *  is cleared in finally{}, so both success and error paths release it. */
+  const inFlightRef = useRef(false);
 
   // Keep serverSeqRef in sync whenever the row reference changes (initial
   // load, post-realtime push, or a fresh reconcile fetch).
@@ -47,19 +49,24 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
   }, [matchRow]);
 
   const submitServerMove = useCallback(
-    (move: ServerMove): Promise<void> => {
-      if (!matchRow) return Promise.resolve();
+    async (move: ServerMove): Promise<void> => {
+      if (!matchRow) return;
+      if (inFlightRef.current) {
+        console.warn("[apply-move DROP] another submit is in flight", {
+          moveType: move.type,
+        });
+        return;
+      }
+      inFlightRef.current = true;
       const matchId = matchRow.id;
-      const currentSeq = serverSeqRef.current;
+      const expected = serverSeqRef.current;
       const cardUid = "uid" in move ? move.uid : undefined;
       console.warn("[apply-move CALL]", {
-        seq: currentSeq,
+        seq: expected,
         moveType: move.type,
         cardUid,
-        stack: new Error().stack,
       });
-      const run = async () => {
-        const expected = serverSeqRef.current;
+      try {
         const result = await applyMoveServer(matchId, expected, move);
         if (result.ok === true) {
           serverSeqRef.current = result.seq;
@@ -98,14 +105,9 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
         } catch (e) {
           console.error("[apply-move] reconcile failed", e);
         }
-      };
-      const chained = (inFlightMoveRef.current ?? Promise.resolve())
-        .then(run, run)
-        .finally(() => {
-          if (inFlightMoveRef.current === chained) inFlightMoveRef.current = null;
-        });
-      inFlightMoveRef.current = chained;
-      return chained;
+      } finally {
+        inFlightRef.current = false;
+      }
     },
     [matchRow, setMatchRow, setState],
   );
