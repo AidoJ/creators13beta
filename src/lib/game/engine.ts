@@ -1126,8 +1126,33 @@ function advanceTurn(state: MatchState): void {
   for (const p of state.players) {
     p.hand = p.hand.map((c) => (c.pickedUpThisTurn ? { ...c, pickedUpThisTurn: false } : c));
   }
-  // Skip to next player.
-  state.turn = (state.turn + 1) % state.players.length;
+
+  // A.2 — N-player rotation. Walk `turnOrder` from the current player and
+  // pick the next slot whose player is still 'active'. If only one active
+  // player remains, finalise the match (they take the next available rank).
+  const order =
+    state.turnOrder && state.turnOrder.length === state.players.length
+      ? state.turnOrder
+      : state.players.map((_, i) => i);
+  const isActive = (slot: number) => (state.players[slot]?.status ?? "active") === "active";
+
+  const activeSlots = order.filter(isActive);
+  if (activeSlots.length <= 1) {
+    finalise(state);
+    return;
+  }
+
+  const currentOrderIdx = order.indexOf(state.turn);
+  const startFrom = currentOrderIdx < 0 ? 0 : currentOrderIdx;
+  let nextSlot = state.turn;
+  for (let step = 1; step <= order.length; step++) {
+    const candidate = order[(startFrom + step) % order.length];
+    if (isActive(candidate)) {
+      nextSlot = candidate;
+      break;
+    }
+  }
+  state.turn = nextSlot;
   state.phase = "draw";
   state.drawnThisTurn = 0;
   state.placedThisTurn = 0;
