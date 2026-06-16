@@ -334,6 +334,20 @@ Deno.serve(async (req) => {
     return null;
   };
 
+  const preStateSeq = Number(match.seq ?? 0);
+  const preStateUids = allStateUids(state);
+  const preCallerHandUids = state.players[callerSlot]?.hand.map((card) => card.uid) ?? [];
+  const payloadUids = movePayloadUids(body.move);
+  console.log(
+    `[server] apply-move received\n` +
+      `  match_id: ${body.match_id}\n` +
+      `  caller_slot: ${callerSlot}\n` +
+      `  move_type: ${body.move.type}\n` +
+      `  move_payload_uids: ${JSON.stringify(payloadUids)}\n` +
+      `  pre_state_seq: ${preStateSeq}\n` +
+      `  pre_state_caller_hand_uids: ${JSON.stringify(preCallerHandUids)}`,
+  );
+
   // Turn check (skipped for non-turn-bound actions).
   // rotate_hex is purely presentational on the caller's own ecosystem, so
   // we allow it any time. Everything else requires it to be the caller's turn.
@@ -359,20 +373,6 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "you are not the disaster victim", message: "You are not the disaster victim" }, 400);
     }
   }
-
-  const preStateSeq = Number(match.seq ?? 0);
-  const preStateUids = allStateUids(state);
-  const preCallerHandUids = state.players[callerSlot]?.hand.map((card) => card.uid) ?? [];
-  const payloadUids = movePayloadUids(body.move);
-  console.log(
-    `[server] apply-move received\n` +
-      `  match_id: ${body.match_id}\n` +
-      `  caller_slot: ${callerSlot}\n` +
-      `  move_type: ${body.move.type}\n` +
-      `  move_payload_uids: ${JSON.stringify(payloadUids)}\n` +
-      `  pre_state_seq: ${preStateSeq}\n` +
-      `  pre_state_caller_hand_uids: ${JSON.stringify(preCallerHandUids)}`,
-  );
 
   // ----- apply -----
   let nextState: MatchState;
