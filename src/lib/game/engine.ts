@@ -895,19 +895,26 @@ export function playDisaster(
   player.hand.splice(idx, 1);
   next.used.push(spentCreator);
 
-  // Find a victim who can intercept with a Golden Hive in hand.
-  const hiveVictim = next.players.find(
+  // A.2 — Collect ALL active other players who hold an unspent Hive. For
+  // 2-player this is at most one (identical to today's behaviour); for N>2
+  // every Hive-holder gets to choose before the wipe finalises.
+  const hiveVictims = next.players.filter(
     (p) =>
       p.id !== player.id &&
+      (p.status ?? "active") === "active" &&
       p.hand.some((c) => c.kind === "golden_hive" && !c.spent),
   );
-  if (hiveVictim) {
+  if (hiveVictims.length > 0) {
+    const victimIds = hiveVictims.map((p) => p.id);
     next.pendingDisaster = {
       attackerId: player.id,
-      victimId: hiveVictim.id,
+      victimIds,
+      victimId: victimIds[0],
+      blockedBy: [],
       creator,
     };
-    next.lastEvent = `${player.name} played a ${creator.name} Disaster — waiting on ${hiveVictim.name}'s Golden Hive…`;
+    const waitingNames = hiveVictims.map((p) => p.name).join(", ");
+    next.lastEvent = `${player.name} played a ${creator.name} Disaster — waiting on ${waitingNames}'s Golden Hive…`;
     // Disaster has been played but does not consume the placement slot until
     // resolved — that way the attacker can't sneak in another action while
     // the victim decides.
