@@ -42,6 +42,7 @@ import {
   type GameMatchRow,
 } from "@/lib/game/persistence";
 import { type ServerMove } from "@/lib/game/serverMoves";
+import { logClientStateChange } from "@/lib/game/debugLog";
 import { deserializeMatch } from "@/lib/game/serialize";
 import { recordProgressDiff } from "@/lib/game/progress";
 import type { BotDifficulty } from "@/lib/game/bot";
@@ -280,11 +281,19 @@ export default function Play() {
     setMatchRow,
     setState,
   });
+  const setLoggedState = useCallback(
+    (next: MatchState, source: "optimistic_engine", seq = serverSeqRef.current) => {
+      if (isPvp) logClientStateChange(source, seq, next);
+      setState(next);
+    },
+    [isPvp, serverSeqRef],
+  );
 
   /* ----------- Realtime: opponent's moves ----------- */
 
   const handleRemote = useCallback(
     (remoteState: MatchState, row: GameMatchRow) => {
+      logClientStateChange("realtime_push", Number(row.seq ?? 0), remoteState);
       setState(remoteState);
       setMatchRow(row);
       serverSeqRef.current = Number(row.seq ?? 0);
@@ -404,11 +413,11 @@ export default function Play() {
     turnStartedAtRef,
     onTick: () => setNowTick((n) => n + 1),
     onMatchEnd: (next) => {
-      setState(next);
+      setLoggedState(next, "optimistic_engine");
       schedulePersist(next, { type: "finalise_by_score" });
     },
     onTurnExpired: (next) => {
-      setState(next);
+      setLoggedState(next, "optimistic_engine");
       schedulePersist(next, { type: "end_turn" });
     },
   });
@@ -475,7 +484,7 @@ export default function Play() {
       const snap = state;
       const next = fn();
       pushUndo(snap);
-      setState(next);
+      setLoggedState(next, "optimistic_engine");
       schedulePersist(next, move);
       setSelectedUid(null);
       setMode("place");
@@ -532,7 +541,7 @@ export default function Play() {
         const snap = state;
         const next = moveMyPlacedHex(state, selfSlot, fromKey, pos);
         pushUndo(snap);
-        setState(next);
+        setLoggedState(next, "optimistic_engine");
         schedulePersist(next, { type: "move_hex", from_key: fromKey, to_pos: pos });
         setMoveFromKey(null);
         armQuickUndo();
@@ -582,6 +591,7 @@ export default function Play() {
       if (!s) return s;
       pushUndo(s);
       const next = rotateMyPlacedHex(s, selfSlot, posKey);
+      if (isPvp) logClientStateChange("optimistic_engine", serverSeqRef.current, next);
       schedulePersist(next, { type: "rotate_hex", pos_key: posKey });
       return next;
     });

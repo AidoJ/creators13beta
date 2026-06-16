@@ -42,7 +42,7 @@ import {
   moveMyPlacedHex,
   finaliseByScore,
 } from "../_shared/game/engine.ts";
-import type { Axial, Ecosystem, MatchState, PlacedCard } from "../_shared/game/types.ts";
+import type { Axial, DeckCard, Ecosystem, MatchState, PlacedCard } from "../_shared/game/types.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -122,6 +122,45 @@ function redactFor(serialisedState: any, recipientPlayerId: string | null) {
         : { ...p, hand: [], handCount: Array.isArray(p.hand) ? p.hand.length : 0 },
     ),
   };
+}
+
+function cardUid(card: DeckCard | null | undefined): string | null {
+  return typeof card?.uid === "string" ? card.uid : null;
+}
+
+function movePayloadUids(move: Move): string[] {
+  const out: string[] = [];
+  const add = (uid: unknown) => {
+    if (typeof uid === "string" && uid.length > 0) out.push(uid);
+  };
+  switch (move.type) {
+    case "pickup_from_used":
+    case "place":
+    case "play_disaster":
+    case "discard":
+      add(move.uid);
+      break;
+    case "play_sky_steal":
+      add(move.uid);
+      break;
+  }
+  return out;
+}
+
+function allStateUids(state: MatchState): Set<string> {
+  const uids = new Set<string>();
+  const addCard = (card: DeckCard | null | undefined) => {
+    const uid = cardUid(card);
+    if (uid) uids.add(uid);
+  };
+  for (const card of state.draw) addCard(card);
+  for (const card of state.used) addCard(card);
+  for (const player of state.players) {
+    for (const card of player.hand) addCard(card);
+    for (const placed of player.ecosystem.placed.values()) addCard(placed.card);
+  }
+  addCard(state.pendingDisaster?.creator);
+  return uids;
 }
 
 /* ----------------------- move dispatch ----------------------- */
@@ -295,6 +334,20 @@ Deno.serve(async (req) => {
     return null;
   };
 
+  const preStateSeq = Number(match.seq ?? 0);
+  const preStateUids = allStateUids(state);
+  const preCallerHandUids = state.players[callerSlot]?.hand.map((card) => card.uid) ?? [];
+  const payloadUids = movePayloadUids(body.move);
+  console.log(
+    `[server] apply-move received\n` +
+      `  match_id: ${body.match_id}\n` +
+      `  caller_slot: ${callerSlot}\n` +
+      `  move_type: ${body.move.type}\n` +
+      `  move_payload_uids: ${JSON.stringify(payloadUids)}\n` +
+      `  pre_state_seq: ${preStateSeq}\n` +
+      `  pre_state_caller_hand_uids: ${JSON.stringify(preCallerHandUids)}`,
+  );
+
   // Turn check (skipped for non-turn-bound actions).
   // rotate_hex is purely presentational on the caller's own ecosystem, so
   // we allow it any time. Everything else requires it to be the caller's turn.
@@ -348,6 +401,15 @@ Deno.serve(async (req) => {
       );
     }
   }
+
+  const postStateSeq = body.expected_seq + 1;
+  const postStateUids = allStateUids(nextState);
+  const anyUidDrift = Array.from(postStateUids).some((uid) => !preStateUids.has(uid));
+  console.log(
+    `[server] engine result\n` +
+      `  post_state_seq: ${postStateSeq}\n` +
+      `  any_uid_drift: ${anyUidDrift}`,
+  );
 
   const finished = !!nextState.finished;
   let winnerUserId: string | null = null;
