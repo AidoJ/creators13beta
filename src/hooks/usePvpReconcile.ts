@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { applyMoveServer, type ServerMove } from "@/lib/game/serverMoves";
 import { loadMatch, type GameMatchRow } from "@/lib/game/persistence";
+import { logClientStateChange } from "@/lib/game/debugLog";
 import { deserializeMatch, type SerializedMatchState } from "@/lib/game/serialize";
 import type { MatchState } from "@/lib/game/types";
 
@@ -62,6 +63,7 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
           if (result.publicState) {
             try {
               const canonical = deserializeMatch(result.publicState as SerializedMatchState);
+              logClientStateChange("move_response", result.seq, canonical);
               setState(canonical);
             } catch (e) {
               console.error("[apply-move] could not hydrate publicState", e);
