@@ -184,8 +184,11 @@ describe("A.2 — Disaster wipe in N=4 with single Hive-holder (single-Hive inva
     expect(resolved.players[3].ecosystem.placed.size).toBe(0);
     // P2's Hive is unspent (saved for later).
     expect(resolved.players[2].hand.some((c) => c.kind === "golden_hive" && !c.spent)).toBe(true);
-    // Attacker untouched.
-    expect(resolved.players[0].ecosystem.placed.size).toBe(4);
+    // Attacker untouched — original 4 Creators still on the board.
+    for (const k of ["0,0", "1,0", "0,1", "-1,1"]) {
+      expect(resolved.players[0].ecosystem.placed.has(k)).toBe(true);
+    }
+
     // Slot consumed exactly once.
     expect(resolved.placedThisTurn).toBe(1);
   });
