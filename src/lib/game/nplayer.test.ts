@@ -157,8 +157,13 @@ describe("A.2 — Disaster wipe in N=4 with single Hive-holder (single-Hive inva
     // P2 blocked → board untouched, Hive marked spent.
     expect(resolved.players[2].ecosystem.placed.size).toBe(1);
     expect(resolved.players[2].hand.some((c) => c.kind === "golden_hive" && !c.spent)).toBe(false);
-    // Attacker (P0) is never wiped.
-    expect(resolved.players[0].ecosystem.placed.size).toBe(4);
+    // Attacker (P0) is never wiped — their 4 original Creators stay put.
+    // (Their ecosystem may GROW because wiped cards land on the attacker's
+    // board per rule book, so we assert on the original keys, not size.)
+    for (const k of ["0,0", "1,0", "0,1", "-1,1"]) {
+      expect(resolved.players[0].ecosystem.placed.has(k)).toBe(true);
+    }
+
     // placedThisTurn incremented exactly ONCE across the whole disaster
     // resolution — not once per victim.
     expect(resolved.placedThisTurn).toBe(1);
