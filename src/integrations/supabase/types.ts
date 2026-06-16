@@ -2087,7 +2087,7 @@ export type Database = {
         Returns: undefined
       }
       finalise_ranked_match: {
-        Args: { _match_id: string; _reason?: string }
+        Args: { _match_id: string; _placements?: Json; _reason?: string }
         Returns: undefined
       }
       generate_invitation_code: { Args: never; Returns: string }
