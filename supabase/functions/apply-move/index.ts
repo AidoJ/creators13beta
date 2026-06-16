@@ -42,7 +42,7 @@ import {
   moveMyPlacedHex,
   finaliseByScore,
 } from "../_shared/game/engine.ts";
-import type { Axial, Ecosystem, MatchState, PlacedCard } from "../_shared/game/types.ts";
+import type { Axial, DeckCard, Ecosystem, MatchState, PlacedCard } from "../_shared/game/types.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -122,6 +122,45 @@ function redactFor(serialisedState: any, recipientPlayerId: string | null) {
         : { ...p, hand: [], handCount: Array.isArray(p.hand) ? p.hand.length : 0 },
     ),
   };
+}
+
+function cardUid(card: DeckCard | null | undefined): string | null {
+  return typeof card?.uid === "string" ? card.uid : null;
+}
+
+function movePayloadUids(move: Move): string[] {
+  const out: string[] = [];
+  const add = (uid: unknown) => {
+    if (typeof uid === "string" && uid.length > 0) out.push(uid);
+  };
+  switch (move.type) {
+    case "pickup_from_used":
+    case "place":
+    case "play_disaster":
+    case "discard":
+      add(move.uid);
+      break;
+    case "play_sky_steal":
+      add(move.uid);
+      break;
+  }
+  return out;
+}
+
+function allStateUids(state: MatchState): Set<string> {
+  const uids = new Set<string>();
+  const addCard = (card: DeckCard | null | undefined) => {
+    const uid = cardUid(card);
+    if (uid) uids.add(uid);
+  };
+  for (const card of state.draw) addCard(card);
+  for (const card of state.used) addCard(card);
+  for (const player of state.players) {
+    for (const card of player.hand) addCard(card);
+    for (const placed of player.ecosystem.placed.values()) addCard(placed.card);
+  }
+  addCard(state.pendingDisaster?.creator);
+  return uids;
 }
 
 /* ----------------------- move dispatch ----------------------- */
