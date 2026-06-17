@@ -1544,74 +1544,76 @@ export function finaliseByScore(state: MatchState): MatchState {
   return next;
 }
 
-/** A.2 — assign ranks to every player and populate `placements`.
+/** A.3 — assign ranks to every player and populate `placements`.
  *
- *  Behaviour:
- *    - Any player already finalised mid-match (status !== 'active') keeps
- *      the rank assigned at the time of their partial finalisation.
- *    - If `winnerId` is supplied AND that player is still active, they
- *      take the next available rank (1 in the standard 2-player case).
- *    - Remaining active players are sorted by `playerTotalScore` desc and
- *      assigned the remaining ranks. Tied players share the higher rank
- *      (e.g. two players tied for 2nd both get rank 2; the next gets 4).
- *    - `winnerId` (state-level, backwards-compat) = the playerId at rank 1.
+ *  Ranking model:
+ *    - Top band (ranks 1..K): players already finalised as 'completed' /
+ *      'finalised' (mid-match completers), in completion order — preserved.
+ *    - Bottom band (ranks N..N-Q+1): players already 'conceded' / 'forfeit',
+ *      preserved.
+ *    - Middle band (ranks K+1..N-Q): remaining active players, sorted by
+ *      `playerTotalScore` desc. Tied players share the higher rank (e.g.
+ *      two tied for rank 2 both get 2; the next gets 4).
+ *    - If `winnerId` is provided and that player is still active, they take
+ *      rank K+1 (top of the middle band) — used by the 2-player fast path
+ *      so concede / first-to-50 still produce identical 2-player ELO.
  *
- *  For 2-player end-of-game this collapses to exactly today's behaviour:
- *  the called-out winner gets rank 1, the opponent rank 2. */
+ *  For 2-player matches this collapses to today's behaviour exactly: the
+ *  called-out winner takes rank 1, the opponent rank 2. */
 function finalise(state: MatchState, winnerId?: string): void {
   state.finished = true;
   const placements = (state.placements ?? []).slice();
   const ranked = new Set(placements.map((pl) => pl.playerId));
 
-  const assignRank = (
-    playerId: string,
-    rank: number,
-    reason: "completed" | "scored" = "scored",
-  ) => {
-    const p = state.players.find((x) => x.id === playerId);
-    if (!p) return;
-    p.status = "finalised";
-    p.rank = rank;
-    p.finalisedAt = Date.now();
-    placements.push({ playerId, rank });
-    ranked.add(playerId);
-    void reason;
-  };
+  let topCount = 0;
+  let bottomCount = 0;
+  for (const pl of placements) {
+    const pp = state.players.find((x) => x.id === pl.playerId);
+    const st = pp?.status ?? "active";
+    if (st === "conceded" || st === "forfeit") bottomCount += 1;
+    else topCount += 1;
+  }
+  const N = state.players.length;
 
-  // Step 1: honour an explicit winner if they're still active.
+  // Honour explicit winner if still active → they take next top-band rank.
   if (winnerId && !ranked.has(winnerId)) {
     const winnerPlayer = state.players.find((p) => p.id === winnerId);
     if (winnerPlayer && (winnerPlayer.status ?? "active") === "active") {
-      assignRank(winnerId, placements.length + 1, "completed");
+      const rank = topCount + 1;
+      winnerPlayer.status = "finalised";
+      winnerPlayer.rank = rank;
+      winnerPlayer.finalisedAt = Date.now();
+      placements.push({ playerId: winnerId, rank });
+      ranked.add(winnerId);
+      topCount += 1;
     }
   }
 
-  // Step 2: rank remaining active players by total score (desc), ties share
-  // the higher rank.
+  // Rank remaining actives into the middle band [topCount+1 .. N-bottomCount].
   const remaining = state.players
     .filter((p) => !ranked.has(p.id))
     .sort((a, b) => playerTotalScore(b) - playerTotalScore(a));
 
+  let cursor = topCount + 1;
   let i = 0;
   while (i < remaining.length) {
-    const rank = placements.length + 1;
+    const groupRank = cursor;
     const score = playerTotalScore(remaining[i]);
-    // Collect every player tied at this score (they share `rank`).
     let j = i;
     while (j < remaining.length && playerTotalScore(remaining[j]) === score) {
       const p = remaining[j];
       p.status = "finalised";
-      p.rank = rank;
+      p.rank = groupRank;
       p.finalisedAt = Date.now();
-      placements.push({ playerId: p.id, rank });
+      placements.push({ playerId: p.id, rank: groupRank });
       ranked.add(p.id);
       j += 1;
     }
+    cursor = groupRank + (j - i); // next group skips by group size
     i = j;
   }
 
   state.placements = placements;
-  // Backwards-compat: winnerId mirrors the rank-1 placement.
   const top = placements.find((pl) => pl.rank === 1);
   state.winnerId = top?.playerId ?? null;
   const topName = top
