@@ -373,21 +373,24 @@ Deno.serve(async (req) => {
     }
   }
   if (body.move.type === "resolve_disaster") {
-    if (state.pendingDisaster?.victimId !== callerPlayerId) {
-      return jsonResponse({ error: "you are not the disaster victim", message: "You are not the disaster victim" }, 400);
+    // A.3 — use victimIds (source of truth post-A.2); victimId is a
+    // legacy single-element alias we no longer rely on here.
+    const queue = state.pendingDisaster?.victimIds ?? [];
+    if (!queue.includes(callerPlayerId)) {
+      return jsonResponse(
+        { error: "you are not the disaster victim", message: "You are not the disaster victim" },
+        400,
+      );
     }
   }
 
   // ----- apply -----
   let nextState: MatchState;
   if (body.move.type === "concede") {
-    nextState = {
-      ...state,
-      players: state.players.map((p) => ({ ...p })),
-      finished: true,
-      winnerId: otherPlayerId,
-      lastEvent: `${state.players[callerSlot].name} conceded.`,
-    };
+    // A.3 — route concede through the engine so ranking direction (bottom-up
+    // for quitters) and N-player partial finalisation are handled correctly.
+    // For N=2 the engine collapses to identical legacy behaviour.
+    nextState = concedePlayer(state, callerPlayerId);
   } else {
     try {
       nextState = applyMove(state, body.move, callerPlayerId);
@@ -412,10 +415,13 @@ Deno.serve(async (req) => {
   console.log(
     `[server] engine result\n` +
       `  post_state_seq: ${postStateSeq}\n` +
-      `  any_uid_drift: ${anyUidDrift}`,
+      `  any_uid_drift: ${anyUidDrift}\n` +
+      `  finished: ${nextState.finished}\n` +
+      `  placements: ${JSON.stringify(nextState.placements ?? [])}`,
   );
 
   const finished = !!nextState.finished;
+  // A.3 — winner resolution via roster lookup, not hardcoded slot 0/1.
   let winnerUserId: string | null = null;
   if (finished && nextState.winnerId) {
     const winnerSlot = nextState.players.findIndex((p) => p.id === nextState.winnerId);
@@ -425,8 +431,9 @@ Deno.serve(async (req) => {
   const serialisedNext = serialise(nextState);
   const publicStateForCaller = redactFor(serialisedNext, callerPlayerId);
 
-  // Build per-player redacted states (A.1: still 2; A.2 generalises to N).
-  // Solo bot matches won't have a user_id for the bot slot — skip those.
+  // Per-player redacted states. Each player sees their own hand fully and
+  // every other player's hand replaced with `handCount`. Boards are public.
+  // Solo bot slots (no user_id) are skipped.
   const playerStates: Array<{ user_id: string; state: any }> = [];
   for (let slot = 0; slot < nextState.players.length; slot++) {
     const uid = userIdForSlot(slot);
@@ -435,6 +442,19 @@ Deno.serve(async (req) => {
     if (!pid) continue;
     playerStates.push({ user_id: uid, state: redactFor(serialisedNext, pid) });
   }
+
+  // A.3 — build placements snapshot for commit_move (syncs roster table) and
+  // for finalise_ranked_match (N-player ELO + points).
+  const placementsSnapshot = (nextState.placements ?? [])
+    .map((pl) => {
+      const slot = nextState.players.findIndex((p) => p.id === pl.playerId);
+      if (slot < 0) return null;
+      const uid = userIdForSlot(slot);
+      if (!uid) return null;
+      const status = nextState.players[slot]?.status ?? "finalised";
+      return { user_id: uid, rank: pl.rank, status };
+    })
+    .filter((x): x is { user_id: string; rank: number; status: string } => !!x);
 
   const { error: commitErr } = await svc.rpc("commit_move", {
     _match_id: body.match_id,
@@ -445,6 +465,7 @@ Deno.serve(async (req) => {
     _player_states: playerStates as any,
     _winner: winnerUserId,
     _finished: finished,
+    _placements: placementsSnapshot.length > 0 ? (placementsSnapshot as any) : null,
   });
   if (commitErr) {
     const code = (commitErr as any).code ?? "";
@@ -456,12 +477,13 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "commit failed", detail: msg }, 500);
   }
 
-  // Server-vouched ranked match outcome. Only fires for ranked PvP matches
-  // that just transitioned to finished. The RPC is service-role only and is
-  // idempotent (it tags `state.__finalised`).
+  // Server-vouched ranked match outcome. Idempotent — finalise_ranked_match
+  // tags `state.__finalised` and short-circuits subsequent calls.
   if (finished && match.is_ranked) {
     const { error: finErr } = await svc.rpc("finalise_ranked_match", {
       _match_id: body.match_id,
+      _reason: "normal",
+      _placements: placementsSnapshot.length > 0 ? (placementsSnapshot as any) : null,
     });
     if (finErr) console.error("[apply-move] finalise_ranked_match failed", finErr);
   }
