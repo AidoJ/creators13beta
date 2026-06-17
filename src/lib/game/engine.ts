@@ -1407,8 +1407,18 @@ function checkWin(state: MatchState): void {
   }
 }
 
-/** A.2 helper — finalise a single player (mid-match completion in N>2)
- *  without ending the match. Pure mutation. */
+/** A.3 — finalise a single player (mid-match completion / concede / forfeit)
+ *  without ending the match.
+ *
+ *  Ranking direction (per A.3 product decision):
+ *    - 'completed' → rank from the TOP (1, 2, 3, …) in completion order.
+ *    - 'conceded' / 'forfeit' → rank from the BOTTOM (N, N-1, N-2, …) in
+ *      quit order. A quitter must never out-rank a player who stayed to
+ *      the finish — otherwise we'd incentivise quitting-while-ahead.
+ *
+ *  Example (N=4): p2 concedes → rank 4; p1 completes → rank 1; p3 concedes
+ *  → rank 3; the last active p4 is finalised by score into the middle band
+ *  → rank 2. */
 function partiallyFinalisePlayer(
   state: MatchState,
   playerId: string,
@@ -1418,7 +1428,19 @@ function partiallyFinalisePlayer(
   if (!player) return;
   if ((player.status ?? "active") !== "active") return;
   const placements = state.placements ?? [];
-  const rank = placements.length + 1;
+
+  let topCount = 0;
+  let bottomCount = 0;
+  for (const pl of placements) {
+    const pp = state.players.find((x) => x.id === pl.playerId);
+    const st = pp?.status ?? "active";
+    if (st === "conceded" || st === "forfeit") bottomCount += 1;
+    else topCount += 1;
+  }
+
+  const N = state.players.length;
+  const rank = reason === "completed" ? topCount + 1 : N - bottomCount;
+
   player.status =
     reason === "conceded" ? "conceded" : reason === "forfeit" ? "forfeit" : "finalised";
   player.rank = rank;
@@ -1430,6 +1452,46 @@ function partiallyFinalisePlayer(
       : reason === "conceded"
       ? `${player.name} conceded — finished #${rank}.`
       : `${player.name} forfeited — finished #${rank}.`;
+}
+
+/** A.3 — public concede handler. Applies the concede ranking and, if only
+ *  one active player remains, closes the match out. Returns a NEW state.
+ *
+ *  For N=2 this collapses to the legacy behaviour exactly: conceder takes
+ *  rank 2, the other player is finalised at rank 1, match ends. */
+export function concedePlayer(state: MatchState, playerId: string): MatchState {
+  if (state.finished) return state;
+  const next = cloneState(state);
+  partiallyFinalisePlayer(next, playerId, "conceded");
+  if (next.pendingDisaster && next.pendingDisaster.victimIds.includes(playerId)) {
+    const remaining = next.pendingDisaster.victimIds.filter((id) => id !== playerId);
+    if (remaining.length === 0) {
+      const attackerId = next.pendingDisaster.attackerId;
+      const creator = next.pendingDisaster.creator;
+      const blockedBy = next.pendingDisaster.blockedBy ?? [];
+      next.pendingDisaster = null;
+      applyDisasterWipe(next, attackerId, creator, blockedBy);
+    } else {
+      next.pendingDisaster = {
+        ...next.pendingDisaster,
+        victimIds: remaining,
+        victimId: remaining[0],
+      };
+    }
+  }
+  const activeCount = next.players.filter(
+    (p) => (p.status ?? "active") === "active",
+  ).length;
+  if (activeCount <= 1) {
+    finalise(next);
+  } else {
+    const conceiderSlot = next.players.findIndex((p) => p.id === playerId);
+    if (next.turn === conceiderSlot) {
+      next.placedThisTurn = 2;
+      advanceTurn(next);
+    }
+  }
+  return next;
 }
 
 /** Return all 4-creator subsets of `creators` such that each of the 4 elements
