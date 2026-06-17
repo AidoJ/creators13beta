@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Users, Shield, ChevronDown, ChevronUp, FileText, CheckCircle, Clock, BarChart3, Eye, EyeOff, FolderOpen, Save, HelpCircle, Briefcase, CreditCard, Mail, Send, UserPlus, ExternalLink, Gamepad2 } from "lucide-react";
 import GameSettingsPanel from "@/components/admin/GameSettingsPanel";
+import { DevMultiplayerPanel } from "@/components/admin/DevMultiplayerPanel";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import ClientDetail from "@/components/practitioner/ClientDetail";
 import { toast } from "@/hooks/use-toast";
@@ -381,6 +382,7 @@ export default function AdminDashboard() {
 
           <TabsContent value="game" className="space-y-4">
             <GameSettingsPanel />
+            <DevMultiplayerPanel />
           </TabsContent>
 
           {/* ======= PRACTITIONERS TAB ======= */}

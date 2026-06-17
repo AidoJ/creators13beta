@@ -2056,6 +2056,7 @@ export type Database = {
           _match_id: string
           _move: Json
           _new_state: Json
+          _placements?: Json
           _player_states: Json
           _winner?: string
         }
