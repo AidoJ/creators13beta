@@ -1,19 +1,28 @@
 /**
  * Admin-only dev affordance for A.3 multiplayer testing.
  *
- * Creates a ranked PvP match with 2/3/4 player slots and returns N-1 join
- * links the admin can distribute across incognito sessions for live
- * end-to-end testing. Deletable in one commit when Batch B ships the
- * production lobby.
+ * Builds the deck + N-player initial state CLIENT-SIDE using the same
+ * `buildDeck` / `createMatch` / `serializeMatch` path as `handleCreatePvp`,
+ * then hands the serialised state to the edge function which only validates
+ * admin, persists the row, seeds the host roster, and returns N-1 join
+ * links. No deck logic lives server-side.
+ *
+ * Deletable in one commit when Batch B ships the production lobby.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, Copy, ExternalLink } from "lucide-react";
+
+import { buildDeck, createMatch } from "@/lib/game";
+import { serializeMatch } from "@/lib/game/serialize";
+import { fetchAllCards, fetchSpecialCards, type GameCard, type SpecialCard } from "@/lib/gameCards";
+import { fetchPlayerShortName } from "@/lib/playerName";
 
 interface Result {
   match_id: string;
@@ -24,20 +33,70 @@ interface Result {
 }
 
 export function DevMultiplayerPanel() {
+  const { user } = useAuth();
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
+  const [allCards, setAllCards] = useState<GameCard[] | null>(null);
+  const [specialCards, setSpecialCards] = useState<SpecialCard[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchAllCards()
+      .then((c) => { if (!cancelled) setAllCards(c); })
+      .catch((e) => toast.error(`Card load failed: ${e.message ?? e}`));
+    fetchSpecialCards()
+      .then((s) => { if (!cancelled) setSpecialCards(s); })
+      .catch(() => { /* non-fatal */ });
+    return () => { cancelled = true; };
+  }, []);
 
   async function create(playerCount: 2 | 3 | 4) {
+    if (!user) { toast.error("Sign in first"); return; }
+    if (!allCards) { toast.error("Cards still loading"); return; }
     setBusy(true);
     setResult(null);
     try {
+      const hostName = await fetchPlayerShortName(user);
+      const deck = buildDeck(allCards, specialCards);
+
+      // Build N player slots up-front so state.players.length === playerCount.
+      // The host is slot 0; remaining slots are filled when guests accept the
+      // invite (the edge function only inserts the host roster row).
+      const players = Array.from({ length: playerCount }, (_, i) =>
+        i === 0
+          ? { id: "host", name: hostName }
+          : { id: `guest${i}`, name: `Waiting ${i}…` },
+      );
+      const initial = createMatch({ deck, players });
+      const state = serializeMatch(initial);
+
+      // Sanity guard before we even ship to the edge function.
+      if (state.players.length !== playerCount) {
+        throw new Error(
+          `Local build produced ${state.players.length} players but expected ${playerCount}`,
+        );
+      }
+
       const { data, error } = await supabase.functions.invoke("dev-create-multiplayer-match", {
         body: {
           player_count: playerCount,
+          host_name: hostName,
           origin: window.location.origin,
+          state,
         },
       });
-      if (error) throw error;
+      if (error) {
+        // supabase-js hides the JSON body on non-2xx; recover it.
+        let detail = error.message;
+        try {
+          const ctx: any = (error as any).context;
+          if (ctx?.json) {
+            const b = await ctx.clone().json();
+            detail = b?.detail ? `${b.error}: ${b.detail}` : (b?.error ?? detail);
+          }
+        } catch { /* ignore */ }
+        throw new Error(detail);
+      }
       if (!data?.ok) throw new Error(data?.error ?? "create failed");
       setResult(data as Result);
       toast.success(`Created ${playerCount}-player test match`);
@@ -53,25 +112,31 @@ export function DevMultiplayerPanel() {
     toast.success("Copied");
   }
 
+  const cardsReady = !!allCards;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Dev: Multiplayer test match (A.3)</CardTitle>
         <CardDescription>
           Admin-only bootstrap for testing 2/3/4-player ranked matches before the
-          production lobby ships. Creates a match with you as host and returns
-          N−1 join links to distribute across incognito sessions / other accounts.
+          production lobby ships. Creates a match with you as host (slot 0) and
+          returns N−1 join links to distribute across incognito sessions / other
+          accounts.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {!cardsReady && (
+          <div className="text-xs text-muted-foreground">Loading cards…</div>
+        )}
         <div className="flex gap-2">
-          <Button disabled={busy} onClick={() => create(2)}>
+          <Button disabled={busy || !cardsReady} onClick={() => create(2)}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create 2-player"}
           </Button>
-          <Button disabled={busy} onClick={() => create(3)}>
+          <Button disabled={busy || !cardsReady} onClick={() => create(3)}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create 3-player"}
           </Button>
-          <Button disabled={busy} onClick={() => create(4)}>
+          <Button disabled={busy || !cardsReady} onClick={() => create(4)}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create 4-player"}
           </Button>
         </div>

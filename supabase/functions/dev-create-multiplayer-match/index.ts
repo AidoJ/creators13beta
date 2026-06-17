@@ -2,17 +2,17 @@
  * dev-create-multiplayer-match — A.3 bootstrap affordance.
  *
  * Admin-gated dev tool for testing N-player multiplayer end-to-end before
- * Batch B ships the production lobby. Creates a ranked PvP match with the
- * caller as host (slot 0) and returns N-1 join links that can be sent to
- * other accounts to fill slots 1..N-1.
+ * Batch B ships the production lobby. The CLIENT builds the deck + initial
+ * state (using the same buildDeck/createMatch path as handleCreatePvp), so
+ * this function has zero deck logic. It validates admin, inserts the match
+ * row with the supplied serialised N-player state, seeds the host roster,
+ * and returns N-1 join links.
  *
  * Removable in one commit when Batch B's lobby UI lands.
  */
 
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-import { createMatch } from "../_shared/game/engine.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -32,16 +32,6 @@ function makeToken(): string {
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/, "");
-}
-
-function serialiseInitial(state: any): any {
-  return {
-    ...state,
-    players: state.players.map((p: any) => ({
-      ...p,
-      ecosystem: { placed: Array.from(p.ecosystem.placed.entries()) },
-    })),
-  };
 }
 
 Deno.serve(async (req) => {
@@ -69,7 +59,12 @@ Deno.serve(async (req) => {
   });
   if (!isAdmin) return jsonResponse({ error: "admin only" }, 403);
 
-  let body: { player_count?: number; host_name?: string; origin?: string };
+  let body: {
+    player_count?: number;
+    host_name?: string;
+    origin?: string;
+    state?: any;
+  };
   try {
     body = await req.json();
   } catch {
@@ -78,31 +73,26 @@ Deno.serve(async (req) => {
   const playerCount = Math.max(2, Math.min(4, Number(body.player_count ?? 3)));
   const hostName = (body.host_name && String(body.host_name).slice(0, 40)) || "Host";
   const origin = body.origin && /^https?:\/\//.test(body.origin) ? body.origin : null;
+  const state = body.state;
 
-  // Build a fresh deck server-side via the shared cards table. We pull the
-  // active cards and let the engine create a starting state.
-  const { data: cards, error: cardsErr } = await svc
-    .from("game_cards")
-    .select("*")
-    .eq("active", true);
-  if (cardsErr) return jsonResponse({ error: "deck fetch failed", detail: cardsErr.message }, 500);
-
-  // Minimal deck stub — enough to start play; the real deck builder lives in
-  // src/lib/game/deck.ts (client). For the dev affordance the engine only
-  // needs SOMETHING shuffleable; players will draw normally.
-  const deck = (cards ?? []).map((c: any, i: number) => ({
-    uid: `${c.id ?? i}#${i}`,
-    kind: (c.kind ?? "animal") as any,
-    name: c.name ?? `Card ${i}`,
-    types: c.types ?? [],
-    element: c.element ?? undefined,
-  }));
-
-  const players = Array.from({ length: playerCount }, (_, i) => ({
-    id: i === 0 ? "host" : `guest${i}`,
-    name: i === 0 ? hostName : `Waiting #${i}…`,
-  }));
-  const initial = createMatch({ deck, players });
+  // Validate the client-supplied state matches the requested player_count.
+  // Defence against a 2-player state being inserted into a 3/4-player row
+  // (which would explode on first move).
+  if (!state || !Array.isArray(state.players)) {
+    return jsonResponse({ error: "missing or invalid state.players" }, 400);
+  }
+  if (state.players.length !== playerCount) {
+    return jsonResponse({
+      error: "state/player_count mismatch",
+      detail: `state.players.length=${state.players.length} player_count=${playerCount}`,
+    }, 400);
+  }
+  if (!Array.isArray(state.turnOrder) || state.turnOrder.length !== playerCount) {
+    return jsonResponse({
+      error: "state.turnOrder missing or wrong length",
+      detail: `expected ${playerCount}, got ${Array.isArray(state.turnOrder) ? state.turnOrder.length : "none"}`,
+    }, 400);
+  }
 
   const inviteToken = makeToken();
   const { data: matchRow, error: insErr } = await svc
@@ -115,19 +105,22 @@ Deno.serve(async (req) => {
       invite_token: inviteToken,
       is_ranked: true,
       player_count: playerCount,
-      state: serialiseInitial(initial),
+      state,
       last_action_by: userId,
     })
     .select("id, invite_token, player_count")
     .single();
   if (insErr) return jsonResponse({ error: "match insert failed", detail: insErr.message }, 500);
 
-  await svc.from("game_match_players").insert({
+  const { error: rosterErr } = await svc.from("game_match_players").insert({
     match_id: matchRow.id,
     user_id: userId,
     slot: 0,
     display_name: hostName,
   });
+  if (rosterErr) {
+    return jsonResponse({ error: "roster insert failed", detail: rosterErr.message }, 500);
+  }
 
   const baseOrigin = origin ?? "https://creators13beta.lovable.app";
   const joinUrl = `${baseOrigin}/play/join/${inviteToken}`;
