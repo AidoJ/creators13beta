@@ -381,6 +381,7 @@ export default function AdminDashboard() {
 
           <TabsContent value="game" className="space-y-4">
             <GameSettingsPanel />
+            <DevMultiplayerPanel />
           </TabsContent>
 
           {/* ======= PRACTITIONERS TAB ======= */}
