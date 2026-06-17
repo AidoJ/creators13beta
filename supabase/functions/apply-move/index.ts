@@ -41,6 +41,7 @@ import {
   rotateMyPlacedHex,
   moveMyPlacedHex,
   finaliseByScore,
+  concedePlayer,
 } from "../_shared/game/engine.ts";
 import type { Axial, DeckCard, Ecosystem, MatchState, PlacedCard } from "../_shared/game/types.ts";
 
