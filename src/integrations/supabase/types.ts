@@ -2202,6 +2202,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_match_participant: { Args: { _match_id: string }; Returns: boolean }
       list_my_active_matches: {
         Args: never
         Returns: {
