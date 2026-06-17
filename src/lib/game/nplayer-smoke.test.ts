@@ -17,6 +17,7 @@ import {
   endTurnEarly,
   finaliseByScore,
   playDisaster,
+  resolveDisaster,
 } from "./engine";
 import type { DeckCard, MatchState, PlayerState } from "./types";
 import type { CreatorTypeName } from "@/lib/gameCards";
