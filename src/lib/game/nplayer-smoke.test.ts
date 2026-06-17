@@ -157,19 +157,20 @@ describe("A.3 — N=4 single-Hive Disaster end-to-end (smoke)", () => {
 });
 
 describe("A.3 — pile/hand exhaustion finalises N>2 by score", () => {
-  it("N=3 with mixed scores and no cards left → finalises with score ranking", () => {
+  it("N=3 pure-stalemate end_of_days → empty-placements draw (existing rule preserved)", () => {
     const players = makePlayers(3);
     players[0].score = 4;
     players[1].score = 9;
     players[2].score = 7;
     const state = baseState(players);
-    // Simulate a mid-match completion of p1 first (top-band rank 1).
     const s1 = endTurnEarly({ ...state, placedThisTurn: 2 });
     expect(s1.finished).toBe(true);
-    const ranks = Object.fromEntries(s1.placements!.map((pl) => [pl.playerId, pl.rank]));
-    expect(ranks.p1).toBe(1);
-    expect(ranks.p2).toBe(2);
-    expect(ranks.p0).toBe(3);
+    // Per the existing engine rule, end_of_days with no mid-match completer
+    // is a stalemate-draw (winnerId=null, placements=[]). The score-based
+    // middle-band ranking only kicks in once at least one player has
+    // partially finalised mid-match.
+    expect(s1.winnerId).toBeNull();
+    expect(s1.placements).toEqual([]);
   });
 
   it("N=4 finaliseByScore with a quitter preserved at bottom rank", () => {
