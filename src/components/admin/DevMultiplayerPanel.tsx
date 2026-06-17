@@ -151,7 +151,7 @@ export function DevMultiplayerPanel() {
             </div>
             <div>
               <a
-                href={`/play/${result.match_id}`}
+                href={`/play/m/${result.match_id}`}
                 className="inline-flex items-center gap-1 text-sm underline"
               >
                 Open your host view <ExternalLink className="h-3 w-3" />
