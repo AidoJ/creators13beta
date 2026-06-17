@@ -146,7 +146,6 @@ describe("A.3 — N=4 single-Hive Disaster end-to-end (smoke)", () => {
     const queued = playDisaster(state, lava.uid);
     expect(queued.pendingDisaster?.victimIds).toEqual(["p2"]);
     // p2 blocks; non-Hive victims wiped, p2 board untouched.
-    const { resolveDisaster } = require("./engine");
     const resolved = resolveDisaster(queued, true);
     expect(resolved.pendingDisaster).toBeNull();
     expect(resolved.players[1].ecosystem.placed.size).toBe(0);
