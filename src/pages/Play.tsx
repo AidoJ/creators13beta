@@ -84,6 +84,7 @@ export default function Play() {
   const [specialCards, setSpecialCards] = useState<SpecialCard[]>([]);
   const [state, setState] = useState<MatchState | null>(null);
   const [matchRow, setMatchRow] = useState<GameMatchRow | null>(null);
+  const [rosterSlot, setRosterSlot] = useState<number | null>(null);
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("place");
   const [error, setError] = useState<string | null>(null);
@@ -187,10 +188,13 @@ export default function Play() {
   const selfSlot = useMemo(() => {
     if (!matchRow) return "you";
     if (isPvp) {
+      if (typeof rosterSlot === "number" && state?.players[rosterSlot]?.id) {
+        return state.players[rosterSlot].id;
+      }
       return user?.id === matchRow.host_user_id ? "host" : "guest";
     }
     return "you";
-  }, [matchRow, user, isPvp]);
+  }, [matchRow, user, isPvp, rosterSlot, state]);
 
   /* ----------- Load cards then bootstrap the match ----------- */
 
@@ -227,6 +231,17 @@ export default function Play() {
           const { row, state } = await loadMatch(routeMatchId);
           if (cancelled) return;
 
+          let myRosterSlot: number | null = null;
+          if (row.mode === "pvp" && user) {
+            const { data: rosterRow } = await supabase
+              .from("game_match_players")
+              .select("slot")
+              .eq("match_id", routeMatchId)
+              .eq("user_id", user.id)
+              .maybeSingle();
+            if (!cancelled) myRosterSlot = typeof rosterRow?.slot === "number" ? rosterRow.slot : null;
+          }
+
           // Sync the live player names in the match state with the latest
           // host_name / guest_name on the row (which the join flow updates).
           // PURELY local — the server now also patches names from the row
@@ -247,6 +262,7 @@ export default function Play() {
           }
 
           setMatchRow(row);
+          setRosterSlot(myRosterSlot);
           setState(patched);
           setWaitingForGuest(row.mode === "pvp" && row.status === "waiting");
           return;
