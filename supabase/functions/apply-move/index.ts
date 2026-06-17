@@ -289,8 +289,12 @@ Deno.serve(async (req) => {
     : match.host_user_id === userId
       ? 0
       : 1;
-  // A.1 stays 2-player; A.2 generalises this to N opponents.
-  const otherSlot = callerSlot === 0 ? 1 : 0;
+  // A.3 — slot resolution generalised to N players. `otherSlots` is the
+  // list of all slots OTHER than the caller; per-slot user IDs come from
+  // the roster (with legacy host/guest fallback for pre-A.1 rows).
+  const totalPlayers = Math.max(rosterRows.length, 2, Number(match.player_count ?? 2));
+  const otherSlots: number[] = [];
+  for (let s = 0; s < totalPlayers; s++) if (s !== callerSlot) otherSlots.push(s);
 
   let state: MatchState;
   try {
@@ -304,8 +308,7 @@ Deno.serve(async (req) => {
   }
 
   const callerPlayerId = state.players[callerSlot]?.id;
-  const otherPlayerId = state.players[otherSlot]?.id;
-  if (!callerPlayerId || !otherPlayerId) {
+  if (!callerPlayerId) {
     return jsonResponse({ error: "player slot empty" }, 500);
   }
 
