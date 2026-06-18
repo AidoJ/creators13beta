@@ -60,11 +60,16 @@ interface Props {
  * Coupons are redeemable ONLY against profiling services + online courses,
  * never subscriptions or hard products. Max discount is 20%.
  *
- * The display below shows progress to the NEXT threshold the player hasn't
- * yet reached. Whether reaching 28 auto-claims a 5% coupon (forcing reset)
- * or the player chooses to hold for 44/88 is pending client confirmation —
- * this panel is display-only until that's resolved, but the structure
- * supports either model.
+ * Client-confirmed behaviour (answer A): the player chooses at each
+ * threshold whether to claim now or keep accumulating toward a bigger
+ * discount. The freeze ("no further points until coupon used") only kicks
+ * in once the player actively claims — reaching 28 does NOT auto-assign.
+ * This keeps 44 and 88 reachable for players who want to hold.
+ *
+ * Display reflects that: progress bar to the next unreached tier, plus a
+ * "ready to claim" badge for the highest already-reached tier so the
+ * player sees the cash-out-or-hold choice. The claim action itself waits
+ * on the coupon-assignment table (assignedCoupon stub below).
  */
 const COUPON_TIERS: { points: number; discount: number }[] = [
   { points: 28, discount: 5 },
