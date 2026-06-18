@@ -1136,15 +1136,29 @@ function playerHasAnyLegalMove(state: MatchState, slot: number): boolean {
   const top = state.used[state.used.length - 1];
   if (top && !top.spent && p.hand.length < HAND_LIMIT) return true;
 
-  // Card-driven actions: placement, disaster, steal.
+  // Card-driven actions: placement, disaster, steal. We deliberately skip
+  // Golden Hive here — `hasAnyLegalAction` returns true for Hive cards
+  // because the Hive is always "ready" to block an incoming disaster, but
+  // a Hive in hand does NOT give its holder a legal *turn* action (it
+  // can't be placed, can't be played, and can't be discarded). Counting
+  // it as a legal move would mask a real stalemate where the player's
+  // hand contains only a Hive.
   for (const card of p.hand) {
+    if (card.kind === "golden_hive") continue;
     if (hasAnyLegalAction(state, p.id, card)) return true;
   }
 
   // Discarding a non-Hive card is always legal once in the place phase
   // (and reachable via skipDraws). It feeds the used pile, so it's
-  // productive — keeps the game progressing.
+  // productive — keeps the game progressing. Hive-only hands fall through
+  // to `return false` and are correctly treated as stuck.
+  // NOTE (sequencing dependency): the `!top.spent` clause above encodes
+  // the CURRENT pickup rules. The forthcoming client rule that makes spent
+  // Sky Creatures pickable (via reshuffle / spent-pickup) MUST update this
+  // check in lockstep, or the backstop will falsely declare stalemate when
+  // a spent Sky Creature on top is actually a legal pickup.
   if (p.hand.some((c) => c.kind !== "golden_hive")) return true;
+
 
   return false;
 }
