@@ -1233,12 +1233,8 @@ function playerHasAnyLegalMove(state: MatchState, slot: number): boolean {
   // (and reachable via skipDraws). It feeds the used pile, so it's
   // productive — keeps the game progressing. Hive-only hands fall through
   // to `return false` and are correctly treated as stuck.
-  // NOTE (sequencing dependency): the `!top.spent` clause above encodes
-  // the CURRENT pickup rules. The forthcoming client rule that makes spent
-  // Sky Creatures pickable (via reshuffle / spent-pickup) MUST update this
-  // check in lockstep, or the backstop will falsely declare stalemate when
-  // a spent Sky Creature on top is actually a legal pickup.
   if (p.hand.some((c) => c.kind !== "golden_hive")) return true;
+
 
 
   return false;
