@@ -157,14 +157,15 @@ describe("A.3 — N=4 single-Hive Disaster end-to-end (smoke)", () => {
     expect(resolved.players[3].ecosystem.placed.size).toBe(0);
     expect(resolved.players[2].ecosystem.placed.size).toBe(1);
     expect(resolved.placedThisTurn).toBe(1);
-    // Post-wipe state: draw=[], used-top = spent Hive (unpickable),
-    // every hand empty. That's a genuine stalemate — the new backstop
-    // routes it through the standard finalise path. Pure-stalemate
-    // end_of_days with no prior completer is a draw (winnerId=null).
-    expect(resolved.finished).toBe(true);
-    expect(resolved.winnerId).toBeNull();
+    // Post-wipe state: draw=[], used = [lava(disasterSpent), spent Hive].
+    // Under the reshuffle rule the disasterSpent lava is RESHUFFLEABLE
+    // (only `spent` is filtered), so every active player still has a
+    // legal pickup via auto-reshuffle on their next draw — the match is
+    // NOT stalemated. The backstop correctly does NOT fire here.
+    expect(resolved.finished).toBe(false);
   });
 });
+
 
 describe("stalemate backstop — Hive-only hand is correctly detected as stuck", () => {
   it("N=2: both players hold only a Hive, no draw, used-top spent → backstop finalises", () => {
