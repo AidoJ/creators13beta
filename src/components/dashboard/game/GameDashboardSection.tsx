@@ -271,6 +271,10 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
             }
 
             const nextTier = COUPON_TIERS.find(t => points < t.points);
+            // Highest tier the player has already reached but not yet claimed —
+            // they can cash out now or hold for a bigger discount (answer A).
+            const reachedTiers = COUPON_TIERS.filter(t => points >= t.points);
+            const claimableTier = reachedTiers[reachedTiers.length - 1] ?? null;
             const upcoming = COUPON_TIERS.filter(t => !nextTier || t.points > nextTier.points);
 
             if (!nextTier) {
@@ -285,6 +289,17 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
             const pct = Math.min(100, Math.round((points / nextTier.points) * 100));
             return (
               <div className="mt-4 space-y-3">
+                {claimableTier && (
+                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="text-xs uppercase tracking-widest text-primary font-semibold">Ready to claim</p>
+                      <p className="font-display text-lg text-primary leading-none">{claimableTier.discount}% off</p>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1.5">
+                      Cash out now, or keep playing toward {nextTier.discount}% off at {nextTier.points} pts.
+                    </p>
+                  </div>
+                )}
                 <div>
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Next: {nextTier.discount}% off coupon</span>
@@ -309,7 +324,7 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
                   </div>
                 )}
                 <p className="text-[10px] text-muted-foreground/70 italic">
-                  Redeeming subtracts the points and resets your total to 0. Coupons apply to profiling &amp; courses only.
+                  Claiming a coupon subtracts those points and pauses earning until it's redeemed. Coupons apply to profiling &amp; courses only.
                 </p>
               </div>
             );
