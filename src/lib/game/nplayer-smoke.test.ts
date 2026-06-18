@@ -118,7 +118,7 @@ describe("A.3 — concede ranks from the bottom (quitter cannot out-rank finishe
 });
 
 describe("A.3 — N=4 single-Hive Disaster end-to-end (smoke)", () => {
-  it("wipes non-Hive victims; Hive blocker spared; placedThisTurn=1; match continues", () => {
+  it("wipes non-Hive victims; Hive blocker spared; placedThisTurn=1; stalemate backstop finalises when nobody can move", () => {
     const players = makePlayers(4);
     const fire = creator("Fire", "Fire");
     const earth = creator("Soil", "Earth");
@@ -152,9 +152,15 @@ describe("A.3 — N=4 single-Hive Disaster end-to-end (smoke)", () => {
     expect(resolved.players[3].ecosystem.placed.size).toBe(0);
     expect(resolved.players[2].ecosystem.placed.size).toBe(1);
     expect(resolved.placedThisTurn).toBe(1);
-    expect(resolved.finished).toBe(false);
+    // Post-wipe state: draw=[], used-top = spent Hive (unpickable),
+    // every hand empty. That's a genuine stalemate — the new backstop
+    // routes it through the standard finalise path. Pure-stalemate
+    // end_of_days with no prior completer is a draw (winnerId=null).
+    expect(resolved.finished).toBe(true);
+    expect(resolved.winnerId).toBeNull();
   });
 });
+
 
 describe("A.3 — pile/hand exhaustion finalises N>2 by score", () => {
   it("N=3 pure-stalemate end_of_days → empty-placements draw (existing rule preserved)", () => {
