@@ -168,20 +168,18 @@ describe("A.3 — N=4 single-Hive Disaster end-to-end (smoke)", () => {
 
 
 describe("stalemate backstop — Hive-only hand is correctly detected as stuck", () => {
-  it("N=2: both players hold only a Hive, no draw, used-top spent → backstop finalises", () => {
+  it("N=2: both players hold only a Hive, no draw, used-top is spent HIVE (unpickable) → backstop finalises", () => {
     const players = makePlayers(2);
-    const hive = (uid: string): DeckCard =>
-      ({ uid, kind: "golden_hive", name: "Golden Hive" } as DeckCard);
+    const hive = (uid: string, spent = false): DeckCard =>
+      ({ uid, kind: "golden_hive", name: "Golden Hive", spent } as DeckCard);
     players[0].hand = [hive("h0")];
     players[1].hand = [hive("h1")];
     const state = baseState(players);
-    const spentTop: DeckCard = {
-      uid: "spent-top",
-      kind: "sky_creature",
-      name: "Spent Sky",
-      spent: true,
-    } as DeckCard;
-    state.used = [spentTop];
+    // Top of used must be unpickable AND unreshuffleable. A spent Hive
+    // satisfies both (Hive when spent is never pickable; spent cards are
+    // filtered from reshuffle). A spent Sky on top would NOT trigger
+    // stalemate under the new rule (it's a legal pickup).
+    state.used = [hive("dead-hive", true)];
     state.draw = [];
     state.placedThisTurn = 2;
     const next = endTurnEarly(state);
@@ -191,14 +189,15 @@ describe("stalemate backstop — Hive-only hand is correctly detected as stuck",
 
   it("a player with a real card in hand does NOT trigger stalemate (discard is legal)", () => {
     const players = makePlayers(2);
-    const hive: DeckCard = { uid: "h0", kind: "golden_hive", name: "Golden Hive" } as DeckCard;
+    const hiveCard: DeckCard = { uid: "h0", kind: "golden_hive", name: "Golden Hive" } as DeckCard;
     const realCard = animal("a-real", ["Lava", "Fire"]);
-    players[0].hand = [hive];
+    players[0].hand = [hiveCard];
     players[1].hand = [realCard];
     const state = baseState(players);
-    state.used = [{ uid: "spent", kind: "sky_creature", name: "Spent", spent: true } as DeckCard];
+    state.used = [{ uid: "dead-hive", kind: "golden_hive", name: "Golden Hive", spent: true } as DeckCard];
     state.draw = [];
     state.placedThisTurn = 2;
+
     const next = endTurnEarly(state);
     expect(next.finished).toBe(false);
   });
