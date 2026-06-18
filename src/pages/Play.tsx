@@ -1504,6 +1504,7 @@ export default function Play() {
 
 
       <MatchOverDialog state={state} onPlayAgain={onNewGame} />
+      <PartialFinaliseOverlay state={state} selfPlayerId={selfSlot} />
       {gameSettings.prompt_player_name && <NamePrompt />}
       {modeSelectorOpen && (
         <GameModeSelector
