@@ -95,7 +95,7 @@ export default function PlayerProfileDiscountCTA({ userId }: Props) {
     if (typeof window !== "undefined" && userId && activeThreshold) {
       localStorage.setItem(`profileDiscountDismiss:${userId}:${activeThreshold}`, "1");
     }
-    toast({ title: "Got it", description: "We won't show this again. Your code is saved in your account." });
+    toast({ title: "Got it", description: "We won't show this again. Find your code anytime under 'Your discount codes' on your dashboard." });
     close();
   }
 

@@ -14,6 +14,7 @@ import AnimalMatchesCard from "@/components/dashboard/AnimalMatchesCard";
 import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
+import DiscountCodesCard from "@/components/dashboard/DiscountCodesCard";
 
 import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
 import { Card } from "@/components/ui/card";
@@ -255,6 +256,7 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {user && <DiscountCodesCard userId={user.id} />}
             <ZoomRecordingsCard />
             <SubscriptionCard />
             {user && <CreatorProfileCard userId={user.id} />}
