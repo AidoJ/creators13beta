@@ -52,11 +52,24 @@ interface Props {
   isPaidTier: boolean;
 }
 
-const UNLOCKS: { label: string; goal: number }[] = [
-  { label: "Unlock DMs", goal: 25 },
-  { label: "Unlock 2v2 trial", goal: 50 },
-  { label: "Type discovery teaser", goal: 250 },
-  { label: "25% off Robin upgrade", goal: 100 },
+/**
+ * Coupon thresholds — Appendix 7 of the Phase 2 spec.
+ *
+ * Spent-currency model (not cumulative): when a player claims a coupon,
+ * the points subtract from their total and accumulation resumes from 0.
+ * Coupons are redeemable ONLY against profiling services + online courses,
+ * never subscriptions or hard products. Max discount is 20%.
+ *
+ * The display below shows progress to the NEXT threshold the player hasn't
+ * yet reached. Whether reaching 28 auto-claims a 5% coupon (forcing reset)
+ * or the player chooses to hold for 44/88 is pending client confirmation —
+ * this panel is display-only until that's resolved, but the structure
+ * supports either model.
+ */
+const COUPON_TIERS: { points: number; discount: number }[] = [
+  { points: 28, discount: 5 },
+  { points: 44, discount: 10 },
+  { points: 88, discount: 20 },
 ];
 
 function timeAgo(ts: string | null): string {
