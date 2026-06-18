@@ -237,33 +237,78 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
 
       {/* ROW 1 — Points / Types seen / Match stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Points */}
+        {/* Points & coupons — Appendix 7 economy */}
         <Card className="p-5">
           <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">Points</h3>
           <div className="font-display text-4xl text-primary leading-none">{points}</div>
-          <p className="text-xs text-muted-foreground mt-1">Earn by playing &amp; meeting new types</p>
-          <div className="mt-4 space-y-3">
-            {UNLOCKS.map(u => {
-              const done = points >= u.goal;
-              const pct = Math.min(100, Math.round((points / u.goal) * 100));
+          <p className="text-xs text-muted-foreground mt-1">
+            Earn by playing &amp; meeting new types. Redeem for discounts on profiling &amp; courses.
+          </p>
+
+          {(() => {
+            // Placeholder until coupon-assignment table is wired:
+            // when an assigned-but-unredeemed coupon exists, points freeze.
+            const assignedCoupon: { code: string; discount: number } | null = null;
+
+            if (assignedCoupon) {
               return (
-                <div key={u.label}>
+                <div className="mt-4 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                  <p className="text-xs uppercase tracking-widest text-primary font-semibold">Coupon ready</p>
+                  <p className="font-display text-2xl text-primary mt-1">{(assignedCoupon as any).discount}% off</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Code <code className="font-mono text-foreground">{(assignedCoupon as any).code}</code> · profiling &amp; courses only
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/80 italic mt-2">
+                    Points paused until this coupon is redeemed.
+                  </p>
+                </div>
+              );
+            }
+
+            const nextTier = COUPON_TIERS.find(t => points < t.points);
+            const upcoming = COUPON_TIERS.filter(t => !nextTier || t.points > nextTier.points);
+
+            if (!nextTier) {
+              return (
+                <div className="mt-4 rounded-lg border border-green-500/30 bg-green-500/5 p-3">
+                  <p className="text-xs text-green-700 font-semibold">Max discount reached — 20% off ready to claim.</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">Profiling &amp; courses only.</p>
+                </div>
+              );
+            }
+
+            const pct = Math.min(100, Math.round((points / nextTier.points) * 100));
+            return (
+              <div className="mt-4 space-y-3">
+                <div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">{u.label}</span>
-                    <span className={done ? "text-green-700 font-semibold" : "text-muted-foreground"}>
-                      {done ? `unlocked ✓` : `${points} / ${u.goal}`}
-                    </span>
+                    <span className="text-muted-foreground">Next: {nextTier.discount}% off coupon</span>
+                    <span className="text-muted-foreground">{points} / {nextTier.points}</span>
                   </div>
-                  <div className="h-1.5 mt-1 bg-muted rounded-full overflow-hidden">
+                  <div className="h-2 mt-1 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-secondary to-primary transition-all"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
                 </div>
-              );
-            })}
-          </div>
+                {upcoming.length > 0 && (
+                  <div className="text-[11px] text-muted-foreground space-y-0.5 pt-1">
+                    <p className="uppercase tracking-widest font-semibold text-muted-foreground/70">Then</p>
+                    {upcoming.map(t => (
+                      <div key={t.points} className="flex justify-between">
+                        <span>{t.discount}% off</span>
+                        <span>{t.points} pts</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[10px] text-muted-foreground/70 italic">
+                  Redeeming subtracts the points and resets your total to 0. Coupons apply to profiling &amp; courses only.
+                </p>
+              </div>
+            );
+          })()}
         </Card>
 
         {/* Types seen */}
