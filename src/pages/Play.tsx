@@ -1050,35 +1050,74 @@ export default function Play() {
           )}
 
           <div className="flex gap-1 items-center">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  onClick={onCloseResumeLater}
-                  className="h-8 w-8"
-                  aria-label="Close and resume later"
-                >
-                  <LayoutDashboard className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Close &amp; resume later</TooltipContent>
-            </Tooltip>
+            {state.finished ? (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => navigate("/dashboard")}
+                      className="h-8 w-8"
+                      aria-label="Back to dashboard"
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Back to dashboard</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={onNewGame}
+                      className="h-8 w-8"
+                      aria-label="Play again"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Play again</TooltipContent>
+                </Tooltip>
+              </>
+            ) : (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={onCloseResumeLater}
+                      className="h-8 w-8"
+                      aria-label="Close and resume later"
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Close &amp; resume later</TooltipContent>
+                </Tooltip>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  onClick={onCloseAbandon}
-                  className="h-8 w-8"
-                  aria-label="Close and abandon"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Close &amp; abandon</TooltipContent>
-            </Tooltip>
+                {/* Hide Abandon once the local player has finalised — they're
+                    already locked in and just spectating. */}
+                {state.players.find((p) => p.id === selfSlot)?.status !== "finalised" && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={onCloseAbandon}
+                        className="h-8 w-8"
+                        aria-label="Close and abandon"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Close &amp; abandon</TooltipContent>
+                  </Tooltip>
+                )}
+              </>
+            )}
 
 
             {isPvp ? (

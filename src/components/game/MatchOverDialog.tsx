@@ -91,8 +91,13 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
 
           <div className="flex-1 overflow-y-auto -mx-1 px-1">
             <div className="grid sm:grid-cols-2 gap-2">
-              {state.players.map((p) => (
-                <PlayerBreakdown key={p.id} player={p} winner={!isDraw && p.id === state.winnerId} />
+              {orderedPlayers(state).map(({ player, rank }) => (
+                <PlayerBreakdown
+                  key={player.id}
+                  player={player}
+                  winner={!isDraw && player.id === state.winnerId}
+                  rank={rank}
+                />
               ))}
             </div>
           </div>
@@ -124,11 +129,11 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
               ))}
             </TabsList>
             <div className="flex-1 overflow-y-auto mt-2">
-              {state.players.map((p) => (
-                <TabsContent key={p.id} value={p.id} className="mt-0">
-                  <PlayerBreakdown player={p} winner={p.id === state.winnerId} />
+              {orderedPlayers(state).map(({ player, rank }) => (
+                <TabsContent key={player.id} value={player.id} className="mt-0">
+                  <PlayerBreakdown player={player} winner={player.id === state.winnerId} rank={rank} />
                   <div className="mt-3 rounded-lg border border-border/60 bg-card/40 p-2 overflow-auto">
-                    <Ecosystem eco={p.ecosystem} size={56} showEmpties={false} minHeight={320} />
+                    <Ecosystem eco={player.ecosystem} size={56} showEmpties={false} minHeight={320} />
                   </div>
                 </TabsContent>
               ))}
@@ -205,7 +210,22 @@ function TypeChip({
   );
 }
 
-function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: boolean }) {
+function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+function orderedPlayers(state: MatchState): Array<{ player: PlayerState; rank: number | null }> {
+  const rankById = new Map<string, number>();
+  for (const pl of state.placements ?? []) rankById.set(pl.playerId, pl.rank);
+  const total = state.players.length;
+  return state.players
+    .map((p) => ({ player: p, rank: rankById.get(p.id) ?? null }))
+    .sort((a, b) => (a.rank ?? total + 1) - (b.rank ?? total + 1));
+}
+
+function PlayerBreakdown({ player, winner, rank }: { player: PlayerState; winner: boolean; rank?: number | null }) {
   const data = useMemo(() => {
     const placedList = Array.from(player.ecosystem.placed.values());
     const creators: PlacedCard[] = [];
@@ -322,9 +342,27 @@ function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: bool
         winner ? "border-amber-400 bg-amber-50 dark:bg-amber-950/20" : "border-border/60"
       }`}
     >
-      <div className="flex items-baseline justify-between mb-2">
-        <div className="font-semibold">{player.name}</div>
-        <div className="text-xs text-muted-foreground">
+      <div className="flex items-baseline justify-between mb-2 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          {rank != null && (
+            <span
+              className={`shrink-0 inline-flex items-center justify-center min-w-[2.25rem] px-1.5 h-6 rounded-full text-[11px] font-semibold ${
+                rank === 1
+                  ? "bg-amber-400 text-amber-950"
+                  : rank === 2
+                  ? "bg-slate-300 text-slate-900"
+                  : rank === 3
+                  ? "bg-orange-400/80 text-orange-950"
+                  : "bg-muted text-muted-foreground"
+              }`}
+              title={`${ordinal(rank)} place`}
+            >
+              {ordinal(rank)}
+            </span>
+          )}
+          <div className="font-semibold truncate">{player.name}</div>
+        </div>
+        <div className="text-xs text-muted-foreground text-right shrink-0">
           {data.creatorsCount} creators · {data.animalsCount} animals{data.goldenBodyCount > 0 ? ` · ${data.goldenBodyCount} Golden Body` : ""} · {playerTotalScore(player)} pts
         </div>
       </div>
