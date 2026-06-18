@@ -193,6 +193,13 @@ export default function PlayerProfileDiscountCTA({ userId }: Props) {
             >
               Maybe later
             </button>
+            <button
+              type="button"
+              onClick={dontShowAgain}
+              className="text-[11px] text-muted-foreground/80 hover:text-foreground underline underline-offset-2"
+            >
+              Don't show again
+            </button>
           </div>
         </div>
       </DialogContent>
