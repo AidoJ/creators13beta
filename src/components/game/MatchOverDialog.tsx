@@ -342,9 +342,27 @@ function PlayerBreakdown({ player, winner, rank }: { player: PlayerState; winner
         winner ? "border-amber-400 bg-amber-50 dark:bg-amber-950/20" : "border-border/60"
       }`}
     >
-      <div className="flex items-baseline justify-between mb-2">
-        <div className="font-semibold">{player.name}</div>
-        <div className="text-xs text-muted-foreground">
+      <div className="flex items-baseline justify-between mb-2 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          {rank != null && (
+            <span
+              className={`shrink-0 inline-flex items-center justify-center min-w-[2.25rem] px-1.5 h-6 rounded-full text-[11px] font-semibold ${
+                rank === 1
+                  ? "bg-amber-400 text-amber-950"
+                  : rank === 2
+                  ? "bg-slate-300 text-slate-900"
+                  : rank === 3
+                  ? "bg-orange-400/80 text-orange-950"
+                  : "bg-muted text-muted-foreground"
+              }`}
+              title={`${ordinal(rank)} place`}
+            >
+              {ordinal(rank)}
+            </span>
+          )}
+          <div className="font-semibold truncate">{player.name}</div>
+        </div>
+        <div className="text-xs text-muted-foreground text-right shrink-0">
           {data.creatorsCount} creators · {data.animalsCount} animals{data.goldenBodyCount > 0 ? ` · ${data.goldenBodyCount} Golden Body` : ""} · {playerTotalScore(player)} pts
         </div>
       </div>
