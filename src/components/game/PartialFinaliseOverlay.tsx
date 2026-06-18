@@ -47,6 +47,19 @@ export function PartialFinaliseOverlay({ state, selfPlayerId }: Props) {
     remaining: string;
   } | null>(null);
 
+  // Skip-on-initial-mount guard. On first render (including reconnects /
+  // refreshes / late joins mid-match), prime seenRef with whatever
+  // placements already exist so we DON'T replay historical events as
+  // fresh "just happened" toasts. Only placements that land AFTER mount
+  // trigger announcements.
+  const primedRef = useRef(false);
+  if (!primedRef.current) {
+    for (const p of state.placements ?? []) {
+      seenRef.current.add(`${p.playerId}:${p.rank}`);
+    }
+    primedRef.current = true;
+  }
+
   useEffect(() => {
     const placements = state.placements ?? [];
     // Don't fire partial UI once the whole match is done — MatchOverDialog
