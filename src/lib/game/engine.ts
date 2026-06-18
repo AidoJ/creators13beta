@@ -1120,10 +1120,79 @@ export function playSkyCreatureSteal(
 
 /* --------------------------- turn / win plumbing --------------------------- */
 
+/** True iff `slot` has at least one legal move available right now —
+ *  i.e. they can draw, pick up the used-pile top, place / disaster / steal
+ *  with any held card, or discard a non-Hive card (which recycles into the
+ *  used pile and is therefore productive). Used by the stalemate backstop;
+ *  must mirror the actual moves the engine allows. */
+function playerHasAnyLegalMove(state: MatchState, slot: number): boolean {
+  const p = state.players[slot];
+  if (!p) return false;
+  if ((p.status ?? "active") !== "active") return false;
+
+  // Pickup options (only matters on the player whose turn it is, but cheap
+  // to check uniformly — pile availability is a per-state fact).
+  if (state.draw.length > 0 && p.hand.length < HAND_LIMIT) return true;
+  const top = state.used[state.used.length - 1];
+  if (top && !top.spent && p.hand.length < HAND_LIMIT) return true;
+
+  // Card-driven actions: placement, disaster, steal.
+  for (const card of p.hand) {
+    if (hasAnyLegalAction(state, p.id, card)) return true;
+  }
+
+  // Discarding a non-Hive card is always legal once in the place phase
+  // (and reachable via skipDraws). It feeds the used pile, so it's
+  // productive — keeps the game progressing.
+  if (p.hand.some((c) => c.kind !== "golden_hive")) return true;
+
+  return false;
+}
+
+/** True iff EVERY still-active player has zero legal moves available.
+ *  Backstop trigger for stalemate finalisation. */
+function matchIsStalemated(state: MatchState): boolean {
+  if (state.finished) return false;
+  let sawActive = false;
+  for (let i = 0; i < state.players.length; i++) {
+    if ((state.players[i].status ?? "active") !== "active") continue;
+    sawActive = true;
+    if (playerHasAnyLegalMove(state, i)) return false;
+  }
+  return sawActive;
+}
+
+/** If every active player is stuck, end the match through the standard
+ *  finalisation path (the same one used by finaliseByScore / pile exhaustion).
+ *  Pure-stalemate end_of_days with no prior completer remains a draw, matching
+ *  the existing pile-exhaustion behaviour. Returns true if it fired. */
+function checkStalemateBackstop(state: MatchState): boolean {
+  if (state.finished) return false;
+  if (!matchIsStalemated(state)) return false;
+  if ((state.gameMode ?? "end_of_days") === "end_of_days") {
+    if ((state.placements?.length ?? 0) === 0) {
+      state.finished = true;
+      state.winnerId = null;
+      state.placements = [];
+      state.lastEvent =
+        "No legal moves remain for any player — match ended.";
+      return true;
+    }
+  }
+  finalise(state);
+  state.lastEvent =
+    "No legal moves remain — remaining players ranked by score.";
+  return true;
+}
+
 function afterAction(state: MatchState): MatchState {
   checkWin(state);
   if (state.finished) return state;
   if (state.placedThisTurn >= 2) advanceTurn(state);
+  if (state.finished) return state;
+  // Mid-turn state mutations (disaster wipes, steals, etc.) can leave the
+  // match stalemated without advanceTurn firing. Catch it here too.
+  checkStalemateBackstop(state);
   return state;
 }
 
