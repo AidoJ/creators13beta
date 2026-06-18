@@ -46,7 +46,6 @@ export default function PlayerProfileDiscountCTA({ userId }: Props) {
         { t: settings.profile_discount_threshold_1, p: settings.profile_discount_percent_1 },
       ].sort((a, b) => b.t - a.t);
 
-      // Fetch all existing codes for this user
       const { data: existing } = await supabase
         .from("profile_discount_codes" as any)
         .select("code, threshold, percent")
@@ -56,9 +55,12 @@ export default function PlayerProfileDiscountCTA({ userId }: Props) {
 
       for (const tier of tiers) {
         if (pts >= tier.t) {
+          const dismissKey = `profileDiscountDismiss:${userId}:${tier.t}`;
+          if (typeof window !== "undefined" && localStorage.getItem(dismissKey) === "1") {
+            return; // user opted out of this tier's pop-up
+          }
           let codeRow = existingMap.get(tier.t);
           if (!codeRow) {
-            // Issue a new code
             let newCode = randomCode();
             for (let i = 0; i < 4; i++) {
               const { data: ins, error } = await supabase
@@ -79,7 +81,7 @@ export default function PlayerProfileDiscountCTA({ userId }: Props) {
             setCode(codeRow.code);
             setOpen(true);
           }
-          return; // only show the highest unseen tier
+          return;
         }
       }
     })();
@@ -87,6 +89,14 @@ export default function PlayerProfileDiscountCTA({ userId }: Props) {
 
   function close() {
     setOpen(false);
+  }
+
+  function dontShowAgain() {
+    if (typeof window !== "undefined" && userId && activeThreshold) {
+      localStorage.setItem(`profileDiscountDismiss:${userId}:${activeThreshold}`, "1");
+    }
+    toast({ title: "Got it", description: "We won't show this again. Your code is saved in your account." });
+    close();
   }
 
   async function copyCode() {
