@@ -58,6 +58,7 @@ import { PlayerHand } from "@/components/game/PlayerHand";
 import { ScorePanel } from "@/components/game/ScorePanel";
 import { BoardHexPiece } from "@/components/game/BoardHexPiece";
 import { MatchOverDialog } from "@/components/game/MatchOverDialog";
+import { PartialFinaliseOverlay } from "@/components/game/PartialFinaliseOverlay";
 import { TutorialOverlay, resetTutorial } from "@/components/game/TutorialOverlay";
 import { MultiplayerLobby } from "@/components/game/MultiplayerLobby";
 import { HandTile } from "@/components/game/cards/HandTile";
@@ -1503,6 +1504,7 @@ export default function Play() {
 
 
       <MatchOverDialog state={state} onPlayAgain={onNewGame} />
+      <PartialFinaliseOverlay state={state} selfPlayerId={selfSlot} />
       {gameSettings.prompt_player_name && <NamePrompt />}
       {modeSelectorOpen && (
         <GameModeSelector
