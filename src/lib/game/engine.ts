@@ -42,6 +42,62 @@ export function shuffle<T>(arr: T[], rand: () => number = Math.random): T[] {
   return out;
 }
 
+/* ----------------- pickup / reshuffle rules (lockstep) -----------------
+ *  These two predicates are the SINGLE SOURCE OF TRUTH for what counts as
+ *  a legal pickup. Both `pickFromUsed`/`pickFromDraw` (the actual moves)
+ *  and `playerHasAnyLegalMove` (the stalemate backstop) consume them, so
+ *  the rule and the legal-move check can never drift.
+ *
+ *  Rule: a spent Sky Creature can still be picked up from the used pile
+ *  and placed as a plain animal (it never steals again — `spent` stays
+ *  true so it's also excluded from any future reshuffle). A spent Hive
+ *  can NEVER be picked up. Everything else is pickable iff not spent.
+ *  `disasterSpent` creators are still pickable — that flag only blocks
+ *  re-using them as a Disaster, not normal pickup/placement. */
+export function isUsedTopPickable(card: DeckCard | undefined | null): boolean {
+  if (!card) return false;
+  if (card.kind === "golden_hive") return !card.spent;
+  if (card.kind === "sky_creature") return true; // spent or not
+  return !card.spent;
+}
+
+/** True iff the player has a draw-phase pickup available right now.
+ *  Mirrors the rules enforced inside pickFromDraw / pickFromUsed —
+ *  including the lazy reshuffle: an empty draw pile is still "drawable"
+ *  if the used pile contains any non-spent (i.e. reshuffleable) cards. */
+export function playerCanPickUp(state: MatchState, slot: number): boolean {
+  const p = state.players[slot];
+  if (!p) return false;
+  if (p.hand.length >= HAND_LIMIT) return false;
+  // Direct draw, or reshuffle would refill draw.
+  if (state.draw.length > 0) return true;
+  if (state.used.some((c) => !c.spent)) return true;
+  // No draw possible, but spent Sky Creature on top is still pickable.
+  const top = state.used[state.used.length - 1];
+  return isUsedTopPickable(top);
+}
+
+/** Move every non-spent card from `used` into `draw` in shuffled order.
+ *  Spent cards (Hive used to block, Sky Creature used to steal) are
+ *  permanently removed from play. Mutates `state` in place. Returns the
+ *  number of cards reshuffled (0 means no reshuffle happened). */
+export function reshuffleUsedIntoDraw(
+  state: MatchState,
+  rand: () => number = Math.random,
+): number {
+  const live: DeckCard[] = [];
+  const dead: DeckCard[] = [];
+  for (const c of state.used) (c.spent ? dead : live).push(c);
+  if (live.length === 0) return 0;
+  state.draw = shuffle(live, rand);
+  // Permanently-removed (spent) cards stay nowhere — they exit play.
+  // The used pile is now empty until the next discard/disaster lands.
+  state.used = [];
+  return live.length;
+}
+
+
+
 function cloneEco(e: Ecosystem): Ecosystem {
   return { placed: new Map(e.placed) };
 }
@@ -156,7 +212,6 @@ export function drawInitialFive(state: MatchState): MatchState {
 export function pickFromDraw(state: MatchState): MatchState {
   if (state.finished) return state;
   if (state.phase !== "draw") throw new Error("Not in pick-up phase");
-  if (state.draw.length === 0) throw new Error("Draw pile empty");
   const me = state.players[state.turn];
   if (!me.firstPickupDone) {
     throw new Error("First take your 5 opening cards.");
@@ -165,11 +220,25 @@ export function pickFromDraw(state: MatchState): MatchState {
     throw new Error(`Hand limit reached (${HAND_LIMIT}). Play or discard cards before drawing more.`);
   }
   const next = cloneState(state);
+  // Lazy auto-reshuffle: if the draw pile is empty but the used pile has
+  // any live (non-spent) cards, fold them into a fresh shuffled draw pile.
+  // Spent cards (Hive used to block, Sky Creature used to steal) are
+  // permanently removed from play — this is the mechanism that lets the
+  // game converge to a clean terminal state. Surfaced via lastEvent so
+  // every client sees the same explanatory string after the commit.
+  let reshuffleNote = "";
+  if (next.draw.length === 0) {
+    const reshuffled = reshuffleUsedIntoDraw(next);
+    if (reshuffled === 0) {
+      throw new Error("No cards left to draw");
+    }
+    reshuffleNote = ` (used pile reshuffled — ${reshuffled} card${reshuffled === 1 ? "" : "s"} back in play)`;
+  }
   const card = next.draw.shift()!;
   next.players[next.turn].hand.push(card);
   next.drawnThisTurn += 1;
   if (next.drawnThisTurn >= 2) next.phase = "place";
-  next.lastEvent = `${next.players[next.turn].name} drew a card`;
+  next.lastEvent = `${next.players[next.turn].name} drew a card${reshuffleNote}`;
   // Hive does NOT auto-arm — it stays passive in hand until used to block a disaster.
   return next;
 }
@@ -186,8 +255,12 @@ export function pickFromUsed(state: MatchState): MatchState {
     throw new Error(`Hand limit reached (${HAND_LIMIT}). Play or discard cards before drawing more.`);
   }
   const top = state.used[state.used.length - 1];
-  if (top.spent) {
-    const label = top.kind === "golden_hive" ? "Golden Hive" : top.kind === "sky_creature" ? "Sky Creature Stealer" : top.name;
+  // Lockstep with `isUsedTopPickable` / `playerHasAnyLegalMove`: a spent
+  // Sky Creature is still pickable (placed as a plain animal — `spent`
+  // stays true so it never steals again and is filtered on any future
+  // reshuffle). A spent Hive is NEVER pickable.
+  if (!isUsedTopPickable(top)) {
+    const label = top.kind === "golden_hive" ? "Golden Hive" : top.name;
     throw new Error(`That ${label} has been spent — it can't be picked up.`);
   }
   const next = cloneState(state);
@@ -195,6 +268,9 @@ export function pickFromUsed(state: MatchState): MatchState {
   // Tag with pickedUpThisTurn so it can't be re-weaponised as a Disaster
   // the same turn — the exploit being: pick up Creator → instantly play it
   // back as a disaster → opponent picks it up → repeats forever.
+  // Preserve `spent` exactly as-is (a spent Sky Creature stays spent — it
+  // becomes a plain animal on placement and is excluded from any future
+  // reshuffle if it ever returns to the used pile).
   const card = { ...popped, pickedUpThisTurn: true };
   next.players[next.turn].hand.push(card);
   next.drawnThisTurn += 1;
@@ -203,6 +279,7 @@ export function pickFromUsed(state: MatchState): MatchState {
   // Hive does NOT auto-arm — it stays passive in hand until used to block a disaster.
   return next;
 }
+
 
 /** Skip the pick-up phase entirely and go straight to placement.
  *  Rule book treats pickup as up to 2 cards — players may choose to draw
@@ -1121,20 +1198,24 @@ export function playSkyCreatureSteal(
 /* --------------------------- turn / win plumbing --------------------------- */
 
 /** True iff `slot` has at least one legal move available right now —
- *  i.e. they can draw, pick up the used-pile top, place / disaster / steal
- *  with any held card, or discard a non-Hive card (which recycles into the
- *  used pile and is therefore productive). Used by the stalemate backstop;
- *  must mirror the actual moves the engine allows. */
+ *  i.e. they can pick up (direct draw / reshuffle-into-draw / spent-Sky-
+ *  pickable used-top), place / disaster / steal with any held card, or
+ *  discard a non-Hive card (which recycles into the used pile and is
+ *  therefore productive). Used by the stalemate backstop; pickup checks
+ *  consume the SAME `playerCanPickUp` / `isUsedTopPickable` helpers that
+ *  `pickFromDraw` and `pickFromUsed` enforce, so the backstop and the
+ *  actual move rules can never drift. */
 function playerHasAnyLegalMove(state: MatchState, slot: number): boolean {
   const p = state.players[slot];
   if (!p) return false;
   if ((p.status ?? "active") !== "active") return false;
 
-  // Pickup options (only matters on the player whose turn it is, but cheap
-  // to check uniformly — pile availability is a per-state fact).
-  if (state.draw.length > 0 && p.hand.length < HAND_LIMIT) return true;
-  const top = state.used[state.used.length - 1];
-  if (top && !top.spent && p.hand.length < HAND_LIMIT) return true;
+  // Pickup options — sourced from the same predicate `pickFromDraw` /
+  // `pickFromUsed` enforce. Covers: direct draw, reshuffle-of-live-used,
+  // and spent-Sky-Creature-pickable top. A spent Hive on top correctly
+  // fails this check (matches `isUsedTopPickable`'s asymmetry).
+  if (playerCanPickUp(state, slot)) return true;
+
 
   // Card-driven actions: placement, disaster, steal. We deliberately skip
   // Golden Hive here — `hasAnyLegalAction` returns true for Hive cards
@@ -1152,12 +1233,8 @@ function playerHasAnyLegalMove(state: MatchState, slot: number): boolean {
   // (and reachable via skipDraws). It feeds the used pile, so it's
   // productive — keeps the game progressing. Hive-only hands fall through
   // to `return false` and are correctly treated as stuck.
-  // NOTE (sequencing dependency): the `!top.spent` clause above encodes
-  // the CURRENT pickup rules. The forthcoming client rule that makes spent
-  // Sky Creatures pickable (via reshuffle / spent-pickup) MUST update this
-  // check in lockstep, or the backstop will falsely declare stalemate when
-  // a spent Sky Creature on top is actually a legal pickup.
   if (p.hand.some((c) => c.kind !== "golden_hive")) return true;
+
 
 
   return false;
