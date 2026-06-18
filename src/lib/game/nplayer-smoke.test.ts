@@ -161,6 +161,45 @@ describe("A.3 — N=4 single-Hive Disaster end-to-end (smoke)", () => {
   });
 });
 
+describe("stalemate backstop — Hive-only hand is correctly detected as stuck", () => {
+  it("N=2: both players hold only a Hive, no draw, used-top spent → backstop finalises", () => {
+    const players = makePlayers(2);
+    const hive = (uid: string): DeckCard =>
+      ({ uid, kind: "golden_hive", name: "Golden Hive" } as DeckCard);
+    players[0].hand = [hive("h0")];
+    players[1].hand = [hive("h1")];
+    const state = baseState(players);
+    const spentTop: DeckCard = {
+      uid: "spent-top",
+      kind: "sky_creature",
+      name: "Spent Sky",
+      spent: true,
+    } as DeckCard;
+    state.used = [spentTop];
+    state.draw = [];
+    state.placedThisTurn = 2;
+    const next = endTurnEarly(state);
+    expect(next.finished).toBe(true);
+    expect(next.winnerId).toBeNull();
+  });
+
+  it("a player with a real card in hand does NOT trigger stalemate (discard is legal)", () => {
+    const players = makePlayers(2);
+    const hive: DeckCard = { uid: "h0", kind: "golden_hive", name: "Golden Hive" } as DeckCard;
+    const realCard = animal("a-real", ["Lava", "Fire"]);
+    players[0].hand = [hive];
+    players[1].hand = [realCard];
+    const state = baseState(players);
+    state.used = [{ uid: "spent", kind: "sky_creature", name: "Spent", spent: true } as DeckCard];
+    state.draw = [];
+    state.placedThisTurn = 2;
+    const next = endTurnEarly(state);
+    expect(next.finished).toBe(false);
+  });
+});
+
+
+
 
 describe("A.3 — pile/hand exhaustion finalises N>2 by score", () => {
   it("N=3 pure-stalemate end_of_days → empty-placements draw (existing rule preserved)", () => {
