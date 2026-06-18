@@ -210,7 +210,22 @@ function TypeChip({
   );
 }
 
-function PlayerBreakdown({ player, winner }: { player: PlayerState; winner: boolean }) {
+function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+function orderedPlayers(state: MatchState): Array<{ player: PlayerState; rank: number | null }> {
+  const rankById = new Map<string, number>();
+  for (const pl of state.placements ?? []) rankById.set(pl.playerId, pl.rank);
+  const total = state.players.length;
+  return state.players
+    .map((p) => ({ player: p, rank: rankById.get(p.id) ?? null }))
+    .sort((a, b) => (a.rank ?? total + 1) - (b.rank ?? total + 1));
+}
+
+function PlayerBreakdown({ player, winner, rank }: { player: PlayerState; winner: boolean; rank?: number | null }) {
   const data = useMemo(() => {
     const placedList = Array.from(player.ecosystem.placed.values());
     const creators: PlacedCard[] = [];
