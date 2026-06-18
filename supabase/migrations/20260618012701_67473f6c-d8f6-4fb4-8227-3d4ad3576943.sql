@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Authenticated users can view practitioner roles" ON public.user_roles;
