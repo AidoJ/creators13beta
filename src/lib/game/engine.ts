@@ -42,6 +42,62 @@ export function shuffle<T>(arr: T[], rand: () => number = Math.random): T[] {
   return out;
 }
 
+/* ----------------- pickup / reshuffle rules (lockstep) -----------------
+ *  These two predicates are the SINGLE SOURCE OF TRUTH for what counts as
+ *  a legal pickup. Both `pickFromUsed`/`pickFromDraw` (the actual moves)
+ *  and `playerHasAnyLegalMove` (the stalemate backstop) consume them, so
+ *  the rule and the legal-move check can never drift.
+ *
+ *  Rule: a spent Sky Creature can still be picked up from the used pile
+ *  and placed as a plain animal (it never steals again — `spent` stays
+ *  true so it's also excluded from any future reshuffle). A spent Hive
+ *  can NEVER be picked up. Everything else is pickable iff not spent.
+ *  `disasterSpent` creators are still pickable — that flag only blocks
+ *  re-using them as a Disaster, not normal pickup/placement. */
+export function isUsedTopPickable(card: DeckCard | undefined | null): boolean {
+  if (!card) return false;
+  if (card.kind === "golden_hive") return !card.spent;
+  if (card.kind === "sky_creature") return true; // spent or not
+  return !card.spent;
+}
+
+/** True iff the player has a draw-phase pickup available right now.
+ *  Mirrors the rules enforced inside pickFromDraw / pickFromUsed —
+ *  including the lazy reshuffle: an empty draw pile is still "drawable"
+ *  if the used pile contains any non-spent (i.e. reshuffleable) cards. */
+export function playerCanPickUp(state: MatchState, slot: number): boolean {
+  const p = state.players[slot];
+  if (!p) return false;
+  if (p.hand.length >= HAND_LIMIT) return false;
+  // Direct draw, or reshuffle would refill draw.
+  if (state.draw.length > 0) return true;
+  if (state.used.some((c) => !c.spent)) return true;
+  // No draw possible, but spent Sky Creature on top is still pickable.
+  const top = state.used[state.used.length - 1];
+  return isUsedTopPickable(top);
+}
+
+/** Move every non-spent card from `used` into `draw` in shuffled order.
+ *  Spent cards (Hive used to block, Sky Creature used to steal) are
+ *  permanently removed from play. Mutates `state` in place. Returns the
+ *  number of cards reshuffled (0 means no reshuffle happened). */
+export function reshuffleUsedIntoDraw(
+  state: MatchState,
+  rand: () => number = Math.random,
+): number {
+  const live: DeckCard[] = [];
+  const dead: DeckCard[] = [];
+  for (const c of state.used) (c.spent ? dead : live).push(c);
+  if (live.length === 0) return 0;
+  state.draw = shuffle(live, rand);
+  // Permanently-removed (spent) cards stay nowhere — they exit play.
+  // The used pile is now empty until the next discard/disaster lands.
+  state.used = [];
+  return live.length;
+}
+
+
+
 function cloneEco(e: Ecosystem): Ecosystem {
   return { placed: new Map(e.placed) };
 }
