@@ -1198,20 +1198,24 @@ export function playSkyCreatureSteal(
 /* --------------------------- turn / win plumbing --------------------------- */
 
 /** True iff `slot` has at least one legal move available right now —
- *  i.e. they can draw, pick up the used-pile top, place / disaster / steal
- *  with any held card, or discard a non-Hive card (which recycles into the
- *  used pile and is therefore productive). Used by the stalemate backstop;
- *  must mirror the actual moves the engine allows. */
+ *  i.e. they can pick up (direct draw / reshuffle-into-draw / spent-Sky-
+ *  pickable used-top), place / disaster / steal with any held card, or
+ *  discard a non-Hive card (which recycles into the used pile and is
+ *  therefore productive). Used by the stalemate backstop; pickup checks
+ *  consume the SAME `playerCanPickUp` / `isUsedTopPickable` helpers that
+ *  `pickFromDraw` and `pickFromUsed` enforce, so the backstop and the
+ *  actual move rules can never drift. */
 function playerHasAnyLegalMove(state: MatchState, slot: number): boolean {
   const p = state.players[slot];
   if (!p) return false;
   if ((p.status ?? "active") !== "active") return false;
 
-  // Pickup options (only matters on the player whose turn it is, but cheap
-  // to check uniformly — pile availability is a per-state fact).
-  if (state.draw.length > 0 && p.hand.length < HAND_LIMIT) return true;
-  const top = state.used[state.used.length - 1];
-  if (top && !top.spent && p.hand.length < HAND_LIMIT) return true;
+  // Pickup options — sourced from the same predicate `pickFromDraw` /
+  // `pickFromUsed` enforce. Covers: direct draw, reshuffle-of-live-used,
+  // and spent-Sky-Creature-pickable top. A spent Hive on top correctly
+  // fails this check (matches `isUsedTopPickable`'s asymmetry).
+  if (playerCanPickUp(state, slot)) return true;
+
 
   // Card-driven actions: placement, disaster, steal. We deliberately skip
   // Golden Hive here — `hasAnyLegalAction` returns true for Hive cards
