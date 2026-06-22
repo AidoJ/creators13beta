@@ -45,16 +45,24 @@ const PETAL_ANGLES: Record<PetalKey, number> = {
 
 const CARDINAL_KEYS: PetalKey[] = ["top", "right", "bottom", "left"];
 
-// Cardinal petal — long pointed almond pointing up, base near centre (100,100),
-// tip near the top edge. Pointier than the previous teardrop to match the
-// reference lotus.
+// Cardinal petal — rounded leaf/teardrop pointing up with a slight scalloped
+// tip, matching the watercolour reference. Base sits just below the avatar
+// circle (centre 100,100), tip near the top edge.
 const CARDINAL_PATH =
-  "M 100 102 C 78 92 70 50 100 6 C 130 50 122 92 100 102 Z";
+  "M 100 104 " +
+  "C 74 100 60 70 76 30 " +
+  "C 84 18 92 12 100 6 " +
+  "C 108 12 116 18 124 30 " +
+  "C 140 70 126 100 100 104 Z";
 
-// Diagonal petal — shorter, slimmer almond. Sits behind the cardinals so only
-// its tip is visible between neighbouring cardinal petals.
+// Diagonal petal — narrower leaf rendered behind the cardinals so only the
+// tip peeks out between adjacent cardinal petals. Slightly shorter reach.
 const DIAGONAL_PATH =
-  "M 100 100 C 86 92 82 64 100 30 C 118 64 114 92 100 100 Z";
+  "M 100 102 " +
+  "C 84 98 76 70 88 36 " +
+  "C 92 26 96 20 100 16 " +
+  "C 104 20 108 26 112 36 " +
+  "C 124 70 116 98 100 102 Z";
 
 export interface LotusFrameProps {
   /** Per-petal fill colours. Missing petals render transparent. */
