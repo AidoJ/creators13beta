@@ -1,13 +1,17 @@
 /**
  * LotusFrame — native SVG 8-petal lotus.
  *
- * Two petal silhouettes:
- *   - Cardinal (top/right/bottom/left): long, pointed almond, full creator-type fill
- *   - Diagonal (NE/SE/SW/NW): shorter, narrower almond rendered behind the
- *     cardinals so only its tip peeks out between adjacent cardinal petals.
+ * One petal path spans exactly 45° and shares its base points with its
+ * neighbours, so when rotated 8× around the centre the petal edges TOUCH
+ * (no gaps, no separate floating PNGs). A gold ring then overdraws all
+ * petal bases at the same radius.
  *
- * Both shapes share the same gold outline and stroke weight to match the
- * watercolour reference lotus.
+ * Cardinal petals (top/right/bottom/left) carry the creator-type fill.
+ * Diagonal petals (NE/SE/SW/NW) are always transparent so the page
+ * background shows through.
+ *
+ * Geometry ported from public/lotus-community.html (viewBox 720) and
+ * scaled to viewBox 200 by ×(200/720) about centre (100,100).
  */
 import { CSSProperties } from "react";
 
@@ -45,24 +49,18 @@ const PETAL_ANGLES: Record<PetalKey, number> = {
 
 const CARDINAL_KEYS: PetalKey[] = ["top", "right", "bottom", "left"];
 
-// Cardinal petal — rounded leaf/teardrop pointing up with a slight scalloped
-// tip, matching the watercolour reference. Base sits just below the avatar
-// circle (centre 100,100), tip near the top edge.
-const CARDINAL_PATH =
-  "M 100 104 " +
-  "C 74 100 60 70 76 30 " +
-  "C 84 18 92 12 100 6 " +
-  "C 108 12 116 18 124 30 " +
-  "C 140 70 126 100 100 104 Z";
+// Single petal spanning 45° — its two base points are shared with the
+// neighbouring petals so the lotus closes around the centre ring.
+// Centre is (100,100); the petal points "up" (cardinal "top" position).
+const PETAL_PATH =
+  "M 83.00 58.94 " +
+  "C 79.44 49.44, 76.67 40.28, 79.72 33.06 " +
+  "C 83.06 26.11, 92.50 26.39, 100.00 20.00 " +
+  "C 107.50 26.39, 116.94 26.11, 120.28 33.06 " +
+  "C 123.33 40.28, 120.56 49.44, 117.00 58.94";
 
-// Diagonal petal — narrower leaf rendered behind the cardinals so only the
-// tip peeks out between adjacent cardinal petals. Slightly shorter reach.
-const DIAGONAL_PATH =
-  "M 100 102 " +
-  "C 84 98 76 70 88 36 " +
-  "C 92 26 96 20 100 16 " +
-  "C 104 20 108 26 112 36 " +
-  "C 124 70 116 98 100 102 Z";
+// Centre ring radius (gold). Matches r=164 in the 720 mockup.
+const CENTER_R = 45.56;
 
 export interface LotusFrameProps {
   /** Per-petal fill colours. Missing petals render transparent. */
@@ -83,18 +81,11 @@ const GOLD = "#c9a04a";
 export function LotusFrame({
   petalFills = {},
   strokeColor = GOLD,
-  strokeWidth = 2.25,
+  strokeWidth = 1.6,
   centerFill = "transparent",
   className,
   style,
 }: LotusFrameProps) {
-  // Render order: diagonals (background) first so cardinal petals visually sit
-  // on top of them — the diagonal tips peek out between cardinals.
-  const order: PetalKey[] = [
-    "top-left", "top-right", "bottom-left", "bottom-right",
-    "top", "right", "bottom", "left",
-  ];
-
   return (
     <svg
       viewBox="0 0 200 200"
@@ -103,23 +94,37 @@ export function LotusFrame({
       style={style}
       aria-hidden
     >
-      {order.map((key) => {
-        const isCardinal = CARDINAL_KEYS.includes(key);
-        const fill = petalFills[key] ?? "transparent";
-        return (
-          <path
-            key={key}
-            id={`petal-${key}`}
-            d={isCardinal ? CARDINAL_PATH : DIAGONAL_PATH}
-            transform={`rotate(${PETAL_ANGLES[key]} 100 100)`}
-            fill={fill}
-            stroke={strokeColor}
-            strokeWidth={strokeWidth}
-            strokeLinejoin="round"
-            strokeLinecap="round"
-          />
-        );
-      })}
+      {/* Petals — diagonals first (so any subtle overlap reads cleanly),
+          then cardinals on top. All share the same gold outline. */}
+      {PETAL_KEYS.filter((k) => !CARDINAL_KEYS.includes(k))
+        .concat(CARDINAL_KEYS)
+        .map((key) => {
+          const fill = petalFills[key] ?? "transparent";
+          return (
+            <path
+              key={key}
+              id={`petal-${key}`}
+              d={PETAL_PATH}
+              transform={`rotate(${PETAL_ANGLES[key]} 100 100)`}
+              fill={fill}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          );
+        })}
+
+      {/* Centre gold ring — drawn AFTER petals so it overdraws every petal
+          base on a single clean circle, exactly like the mockup. */}
+      <circle
+        cx="100"
+        cy="100"
+        r={CENTER_R}
+        fill={centerFill}
+        stroke={strokeColor}
+        strokeWidth={strokeWidth}
+      />
     </svg>
   );
 }
