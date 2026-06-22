@@ -135,8 +135,7 @@ export function LotusFrame({
             <path
               key={key}
               id={`petal-${key}`}
-              d={PETAL_PATH}
-              transform={`rotate(${PETAL_ANGLES[key]} 100 100)`}
+              d={PETAL_PATHS[key]}
               fill={fill}
               stroke={strokeColor}
               strokeWidth={strokeWidth}
@@ -151,7 +150,7 @@ export function LotusFrame({
       <circle
         cx="100"
         cy="100"
-        r={CENTER_R}
+        r={INNER_R}
         fill={centerFill}
         stroke={strokeColor}
         strokeWidth={strokeWidth}
