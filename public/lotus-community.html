@@ -13,11 +13,14 @@
 
   :root {
     --lotus-size: 720px;
-    --circle-d: 280px;
+    /* Geometry: for 8 petals at 45°, neighbouring bases of width W touch
+       when r = (W/2)/sin(22.5°) ≈ 1.307·W. We pull r in by ~8% so bases
+       overlap each other AND overlap the circle edge (matching reference). */
+    --petal-w: 180px;
+    --petal-h: 106px;            /* native aspect 220:130 */
+    --petal-offset: 216px;        /* ≈ 1.20·W → tight overlap */
+    --circle-d: 440px;            /* ≈ 2·offset + small inset */
     --circle-color: #c8902a;
-    --petal-w: 200px;
-    --petal-h: 118px;     /* native aspect 220:130 */
-    --petal-offset: 140px; /* base sits flush on circle edge (= circle radius) */
   }
 
   .lotus {
