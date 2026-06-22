@@ -1324,9 +1324,11 @@ function advanceTurn(state: MatchState): void {
   let nextSlot = state.turn;
   const passedNames: string[] = [];
   let landed = false;
+  let firstActiveFallback = -1;
   for (let step = 1; step <= order.length; step++) {
     const candidate = order[(startFrom + step) % order.length];
     if (!isActive(candidate)) continue;
+    if (firstActiveFallback < 0) firstActiveFallback = candidate;
     if (playerHasAnyLegalMove(state, candidate)) {
       nextSlot = candidate;
       landed = true;
@@ -1335,6 +1337,11 @@ function advanceTurn(state: MatchState): void {
     const skipped = state.players[candidate];
     if (skipped?.name) passedNames.push(skipped.name);
   }
+  // No active player has a legal move — every skip we just recorded is a
+  // would-be auto-pass that the stalemate backstop will roll up into a
+  // finalise-by-score below. Park `state.turn` on the first active slot so
+  // downstream consumers don't see a finalised player as "current".
+  if (!landed && firstActiveFallback >= 0) nextSlot = firstActiveFallback;
   state.turn = nextSlot;
   state.phase = "draw";
   state.drawnThisTurn = 0;
