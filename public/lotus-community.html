@@ -13,13 +13,17 @@
 
   :root {
     --lotus-size: 720px;
-    /* Geometry: for 8 petals at 45°, neighbouring bases of width W touch
-       when r = (W/2)/sin(22.5°) ≈ 1.307·W. We pull r in by ~8% so bases
-       overlap each other AND overlap the circle edge (matching reference). */
-    --petal-w: 180px;
-    --petal-h: 106px;            /* native aspect 220:130 */
-    --petal-offset: 216px;        /* ≈ 1.20·W → tight overlap */
-    --circle-d: 440px;            /* ≈ 2·offset + small inset */
+    /* Petal PNG is 220×130. Visible base inside the PNG ≈ 118px wide,
+       centered horizontally, sitting ~5px above the box bottom.
+       For 8 petals at 45°, side edges of neighbouring visible bases touch
+       when their base midpoints sit on a ring of radius:
+           R = Wv / (2·sin(22.5°)) = 118 / 0.7654 ≈ 154px.
+       Anchor the gold circle's outer edge to that same R so each petal's
+       base sits flush on the ring AND meets its neighbours' base corners. */
+    --petal-w: 220px;             /* native PNG width */
+    --petal-h: 130px;             /* native PNG height */
+    --petal-offset: 154px;        /* base midpoint radius (touching radius) */
+    --circle-d: 300px;            /* 2·R minus a 4px inset so base nestles on ring */
     --circle-color: #c8902a;
   }
 
