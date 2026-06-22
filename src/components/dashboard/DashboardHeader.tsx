@@ -46,13 +46,15 @@ export default function DashboardHeader({ email, onSignOut }: DashboardHeaderPro
   const isPractitioner = roles.some((r) => ["practitioner", "trainee", "trainer"].includes(r));
   const isTrainerOrAdmin = roles.includes("trainer") || roles.includes("admin");
   const isTrainer = roles.includes("trainer");
+  const isStaff = roles.some((r) => ["practitioner", "trainee", "trainer", "admin"].includes(r));
 
-  // Core sections — Me, Play, Community. Community gated on profile completion
-  // only (visibility is a "be seen" gate, not a "see" gate).
+  // Core sections — Me, Play, Community. Community is gated on profile
+  // completion for regular members; staff (practitioner/trainer/admin) can
+  // always reach it so they can support / moderate.
   const coreNav: NavItem[] = [
     { label: "Me", path: "/dashboard", icon: User, show: true },
     { label: "Play", path: "/play", icon: Gamepad2, show: true, nested: true },
-    { label: "Community", path: "/community/dashboard", icon: Globe, show: profileComplete, nested: true },
+    { label: "Community", path: "/community/dashboard", icon: Globe, show: profileComplete || isStaff, nested: true },
   ];
 
   // Role-gated tools.
