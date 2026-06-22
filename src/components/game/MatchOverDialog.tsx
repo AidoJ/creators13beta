@@ -60,7 +60,22 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
   const navigate = useNavigate();
   const [reviewOpen, setReviewOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
-  const open = state.finished && !dismissed;
+  // Client-side beat: when the match finalises (server is the source of
+  // truth and writes `state.finished` immediately on first completion), we
+  // delay OPENING this dialog by ~750ms so players get a brief "board
+  // flash" moment to register that someone completed an ecosystem before
+  // the results modal takes over. The server has already settled — a laggy
+  // client just sees the dialog open slightly later, never desynced.
+  const [revealReady, setRevealReady] = useState(false);
+  useEffect(() => {
+    if (!state.finished) {
+      setRevealReady(false);
+      return;
+    }
+    const t = window.setTimeout(() => setRevealReady(true), 750);
+    return () => window.clearTimeout(t);
+  }, [state.finished]);
+  const open = state.finished && revealReady && !dismissed;
   const isDraw = state.finished && state.winnerId == null;
   const winner = state.players.find((p) => p.id === state.winnerId) ?? state.players[0];
 
