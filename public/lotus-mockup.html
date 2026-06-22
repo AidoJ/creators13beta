@@ -1,76 +1,132 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Lotus Mockup</title>
+<title>Lotus mockup v2</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
-  body { margin:0; min-height:100vh; display:grid; place-items:center; background:#0f1419; font-family: system-ui, sans-serif; color:#eee; gap:24px; }
-  .wrap { display:flex; flex-direction:column; align-items:center; gap:16px; padding:32px; }
-  svg { width: min(80vmin, 560px); height: auto; display:block; }
-  h2 { margin:0; font-weight:400; opacity:.7; font-size:14px; letter-spacing:.1em; text-transform:uppercase; }
+  html,body { margin:0; padding:0; }
+  body {
+    min-height:100vh;
+    font-family: system-ui, sans-serif;
+    /* Soft pale leafy watercolour-ish background */
+    background:
+      radial-gradient(ellipse at 20% 15%, #d9e4c8 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 25%, #e8d9b8 0%, transparent 55%),
+      radial-gradient(ellipse at 70% 90%, #cfdcc0 0%, transparent 60%),
+      radial-gradient(ellipse at 10% 85%, #e3d6b6 0%, transparent 60%),
+      linear-gradient(#efe7d2, #e6dcc1);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:24px;
+    padding:40px 20px;
+    color:#3a2f1a;
+  }
+  h1 { font-weight:500; font-size:18px; opacity:.7; margin:0; }
+  .stage { width:min(560px, 92vw); aspect-ratio:1; position:relative; }
+  .stage svg { width:100%; height:100%; display:block; }
+  .row { display:flex; gap:24px; flex-wrap:wrap; justify-content:center; }
+  .small { width:220px; }
+  .label { text-align:center; font-size:13px; opacity:.7; margin-top:4px; }
+  .avatar {
+    /* placeholder portrait inside the centre circle */
+    background:
+      radial-gradient(circle at 50% 38%, #c9a37a 0%, #a87a55 55%, #7a5436 100%);
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h2>Lotus Frame — 8 petal ring mockup</h2>
-  <svg viewBox="-200 -200 400 400" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <!--
-        ONE petal, drawn with its BASE on the X axis (y=0 line),
-        apex pointing UP (toward -y). Base center sits at origin.
-        Half-base width = sin(22.5°)*R_base so that 8 bases at radius R_base
-        meet edge-to-edge with no gap.
-        R_base = 70, half-base = 70 * sin(22.5°) ≈ 26.79
-        Apex at y = -160 (outer radius)
-      -->
-      <symbol id="petal" overflow="visible">
+  <h1>8-petal lotus — pale background, 4 filled cardinals, 4 outline diagonals</h1>
+
+  <div class="stage">
+    <svg viewBox="-200 -200 400 400" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Rough hand-painted gold edge -->
+        <filter id="rough" x="-20%" y="-20%" width="140%" height="140%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="noise"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.2" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+        <filter id="roughHeavy" x="-20%" y="-20%" width="140%" height="140%">
+          <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="7" result="noise"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+
+        <!-- Soft watercolour wash for filled petals -->
+        <radialGradient id="washBlue"   cx="50%" cy="65%" r="65%"><stop offset="0%" stop-color="#9ec4d8"/><stop offset="100%" stop-color="#5e8fa8"/></radialGradient>
+        <radialGradient id="washRed"    cx="50%" cy="65%" r="65%"><stop offset="0%" stop-color="#e6a89a"/><stop offset="100%" stop-color="#b86552"/></radialGradient>
+        <radialGradient id="washYellow" cx="50%" cy="65%" r="65%"><stop offset="0%" stop-color="#f1d684"/><stop offset="100%" stop-color="#c79a37"/></radialGradient>
+        <radialGradient id="washPurple" cx="50%" cy="65%" r="65%"><stop offset="0%" stop-color="#b9a3c9"/><stop offset="100%" stop-color="#7e6592"/></radialGradient>
+
         <!--
-          Crown/shield petal:
-          start at right base corner (26.79, 0)
-          curve out to right shoulder bump
-          dip slightly between shoulder and apex
-          rise to pointed apex (0, -160)
-          mirror down left side
-          close along base
+          Petal: short, broad, rounded sides, small pointed top, shallow
+          curved base. Centred at origin, base sits at y=0, apex at y=-150.
+          Width at the broad shoulder (around y=-70) is about ±62.
         -->
-        <path d="
-          M 26.79 0
-          C 40 -30, 52 -55, 55 -85
-          C 56 -98, 48 -100, 38 -98
-          C 28 -96, 20 -105, 14 -120
-          C 9 -135, 4 -150, 0 -160
-          C -4 -150, -9 -135, -14 -120
-          C -20 -105, -28 -96, -38 -98
-          C -48 -100, -56 -98, -55 -85
-          C -52 -55, -40 -30, -26.79 0
-          Z
-        "
-        stroke="#E8A53A" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
-      </symbol>
-    </defs>
+        <symbol id="petal" overflow="visible">
+          <path d="
+            M -34 4
+            C -36 -10 -58 -30 -62 -70
+            C -66 -118 -36 -150 0 -152
+            C 36 -150 66 -118 62 -70
+            C 58 -30 36 -10 34 4
+            C 22 8 -22 8 -34 4 Z
+          "/>
+        </symbol>
+      </defs>
 
-    <!-- Diagonals first (outline only, transparent fill) -->
-    <g fill="none">
-      <use href="#petal" transform="rotate(45)" />
-      <use href="#petal" transform="rotate(135)" />
-      <use href="#petal" transform="rotate(225)" />
-      <use href="#petal" transform="rotate(315)" />
-    </g>
+      <!-- Diagonal petals (outline-only) drawn first, behind cardinals -->
+      <g filter="url(#roughHeavy)">
+        <g stroke="#b07a26" stroke-width="2.4" fill="none" stroke-linejoin="round" stroke-linecap="round">
+          <use href="#petal" transform="rotate(45)"  />
+          <use href="#petal" transform="rotate(135)" />
+          <use href="#petal" transform="rotate(225)" />
+          <use href="#petal" transform="rotate(315)" />
+        </g>
+      </g>
 
-    <!-- Cardinals on top (creator-type colors) -->
-    <use href="#petal" transform="rotate(0)"   fill="#2BC4B8" />
-    <use href="#petal" transform="rotate(90)"  fill="#E85A4F" />
-    <use href="#petal" transform="rotate(180)" fill="#F2C744" />
-    <use href="#petal" transform="rotate(270)" fill="#5B8DEF" />
+      <!-- Cardinal petals (filled) on top -->
+      <g filter="url(#rough)">
+        <g stroke="#a8701f" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round">
+          <use href="#petal" transform="rotate(0)"   fill="url(#washBlue)"/>
+          <use href="#petal" transform="rotate(90)"  fill="url(#washRed)"/>
+          <use href="#petal" transform="rotate(180)" fill="url(#washYellow)"/>
+          <use href="#petal" transform="rotate(270)" fill="url(#washPurple)"/>
+        </g>
+      </g>
 
-    <!-- Center avatar circle -->
-    <circle cx="0" cy="0" r="60" fill="#1a1f2e" stroke="#E8A53A" stroke-width="4" />
-    <text x="0" y="6" text-anchor="middle" font-size="14" fill="#888">avatar</text>
-  </svg>
-  <p style="opacity:.6; font-size:13px; max-width:520px; text-align:center;">
-    8 petals rotated 45° apart, bases meeting edge-to-edge around the central circle.
-    Cardinals (N/E/S/W) filled with creator-type colors; diagonals (NE/SE/SW/NW) outline only.
-  </p>
-</div>
+      <!-- Avatar circle covers petal bases so the ring feels continuous -->
+      <g>
+        <circle cx="0" cy="0" r="56" fill="#efe6cf" />
+        <circle cx="0" cy="0" r="52" class="avatar-bg"
+                fill="url(#washYellow)" opacity="0.0"/>
+        <!-- placeholder portrait (radial brown) -->
+        <circle cx="0" cy="0" r="52" fill="#a87a55"/>
+        <circle cx="0" cy="-6" r="40" fill="#c49575" opacity="0.85"/>
+        <circle cx="0" cy="0" r="52" fill="none" stroke="#a8701f" stroke-width="2.6" filter="url(#rough)"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="row">
+    <div>
+      <div class="stage small">
+        <svg viewBox="-200 -200 400 400" xmlns="http://www.w3.org/2000/svg">
+          <use href="#petal" transform="rotate(0)"   fill="url(#washBlue)"   stroke="#a8701f" stroke-width="2.6" filter="url(#rough)"/>
+          <use href="#petal" transform="rotate(45)"  fill="none"             stroke="#b07a26" stroke-width="2.4" filter="url(#roughHeavy)"/>
+          <use href="#petal" transform="rotate(90)"  fill="url(#washRed)"    stroke="#a8701f" stroke-width="2.6" filter="url(#rough)"/>
+          <use href="#petal" transform="rotate(135)" fill="none"             stroke="#b07a26" stroke-width="2.4" filter="url(#roughHeavy)"/>
+          <use href="#petal" transform="rotate(180)" fill="url(#washYellow)" stroke="#a8701f" stroke-width="2.6" filter="url(#rough)"/>
+          <use href="#petal" transform="rotate(225)" fill="none"             stroke="#b07a26" stroke-width="2.4" filter="url(#roughHeavy)"/>
+          <use href="#petal" transform="rotate(270)" fill="url(#washPurple)" stroke="#a8701f" stroke-width="2.6" filter="url(#rough)"/>
+          <use href="#petal" transform="rotate(315)" fill="none"             stroke="#b07a26" stroke-width="2.4" filter="url(#roughHeavy)"/>
+          <circle cx="0" cy="0" r="56" fill="#efe6cf"/>
+          <circle cx="0" cy="0" r="52" fill="#a87a55"/>
+          <circle cx="0" cy="0" r="52" fill="none" stroke="#a8701f" stroke-width="2.6" filter="url(#rough)"/>
+        </svg>
+      </div>
+      <div class="label">Compact size preview</div>
+    </div>
+  </div>
 </body>
 </html>
