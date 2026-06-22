@@ -73,7 +73,7 @@ const GOLD = "#c9a04a";
 export function LotusFrame({
   petalFills = {},
   strokeColor = GOLD,
-  strokeWidth = 1.6,
+  strokeWidth = 5,
   centerFill = "transparent",
   className,
   style,
