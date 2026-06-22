@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Lotus Mockup</title>
+<style>
+  body { margin:0; min-height:100vh; display:grid; place-items:center; background:#0f1419; font-family: system-ui, sans-serif; color:#eee; gap:24px; }
+  .wrap { display:flex; flex-direction:column; align-items:center; gap:16px; padding:32px; }
+  svg { width: min(80vmin, 560px); height: auto; display:block; }
+  h2 { margin:0; font-weight:400; opacity:.7; font-size:14px; letter-spacing:.1em; text-transform:uppercase; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Lotus Frame — 8 petal ring mockup</h2>
+  <svg viewBox="-200 -200 400 400" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!--
+        ONE petal, drawn with its BASE on the X axis (y=0 line),
+        apex pointing UP (toward -y). Base center sits at origin.
+        Half-base width = sin(22.5°)*R_base so that 8 bases at radius R_base
+        meet edge-to-edge with no gap.
+        R_base = 70, half-base = 70 * sin(22.5°) ≈ 26.79
+        Apex at y = -160 (outer radius)
+      -->
+      <symbol id="petal" overflow="visible">
+        <!--
+          Crown/shield petal:
+          start at right base corner (26.79, 0)
+          curve out to right shoulder bump
+          dip slightly between shoulder and apex
+          rise to pointed apex (0, -160)
+          mirror down left side
+          close along base
+        -->
+        <path d="
+          M 26.79 0
+          C 40 -30, 52 -55, 55 -85
+          C 56 -98, 48 -100, 38 -98
+          C 28 -96, 20 -105, 14 -120
+          C 9 -135, 4 -150, 0 -160
+          C -4 -150, -9 -135, -14 -120
+          C -20 -105, -28 -96, -38 -98
+          C -48 -100, -56 -98, -55 -85
+          C -52 -55, -40 -30, -26.79 0
+          Z
+        "
+        stroke="#E8A53A" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+      </symbol>
+    </defs>
+
+    <!-- Diagonals first (outline only, transparent fill) -->
+    <g fill="none">
+      <use href="#petal" transform="rotate(45)" />
+      <use href="#petal" transform="rotate(135)" />
+      <use href="#petal" transform="rotate(225)" />
+      <use href="#petal" transform="rotate(315)" />
+    </g>
+
+    <!-- Cardinals on top (creator-type colors) -->
+    <use href="#petal" transform="rotate(0)"   fill="#2BC4B8" />
+    <use href="#petal" transform="rotate(90)"  fill="#E85A4F" />
+    <use href="#petal" transform="rotate(180)" fill="#F2C744" />
+    <use href="#petal" transform="rotate(270)" fill="#5B8DEF" />
+
+    <!-- Center avatar circle -->
+    <circle cx="0" cy="0" r="60" fill="#1a1f2e" stroke="#E8A53A" stroke-width="4" />
+    <text x="0" y="6" text-anchor="middle" font-size="14" fill="#888">avatar</text>
+  </svg>
+  <p style="opacity:.6; font-size:13px; max-width:520px; text-align:center;">
+    8 petals rotated 45° apart, bases meeting edge-to-edge around the central circle.
+    Cardinals (N/E/S/W) filled with creator-type colors; diagonals (NE/SE/SW/NW) outline only.
+  </p>
+</div>
+</body>
+</html>
