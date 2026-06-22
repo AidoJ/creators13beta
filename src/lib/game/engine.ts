@@ -1550,27 +1550,17 @@ function checkWin(state: MatchState): void {
     }
   }
 
-  // Classic ecosystem-complete win. For 2-player the first completer wins
-  // the match outright (rank 1, opponent rank 2). For N>2 the first
-  // completer finalises their OWN position only (next available rank, also
-  // 1 for the first); the match continues for the remaining actives until
-  // only one active player remains — at which point `advanceTurn` triggers
-  // `finalise` to close the match out with score-ranked placements.
+  // Classic ecosystem-complete win. INSTANT-END for ALL player counts (client
+  // confirmed, Jun 2026): the first player to complete a valid ecosystem ends
+  // the match immediately. They take rank 1; every other player is ranked by
+  // total score descending (ties share rank) via the same `finalise` path
+  // used by N=2 today. No partial-finalise — there's no incentive for
+  // runners-up to keep playing under the points economy (winner 6, others 1).
   for (const p of state.players) {
     if ((p.status ?? "active") !== "active") continue;
     if (!validateEcosystemWin(p).valid) continue;
-
-    const totalPlayers = state.players.length;
-    if (totalPlayers <= 2) {
-      // N=2 fast path — preserves existing behaviour exactly (immediate end).
-      finalise(state, p.id);
-      return;
-    }
-
-    // N>2 — partial finalise. Assign next rank, mark status, leave match
-    // running. If finalising this player leaves ≤1 active, `advanceTurn`
-    // (called by `afterAction`) will detect that and end the match.
-    partiallyFinalisePlayer(state, p.id, "completed");
+    finalise(state, p.id);
+    return;
   }
 }
 

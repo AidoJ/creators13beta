@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,22 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
   const navigate = useNavigate();
   const [reviewOpen, setReviewOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
-  const open = state.finished && !dismissed;
+  // Client-side beat: when the match finalises (server is the source of
+  // truth and writes `state.finished` immediately on first completion), we
+  // delay OPENING this dialog by ~750ms so players get a brief "board
+  // flash" moment to register that someone completed an ecosystem before
+  // the results modal takes over. The server has already settled — a laggy
+  // client just sees the dialog open slightly later, never desynced.
+  const [revealReady, setRevealReady] = useState(false);
+  useEffect(() => {
+    if (!state.finished) {
+      setRevealReady(false);
+      return;
+    }
+    const t = window.setTimeout(() => setRevealReady(true), 750);
+    return () => window.clearTimeout(t);
+  }, [state.finished]);
+  const open = state.finished && revealReady && !dismissed;
   const isDraw = state.finished && state.winnerId == null;
   const winner = state.players.find((p) => p.id === state.winnerId) ?? state.players[0];
 
@@ -91,12 +106,13 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
 
           <div className="flex-1 overflow-y-auto -mx-1 px-1">
             <div className="grid sm:grid-cols-2 gap-2">
-              {orderedPlayers(state).map(({ player, rank }) => (
+              {orderedPlayers(state).map(({ player, rank, tied }) => (
                 <PlayerBreakdown
                   key={player.id}
                   player={player}
                   winner={!isDraw && player.id === state.winnerId}
                   rank={rank}
+                  tied={tied}
                 />
               ))}
             </div>
@@ -129,9 +145,9 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
               ))}
             </TabsList>
             <div className="flex-1 overflow-y-auto mt-2">
-              {orderedPlayers(state).map(({ player, rank }) => (
+              {orderedPlayers(state).map(({ player, rank, tied }) => (
                 <TabsContent key={player.id} value={player.id} className="mt-0">
-                  <PlayerBreakdown player={player} winner={player.id === state.winnerId} rank={rank} />
+                  <PlayerBreakdown player={player} winner={player.id === state.winnerId} rank={rank} tied={tied} />
                   <div className="mt-3 rounded-lg border border-border/60 bg-card/40 p-2 overflow-auto">
                     <Ecosystem eco={player.ecosystem} size={56} showEmpties={false} minHeight={320} />
                   </div>
@@ -216,16 +232,24 @@ function ordinal(n: number): string {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
-function orderedPlayers(state: MatchState): Array<{ player: PlayerState; rank: number | null }> {
+function orderedPlayers(state: MatchState): Array<{ player: PlayerState; rank: number | null; tied: boolean }> {
   const rankById = new Map<string, number>();
   for (const pl of state.placements ?? []) rankById.set(pl.playerId, pl.rank);
+  const rankCounts = new Map<number, number>();
+  for (const pl of state.placements ?? []) {
+    rankCounts.set(pl.rank, (rankCounts.get(pl.rank) ?? 0) + 1);
+  }
   const total = state.players.length;
   return state.players
-    .map((p) => ({ player: p, rank: rankById.get(p.id) ?? null }))
+    .map((p) => {
+      const rank = rankById.get(p.id) ?? null;
+      const tied = rank != null && (rankCounts.get(rank) ?? 0) > 1;
+      return { player: p, rank, tied };
+    })
     .sort((a, b) => (a.rank ?? total + 1) - (b.rank ?? total + 1));
 }
 
-function PlayerBreakdown({ player, winner, rank }: { player: PlayerState; winner: boolean; rank?: number | null }) {
+function PlayerBreakdown({ player, winner, rank, tied }: { player: PlayerState; winner: boolean; rank?: number | null; tied?: boolean }) {
   const data = useMemo(() => {
     const placedList = Array.from(player.ecosystem.placed.values());
     const creators: PlacedCard[] = [];
@@ -355,9 +379,9 @@ function PlayerBreakdown({ player, winner, rank }: { player: PlayerState; winner
                   ? "bg-orange-400/80 text-orange-950"
                   : "bg-muted text-muted-foreground"
               }`}
-              title={`${ordinal(rank)} place`}
+              title={`${ordinal(rank)} place${tied ? " (tied)" : ""}`}
             >
-              {ordinal(rank)}
+              {ordinal(rank)}{tied ? " (tied)" : ""}
             </span>
           )}
           <div className="font-semibold truncate">{player.name}</div>
