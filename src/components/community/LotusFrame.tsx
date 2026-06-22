@@ -1,12 +1,13 @@
 /**
  * LotusFrame — native SVG 8-petal lotus.
  *
- * Each petal is its own <path> element with a stable id and can be individually
- * filled via the `petalFills` prop. The gold outline matches the original
- * lotus-frame.png art direction.
+ * Two petal silhouettes:
+ *   - Cardinal (top/right/bottom/left): long, pointed almond, full creator-type fill
+ *   - Diagonal (NE/SE/SW/NW): shorter, narrower almond rendered behind the
+ *     cardinals so only its tip peeks out between adjacent cardinal petals.
  *
- * Petal keys (clockwise from 12 o'clock):
- *   top, top-right, right, bottom-right, bottom, bottom-left, left, top-left
+ * Both shapes share the same gold outline and stroke weight to match the
+ * watercolour reference lotus.
  */
 import { CSSProperties } from "react";
 
@@ -42,11 +43,18 @@ const PETAL_ANGLES: Record<PetalKey, number> = {
   "top-left": 315,
 };
 
-// A single petal path pointing UP, centred horizontally at x=100,
-// with its base at the centre (100,100) and tip near the top edge.
-// Almond / teardrop with a soft curve.
-const PETAL_PATH =
-  "M 100 100 C 70 80 70 40 100 8 C 130 40 130 80 100 100 Z";
+const CARDINAL_KEYS: PetalKey[] = ["top", "right", "bottom", "left"];
+
+// Cardinal petal — long pointed almond pointing up, base near centre (100,100),
+// tip near the top edge. Pointier than the previous teardrop to match the
+// reference lotus.
+const CARDINAL_PATH =
+  "M 100 102 C 78 92 70 50 100 6 C 130 50 122 92 100 102 Z";
+
+// Diagonal petal — shorter, slimmer almond. Sits behind the cardinals so only
+// its tip is visible between neighbouring cardinal petals.
+const DIAGONAL_PATH =
+  "M 100 100 C 86 92 82 64 100 30 C 118 64 114 92 100 100 Z";
 
 export interface LotusFrameProps {
   /** Per-petal fill colours. Missing petals render transparent. */
@@ -67,11 +75,18 @@ const GOLD = "#c9a04a";
 export function LotusFrame({
   petalFills = {},
   strokeColor = GOLD,
-  strokeWidth = 2,
+  strokeWidth = 2.25,
   centerFill = "transparent",
   className,
   style,
 }: LotusFrameProps) {
+  // Render order: diagonals (background) first so cardinal petals visually sit
+  // on top of them — the diagonal tips peek out between cardinals.
+  const order: PetalKey[] = [
+    "top-left", "top-right", "bottom-left", "bottom-right",
+    "top", "right", "bottom", "left",
+  ];
+
   return (
     <svg
       viewBox="0 0 200 200"
@@ -80,33 +95,23 @@ export function LotusFrame({
       style={style}
       aria-hidden
     >
-      {/* Render diagonals first so cardinals visually sit on top. */}
-      {(["top-left", "top-right", "bottom-left", "bottom-right", "top", "right", "bottom", "left"] as PetalKey[]).map(
-        (key) => {
-          const fill = petalFills[key] ?? "transparent";
-          return (
-            <path
-              key={key}
-              id={`petal-${key}`}
-              d={PETAL_PATH}
-              transform={`rotate(${PETAL_ANGLES[key]} 100 100)`}
-              fill={fill}
-              stroke={strokeColor}
-              strokeWidth={strokeWidth}
-              strokeLinejoin="round"
-            />
-          );
-        }
-      )}
-      {/* Centre circle */}
-      <circle
-        cx="100"
-        cy="100"
-        r="22"
-        fill={centerFill}
-        stroke={strokeColor}
-        strokeWidth={strokeWidth}
-      />
+      {order.map((key) => {
+        const isCardinal = CARDINAL_KEYS.includes(key);
+        const fill = petalFills[key] ?? "transparent";
+        return (
+          <path
+            key={key}
+            id={`petal-${key}`}
+            d={isCardinal ? CARDINAL_PATH : DIAGONAL_PATH}
+            transform={`rotate(${PETAL_ANGLES[key]} 100 100)`}
+            fill={fill}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        );
+      })}
     </svg>
   );
 }
