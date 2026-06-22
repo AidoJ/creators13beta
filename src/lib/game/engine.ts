@@ -1311,13 +1311,29 @@ function advanceTurn(state: MatchState): void {
 
   const currentOrderIdx = order.indexOf(state.turn);
   const startFrom = currentOrderIdx < 0 ? 0 : currentOrderIdx;
+
+  // Auto-pass scan: walk forward through `turnOrder` and stop on the first
+  // ACTIVE player who has at least one legal move available. Active players
+  // we step past with no legal move are auto-passed (NOT conceded) — they
+  // remain active and eligible to play once state changes (a disaster wipes
+  // the used top, an opponent discards, etc.) make a move legal again. If
+  // the scan completes a full lap without finding a player who can act,
+  // every active player is stuck → fall through to the stalemate backstop,
+  // which finalises by score through the same path used elsewhere. Bounded
+  // by `order.length`, so it cannot loop.
   let nextSlot = state.turn;
+  const passedNames: string[] = [];
+  let landed = false;
   for (let step = 1; step <= order.length; step++) {
     const candidate = order[(startFrom + step) % order.length];
-    if (isActive(candidate)) {
+    if (!isActive(candidate)) continue;
+    if (playerHasAnyLegalMove(state, candidate)) {
       nextSlot = candidate;
+      landed = true;
       break;
     }
+    const skipped = state.players[candidate];
+    if (skipped?.name) passedNames.push(skipped.name);
   }
   state.turn = nextSlot;
   state.phase = "draw";
@@ -1325,6 +1341,13 @@ function advanceTurn(state: MatchState): void {
   state.placedThisTurn = 0;
   state.turnNumber += 1;
 
+  if (landed && passedNames.length > 0) {
+    const label =
+      passedNames.length === 1
+        ? `${passedNames[0]} — no legal move, turn passed.`
+        : `No legal move — turn passed for ${passedNames.join(", ")}.`;
+    state.lastEvent = label;
+  }
 
   // Stalemate backstop: fire whenever no active player has any legal move,
   // not only the strict "both piles + all hands empty" case. Catches the
