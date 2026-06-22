@@ -11,93 +11,63 @@
   }
   body { display: grid; place-items: center; }
 
-  :root {
-    --lotus-size: 720px;
-    /* Petal PNG is 220×130. Visible base inside the PNG ≈ 118px wide,
-       centered horizontally, sitting ~5px above the box bottom.
-       For 8 petals at 45°, side edges of neighbouring visible bases touch
-       when their base midpoints sit on a ring of radius:
-           R = Wv / (2·sin(22.5°)) = 118 / 0.7654 ≈ 154px.
-       Anchor the gold circle's outer edge to that same R so each petal's
-       base sits flush on the ring AND meets its neighbours' base corners. */
-    --petal-w: 220px;             /* native PNG width */
-    --petal-h: 130px;             /* native PNG height */
-    --petal-offset: 154px;        /* base midpoint radius (touching radius) */
-    --circle-d: 300px;            /* 2·R minus a 4px inset so base nestles on ring */
-    --circle-color: #c8902a;
-  }
+  :root { --gold: #c8902a; }
 
   .lotus {
-    position: relative;
-    width: var(--lotus-size);
-    height: var(--lotus-size);
+    width: min(720px, 92vmin);
+    aspect-ratio: 1;
   }
 
-  /* Petal native: base at bottom-center, apex at top-center.
-     Place base-center at lotus centre, then rotate around base-center
-     and translate outward so apex points away from centre. */
-  .petal {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: var(--petal-w);
-    height: var(--petal-h);
-    margin-left: calc(var(--petal-w) / -2);
-    margin-top: calc(var(--petal-h) * -1);
-    transform-origin: 50% 100%;
-    transform: rotate(var(--a)) translateY(calc(var(--petal-offset) * -1));
-    pointer-events: none;
-    user-select: none;
-  }
-  .petal img { width: 100%; height: 100%; display: block; }
-
-  .p1 { --a:    0deg; }   /* N  */
-  .p2 { --a:   45deg; }   /* NE */
-  .p3 { --a:   90deg; }   /* E  */
-  .p4 { --a:  135deg; }   /* SE */
-  .p5 { --a:  180deg; }   /* S  */
-  .p6 { --a:  225deg; }   /* SW */
-  .p7 { --a:  270deg; }   /* W  */
-  .p8 { --a:  315deg; }   /* NW */
-
-  .center-circle {
-    position: absolute;
-    left: 50%; top: 50%;
-    width: var(--circle-d); height: var(--circle-d);
-    margin-left: calc(var(--circle-d) / -2);
-    margin-top: calc(var(--circle-d) / -2);
-    border: 3px solid var(--circle-color);
-    border-radius: 50%;
-    background: transparent;
-    z-index: 2;
+  svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
   }
 
-  .avatar {
-    position: absolute;
-    left: 50%; top: 50%;
-    width: calc(var(--circle-d) - 28px);
-    height: calc(var(--circle-d) - 28px);
-    margin-left: calc((var(--circle-d) - 28px) / -2);
-    margin-top: calc((var(--circle-d) - 28px) / -2);
-    border-radius: 50%;
-    background: rgba(200, 144, 42, 0.12);
-    border: 1px dashed rgba(200, 144, 42, 0.5);
-    z-index: 3;
+  .line {
+    fill: none;
+    stroke: var(--gold);
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .avatar-fill { fill: #26272b; }
+  .avatar-guide {
+    fill: none;
+    stroke: rgba(200, 144, 42, 0.55);
+    stroke-width: 1.2;
+    stroke-dasharray: 2 4;
   }
 </style>
 </head>
 <body>
 <div class="lotus">
-  <div class="petal p1"><img src="/petal-outline-gold.png" alt="" /></div>
-  <div class="petal p2"><img src="/petal-outline-gold.png" alt="" /></div>
-  <div class="petal p3"><img src="/petal-outline-gold.png" alt="" /></div>
-  <div class="petal p4"><img src="/petal-outline-gold.png" alt="" /></div>
-  <div class="petal p5"><img src="/petal-outline-gold.png" alt="" /></div>
-  <div class="petal p6"><img src="/petal-outline-gold.png" alt="" /></div>
-  <div class="petal p7"><img src="/petal-outline-gold.png" alt="" /></div>
-  <div class="petal p8"><img src="/petal-outline-gold.png" alt="" /></div>
-  <div class="center-circle"></div>
-  <div class="avatar"></div>
+  <svg viewBox="0 0 720 720" role="img" aria-label="Lotus creator profile frame">
+    <defs>
+      <!-- One petal spans exactly 45 degrees: its two base points are the same
+           points used by the neighbouring petals, so the petals connect around
+           the centre instead of floating as separate PNGs. -->
+      <path id="petal" d="M 298.8 212.2 C 286 178, 276 145, 287 119 C 299 94, 333 95, 360 72 C 387 95, 421 94, 433 119 C 444 145, 434 178, 421.2 212.2" />
+    </defs>
+
+    <g class="line">
+      <use href="#petal" />
+      <use href="#petal" transform="rotate(45 360 360)" />
+      <use href="#petal" transform="rotate(90 360 360)" />
+      <use href="#petal" transform="rotate(135 360 360)" />
+      <use href="#petal" transform="rotate(180 360 360)" />
+      <use href="#petal" transform="rotate(225 360 360)" />
+      <use href="#petal" transform="rotate(270 360 360)" />
+      <use href="#petal" transform="rotate(315 360 360)" />
+      <circle cx="360" cy="360" r="164" />
+    </g>
+
+    <circle class="avatar-fill" cx="360" cy="360" r="138" />
+    <circle class="avatar-guide" cx="360" cy="360" r="138" />
+  </svg>
 </div>
 </body>
 </html>
