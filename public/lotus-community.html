@@ -6,27 +6,18 @@
 <title>Lotus Community Mockup</title>
 <style>
   html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    background: #0F172A; /* community page dark background so you can see the transparency */
-    overflow: hidden;
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: #0F172A; overflow: hidden;
   }
-  body {
-    display: grid;
-    place-items: center;
-  }
+  body { display: grid; place-items: center; }
 
   :root {
     --lotus-size: 720px;
-    --circle-d: 240px;        /* central gold circle diameter */
-    --circle-color: #c8902a;  /* gold */
-    --petal-w: 220px;         /* native petal width */
-    --petal-h: 130px;         /* native petal height */
-    --base-x: 0px;            /* petal base is the left edge of the image */
-    --base-y: 65px;           /* vertical centre of the petal */
-    --petal-offset: 120px;    /* distance from lotus centre to petal base */
+    --circle-d: 280px;
+    --circle-color: #c8902a;
+    --petal-w: 200px;
+    --petal-h: 118px;     /* native aspect 220:130 */
+    --petal-offset: 140px; /* base sits flush on circle edge (= circle radius) */
   }
 
   .lotus {
@@ -35,41 +26,37 @@
     height: var(--lotus-size);
   }
 
+  /* Petal native: base at bottom-center, apex at top-center.
+     Place base-center at lotus centre, then rotate around base-center
+     and translate outward so apex points away from centre. */
   .petal {
-    position: absolute;
-    left: calc(50% + var(--petal-offset) * var(--dx) - var(--base-x));
-    top: calc(50% + var(--petal-offset) * var(--dy) - var(--base-y));
-    width: var(--petal-w);
-    height: var(--petal-h);
-    transform-origin: var(--base-x) var(--base-y);
-    transform: rotate(var(--a));
-    pointer-events: none;
-    user-select: none;
-    -webkit-user-drag: none;
-  }
-
-  .petal img {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-
-  /* right, up-right, up, up-left, left, down-left, down, down-right */
-  .p1 { --a:   0deg; --dx:  1.000; --dy:  0.000; }
-  .p2 { --a: -45deg; --dx:  0.707; --dy: -0.707; }
-  .p3 { --a: -90deg; --dx:  0.000; --dy: -1.000; }
-  .p4 { --a:-135deg; --dx: -0.707; --dy: -0.707; }
-  .p5 { --a: 180deg; --dx: -1.000; --dy:  0.000; }
-  .p6 { --a: 135deg; --dx: -0.707; --dy:  0.707; }
-  .p7 { --a:  90deg; --dx:  0.000; --dy:  1.000; }
-  .p8 { --a:  45deg; --dx:  0.707; --dy:  0.707; }
-
-  .center-circle {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: var(--circle-d);
-    height: var(--circle-d);
+    width: var(--petal-w);
+    height: var(--petal-h);
+    margin-left: calc(var(--petal-w) / -2);
+    margin-top: calc(var(--petal-h) * -1);
+    transform-origin: 50% 100%;
+    transform: rotate(var(--a)) translateY(calc(var(--petal-offset) * -1));
+    pointer-events: none;
+    user-select: none;
+  }
+  .petal img { width: 100%; height: 100%; display: block; }
+
+  .p1 { --a:    0deg; }   /* N  */
+  .p2 { --a:   45deg; }   /* NE */
+  .p3 { --a:   90deg; }   /* E  */
+  .p4 { --a:  135deg; }   /* SE */
+  .p5 { --a:  180deg; }   /* S  */
+  .p6 { --a:  225deg; }   /* SW */
+  .p7 { --a:  270deg; }   /* W  */
+  .p8 { --a:  315deg; }   /* NW */
+
+  .center-circle {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: var(--circle-d); height: var(--circle-d);
     margin-left: calc(var(--circle-d) / -2);
     margin-top: calc(var(--circle-d) / -2);
     border: 3px solid var(--circle-color);
@@ -78,24 +65,21 @@
     z-index: 2;
   }
 
-  /* Avatar placeholder sits in the centre of the circle */
   .avatar {
     position: absolute;
-    left: 50%;
-    top: 50%;
-    width: calc(var(--circle-d) - 24px);
-    height: calc(var(--circle-d) - 24px);
-    margin-left: calc((var(--circle-d) - 24px) / -2);
-    margin-top: calc((var(--circle-d) - 24px) / -2);
+    left: 50%; top: 50%;
+    width: calc(var(--circle-d) - 28px);
+    height: calc(var(--circle-d) - 28px);
+    margin-left: calc((var(--circle-d) - 28px) / -2);
+    margin-top: calc((var(--circle-d) - 28px) / -2);
     border-radius: 50%;
-    background: rgba(200, 144, 42, 0.15);
-    border: 1px dashed rgba(200, 144, 42, 0.6);
+    background: rgba(200, 144, 42, 0.12);
+    border: 1px dashed rgba(200, 144, 42, 0.5);
     z-index: 3;
   }
 </style>
 </head>
 <body>
-
 <div class="lotus">
   <div class="petal p1"><img src="/petal-outline-gold.png" alt="" /></div>
   <div class="petal p2"><img src="/petal-outline-gold.png" alt="" /></div>
@@ -108,6 +92,5 @@
   <div class="center-circle"></div>
   <div class="avatar"></div>
 </div>
-
 </body>
 </html>
