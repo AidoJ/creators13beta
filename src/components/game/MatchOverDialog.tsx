@@ -106,12 +106,13 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
 
           <div className="flex-1 overflow-y-auto -mx-1 px-1">
             <div className="grid sm:grid-cols-2 gap-2">
-              {orderedPlayers(state).map(({ player, rank }) => (
+              {orderedPlayers(state).map(({ player, rank, tied }) => (
                 <PlayerBreakdown
                   key={player.id}
                   player={player}
                   winner={!isDraw && player.id === state.winnerId}
                   rank={rank}
+                  tied={tied}
                 />
               ))}
             </div>
