@@ -379,9 +379,9 @@ function PlayerBreakdown({ player, winner, rank, tied }: { player: PlayerState; 
                   ? "bg-orange-400/80 text-orange-950"
                   : "bg-muted text-muted-foreground"
               }`}
-              title={`${ordinal(rank)} place`}
+              title={`${ordinal(rank)} place${tied ? " (tied)" : ""}`}
             >
-              {ordinal(rank)}
+              {ordinal(rank)}{tied ? " (tied)" : ""}
             </span>
           )}
           <div className="font-semibold truncate">{player.name}</div>
