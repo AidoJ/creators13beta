@@ -1,16 +1,13 @@
 /**
  * LotusFrame — native SVG 8-petal lotus.
  *
- * One shared petal silhouette is rotated eight times around the centre,
- * matching the watercolour reference (8-fold radial symmetry, ogee/shield
- * petal with a small shoulder before a pointed tip and a wide rounded base
- * that tucks behind the centre circle).
+ * Two petal silhouettes:
+ *   - Cardinal (top/right/bottom/left): long, pointed almond, full creator-type fill
+ *   - Diagonal (NE/SE/SW/NW): shorter, narrower almond rendered behind the
+ *     cardinals so only its tip peeks out between adjacent cardinal petals.
  *
- * Render order: diagonals first, then cardinals on top — so where adjacent
- * petals overlap at the base, the cardinal (coloured) petal sits in front of
- * the diagonal (white/outline) petal. Cardinal petals receive the player's
- * Creator-Type fills; diagonals stay transparent so the gold outline reads
- * as the white/outlined background lotus from the reference.
+ * Both shapes share the same gold outline and stroke weight to match the
+ * watercolour reference lotus.
  */
 import { CSSProperties } from "react";
 
@@ -48,18 +45,24 @@ const PETAL_ANGLES: Record<PetalKey, number> = {
 
 const CARDINAL_KEYS: PetalKey[] = ["top", "right", "bottom", "left"];
 
-// Single shared petal path. ViewBox is 0 0 200 200, centre (100,100). Petal
-// points upward: tip at (100,8), wide rounded base at y≈72 (radius ≈28 from
-// centre, sitting flush with the avatar circle). Mid-bulge ≈40 wide, with a
-// slight ogee shoulder that gives the pointed tip its characteristic shape.
-const PETAL_PATH =
-  "M 100 8 " +
-  "C 96 12 94 16 92 22 " +
-  "C 88 28 82 36 80 48 " +
-  "C 78 60 84 70 100 72 " +
-  "C 116 70 122 60 120 48 " +
-  "C 118 36 112 28 108 22 " +
-  "C 106 16 104 12 100 8 Z";
+// Cardinal petal — rounded leaf/teardrop pointing up with a slight scalloped
+// tip, matching the watercolour reference. Base sits just below the avatar
+// circle (centre 100,100), tip near the top edge.
+const CARDINAL_PATH =
+  "M 100 104 " +
+  "C 74 100 60 70 76 30 " +
+  "C 84 18 92 12 100 6 " +
+  "C 108 12 116 18 124 30 " +
+  "C 140 70 126 100 100 104 Z";
+
+// Diagonal petal — narrower leaf rendered behind the cardinals so only the
+// tip peeks out between adjacent cardinal petals. Slightly shorter reach.
+const DIAGONAL_PATH =
+  "M 100 102 " +
+  "C 84 98 76 70 88 36 " +
+  "C 92 26 96 20 100 16 " +
+  "C 104 20 108 26 112 36 " +
+  "C 124 70 116 98 100 102 Z";
 
 export interface LotusFrameProps {
   /** Per-petal fill colours. Missing petals render transparent. */
@@ -80,13 +83,13 @@ const GOLD = "#c9a04a";
 export function LotusFrame({
   petalFills = {},
   strokeColor = GOLD,
-  strokeWidth = 1.75,
+  strokeWidth = 2.25,
   centerFill = "transparent",
   className,
   style,
 }: LotusFrameProps) {
-  // Render diagonals (background) first so cardinal petals visually sit on
-  // top where they overlap at the base.
+  // Render order: diagonals (background) first so cardinal petals visually sit
+  // on top of them — the diagonal tips peek out between cardinals.
   const order: PetalKey[] = [
     "top-left", "top-right", "bottom-left", "bottom-right",
     "top", "right", "bottom", "left",
@@ -102,14 +105,12 @@ export function LotusFrame({
     >
       {order.map((key) => {
         const isCardinal = CARDINAL_KEYS.includes(key);
-        const fill = isCardinal
-          ? (petalFills[key] ?? "transparent")
-          : "#ffffff";
+        const fill = petalFills[key] ?? "transparent";
         return (
           <path
             key={key}
             id={`petal-${key}`}
-            d={PETAL_PATH}
+            d={isCardinal ? CARDINAL_PATH : DIAGONAL_PATH}
             transform={`rotate(${PETAL_ANGLES[key]} 100 100)`}
             fill={fill}
             stroke={strokeColor}
@@ -119,15 +120,6 @@ export function LotusFrame({
           />
         );
       })}
-      {/* Centre circle — sits in front of petal bases, behind avatar overlay */}
-      <circle
-        cx="100"
-        cy="100"
-        r="28"
-        fill={centerFill}
-        stroke={strokeColor}
-        strokeWidth={strokeWidth}
-      />
     </svg>
   );
 }
