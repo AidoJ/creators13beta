@@ -585,6 +585,9 @@ export default function CommunityDashboard() {
             : "px-4 max-w-6xl pl-20"
         )}
       >
+        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl text-gold text-center drop-shadow-sm">
+          Who's your Creator Match?
+        </h1>
         {loading ? (
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
             {Array.from({ length: 10 }).map((_, i) => (
