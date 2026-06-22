@@ -231,16 +231,24 @@ function ordinal(n: number): string {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
-function orderedPlayers(state: MatchState): Array<{ player: PlayerState; rank: number | null }> {
+function orderedPlayers(state: MatchState): Array<{ player: PlayerState; rank: number | null; tied: boolean }> {
   const rankById = new Map<string, number>();
   for (const pl of state.placements ?? []) rankById.set(pl.playerId, pl.rank);
+  const rankCounts = new Map<number, number>();
+  for (const pl of state.placements ?? []) {
+    rankCounts.set(pl.rank, (rankCounts.get(pl.rank) ?? 0) + 1);
+  }
   const total = state.players.length;
   return state.players
-    .map((p) => ({ player: p, rank: rankById.get(p.id) ?? null }))
+    .map((p) => {
+      const rank = rankById.get(p.id) ?? null;
+      const tied = rank != null && (rankCounts.get(rank) ?? 0) > 1;
+      return { player: p, rank, tied };
+    })
     .sort((a, b) => (a.rank ?? total + 1) - (b.rank ?? total + 1));
 }
 
-function PlayerBreakdown({ player, winner, rank }: { player: PlayerState; winner: boolean; rank?: number | null }) {
+function PlayerBreakdown({ player, winner, rank, tied }: { player: PlayerState; winner: boolean; rank?: number | null; tied?: boolean }) {
   const data = useMemo(() => {
     const placedList = Array.from(player.ecosystem.placed.values());
     const creators: PlacedCard[] = [];
