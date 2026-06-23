@@ -296,10 +296,8 @@ export default function ResourceLibrary() {
                     </Button>
                   )}
                   {r.resource_type !== "url" && (
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" asChild>
-                      <a href={getPublicUrl(r.storage_path)} download={r.file_name}>
-                        <Download className="h-3 w-3" />
-                      </a>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => handleDownload(r)}>
+                      <Download className="h-3 w-3" />
                     </Button>
                   )}
                 </div>
