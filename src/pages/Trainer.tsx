@@ -22,6 +22,7 @@ import FaceSplitMirror from "@/components/trainer/FaceSplitMirror";
 import BodyAnnotationTool from "@/components/trainer/BodyAnnotationTool";
 import ClientDetail from "@/components/practitioner/ClientDetail";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SignedProfilingImage } from "@/lib/profilingPhotoUrl";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 type EnrollmentStep = Database["public"]["Enums"]["enrollment_step"];
