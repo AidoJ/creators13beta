@@ -44,20 +44,23 @@ serve(async (req) => {
       });
     }
 
-    // Get public URLs and build image data for AI
+    // Sign short-lived URLs (10 min) for each photo so the AI gateway can fetch
+    // them. The bucket is private; getPublicUrl would 400 here.
     const photoData: { id: string; currentType: string; storagePath: string; publicUrl: string }[] = [];
     for (const photo of photos) {
-      const { data: urlData } = supabaseAdmin.storage
+      const { data: signed, error: signErr } = await supabaseAdmin.storage
         .from("profiling-photos")
-        .getPublicUrl(photo.storage_path);
-      if (urlData?.publicUrl) {
-        photoData.push({
-          id: photo.id,
-          currentType: photo.photo_type,
-          storagePath: photo.storage_path,
-          publicUrl: urlData.publicUrl,
-        });
+        .createSignedUrl(photo.storage_path, 600);
+      if (signErr || !signed?.signedUrl) {
+        console.error("classify-photos: failed to sign", photo.storage_path, signErr);
+        continue;
       }
+      photoData.push({
+        id: photo.id,
+        currentType: photo.photo_type,
+        storagePath: photo.storage_path,
+        publicUrl: signed.signedUrl,
+      });
     }
 
     // Call AI to classify all photos at once
