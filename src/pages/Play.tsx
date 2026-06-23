@@ -285,9 +285,17 @@ export default function Play() {
           setState(restored);
           return;
         }
-        // No restored match — let the player pick a Game Type.
+        // No restored match.
         if (cancelled) return;
-        setModeSelectorOpen(true);
+        if (practiceRef.current) {
+          // Practice rung: skip the mode selector, auto-start a quick
+          // easy-difficulty End of Days bot match. No new engine work —
+          // reuses startSoloMatch with a sensible default config.
+          startSoloMatch("end_of_days", {}, "easy");
+        } else {
+          // Let the player pick a Game Type.
+          setModeSelectorOpen(true);
+        }
       } catch (e: any) {
         if (!cancelled) setError(e?.message ?? String(e));
       }
