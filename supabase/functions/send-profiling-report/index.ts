@@ -46,6 +46,10 @@ serve(async (req) => {
       .replace(/\{\{firstName\}\}/g, firstName)
       .replace(/\{\{practitionerName\}\}/g, practitioner_name || "");
 
+    const privacyNotice =
+      "For your privacy, images in this report expire after 48 hours. " +
+      "Sign in to your dashboard to view a fresh copy, or ask your practitioner to resend the report.";
+
     const htmlBody = tmpl?.html_body
       ? tmpl.html_body
           .replace(/\{\{clientName\}\}/g, client_name || "")
@@ -58,6 +62,7 @@ serve(async (req) => {
           .replace(/\{\{leftMirroredUrl\}\}/g, image_urls?.leftMirrored || "")
           .replace(/\{\{rightMirroredUrl\}\}/g, image_urls?.rightMirrored || "")
           .replace(/\{\{bodyAnnotatedUrl\}\}/g, image_urls?.bodyAnnotated || "")
+          .replace(/\{\{privacyNotice\}\}/g, privacyNotice)
       : buildDefaultHtml({
           client_name,
           practitioner_name,
