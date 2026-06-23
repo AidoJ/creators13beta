@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { HelpCircle, Loader2, Users, BookOpen, Maximize2, ChevronUp, ChevronDown, LayoutDashboard, X, Plus, Swords, Clock } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -79,7 +79,13 @@ const LOCAL_STORAGE_KEY = "creators13.play.local-match.v1";
 export default function Play() {
   const { matchId: routeMatchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  // Practice rung — set on /play/new?practice=1. While true, the post-game
+  // path skips `bump_bot_match_stats` (no pollution of the bot-record panel)
+  // and instead bumps `player_progress.practice_games_played`.
+  const practiceRef = useRef<boolean>(searchParams.get("practice") === "1");
+  const PRACTICE_TARGET = 3;
 
   const [allCards, setAllCards] = useState<GameCard[] | null>(null);
   const [specialCards, setSpecialCards] = useState<SpecialCard[]>([]);
