@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Paperclip, ZoomIn, FileText } from "lucide-react";
+import { signProfilingPhotoUrls } from "@/lib/profilingPhotoUrl";
 
 interface AttachmentGalleryProps {
   attachments: string[];
@@ -10,12 +10,21 @@ interface AttachmentGalleryProps {
 
 export default function AttachmentGallery({ attachments, title = "Paper Assessment Pages" }: AttachmentGalleryProps) {
   const [zoomedUrl, setZoomedUrl] = useState<string | null>(null);
+  const [urlMap, setUrlMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!attachments || attachments.length === 0) {
+      setUrlMap({});
+      return;
+    }
+    signProfilingPhotoUrls(attachments).then((m) => {
+      if (!cancelled) setUrlMap(m);
+    });
+    return () => { cancelled = true; };
+  }, [attachments?.join("|")]);
 
   if (!attachments || attachments.length === 0) return null;
-
-  function getPublicUrl(path: string) {
-    return supabase.storage.from("profiling-photos").getPublicUrl(path).data.publicUrl;
-  }
 
   function getLabel(path: string) {
     const fileName = path.split("/").pop() || "";
@@ -29,20 +38,25 @@ export default function AttachmentGallery({ attachments, title = "Paper Assessme
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {attachments.map((path, i) => {
-          const url = getPublicUrl(path);
+          const url = urlMap[path];
           const isPdf = /\.pdf$/i.test(path);
           return (
             <button
               key={i}
-              onClick={() => isPdf ? window.open(url, "_blank", "noopener,noreferrer") : setZoomedUrl(url)}
-              className="group relative rounded-lg border border-border overflow-hidden bg-muted/30 aspect-[3/4] hover:ring-2 hover:ring-primary/40 transition-all"
+              disabled={!url}
+              onClick={() => {
+                if (!url) return;
+                if (isPdf) window.open(url, "_blank", "noopener,noreferrer");
+                else setZoomedUrl(url);
+              }}
+              className="group relative rounded-lg border border-border overflow-hidden bg-muted/30 aspect-[3/4] hover:ring-2 hover:ring-primary/40 transition-all disabled:opacity-60"
             >
               {isPdf ? (
                 <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground p-2 text-center">
                   <FileText className="h-10 w-10 mb-1" />
                   <span className="text-[10px] uppercase tracking-wide">PDF</span>
                 </div>
-              ) : (
+              ) : url ? (
                 <img
                   src={url}
                   alt={getLabel(path)}
@@ -50,6 +64,10 @@ export default function AttachmentGallery({ attachments, title = "Paper Assessme
                   loading="lazy"
                   decoding="async"
                 />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground text-[10px]">
+                  Loading…
+                </div>
               )}
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                 <ZoomIn className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />

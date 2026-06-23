@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Send, Check, Loader2 } from "lucide-react";
 import type { FaceSplitData } from "@/components/trainer/FaceSplitMirror";
 import type { BodyAnnotationData } from "@/components/trainer/BodyAnnotationTool";
+import { signProfilingPhotoUrl, PROFILING_PHOTO_EXPIRY } from "@/lib/profilingPhotoUrl";
 
 interface ProfilingReportButtonProps {
   clientId: string;
@@ -16,9 +17,10 @@ interface ProfilingReportButtonProps {
   bodyAnnotationData: BodyAnnotationData | null;
 }
 
+// Returns a signed URL (7-day expiry) suitable for embedding in an email.
 async function uploadDataUrlToStorage(
   dataUrl: string,
-  storagePath: string
+  storagePath: string,
 ): Promise<string | null> {
   try {
     const res = await fetch(dataUrl);
@@ -30,10 +32,7 @@ async function uploadDataUrlToStorage(
       console.error("Upload error:", error);
       return null;
     }
-    const { data } = supabase.storage
-      .from("profiling-photos")
-      .getPublicUrl(storagePath);
-    return data.publicUrl;
+    return await signProfilingPhotoUrl(storagePath, PROFILING_PHOTO_EXPIRY.emailEmbed);
   } catch (e) {
     console.error("Upload failed:", e);
     return null;
@@ -96,18 +95,19 @@ export default function ProfilingReportButton({
           );
           if (url) imageUrls.original = url;
         } else {
-          // Re-upload the public URL as a copy into reports/ so it's always accessible
+          // Re-upload (copy) the existing storage object into reports/ so the
+          // emailed link is a stable, signed URL we control.
           try {
             const resp = await fetch(faceSplitData.originalImageUrl);
             const blob = await resp.blob();
+            const copyPath = `reports/${clientId}/face-original-${ts}.png`;
             const { error } = await supabase.storage
               .from("profiling-photos")
-              .upload(`reports/${clientId}/face-original-${ts}.png`, blob, { upsert: true, contentType: blob.type || "image/png" });
+              .upload(copyPath, blob, { upsert: true, contentType: blob.type || "image/png" });
             if (!error) {
-              const { data: urlData } = supabase.storage
-                .from("profiling-photos")
-                .getPublicUrl(`reports/${clientId}/face-original-${ts}.png`);
-              imageUrls.original = urlData.publicUrl;
+              const signed = await signProfilingPhotoUrl(copyPath, PROFILING_PHOTO_EXPIRY.emailEmbed);
+              if (signed) imageUrls.original = signed;
+              else imageUrls.original = faceSplitData.originalImageUrl;
             } else {
               imageUrls.original = faceSplitData.originalImageUrl;
             }

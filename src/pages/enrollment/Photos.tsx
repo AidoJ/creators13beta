@@ -186,15 +186,18 @@ export default function Photos() {
         .eq("user_id", user.id);
 
       if (photoRows && photoRows.length > 0) {
+        const paths = photoRows.map((r) => r.storage_path).filter(Boolean) as string[];
+        const { signProfilingPhotoUrls } = await import("@/lib/profilingPhotoUrl");
+        const urlMap = await signProfilingPhotoUrls(paths);
         const updates: Partial<Record<PhotoKey, PhotoState>> = {};
         for (const row of photoRows) {
           const key = row.photo_type as PhotoKey;
           if (!PHOTO_SLOTS.find((s) => s.key === key)) continue;
-          const { data: urlData } = supabase.storage.from("profiling-photos").getPublicUrl(row.storage_path);
-          if (urlData?.publicUrl) {
+          const url = urlMap[row.storage_path];
+          if (url) {
             updates[key] = {
               ...initialPhotoState,
-              preview: urlData.publicUrl,
+              preview: url,
               uploaded: true,
               existingPath: row.storage_path,
               review: { pass: true, feedback: "Previously uploaded" },

@@ -482,7 +482,7 @@ function CaseStudyList({ caseStudies, emptyMessage, expandedCaseStudy, setExpand
                   <div className="relative max-w-[400px] bg-white rounded-lg border border-border overflow-hidden" style={{ aspectRatio: "400/800" }}>
                     <BodyOutlineSVG className="absolute inset-0 w-full h-full text-foreground/60 pointer-events-none z-0" />
                     {cs.body_drawing_path && (
-                      <img src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/profiling-photos/${cs.body_drawing_path}`} alt="Body drawing annotations" className="absolute inset-0 w-full h-full object-contain z-10" />
+                      <SignedProfilingImage path={cs.body_drawing_path} alt="Body drawing annotations" className="absolute inset-0 w-full h-full object-contain z-10" />
                     )}
                   </div>
                   {!cs.body_drawing_path && <p className="text-[10px] text-muted-foreground italic mt-1">No annotations added yet</p>}

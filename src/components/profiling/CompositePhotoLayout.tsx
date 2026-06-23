@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { generateProfilingPdf } from "@/lib/generateProfilingPdf";
+import { signProfilingPhotoUrls, PROFILING_PHOTO_EXPIRY } from "@/lib/profilingPhotoUrl";
 
 const PHOTO_ORDER = [
   { key: "face_front_closed", label: "Face Front" },
@@ -59,18 +60,28 @@ export default function CompositePhotoLayout({ userId, subjectName, className, s
       return;
     }
 
+    const paths = data.map((r) => r.storage_path).filter(Boolean) as string[];
+    // Sign full-size and thumbnail URLs in parallel. Thumbs use the storage
+    // image-transform endpoint (different render URL → must be signed separately).
+    const [fullMap, thumbMap] = await Promise.all([
+      signProfilingPhotoUrls(paths),
+      Promise.all(
+        paths.map(async (p) => {
+          const { data: t } = await supabase.storage
+            .from("profiling-photos")
+            .createSignedUrl(p, PROFILING_PHOTO_EXPIRY.view, { transform: { width: 300, quality: 60 } });
+          return [p, t?.signedUrl] as const;
+        }),
+      ).then((entries) => Object.fromEntries(entries.filter(([, u]) => !!u)) as Record<string, string>),
+    ]);
+
     const photoMap: Record<string, { thumb: string; full: string } | null> = {};
     let earliestDate: string | null = null;
     for (const row of data) {
-      const { data: urlData } = supabase.storage
-        .from("profiling-photos")
-        .getPublicUrl(row.storage_path);
-      if (urlData?.publicUrl) {
-        const base = urlData.publicUrl;
-        photoMap[row.photo_type] = {
-          thumb: `${base}?width=300&quality=60`,
-          full: base,
-        };
+      const full = fullMap[row.storage_path];
+      const thumb = thumbMap[row.storage_path] || full;
+      if (full) {
+        photoMap[row.photo_type] = { thumb, full };
       } else {
         photoMap[row.photo_type] = null;
       }
