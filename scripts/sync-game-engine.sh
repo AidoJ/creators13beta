@@ -10,13 +10,22 @@
 # files compile under Deno without pulling in client-only deps (assets,
 # Supabase client, etc.).
 #
-# Usage:  scripts/sync-game-engine.sh                # write mirror
+# Also stamps every edge function that consumes the mirror with a
+# `// engine-mirror-hash: <sha>` marker. Lovable's auto-deploy only re-ships
+# a function when files INSIDE its own directory change — so an engine
+# rebuild that only touches src/ + _shared/ would silently leave consumers
+# running stale code. Updating the marker on every sync forces the consumer's
+# own index.ts to change, which triggers redeploy. CI runs the sync (not
+# --check) and fails if the marker line ends up modified-but-uncommitted.
+#
+# Usage:  scripts/sync-game-engine.sh                # write mirror + stamps
 #         scripts/sync-game-engine.sh --check        # exit 1 if mirror is stale
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="$ROOT/src/lib/game"
 DEST="$ROOT/supabase/functions/_shared/game"
+FUNCTIONS_DIR="$ROOT/supabase/functions"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -89,17 +98,84 @@ mirror elements.ts
 mirror rotation.ts
 mirror engine.ts
 
+# --- hash + stamp helpers --------------------------------------------------
+compute_hash() {
+  # Concatenate mirror files in deterministic order and hash. Uses sha256sum
+  # (Linux/CI) with a shasum fallback (macOS).
+  local dir="$1"
+  local files=(cards.ts gameCards.ts types.ts board.ts elements.ts rotation.ts engine.ts)
+  local cmd
+  if command -v sha256sum >/dev/null 2>&1; then cmd="sha256sum"
+  elif command -v shasum >/dev/null 2>&1; then cmd="shasum -a 256"
+  else echo "neither sha256sum nor shasum found" >&2; exit 2; fi
+  (cd "$dir" && cat "${files[@]}") | $cmd | awk '{print substr($1,1,16)}'
+}
+
+stamp_consumer() {
+  # Rewrite (or insert) the `// engine-mirror-hash: <sha>` marker on line 2
+  # of every edge function index.ts that imports from _shared/game/.
+  local hash="$1"
+  local marker="// engine-mirror-hash: ${hash}"
+  local consumers
+  consumers=$(grep -lE 'from "(\.\./)+_shared/game/' "$FUNCTIONS_DIR"/*/index.ts 2>/dev/null || true)
+  if [ -z "$consumers" ]; then
+    echo "  (no _shared/game consumers found to stamp)" >&2
+    return 0
+  fi
+  for f in $consumers; do
+    if grep -q '^// engine-mirror-hash: ' "$f"; then
+      # Replace existing marker line in place (portable: write to tmp + mv).
+      awk -v m="$marker" '/^\/\/ engine-mirror-hash: /{print m; next}{print}' "$f" > "$f.tmp"
+      mv "$f.tmp" "$f"
+    else
+      # Insert marker as new line 2. Preserves shebang-free TS files.
+      awk -v m="$marker" 'NR==1{print; print m; next}{print}' "$f" > "$f.tmp"
+      mv "$f.tmp" "$f"
+    fi
+    echo "  stamped ${f#$ROOT/} with ${marker}"
+  done
+}
+
+# --- --check mode (CI gate for source↔mirror drift) ------------------------
 if [ "${1:-}" = "--check" ]; then
-  if ! diff -ruN "$DEST" "$TMP" >/dev/null 2>&1; then
-    echo "::error::supabase/functions/_shared/game is out of sync with src/lib/game" >&2
-    diff -ruN "$DEST" "$TMP" || true
+  # Compare each generated mirror file against the committed one. Pure-bash
+  # so we don't depend on `diff` being installed.
+  stale=0
+  for f in cards.ts gameCards.ts types.ts board.ts elements.ts rotation.ts engine.ts; do
+    if [ ! -f "$DEST/$f" ]; then
+      echo "::error::missing mirror file: $DEST/$f" >&2; stale=1; continue
+    fi
+    if ! cmp -s "$TMP/$f" "$DEST/$f"; then
+      echo "::error::mirror out of sync: supabase/functions/_shared/game/$f" >&2
+      stale=1
+    fi
+  done
+  if [ "$stale" -ne 0 ]; then
+    echo "::error::run scripts/sync-game-engine.sh and commit the result" >&2
     exit 1
   fi
-  echo "game engine mirror is up to date."
+  # Also verify every consumer carries the CURRENT hash marker.
+  expected_hash=$(compute_hash "$DEST")
+  expected_marker="// engine-mirror-hash: ${expected_hash}"
+  consumers=$(grep -lE 'from "(\.\./)+_shared/game/' "$FUNCTIONS_DIR"/*/index.ts 2>/dev/null || true)
+  for f in $consumers; do
+    if ! grep -qxF "$expected_marker" "$f"; then
+      echo "::error::${f#$ROOT/} is missing or has a stale engine-mirror-hash marker" >&2
+      echo "::error::expected: ${expected_marker}" >&2
+      stale=1
+    fi
+  done
+  if [ "$stale" -ne 0 ]; then exit 1; fi
+  echo "game engine mirror + consumer stamps are up to date."
   exit 0
 fi
 
+# --- write mode ------------------------------------------------------------
 rm -rf "$DEST"
 mkdir -p "$DEST"
 cp "$TMP"/*.ts "$DEST/"
 echo "synced shared game engine → $DEST"
+
+hash=$(compute_hash "$DEST")
+echo "engine-mirror-hash: ${hash}"
+stamp_consumer "$hash"
