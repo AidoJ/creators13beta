@@ -33,3 +33,19 @@ jobs:
 
       - name: Server engine mirror is in sync
         run: bash scripts/sync-game-engine.sh --check
+
+      - name: Engine mirror sync produces no diff (consumer stamps committed)
+        # Runs the full sync (writes mirror + stamps every _shared/game
+        # consumer with the current engine-mirror-hash marker). If anything
+        # changes, the markers / mirror weren't committed — fail the build so
+        # we can't merge an engine change that would silently leave an edge
+        # function running stale code (Lovable auto-deploy only fires when
+        # files inside the function's own directory change).
+        run: |
+          bash scripts/sync-game-engine.sh
+          if [ -n "$(git status --porcelain supabase/functions)" ]; then
+            echo "::error::sync-game-engine.sh produced uncommitted changes:" >&2
+            git status --porcelain supabase/functions >&2
+            git --no-pager diff supabase/functions >&2
+            exit 1
+          fi
