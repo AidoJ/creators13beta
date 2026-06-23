@@ -412,11 +412,41 @@ export default function Play() {
       const youPlayer = next.players.find((p) => p.id === youSlot);
       const won = next.winnerId == null ? null : next.winnerId === youSlot;
       const perfectEco = (youPlayer?.ecosystem.placed.size ?? 0) >= 16 && won === true;
-      supabase.rpc("bump_bot_match_stats", {
-        _difficulty: botDifficultyRef.current,
-        _won: won,
-        _perfect_eco: perfectEco,
-      }).then(({ error }) => { if (error) console.warn("bump_bot_match_stats failed", error); });
+      if (practiceRef.current) {
+        // Practice rung: deliberately excluded from `bot_match_stats` so
+        // the bot-record panel keeps meaning ("record once you started
+        // playing for real"). Instead, advance the practice counter and
+        // mark complete once the target is hit. Best-effort, never blocks.
+        (async () => {
+          try {
+            const { data: pp } = await supabase
+              .from("player_progress")
+              .select("practice_games_played, practice_completed_at")
+              .eq("user_id", user.id)
+              .maybeSingle();
+            const prev = (pp as any)?.practice_games_played ?? 0;
+            const already = (pp as any)?.practice_completed_at ?? null;
+            const nextCount = prev + 1;
+            const patch: { practice_games_played: number; practice_completed_at?: string } = {
+              practice_games_played: nextCount,
+            };
+            if (!already && nextCount >= PRACTICE_TARGET) {
+              patch.practice_completed_at = new Date().toISOString();
+            }
+            await supabase
+              .from("player_progress")
+              .upsert({ user_id: user.id, ...patch }, { onConflict: "user_id" });
+          } catch (e) {
+            console.warn("practice counter bump failed", e);
+          }
+        })();
+      } else {
+        supabase.rpc("bump_bot_match_stats", {
+          _difficulty: botDifficultyRef.current,
+          _won: won,
+          _perfect_eco: perfectEco,
+        }).then(({ error }) => { if (error) console.warn("bump_bot_match_stats failed", error); });
+      }
     }
     if (matchRow && user) {
       // PvP is fully server-authoritative now: clients no longer have UPDATE
