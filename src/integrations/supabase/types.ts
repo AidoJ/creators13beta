@@ -1279,6 +1279,8 @@ export type Database = {
           longest_streak: number
           perfect_ecosystems: number
           points: number
+          practice_completed_at: string | null
+          practice_games_played: number
           types_seen: string[]
           updated_at: string
           user_id: string
@@ -1292,6 +1294,8 @@ export type Database = {
           longest_streak?: number
           perfect_ecosystems?: number
           points?: number
+          practice_completed_at?: string | null
+          practice_games_played?: number
           types_seen?: string[]
           updated_at?: string
           user_id: string
@@ -1305,6 +1309,8 @@ export type Database = {
           longest_streak?: number
           perfect_ecosystems?: number
           points?: number
+          practice_completed_at?: string | null
+          practice_games_played?: number
           types_seen?: string[]
           updated_at?: string
           user_id?: string
@@ -2036,6 +2042,8 @@ export type Database = {
           longest_streak: number
           perfect_ecosystems: number
           points: number
+          practice_completed_at: string | null
+          practice_games_played: number
           types_seen: string[]
           updated_at: string
           user_id: string
