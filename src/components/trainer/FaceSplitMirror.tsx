@@ -13,6 +13,7 @@ import {
   loadCreatorProfilingData,
   mergeCreatorProfilingData,
 } from "@/lib/creatorTypeProfilingData";
+import { signProfilingPhotoUrl, SignedProfilingImage } from "@/lib/profilingPhotoUrl";
 
 interface Point {
   x: number;
@@ -40,13 +41,14 @@ interface FaceSplitMirrorProps {
 }
 
 async function uploadDataUrl(dataUrl: string, path: string): Promise<string | null> {
+  // Uploads to private bucket. Returns the storage PATH on success (callers
+  // only check truthiness); render-time consumers sign the URL on demand.
   try {
     const res = await fetch(dataUrl);
     const blob = await res.blob();
     const { error } = await supabase.storage.from("profiling-photos").upload(path, blob, { upsert: true });
     if (error) throw error;
-    const { data } = supabase.storage.from("profiling-photos").getPublicUrl(path);
-    return data.publicUrl;
+    return path;
   } catch {
     return null;
   }
@@ -83,6 +85,7 @@ export default function FaceSplitMirror({ userId, onDataChange }: FaceSplitMirro
   const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 });
   const [saving, setSaving] = useState(false);
   const [savedData, setSavedData] = useState<SavedFaceSplitData | null>(null);
+  const [savedUrls, setSavedUrls] = useState<{ original?: string; left?: string; right?: string }>({});
   const [loadingSaved, setLoadingSaved] = useState(false);
   const { toast } = useToast();
 
@@ -115,27 +118,31 @@ export default function FaceSplitMirror({ userId, onDataChange }: FaceSplitMirro
     loadSaved();
   }, [userId]);
 
+  // Sign signed URLs for any saved paths so they can be embedded in the
+  // report and shown inline.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const [original, left, right] = await Promise.all([
+        signProfilingPhotoUrl(savedData?.original_path),
+        signProfilingPhotoUrl(savedData?.left_path),
+        signProfilingPhotoUrl(savedData?.right_path),
+      ]);
+      if (cancelled) return;
+      setSavedUrls({ original: original ?? undefined, left: left ?? undefined, right: right ?? undefined });
+    })();
+    return () => { cancelled = true; };
+  }, [savedData?.original_path, savedData?.left_path, savedData?.right_path]);
+
   // Report data changes to parent
   useEffect(() => {
     onDataChange?.({
-      originalImageUrl:
-        image?.src ||
-        (savedData?.original_path
-          ? supabase.storage.from("profiling-photos").getPublicUrl(savedData.original_path).data.publicUrl
-          : undefined),
-      leftMirroredDataUrl:
-        results?.left ||
-        (savedData?.left_path
-          ? supabase.storage.from("profiling-photos").getPublicUrl(savedData.left_path).data.publicUrl
-          : undefined),
-      rightMirroredDataUrl:
-        results?.right ||
-        (savedData?.right_path
-          ? supabase.storage.from("profiling-photos").getPublicUrl(savedData.right_path).data.publicUrl
-          : undefined),
+      originalImageUrl: image?.src || savedUrls.original,
+      leftMirroredDataUrl: results?.left || savedUrls.left,
+      rightMirroredDataUrl: results?.right || savedUrls.right,
       notes,
     });
-  }, [image, results, notes, onDataChange, savedData]);
+  }, [image, results, notes, onDataChange, savedUrls]);
 
   const handleSave = async () => {
     if (!userId || !results) return;
@@ -501,8 +508,7 @@ export default function FaceSplitMirror({ userId, onDataChange }: FaceSplitMirro
   const formatPhotoType = (type: string) =>
     type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 
-  const getPublicUrl = (path: string) =>
-    supabase.storage.from("profiling-photos").getPublicUrl(path).data.publicUrl;
+  // (private bucket — saved images rendered via <SignedProfilingImage> below)
 
   // Show saved results if no active editing session
   const showSavedResults = !image && !results && !!(savedData?.left_path || savedData?.right_path || savedData?.original_path);
@@ -538,17 +544,17 @@ export default function FaceSplitMirror({ userId, onDataChange }: FaceSplitMirro
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2 text-center">
                 <p className="text-xs font-medium text-muted-foreground">Left Side Mirrored</p>
-                <img src={getPublicUrl(savedData.left_path!)} alt="Left mirrored" className="rounded-lg border border-border w-full" />
+                <SignedProfilingImage path={savedData.left_path} alt="Left mirrored" className="rounded-lg border border-border w-full" />
               </div>
               {savedData.original_path && (
                 <div className="space-y-2 text-center">
                   <p className="text-xs font-medium text-muted-foreground">Original</p>
-                  <img src={getPublicUrl(savedData.original_path)} alt="Original" className="rounded-lg border border-border w-full" />
+                  <SignedProfilingImage path={savedData.original_path} alt="Original" className="rounded-lg border border-border w-full" />
                 </div>
               )}
               <div className="space-y-2 text-center">
                 <p className="text-xs font-medium text-muted-foreground">Right Side Mirrored</p>
-                <img src={getPublicUrl(savedData.right_path!)} alt="Right mirrored" className="rounded-lg border border-border w-full" />
+                <SignedProfilingImage path={savedData.right_path} alt="Right mirrored" className="rounded-lg border border-border w-full" />
               </div>
             </div>
           </div>

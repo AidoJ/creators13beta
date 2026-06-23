@@ -12,6 +12,7 @@ import {
   loadCreatorProfilingData,
   mergeCreatorProfilingData,
 } from "@/lib/creatorTypeProfilingData";
+import { signProfilingPhotoUrl, SignedProfilingImage } from "@/lib/profilingPhotoUrl";
 
 interface Point {
   x: number;
@@ -91,6 +92,7 @@ export default function BodyAnnotationTool({ userId, onDataChange }: BodyAnnotat
   const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 });
   const [saving, setSaving] = useState(false);
   const [savedData, setSavedData] = useState<SavedBodyAnnotationData | null>(null);
+  const [savedAnnotatedUrl, setSavedAnnotatedUrl] = useState<string | undefined>(undefined);
   const [loadingSaved, setLoadingSaved] = useState(false);
   const { toast } = useToast();
 
@@ -125,17 +127,22 @@ export default function BodyAnnotationTool({ userId, onDataChange }: BodyAnnotat
     loadSaved();
   }, [userId]);
 
+  // Sign saved annotated path for embedding/preview.
+  useEffect(() => {
+    let cancelled = false;
+    signProfilingPhotoUrl(savedData?.annotated_path).then((u) => {
+      if (!cancelled) setSavedAnnotatedUrl(u ?? undefined);
+    });
+    return () => { cancelled = true; };
+  }, [savedData?.annotated_path]);
+
   // Report data changes to parent
   useEffect(() => {
     onDataChange?.({
-      annotatedImageDataUrl:
-        canvasRef.current?.toDataURL("image/png") ||
-        (savedData?.annotated_path
-          ? supabase.storage.from("profiling-photos").getPublicUrl(savedData.annotated_path).data.publicUrl
-          : undefined),
+      annotatedImageDataUrl: canvasRef.current?.toDataURL("image/png") || savedAnnotatedUrl,
       notes,
     });
-  }, [notes, actions, onDataChange, savedData]);
+  }, [notes, actions, onDataChange, savedAnnotatedUrl]);
 
   const handleSave = async () => {
     if (!userId || !canvasRef.current) return;
@@ -340,8 +347,7 @@ export default function BodyAnnotationTool({ userId, onDataChange }: BodyAnnotat
   const formatPhotoType = (type: string) =>
     type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 
-  const getPublicUrl = (path: string) =>
-    supabase.storage.from("profiling-photos").getPublicUrl(path).data.publicUrl;
+  // (private bucket — saved image rendered via <SignedProfilingImage> below)
 
   const showSavedResult = !image && !!savedData?.annotated_path;
 
@@ -367,7 +373,7 @@ export default function BodyAnnotationTool({ userId, onDataChange }: BodyAnnotat
               </Button>
             </div>
             <div className="flex justify-center">
-              <img src={getPublicUrl(savedData.annotated_path!)} alt="Body annotated" className="rounded-lg border border-border max-w-[300px]" />
+              <SignedProfilingImage path={savedData.annotated_path} alt="Body annotated" className="rounded-lg border border-border max-w-[300px]" />
             </div>
           </div>
         )}

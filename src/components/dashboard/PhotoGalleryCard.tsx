@@ -39,25 +39,30 @@ export default function PhotoGalleryCard({ userId, photosUploaded }: PhotoGaller
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
       const { data } = await supabase
         .from("profiling_photos")
         .select("photo_type, storage_path")
         .eq("user_id", userId);
+      if (cancelled) return;
 
       if (data && data.length > 0) {
+        const { signProfilingPhotoUrls } = await import("@/lib/profilingPhotoUrl");
+        const paths = data.map((r) => r.storage_path).filter(Boolean) as string[];
+        const urlMap = await signProfilingPhotoUrls(paths);
+        if (cancelled) return;
         const map: Record<string, string> = {};
         for (const row of data) {
-          const { data: urlData } = supabase.storage
-            .from("profiling-photos")
-            .getPublicUrl(row.storage_path);
-          if (urlData?.publicUrl) map[row.photo_type] = urlData.publicUrl;
+          const u = urlMap[row.storage_path];
+          if (u) map[row.photo_type] = u;
         }
         setPhotos(map);
       }
       setLoading(false);
     }
     load();
+    return () => { cancelled = true; };
   }, [userId]);
 
   const photoCount = Object.keys(photos).length;

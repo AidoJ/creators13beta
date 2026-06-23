@@ -49,11 +49,23 @@ export async function mergeCreatorProfilingData(
 export function getStoragePathFromPublicUrl(pathOrUrl?: string): string | undefined {
   if (!pathOrUrl) return undefined;
 
-  const marker = "/object/public/profiling-photos/";
-  const markerIndex = pathOrUrl.indexOf(marker);
-
-  if (markerIndex === -1) return pathOrUrl;
-
-  const rawPath = pathOrUrl.slice(markerIndex + marker.length).split("?")[0];
-  return decodeURIComponent(rawPath);
+  // Defensive: extract the bucket-relative path from any historic public OR
+  // signed Supabase Storage URL for profiling-photos. The DB sweep before the
+  // bucket flip confirmed nothing currently stores a full URL, but this guard
+  // keeps the helper correct if anything is ever upserted that way again.
+  const markers = [
+    "/object/public/profiling-photos/",
+    "/object/sign/profiling-photos/",
+    "/render/image/public/profiling-photos/",
+    "/render/image/sign/profiling-photos/",
+  ];
+  for (const marker of markers) {
+    const idx = pathOrUrl.indexOf(marker);
+    if (idx !== -1) {
+      const rawPath = pathOrUrl.slice(idx + marker.length).split("?")[0];
+      return decodeURIComponent(rawPath);
+    }
+  }
+  return pathOrUrl;
 }
+
