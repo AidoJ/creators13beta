@@ -6,6 +6,8 @@ import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 
 import PlayerProfileDiscountCTA from "@/components/dashboard/PlayerProfileDiscountCTA";
 import DiscountCodesCard from "@/components/dashboard/DiscountCodesCard";
+import CreatorsSeenPrompt from "@/components/dashboard/CreatorsSeenPrompt";
+import PracticeRungCard from "@/components/dashboard/game/PracticeRungCard";
 import { Card } from "@/components/ui/card";
 import { Gamepad2, Globe, ArrowRight, Mail } from "lucide-react";
 
@@ -78,6 +80,8 @@ export default function PlayerDashboard({ userId, email, firstName, onSignOut }:
           )}
         </div>
 
+        <PracticeRungCard userId={userId} />
+        <CreatorsSeenPrompt userId={userId} />
         <DiscountCodesCard userId={userId} />
 
 
