@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { HelpCircle, Loader2, Users, BookOpen, Maximize2, ChevronUp, ChevronDown, LayoutDashboard, X, Plus, Swords, Clock } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -79,7 +79,13 @@ const LOCAL_STORAGE_KEY = "creators13.play.local-match.v1";
 export default function Play() {
   const { matchId: routeMatchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  // Practice rung — set on /play/new?practice=1. While true, the post-game
+  // path skips `bump_bot_match_stats` (no pollution of the bot-record panel)
+  // and instead bumps `player_progress.practice_games_played`.
+  const practiceRef = useRef<boolean>(searchParams.get("practice") === "1");
+  const PRACTICE_TARGET = 3;
 
   const [allCards, setAllCards] = useState<GameCard[] | null>(null);
   const [specialCards, setSpecialCards] = useState<SpecialCard[]>([]);
@@ -279,9 +285,17 @@ export default function Play() {
           setState(restored);
           return;
         }
-        // No restored match — let the player pick a Game Type.
+        // No restored match.
         if (cancelled) return;
-        setModeSelectorOpen(true);
+        if (practiceRef.current) {
+          // Practice rung: skip the mode selector, auto-start a quick
+          // easy-difficulty End of Days bot match. No new engine work —
+          // reuses startSoloMatch with a sensible default config.
+          startSoloMatch("end_of_days", {}, "easy");
+        } else {
+          // Let the player pick a Game Type.
+          setModeSelectorOpen(true);
+        }
       } catch (e: any) {
         if (!cancelled) setError(e?.message ?? String(e));
       }
@@ -398,11 +412,41 @@ export default function Play() {
       const youPlayer = next.players.find((p) => p.id === youSlot);
       const won = next.winnerId == null ? null : next.winnerId === youSlot;
       const perfectEco = (youPlayer?.ecosystem.placed.size ?? 0) >= 16 && won === true;
-      supabase.rpc("bump_bot_match_stats", {
-        _difficulty: botDifficultyRef.current,
-        _won: won,
-        _perfect_eco: perfectEco,
-      }).then(({ error }) => { if (error) console.warn("bump_bot_match_stats failed", error); });
+      if (practiceRef.current) {
+        // Practice rung: deliberately excluded from `bot_match_stats` so
+        // the bot-record panel keeps meaning ("record once you started
+        // playing for real"). Instead, advance the practice counter and
+        // mark complete once the target is hit. Best-effort, never blocks.
+        (async () => {
+          try {
+            const { data: pp } = await supabase
+              .from("player_progress")
+              .select("practice_games_played, practice_completed_at")
+              .eq("user_id", user.id)
+              .maybeSingle();
+            const prev = (pp as any)?.practice_games_played ?? 0;
+            const already = (pp as any)?.practice_completed_at ?? null;
+            const nextCount = prev + 1;
+            const patch: { practice_games_played: number; practice_completed_at?: string } = {
+              practice_games_played: nextCount,
+            };
+            if (!already && nextCount >= PRACTICE_TARGET) {
+              patch.practice_completed_at = new Date().toISOString();
+            }
+            await supabase
+              .from("player_progress")
+              .upsert({ user_id: user.id, ...patch }, { onConflict: "user_id" });
+          } catch (e) {
+            console.warn("practice counter bump failed", e);
+          }
+        })();
+      } else {
+        supabase.rpc("bump_bot_match_stats", {
+          _difficulty: botDifficultyRef.current,
+          _won: won,
+          _perfect_eco: perfectEco,
+        }).then(({ error }) => { if (error) console.warn("bump_bot_match_stats failed", error); });
+      }
     }
     if (matchRow && user) {
       // PvP is fully server-authoritative now: clients no longer have UPDATE
@@ -970,6 +1014,12 @@ export default function Play() {
       {gameSettings.maintenance_banner_enabled && gameSettings.maintenance_banner_text && (
         <div className="px-3 py-1.5 text-xs sm:text-sm text-center bg-amber-500/15 text-amber-200 border-b border-amber-500/30">
           {gameSettings.maintenance_banner_text}
+        </div>
+      )}
+
+      {practiceRef.current && (
+        <div className="px-3 py-1.5 text-xs sm:text-sm text-center bg-secondary/15 text-secondary-foreground border-b border-secondary/30">
+          Warm up against the bot — no points at stake.
         </div>
       )}
 

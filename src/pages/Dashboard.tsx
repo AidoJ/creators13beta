@@ -17,6 +17,7 @@ import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
 import DiscountCodesCard from "@/components/dashboard/DiscountCodesCard";
 
 import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
+import CreatorsSeenPrompt from "@/components/dashboard/CreatorsSeenPrompt";
 import { Card } from "@/components/ui/card";
 import { Gamepad2, Globe, ArrowRight, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -201,6 +202,8 @@ export default function Dashboard() {
             </Card>
           )}
         </div>
+
+        {user && <CreatorsSeenPrompt userId={user.id} />}
 
 
         {/* PROFILE section: visible for paid tiers AND case-study subscribers */}
