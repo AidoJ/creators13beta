@@ -7,9 +7,15 @@
  *                open >1hr, a reload re-signs.
  *   reportGen  — 5 min. Single PDF-generation pass that downloads images
  *                into a blob; never persisted.
- *   emailEmbed — 7 days. URLs embedded into emailed reports the client opens
- *                later. Trade-off accepted: email images go blank after 7
- *                days; the report PDF (if requested) can be re-sent.
+ *   emailEmbed — 48 hours. URLs embedded into emailed reports the client
+ *                opens later. Tight window because these are signed URLs
+ *                to sensitive body photos that bypass auth for anyone with
+ *                the link. The email body explains expiry and points the
+ *                client to the dashboard to view fresh images.
+ *
+ *   NOTE: The edge function `send-profiling-report` mirrors `emailEmbed`
+ *   (Deno functions can't import from `src/`). If you change it here,
+ *   update `supabase/functions/send-profiling-report/index.ts` too.
  */
 import { useEffect, useState, type ImgHTMLAttributes } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +25,7 @@ const BUCKET = "profiling-photos";
 export const PROFILING_PHOTO_EXPIRY = {
   view: 60 * 60,
   reportGen: 5 * 60,
-  emailEmbed: 7 * 24 * 60 * 60,
+  emailEmbed: 48 * 60 * 60,
 } as const;
 
 export async function signProfilingPhotoUrl(
