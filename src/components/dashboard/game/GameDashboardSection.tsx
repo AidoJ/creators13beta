@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { CREATOR_TYPE_NAMES, getCreatorTypeColor } from "@/lib/creatorTypes";
 import { CREATOR_TYPE_GLYPHS } from "@/lib/game/glyphs";
 import { inviteUrl } from "@/lib/game/persistence";
+import PracticeRungCard from "@/components/dashboard/game/PracticeRungCard";
 
 interface ProgressRow {
   points: number;
@@ -175,6 +176,7 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
 
   return (
     <div className="space-y-5">
+      <PracticeRungCard userId={userId} />
       {/* HERO */}
       <div
         className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card/95 to-secondary/10 p-6 sm:p-8 shadow-md"
