@@ -137,15 +137,20 @@ stamp_consumer() {
 }
 
 # --- --check mode (CI gate for source↔mirror drift) ------------------------
+file_hash() {
+  if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | awk '{print $1}'
+  else shasum -a 256 "$1" | awk '{print $1}'; fi
+}
+
 if [ "${1:-}" = "--check" ]; then
-  # Compare each generated mirror file against the committed one. Pure-bash
-  # so we don't depend on `diff` being installed.
+  # Compare each generated mirror file against the committed one via sha256
+  # (no dependency on `cmp` / `diff` being installed).
   stale=0
   for f in cards.ts gameCards.ts types.ts board.ts elements.ts rotation.ts engine.ts; do
     if [ ! -f "$DEST/$f" ]; then
       echo "::error::missing mirror file: $DEST/$f" >&2; stale=1; continue
     fi
-    if ! cmp -s "$TMP/$f" "$DEST/$f"; then
+    if [ "$(file_hash "$TMP/$f")" != "$(file_hash "$DEST/$f")" ]; then
       echo "::error::mirror out of sync: supabase/functions/_shared/game/$f" >&2
       stale=1
     fi
