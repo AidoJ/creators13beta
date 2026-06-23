@@ -105,22 +105,36 @@ export default function ResourceLibrary() {
     ? resources
     : resources.filter(r => activeFilters.has(r.category));
 
-  function getPublicUrl(path: string) {
-    return supabase.storage.from("training-resources").getPublicUrl(path).data.publicUrl;
+  async function getSignedUrl(path: string, opts?: { download?: string }) {
+    const { data, error } = await supabase.storage
+      .from("training-resources")
+      .createSignedUrl(path, 3600, opts?.download ? { download: opts.download } : undefined);
+    if (error || !data?.signedUrl) {
+      console.error("Failed to sign training-resource URL", error);
+      return null;
+    }
+    return data.signedUrl;
   }
 
-  function handleOpen(resource: Resource) {
+  async function handleOpen(resource: Resource) {
     if (resource.resource_type === "url") {
       window.open(resource.storage_path, "_blank");
       return;
     }
-    const url = getPublicUrl(resource.storage_path);
+    const url = await getSignedUrl(resource.storage_path);
+    if (!url) return;
     if (resource.resource_type === "video" || resource.resource_type === "audio") {
       setPreviewUrl(url);
       setPreviewType(resource.resource_type);
     } else {
       window.open(url, "_blank");
     }
+  }
+
+  async function handleDownload(resource: Resource) {
+    const url = await getSignedUrl(resource.storage_path, { download: resource.file_name });
+    if (!url) return;
+    window.location.href = url;
   }
 
   if (loading) return <div className="text-center py-8 text-muted-foreground text-sm">Loading resources…</div>;
@@ -282,10 +296,8 @@ export default function ResourceLibrary() {
                     </Button>
                   )}
                   {r.resource_type !== "url" && (
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" asChild>
-                      <a href={getPublicUrl(r.storage_path)} download={r.file_name}>
-                        <Download className="h-3 w-3" />
-                      </a>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => handleDownload(r)}>
+                      <Download className="h-3 w-3" />
                     </Button>
                   )}
                 </div>
