@@ -46,6 +46,10 @@ serve(async (req) => {
       .replace(/\{\{firstName\}\}/g, firstName)
       .replace(/\{\{practitionerName\}\}/g, practitioner_name || "");
 
+    const privacyNotice =
+      "For your privacy, images in this report expire after 48 hours. " +
+      "Sign in to your dashboard to view a fresh copy, or ask your practitioner to resend the report.";
+
     const htmlBody = tmpl?.html_body
       ? tmpl.html_body
           .replace(/\{\{clientName\}\}/g, client_name || "")
@@ -58,6 +62,7 @@ serve(async (req) => {
           .replace(/\{\{leftMirroredUrl\}\}/g, image_urls?.leftMirrored || "")
           .replace(/\{\{rightMirroredUrl\}\}/g, image_urls?.rightMirrored || "")
           .replace(/\{\{bodyAnnotatedUrl\}\}/g, image_urls?.bodyAnnotated || "")
+          .replace(/\{\{privacyNotice\}\}/g, privacyNotice)
       : buildDefaultHtml({
           client_name,
           practitioner_name,
@@ -222,7 +227,13 @@ function buildDefaultHtml(data: ReportData): string {
 
           ${notesSection("Body Annotation Notes", body_annotation_notes)}
 
-          <div style="margin-top:32px;padding-top:20px;border-top:1px solid #e8ddd4;text-align:center;">
+          <div style="margin-top:32px;padding:16px 20px;background:#faf7f4;border:1px solid #e8ddd4;border-radius:12px;">
+            <p style="margin:0;font-size:13px;color:#5a3a28;line-height:1.6;">
+              <strong style="color:#b5314e;">A note on privacy:</strong> Images in this report expire after 48 hours so they can't be viewed from a forwarded or shared link. To see them again, sign in to your dashboard for a fresh copy — or ask your practitioner to resend the report.
+            </p>
+          </div>
+
+          <div style="margin-top:24px;padding-top:20px;border-top:1px solid #e8ddd4;text-align:center;">
             <a href="https://creators13.lovable.app/dashboard" style="display:inline-block;background:#b5314e;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">
               View Your Dashboard
             </a>
