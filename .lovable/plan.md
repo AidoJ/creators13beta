@@ -1,190 +1,139 @@
-# Batch A.1 — N-Player Schema Foundations
+# Merge Plan v3: Promote Beta → Live (hardened, on-the-shelf)
 
-**Goal:** Land the schema and persistence layer for N-player support (N ∈ {2,3,4}) without changing any gameplay behaviour. Existing 1v1 matches continue to work unchanged throughout. Engine generalisation is A.2; engine wire-up + ELO is A.3; presence/forfeit is A.4.
+**Status:** strategy locked, **not yet scheduled**. Beta still has game work to finish. This plan sits ready for when you give the cutover green light.
 
-**Non-goals:** Engine changes. UI changes. Forfeit logic. Presence channel. ELO N-party adjustments. All deferred.
-
----
-
-## A.4 design — two acknowledged limits (locked into the 1-pager)
-
-Before A.1 ships, the A.4 design doc records these two limits so we don't rediscover them later:
-
-1. **Grace-timer wobble.** Leave-reporting relies on still-connected peers. If every peer also blips during the 5s debounce, the leave goes un-stamped until someone reconnects — so the 5-minute clock starts from when reporting lands, not from actual disconnect. Acceptable at current scale.
-2. **Simultaneous-disconnect hole.** If the last two connected peers drop within milliseconds of each other before either reports, neither row gets stamped. Match sits in limbo until any client reconnects and re-observes presence.
-
-**Documented upgrade path (not built now):** client-side 15–30s heartbeat updating `last_seen_at`; cron sweep gains a stage 1 that stamps `disconnected_at` for stale `last_seen_at` before evaluating the 5-min forfeit window. Closes both holes. Defer until real disconnect data shows the wobble in practice.
+Strategy: beta becomes the new live. Beta's backend stays; live's data is migrated *in*; the custom domain is re-pointed.
 
 ---
 
-## Schema changes (one migration)
+## Phase 0 — Trigger (when beta game work is done)
 
-### 1. New table: `public.game_match_players`
-
-```text
-match_id          uuid          (FK → game_matches.id, ON DELETE CASCADE)
-user_id           uuid          (FK → auth.users.id)
-slot              smallint      (0..3, turn order; UNIQUE per match)
-display_name      text
-joined_at         timestamptz   (default now())
--- A.4 columns reserved now, unused until A.4:
-last_seen_at      timestamptz
-disconnected_at   timestamptz   (NULL = connected)
-disconnect_reason text          ('presence_leave' | 'timeout' | NULL)
-status            text          ('active' | 'finalised' | 'forfeit' | 'conceded'; default 'active')
-finalised_at      timestamptz
-rank              smallint      CHECK (rank IS NULL OR rank BETWEEN 1 AND 4)
-PRIMARY KEY (match_id, user_id)
-UNIQUE (match_id, slot)
-```
-
-Partial index for the future cron sweep:
-```text
-CREATE INDEX … ON game_match_players (match_id, disconnected_at)
-  WHERE disconnected_at IS NOT NULL;
-```
-
-### 2. New table: `public.game_match_player_states`
-
-Replaces the single `game_matches.public_state` column. One row per (match, player) holding that player's redacted view.
-
-```text
-match_id     uuid          (FK → game_matches.id, ON DELETE CASCADE)
-user_id      uuid          (FK → auth.users.id)
-state        jsonb         (this player's redacted MatchState)
-seq          bigint        (mirrors game_matches.seq at the moment of write)
-updated_at   timestamptz   (default now())
-PRIMARY KEY (match_id, user_id)
-```
-
-Realtime: `ALTER PUBLICATION supabase_realtime ADD TABLE public.game_match_player_states;`. Each client subscribes with `filter: user_id=eq.<self>` — zero fan-out cost, zero client-side filtering.
-
-### 3. `game_matches` — additive only
-
-- **Keep** `host_user_id`, `guest_user_id`, `host_name`, `guest_name` for one release. Mark deprecated in a column comment. **Migration comment explicitly notes: scheduled for removal in A.3 or later.** No new code reads them.
-- **Drop** `public_state` column in this same migration (now superseded by `game_match_player_states`).
-- **Add** `player_count smallint NOT NULL DEFAULT 2 CHECK (player_count BETWEEN 2 AND 4)`.
-
-### 4. `finalise_ranked_match` — reserved parameter
-
-Recreate with new signature now to avoid a future signature change:
-```text
-finalise_ranked_match(_match_id uuid, _reason text DEFAULT 'normal')
-```
-Body unchanged in A.1; `_reason` is currently ignored. A.4 will pass `'opponent_forfeit'`.
-
-### 5. Backfill (same migration, in a `DO` block)
-
-For every existing `game_matches` row:
-- Insert `game_match_players` row for `host_user_id` at slot 0.
-- Insert row for `guest_user_id` at slot 1 if non-null.
-- Set `player_count = 2`.
-- Copy current `public_state` (if any) into one `game_match_player_states` row per existing player — same redacted payload both players already see today (the existing `get_match_state` RPC already returns the right shape per caller; A.1 calls it once per player during backfill).
-- Set `seq` on the player-state rows to the current `game_matches.seq`.
-
-After backfill, drop `public_state` column.
-
-### 6. RLS + GRANTs
-
-`game_match_players`:
-```text
-GRANT SELECT ON public.game_match_players TO authenticated;
-GRANT ALL ON public.game_match_players TO service_role;
-ENABLE ROW LEVEL SECURITY;
--- SELECT: a player can see all rows of a match they're in
-CREATE POLICY "players see their match roster" ON game_match_players
-  FOR SELECT TO authenticated
-  USING (EXISTS (
-    SELECT 1 FROM game_match_players me
-    WHERE me.match_id = game_match_players.match_id
-      AND me.user_id = auth.uid()
-  ));
--- No INSERT/UPDATE/DELETE for end users; all writes via SECURITY DEFINER RPC
--- (accept_game_invite, apply-move edge fn via service_role).
-```
-
-`game_match_player_states`:
-```text
-GRANT SELECT ON public.game_match_player_states TO authenticated;
-GRANT ALL ON public.game_match_player_states TO service_role;
-ENABLE ROW LEVEL SECURITY;
--- SELECT: only your own row
-CREATE POLICY "see only my redacted state" ON game_match_player_states
-  FOR SELECT TO authenticated
-  USING (user_id = auth.uid());
--- All writes via service_role from apply-move (no end-user policy).
-```
-
-### 7. `get_match_state` RPC
-
-Replace body: read from `game_match_player_states WHERE match_id=_ AND user_id=auth.uid()`, return `state`. Membership check via `game_match_players` (not the legacy host/guest columns). Solo-bot path unchanged (still trusts `game_matches.state` for `is_ranked = false`).
-
-### 8. `accept_game_invite` RPC
-
-After updating `game_matches` row, also insert the joining user into `game_match_players` (slot 1) and seed an initial `game_match_player_states` row mirroring whatever the host already has.
+Before phase 1 starts, confirm:
+- Beta game build is feature-complete and stable on 3-client live test.
+- No further structural schema changes planned on beta in the cutover window.
+- No further code/content changes planned on live in the cutover window (110 users, low-traffic — easy to freeze).
 
 ---
 
-## Code changes (post-migration)
+## Phase 1 — Pre-flight (no production touch)
 
-Implement only after the migration is approved and `types.ts` regenerates.
+### 1a. Schema diff — DB-to-DB, not repo-to-repo
 
-### `src/lib/game/persistence.ts`
+The diff source is **`pg_dump --schema-only` against both Cloud projects**, not the `supabase/migrations/` folders.
 
-- `GameMatchRow.public_state` field removed.
-- `NON_STATE_COLS` rebuilt without `public_state`; adds `player_count`.
-- `createMatchRow`: after inserting `game_matches`, also insert the host into `game_match_players` (slot 0).
-- `listMyActiveMatches`: swap the `.or('host_user_id.eq…,guest_user_id.eq…')` filter for `.in('id', <subquery on game_match_players where user_id = me>)` — done as a single RPC `list_my_active_matches()` to avoid an N+1 round trip. **New RPC included in this migration.**
-- `acceptInvite`: unchanged caller-side (RPC handles the new table writes).
-- `loadMatch`: still calls `get_match_state` — no caller change, RPC body now reads the new table.
+Why: migrations are append-only history. Beta has 145 migration files; live has its own separate set. Replaying them doesn't give you a side-by-side current state, and a repo-level diff is messy for renames/drops and blind to any drift between migration history and live DB state.
 
-### `supabase/functions/apply-move/index.ts`
+The repo migrations are still useful — as a **cross-check** that beta has no out-of-band changes — but not as the diff source.
 
-- Membership check: replace the `host_user_id = caller OR guest_user_id = caller` test with `EXISTS (SELECT 1 FROM game_match_players WHERE match_id = _ AND user_id = caller)`.
-- `callerSlot` / `otherSlot` derived from `game_match_players.slot` instead of the binary host/guest distinction. Still hardcoded to two slots in A.1 — N-aware turn rotation lands in A.2.
-- After computing the new state, instead of writing `public_state` to `game_matches`, perform an `UPSERT` per player into `game_match_player_states` with their redacted payload (in A.1 still just 2 rows; redaction logic unchanged from today). Same transaction as the `commit_move` RPC call.
-- `commit_move` RPC signature change: drop `_public_state jsonb` parameter (no longer used). Recreate the function inside this migration.
+Note: Lovable Cloud's agent tooling doesn't expose full `pg_dump`. The dumps need to be pulled directly using each project's DB connection string (from Cloud settings) or coordinated via Lovable support. This is a manual step, owned by you, not something I can run from here.
 
-### Realtime subscription (`src/hooks/useMatchRealtime.ts`)
+Two diff reports produced:
+- **live → beta**: additions/changes beta has (expected — beta is ahead).
+- **beta → live**: anything live has that beta dropped/renamed in refactors. Every entry needs an explicit rule in the migration script: transform, rename, drop with confirmation, or block migration. Live data in a dropped column has nowhere to land otherwise.
 
-Switch from subscribing to `game_matches` row changes for `public_state` to subscribing to `game_match_player_states` with `filter: 'user_id=eq.' + me`. The `game_matches` subscription stays for `seq`/`status`/`winner_user_id` changes. Two channels per match instead of one — acceptable for the cleaner separation.
+Diff scope (all of these matter, not just tables/columns):
+- Tables, columns, types, defaults, nullability, enums
+- FKs, indexes, unique constraints, CHECK constraints
+- RLS policies (per-table, per-role, per-action)
+- Trigger definitions and function bodies (full source, not just signatures — `types.ts` is blind to bodies)
+- Storage bucket names, privacy flags, MIME/size limits, and `storage.objects` RLS policies
+- Sequences and grants
 
-### `src/lib/game/serialize.ts`
+### 1b. Code parity check
+Confirm every fix/content change made on live since the fork is already in beta. Anything missing gets ported into beta **before** cutover, not after.
 
-No changes in A.1. (A.2 will fix the "the other player" wording in `sanitiseLastEvent`.)
+### 1c. Storage sizing
+Measure object count + total bytes per bucket on live (profiling-photos, recordings, attachments, avatars, etc.). "Copy objects" could be many GBs — sizing drives whether we stream in parallel, chunk by bucket, or pre-stage incrementally before the freeze.
 
----
+Carry bucket-level settings too: privacy, MIME types, size limits, and `storage.objects` policies. Not just the objects.
 
-## Verification
-
-Run all of these on a staging copy of prod data before merging:
-
-1. **Existing 1v1 matches load and play.** Pick 3 in-progress matches; both players load them, take a turn each, see correct state. Realtime updates land.
-2. **New match creation.** Host creates pvp match → `game_match_players` row exists for host; `game_matches.player_count = 2`; invite link resolves; guest accepts → second `game_match_players` row + both `game_match_player_states` rows seeded.
-3. **Solo bot match.** Unchanged path (no `game_match_players` rows for bot side; `is_ranked = false`). Confirm it still saves/loads.
-4. **RLS spot-checks.** As player A, `SELECT * FROM game_match_player_states WHERE match_id = <A's match>` returns exactly A's row. As an unrelated user, returns zero rows.
-5. **Deprecated columns.** `SELECT host_user_id, guest_user_id FROM game_matches` still works (readable). Grep confirms no new code reads them. Migration comment present.
-6. **Realtime fan-out.** Player A places a card; player B's `game_match_player_states` row updates within <1s; B's UI re-renders.
-7. **`get_match_state` redaction.** Player A's row contains B's hand as empty array + `handCount`; vice versa.
-8. **Linter.** `supabase--linter` clean for the new tables (RLS enabled, policies present, grants present).
+### 1d. Profiling-photos privacy fix — sequenced
+**Recommendation: out of this cutover, scheduled immediately after.** Reasons: signed-URL code path needs testing in beta against migrated data first; bundling two disruptions doubles rollback complexity. Bucket migrates with current privacy setting; a follow-up flips it once signed URLs are verified.
 
 ---
 
-## Out of scope (explicit, to prevent scope creep)
+## Phase 2 — Auth migration (the hard part, spelled out)
 
-- N-player turn rotation, deck scaling, `victimIds[]`, `placements[]`, ranked `finalise()` — all A.2.
-- N-party ELO in `finalise_ranked_match` body — A.3.
-- Presence channel, `report-presence` edge fn, cron sweeper, forfeit logic — A.4.
-- UI showing multiple opponents — separate batch after A.3.
-- Dropping `host_user_id` / `guest_user_id` columns — A.3 or later, comment in migration.
+This gets its own sub-phase with its own smoke tests.
+
+### What actually moves
+
+For every user in `auth.users` on live, preserve on beta:
+1. **`auth.users` row** — same UID (critical: every public FK and storage object path keys off it), email, phone, `email_confirmed_at`, `created_at`, `last_sign_in_at`, `raw_user_meta_data`, `raw_app_meta_data`.
+2. **`auth.identities` rows** — one per linked provider per user. `provider`, `provider_id`, `identity_data`, `last_sign_in_at`. **Without these, OAuth users cannot sign in.**
+3. **`encrypted_password`** — bcrypt hash for email/password users, portable across Supabase projects.
+
+### Email/password vs OAuth — separate paths
+
+- **Email/password users**: migrate `auth.users` row + `encrypted_password` + `auth.identities` row of `provider='email'`.
+- **Google OAuth users**: migrate `auth.users` row (no password) + `auth.identities` row of `provider='google'` with exact `provider_id` (Google's `sub` claim) and `identity_data` intact. Wrong/missing `provider_id` → Google sign-in creates a *new* user on next login, original is orphaned.
+- **Discord OAuth users**: same as Google — preserve `provider_id` exactly.
+- **Mixed-identity users** (email + linked Google): both identity rows must move together.
+
+### Providers configured on beta BEFORE auth import
+Google + Discord OAuth client IDs/secrets configured on beta, redirect URLs whitelisted (including the production custom domain). If a provider is missing when identity rows are imported, users of that provider can't sign in.
+
+### Three separate auth smoke tests
+1. Email/password — known user, password unchanged.
+2. Google — known Google-only user.
+3. Mixed — user with both providers, both methods.
+Plus: password reset → email lands → reset completes.
 
 ---
 
-## Sequencing
+## Phase 3 — Full dry-run rehearsal
 
-1. Draft & approve the migration (single file: tables + grants + RLS + backfill + RPC rewrites + `commit_move` resignature + `finalise_ranked_match` resignature + `list_my_active_matches` RPC).
-2. After regeneration of `types.ts`: rewrite `persistence.ts`, `apply-move/index.ts`, `useMatchRealtime.ts`.
-3. Run verification list against staging.
-4. Ship. Move to A.2.
+**Mandatory gate.** The real cutover is the **second** time the script runs.
 
-On approval, I'll start with the migration.
+1. Clone live data (DB + storage) into a scratch Cloud project (or wiped/restored copy of beta).
+2. Run the migration script end-to-end against it.
+3. Run the full smoke suite (auth ×3 + profile/photos/subscription/case-study/practitioner-linkage/training/recordings).
+4. Fix every script issue. Re-run until clean.
+5. Throw the rehearsal data away.
+6. Time the rehearsal end-to-end → real window's duration.
+
+---
+
+## Phase 4 — Cutover (the real window)
+
+### Before the window
+- Drop DNS TTL on the custom domain(s) to 60–300s **several days ahead** → fast propagation on the day.
+- Pre-stage storage objects if sizing showed large volume; final delta pass during the freeze.
+
+### During the window
+1. **Freeze live**: maintenance banner + block writes (revoke `INSERT`/`UPDATE`/`DELETE` for `authenticated`, or take auth offline). Must hold through DNS propagation overlap — any write to old-live after this point is lost.
+2. **Disable** (don't delete) Stripe webhook on live → retries queue up.
+3. Migration script: auth → public tables in FK order → storage delta.
+4. Smoke suite on beta against migrated data. **Go/no-go decision happens here, while maintenance is still up.** Rollback is only clean until the first user writes to the new system.
+5. Re-point DNS to beta.
+6. Swap Stripe webhook endpoint URL to beta's edge function.
+7. Update OAuth redirect URLs (Google, Discord) to beta.
+
+### Stripe event replay — explicit
+- Stripe does **not** auto-replay events that succeeded before the URL changed; it does retry **failed/pending** deliveries on its normal schedule (up to ~3 days). Update the *existing* endpoint URL on the Stripe side rather than creating a new endpoint — preserves the retry queue.
+- Manually replay any events missed entirely from Stripe Dashboard → Developers → Events, filtered to the freeze window.
+- **Real-data webhook test, not generic**: pick one migrated paying subscriber, trigger a real event for *their* customer ID (e.g. `customer.subscription.updated` via Dashboard), confirm beta's webhook processes it correctly against the migrated `subscriptions` row. Generic test events don't prove the FK linkage survived.
+
+### Lifting maintenance
+Only after smoke suite + Stripe replay test on a migrated customer both pass. Once lifted, rollback effectively closes (new writes on beta won't exist on old-live).
+
+---
+
+## Phase 5 — Post-cutover
+
+- Old-live archived read-only for 30 days as a reference, not a live rollback target.
+- Monitor edge function logs + Stripe webhook deliveries for 48h.
+- Restore DNS TTL.
+- Schedule profiling-photos → private follow-up (per 1d).
+
+---
+
+## What I still need from you (when you trigger phase 0)
+
+1. **Live code/content delta since fork** — anything on live that isn't in beta yet?
+2. **Domain(s)** to re-point — confirm exact hostnames currently on live.
+3. **Stripe webhook swap** — confirm we update the *existing* endpoint URL (preserves retry queue) rather than creating a new endpoint + deleting the old one.
+
+---
+
+**Approval semantics:** approving this plan **does not** start phase 1. It locks the strategy on the shelf. When beta game work is done and you message "kick off the merge," I begin phase 1 with the three answers above.
