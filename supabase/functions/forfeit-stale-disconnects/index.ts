@@ -21,12 +21,24 @@
  *      two sweep ticks 30s apart could each forfeit one player and
  *      miscompute "latest".
  *
- *   3. PAST-GRACE FORFEIT: for matches not all-disconnected, any player
- *      whose `now() - disconnected_at > disconnect_grace_seconds` is
- *      ranked-by-score into the middle band via the engine's `finalise()`
- *      path. Disconnects are NOT routed through the conceded/forfeit
- *      bottom-band path — that's reserved for explicit Leave Match (which
- *      A.4 doesn't add). A dropped connection is not a deliberate quit.
+ *   3. PAST-GRACE AUTO-SKIP: if the match is NOT all-disconnected and the
+ *      current `state.turn` slot is held by a player whose disconnect age
+ *      exceeds `disconnect_grace_seconds`, the sweep deserialises the state,
+ *      injects roster disconnect stamps + grace, calls the engine's
+ *      `forceAdvanceTurn`, and commits the result through `commit_move` —
+ *      identical to a normal apply-move. The engine's existing ≤1-active
+ *      check inside `advanceTurn` is what ends the match (with proper
+ *      placements / winnerId / lastEvent), NOT this sweep. The sweep never
+ *      writes finished-state directly in this branch.
+ *
+ *      Idempotency: only fires when `state.turn` is held by a past-grace
+ *      seat. After a successful auto-skip, `state.turn` belongs to a
+ *      connected player — the next sweep tick observes that and no-ops.
+ *      Two concurrent ticks → second one hits `commit_move`'s `stale seq`
+ *      (40001) and is caught + ignored. If `state.turn` is held by a
+ *      connected player while a different seat is past-grace, we do
+ *      nothing: their next real move will run `advanceTurn`, which sees
+ *      the past-grace seat and finalises through the same engine path.
  *
  * The engine import below is what binds this function to the engine-mirror
  * hash marker (auto-stamped by scripts/sync-game-engine.sh on line 2 of
@@ -36,13 +48,9 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-// Engine import: binds the marker. The actual finalisation work is done by
-// the SQL `commit_move` + `finalise_ranked_match` RPCs (which already use
-// the canonical ranking logic), but importing from the mirror means this
-// function is forced to redeploy when the engine changes — which is what we
-// want, since the auto-pass / grace semantics live there.
-// deno-lint-ignore no-unused-vars
-import type { MatchState } from "../_shared/game/types.ts";
+import { forceAdvanceTurn } from "../_shared/game/engine.ts";
+import type { DeckCard, Ecosystem, MatchState, PlacedCard } from "../_shared/game/types.ts";
+
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
