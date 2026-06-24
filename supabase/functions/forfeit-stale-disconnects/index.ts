@@ -100,10 +100,6 @@ function redactFor(serialisedState: any, recipientPlayerId: string | null) {
     ),
   };
 }
-// `DeckCard` only referenced through the type signature above to satisfy
-// no-unused; keep the import.
-// deno-lint-ignore no-unused-vars
-type _DeckCardKeep = DeckCard;
 
 
 interface SettingsRow {
