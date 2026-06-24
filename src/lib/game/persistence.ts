@@ -29,6 +29,11 @@ export interface GameMatchRow {
   /** @deprecated A.1 — use game_match_players.display_name. */
   guest_name: string | null;
   invite_token: string | null;
+  /** B — short 6-char human-typable code (Crockford base32, no look-alikes). */
+  invite_code: string | null;
+  /** B — true for matches created via the multiplayer lobby. Lobby matches
+   *  stay in 'waiting' status until the host triggers `start_lobby_match`. */
+  lobby_mode: boolean;
   state: SerializedMatchState;
   /** Server-managed monotonic sequence. Bumped by `commit_move`. */
   seq: number;
@@ -74,9 +79,6 @@ export async function createMatchRow(args: {
     .single();
   if (error) throw error;
 
-  // Seed the host roster row for PvP matches. Solo bot matches don't get a
-  // roster (the bot has no user_id); the apply-move path is bypassed for
-  // them entirely.
   if (args.mode === "pvp") {
     const { error: rosterErr } = await supabase
       .from("game_match_players")
@@ -92,8 +94,63 @@ export async function createMatchRow(args: {
   return data as unknown as GameMatchRow;
 }
 
+/**
+ * B — create a multiplayer lobby match.
+ *
+ * Differs from `createMatchRow` in three ways:
+ *   1. Always pvp + ranked, always status='waiting'.
+ *   2. Sets `lobby_mode=true` so `accept_game_invite` does NOT auto-flip
+ *      status to 'active' when the roster fills (the host's
+ *      `start_lobby_match` move is the trigger).
+ *   3. Stamps a short `invite_code` (6 chars) alongside the long token.
+ *   4. Sizes `player_count` per host tier (free→2, paid→4).
+ */
+export async function createLobbyMatch(args: {
+  hostUserId: string;
+  hostName: string;
+  playerCount: 2 | 3 | 4;
+  state: MatchState;
+}): Promise<GameMatchRow> {
+  const inviteToken = makeToken();
+  // Short invite code from the DB so collisions are server-checked.
+  const { data: codeData, error: codeErr } = await supabase.rpc("generate_match_invite_code");
+  if (codeErr) throw codeErr;
+  const inviteCode = codeData as string;
+
+  const { data, error } = await supabase
+    .from("game_matches")
+    .insert({
+      mode: "pvp",
+      status: "waiting",
+      host_user_id: args.hostUserId,
+      host_name: args.hostName,
+      invite_token: inviteToken,
+      invite_code: inviteCode,
+      lobby_mode: true,
+      is_ranked: true,
+      player_count: args.playerCount,
+      state: serializeMatch(args.state) as any,
+      last_action_by: args.hostUserId,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  const { error: rosterErr } = await supabase
+    .from("game_match_players")
+    .insert({
+      match_id: (data as any).id,
+      user_id: args.hostUserId,
+      slot: 0,
+      display_name: args.hostName,
+    });
+  if (rosterErr) console.error("[createLobbyMatch] roster insert failed", rosterErr);
+
+  return data as unknown as GameMatchRow;
+}
+
 const NON_STATE_COLS =
-  "id, mode, status, host_user_id, host_name, guest_user_id, guest_name, invite_token, seq, is_ranked, player_count, winner_user_id, last_action_by, created_at, updated_at";
+  "id, mode, status, host_user_id, host_name, guest_user_id, guest_name, invite_token, invite_code, lobby_mode, seq, is_ranked, player_count, winner_user_id, last_action_by, created_at, updated_at";
 
 export async function loadMatch(matchId: string): Promise<{ row: GameMatchRow; state: MatchState }> {
   const [rowRes, stateRes] = await Promise.all([
@@ -115,14 +172,27 @@ export async function acceptInvite(token: string, guestName: string): Promise<st
   return data as string;
 }
 
+/** B — resolve a short 6-char invite code to the long invite token. */
+export async function resolveInviteCode(code: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc("resolve_match_invite_code", { _code: code });
+  if (error) throw error;
+  return (data as string | null) ?? null;
+}
+
+/** B — host-only lobby cancel. Marks the lobby finished without a winner. */
+export async function cancelLobby(matchId: string): Promise<void> {
+  const { error } = await supabase.rpc("cancel_lobby_match", { _match_id: matchId });
+  if (error) throw error;
+}
+
 export async function listMyActiveMatches(_userId: string): Promise<GameMatchRow[]> {
-  // Uses the new roster-aware RPC (A.1). `_userId` is ignored — the RPC
-  // derives the caller from auth.uid().
   const { data, error } = await supabase.rpc("list_my_active_matches");
   if (error) throw error;
   return ((data ?? []) as unknown as GameMatchRow[]).map((r) => ({
     ...r,
     player_count: r.player_count ?? 2,
+    lobby_mode: (r as any).lobby_mode ?? false,
+    invite_code: (r as any).invite_code ?? null,
   }));
 }
 
