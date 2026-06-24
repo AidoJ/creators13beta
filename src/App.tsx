@@ -28,6 +28,7 @@ import CardPreview from "./pages/CardPreview";
 import Play from "./pages/Play";
 import PlayDashboard from "./pages/PlayDashboard";
 import JoinMatch from "./pages/JoinMatch";
+import Lobby from "./pages/Lobby";
 import ProfileWizard from "./pages/onboarding/ProfileWizard";
 import CommunitySettings from "./pages/settings/CommunitySettings";
 import ContactSettings from "./pages/settings/ContactSettings";
