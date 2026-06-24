@@ -980,10 +980,15 @@ export function playDisaster(
   // produces 0 or 1 results — never more. The result is wrapped in an array
   // purely for queue-shape consistency with `resolveDisaster`; it is NOT
   // evidence that multi-Hive play is supported (it isn't).
+  // Disconnect protection: a disconnected opponent cannot respond to the
+  // Hive prompt, so they're excluded from the victim queue here (and from
+  // the wipe itself in applyDisasterWipe). The disaster proceeds against
+  // any remaining connected victims without hanging.
   const hiveVictims = next.players.filter(
     (p) =>
       p.id !== player.id &&
       (p.status ?? "active") === "active" &&
+      !(typeof p.disconnectedAt === "number" && p.disconnectedAt > 0) &&
       p.hand.some((c) => c.kind === "golden_hive" && !c.spent),
   );
 
@@ -1079,6 +1084,9 @@ function applyDisasterWipe(
     if (victim.id === attackerId) continue;
     if (skipSet.has(victim.id)) continue;
     if ((victim.status ?? "active") !== "active") continue;
+    // Disconnect protection: skip disconnected players entirely (their
+    // boards are untouched until they reconnect or the match resolves).
+    if (typeof victim.disconnectedAt === "number" && victim.disconnectedAt > 0) continue;
     if (victim.hiveShield) {
       victim.hiveShield = false;
       next.lastEvent = `Hive shield absorbed the ${creator.name} disaster!`;
@@ -1156,6 +1164,12 @@ export function playSkyCreatureSteal(
 
   const victim = next.players.find((p) => p.id === victimId);
   if (!victim) throw new Error("Victim not found");
+  // Disconnect steal-protection: a disconnected opponent's cards cannot be
+  // targeted until they reconnect (or the match resolves). Mirrors the
+  // disaster wipe carve-out in applyDisasterWipe.
+  if (typeof victim.disconnectedAt === "number" && victim.disconnectedAt > 0) {
+    throw new Error(`${victim.name} is disconnected — their cards are protected until they reconnect.`);
+  }
   const stolen = victim.ecosystem.placed.get(victimPosKey);
   if (!stolen) throw new Error("Target hex empty");
   const k = stolen.card.kind;
@@ -1327,6 +1341,27 @@ export function forceAdvanceTurn(state: MatchState, now: number = Date.now()): M
   if (!isDisconnectedPastGrace(state, state.turn, now)) return state;
   const next: MatchState = {
     ...state,
+    players: state.players.map((p) => ({ ...p, hand: [...p.hand] })),
+  };
+  advanceTurn(next, now);
+  return next;
+}
+
+/** 2-player instant-end on disconnect: the sweep calls this once
+ *  `disconnected_at` is stamped (post-debounce) on a 2-player match,
+ *  regardless of whose turn it is. We force `disconnectGraceMs = 0` so
+ *  the disconnected seat is treated as past-grace by `advanceTurn`'s
+ *  ≤1-active check, which routes through the same finalise path the
+ *  past-grace sweep uses for 3+ player matches — placements, winnerId,
+ *  and lastEvent are populated through normal engine logic. No new
+ *  finalise path is introduced for the 2-player case. */
+export function forceFinaliseDisconnect2p(
+  state: MatchState,
+  now: number = Date.now(),
+): MatchState {
+  const next: MatchState = {
+    ...state,
+    disconnectGraceMs: 0,
     players: state.players.map((p) => ({ ...p, hand: [...p.hand] })),
   };
   advanceTurn(next, now);
