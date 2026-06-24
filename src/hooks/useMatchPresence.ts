@@ -180,24 +180,6 @@ export function useMatchPresence({
       }
     });
 
-    const rosterChannel = supabase
-      .channel(`match-roster-presence:${matchId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "game_match_players",
-          filter: `match_id=eq.${matchId}`,
-        },
-        (payload) => {
-          const row = (payload.new ?? payload.old) as Partial<RosterPresence> | null;
-          if (!row?.user_id) return;
-          mergeRosterRows([row as RosterPresence]);
-        },
-      )
-      .subscribe();
-
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         void reportPresence("heartbeat");
@@ -223,7 +205,6 @@ export function useMatchPresence({
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       void reportPresence("leave", "unmount");
       supabase.removeChannel(channel);
-      supabase.removeChannel(rosterChannel);
       channelRef.current = null;
     };
   }, [matchId, userId, seat, enabled, reportPresence]);
