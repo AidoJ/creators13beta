@@ -511,19 +511,19 @@ export default function Play() {
   const getPresenceStatusForPlayer = useCallback(
     (playerId: string | null | undefined) => {
       if (matchRow?.mode !== "pvp" || !playerId) return null;
+      const slot = state?.players.findIndex((p) => p.id === playerId) ?? -1;
       const uid =
-        playerId === "host"
+        slot === 0
           ? matchRow.host_user_id
-          : playerId === "guest"
+          : slot === 1
             ? matchRow.guest_user_id
             : null;
       if (!uid) return null;
-      if (presence.isReconnecting(uid)) return "reconnecting" as const;
-      if (presence.isMissing(uid)) return "missing" as const;
-      if (presence.isConnected(uid)) return "connected" as const;
+      const status = presence.statusFor(uid);
+      if (status) return status;
       return null;
     },
-    [matchRow, presence],
+    [matchRow, state?.players, presence],
   );
   const selectedCard: DeckCard | undefined = useMemo(
     () => selfPlayer?.hand.find((c) => c.uid === selectedUid),
@@ -847,7 +847,7 @@ export default function Play() {
     const turnPresence = getPresenceStatusForPlayer(turnPlayer?.id);
     if (turnPresence === "reconnecting") {
       phaseHint = `${turnPlayer.name} is reconnecting…`;
-    } else if (turnPresence === "missing") {
+    } else if (turnPresence === "disconnected" || turnPresence === "missing") {
       phaseHint = `${turnPlayer.name} disconnected — waiting to reconnect…`;
     } else {
       phaseHint = `${turnPlayer.name} is ${isPvp ? "thinking" : "thinking…"}`;
@@ -1413,7 +1413,7 @@ export default function Play() {
                 const hexSize = opponents.length >= 4 ? 36 : opponents.length === 3 ? 44 : isMulti ? 52 : 60;
                 const opPresence = getPresenceStatusForPlayer(op.id);
                 const isReconnecting = opPresence === "reconnecting";
-                const isDisconnected = opPresence === "missing";
+                const isDisconnected = opPresence === "disconnected" || opPresence === "missing";
                 return (
                   <Card
                     key={op.id}
