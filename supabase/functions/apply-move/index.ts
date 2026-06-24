@@ -562,8 +562,6 @@ Deno.serve(async (req) => {
 
   // Server-vouched ranked match outcome. Idempotent — finalise_ranked_match
   // tags `state.__finalised` and short-circuits subsequent calls.
-  // Server-vouched ranked match outcome. Idempotent — finalise_ranked_match
-  // tags `state.__finalised` and short-circuits subsequent calls.
   if (finished && match.is_ranked) {
     const { error: finErr } = await svc.rpc("finalise_ranked_match", {
       _match_id: body.match_id,
