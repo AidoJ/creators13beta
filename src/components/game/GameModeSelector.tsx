@@ -17,7 +17,7 @@ interface Props {
   onChooseMultiplayer?: (mode: GameMode, config: GameConfig) => void;
 }
 
-export function GameModeSelector({ open, onCancel, onChoose }: Props) {
+export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer }: Props) {
   const { settings } = useGameSettings();
   const [mode, setMode] = useState<GameMode>("end_of_days");
   const [targetScore, setTargetScore] = useState(50);
