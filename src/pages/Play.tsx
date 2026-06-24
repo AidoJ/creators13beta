@@ -847,7 +847,7 @@ export default function Play() {
     const turnPresence = getPresenceStatusForPlayer(turnPlayer?.id);
     if (turnPresence === "reconnecting") {
       phaseHint = `${turnPlayer.name} is reconnecting…`;
-    } else if (turnPresence === "missing" || turnPresence === "disconnected") {
+    } else if (turnPresence === "missing") {
       phaseHint = `${turnPlayer.name} disconnected — waiting to reconnect…`;
     } else {
       phaseHint = `${turnPlayer.name} is ${isPvp ? "thinking" : "thinking…"}`;
