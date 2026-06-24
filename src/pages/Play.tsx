@@ -790,27 +790,57 @@ export default function Play() {
       navigate(`/auth?returnTo=${encodeURIComponent("/play")}`);
       return;
     }
-    setLobbyOpen(true);
+    // Reuse GameModeSelector — its onChooseMultiplayer callback takes the
+    // selected mode/config and routes to lobby creation. Solo "Start match"
+    // still works alongside.
+    setModeSelectorOpen(true);
   }
 
-  async function handleCreatePvp() {
-    if (!user || !allCards) throw new Error("Not ready");
-    const deck = buildDeck(allCards, specialCards);
-    const hostName = await fetchPlayerShortName(user);
-    const initial = createMatch({
-      deck,
-      players: [
-        { id: "host", name: hostName },
-        { id: "guest", name: "Waiting…" },
-      ],
-    });
-    const row = await createMatchRow({
-      mode: "pvp",
-      hostUserId: user.id,
-      hostName,
-      state: initial,
-    });
-    return { matchId: row.id, token: row.invite_token! };
+  /**
+   * Batch B — create a multiplayer lobby and navigate to /play/lobby/:id.
+   * Host tier sets the lobby capacity (free → 2, paid → 4).
+   */
+  async function createMultiplayerLobby(mode: GameMode, config: GameConfig) {
+    if (!user || !allCards) {
+      toast.error("Not ready yet");
+      return;
+    }
+    try {
+      // Tier lookup — gates capacity. Only the host's tier matters.
+      const { data: sub } = await supabase
+        .from("subscriptions")
+        .select("tier")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const playerCount: 2 | 4 = isPaidTier(sub?.tier ?? null) ? 4 : 2;
+
+      const hostName = await fetchPlayerShortName(user);
+      const deck = buildDeck(allCards, specialCards);
+
+      // Build N player slots up-front; invitees fill via accept_game_invite.
+      const players = Array.from({ length: playerCount }, (_, i) =>
+        i === 0
+          ? { id: "host", name: hostName }
+          : { id: `guest${i}`, name: `Waiting ${i}…` },
+      );
+      const initial = createMatch({
+        deck,
+        players,
+        gameMode: mode,
+        gameConfig: config,
+      });
+      const row = await createLobbyMatch({
+        hostUserId: user.id,
+        hostName,
+        playerCount,
+        state: initial,
+      });
+      setModeSelectorOpen(false);
+      navigate(`/play/lobby/${row.id}`);
+    } catch (e: any) {
+      console.error("[multiplayer-lobby] create failed", e);
+      toast.error(e?.message ?? "Could not create lobby");
+    }
   }
 
   /* ----------- Render ----------- */
