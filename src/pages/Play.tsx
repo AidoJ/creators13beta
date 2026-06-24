@@ -511,19 +511,21 @@ export default function Play() {
   const getPresenceStatusForPlayer = useCallback(
     (playerId: string | null | undefined) => {
       if (matchRow?.mode !== "pvp" || !playerId) return null;
+      const slot = state?.players.findIndex((p) => p.id === playerId) ?? -1;
       const uid =
-        playerId === "host"
+        slot === 0
           ? matchRow.host_user_id
-          : playerId === "guest"
-            ? matchRow.guest_user_id
+          : slot === 1
+            ? matchRow.guest_user_id ?? presence.userIdForSlot(slot)
+            : slot > 1
+              ? presence.userIdForSlot(slot)
             : null;
       if (!uid) return null;
-      if (presence.isReconnecting(uid)) return "reconnecting" as const;
-      if (presence.isMissing(uid)) return "missing" as const;
-      if (presence.isConnected(uid)) return "connected" as const;
+      const status = presence.statusFor(uid);
+      if (status) return status;
       return null;
     },
-    [matchRow, presence],
+    [matchRow, state?.players, presence],
   );
   const selectedCard: DeckCard | undefined = useMemo(
     () => selfPlayer?.hand.find((c) => c.uid === selectedUid),
@@ -847,7 +849,7 @@ export default function Play() {
     const turnPresence = getPresenceStatusForPlayer(turnPlayer?.id);
     if (turnPresence === "reconnecting") {
       phaseHint = `${turnPlayer.name} is reconnecting…`;
-    } else if (turnPresence === "missing") {
+    } else if (turnPresence === "disconnected" || turnPresence === "missing") {
       phaseHint = `${turnPlayer.name} disconnected — waiting to reconnect…`;
     } else {
       phaseHint = `${turnPlayer.name} is ${isPvp ? "thinking" : "thinking…"}`;
@@ -1284,10 +1286,32 @@ export default function Play() {
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 h-7 text-[11px] px-2 truncate"
+              className={
+                "flex-1 min-h-7 h-auto text-[11px] px-2 justify-start " +
+                ((getPresenceStatusForPlayer(opponent.id) === "disconnected" || getPresenceStatusForPlayer(opponent.id) === "missing")
+                  ? "border-destructive/60 bg-destructive/10 text-destructive"
+                  : getPresenceStatusForPlayer(opponent.id) === "reconnecting"
+                    ? "border-amber-500/60 bg-amber-500/10 text-amber-300"
+                    : "")
+              }
               onClick={() => { setExpandedOpponentId(opponent.id); setOpponentPanelOpen(true); }}
             >
-              <Maximize2 className="w-3 h-3 mr-1 shrink-0" /> {opponent.name}
+              <span className="min-w-0 flex-1 text-left">
+                <span className="flex items-center gap-1 min-w-0">
+                  <Maximize2 className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{opponent.name}</span>
+                </span>
+                {(getPresenceStatusForPlayer(opponent.id) === "disconnected" || getPresenceStatusForPlayer(opponent.id) === "missing") && (
+                  <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
+                    <WifiOff className="w-2.5 h-2.5" /> Disconnected
+                  </span>
+                )}
+                {getPresenceStatusForPlayer(opponent.id) === "reconnecting" && (
+                  <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
+                    <Loader2 className="w-2.5 h-2.5 animate-spin" /> Reconnecting
+                  </span>
+                )}
+              </span>
             </Button>
             <button
               type="button"
@@ -1413,7 +1437,7 @@ export default function Play() {
                 const hexSize = opponents.length >= 4 ? 36 : opponents.length === 3 ? 44 : isMulti ? 52 : 60;
                 const opPresence = getPresenceStatusForPlayer(op.id);
                 const isReconnecting = opPresence === "reconnecting";
-                const isDisconnected = opPresence === "missing";
+                const isDisconnected = opPresence === "disconnected" || opPresence === "missing";
                 return (
                   <Card
                     key={op.id}
@@ -1432,8 +1456,8 @@ export default function Play() {
                       className="w-full flex items-center justify-between gap-2 mb-1 group text-left"
                       aria-label={`Pop out ${op.name}'s ecosystem`}
                     >
-                      <span className="font-display text-sm truncate group-hover:text-foreground transition-colors min-w-0 flex items-center gap-1.5">
-                        <span className="truncate">{op.name}</span>
+                      <span className="font-display text-sm group-hover:text-foreground transition-colors min-w-0 flex flex-col items-start gap-0.5">
+                        <span className="truncate max-w-full">{op.name}</span>
                         {isDisconnected && (
                           <span
                             className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide border border-destructive/50 bg-destructive/15 text-destructive shrink-0"
@@ -1704,7 +1728,14 @@ export default function Play() {
         player={expandedOpponent}
         opponentUserId={
           matchRow && matchRow.mode === "pvp" && expandedOpponent
-            ? (expandedOpponent.id === "host" ? matchRow.host_user_id : matchRow.guest_user_id)
+            ? (() => {
+                const slot = state.players.findIndex((p) => p.id === expandedOpponent.id);
+                return slot === 0
+                  ? matchRow.host_user_id
+                  : slot === 1
+                    ? matchRow.guest_user_id ?? presence.userIdForSlot(slot)
+                    : presence.userIdForSlot(slot);
+              })()
             : null
         }
         presenceStatus={(() => {
