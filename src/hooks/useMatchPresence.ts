@@ -234,10 +234,8 @@ export function useMatchPresence({
       const live = state.byUser[uid]?.status;
       const roster = state.rosterByUser[uid];
 
-      // Live presence wins over stale DB stamps; report-presence join clears
-      // disconnected_at, but the UI should recover immediately when realtime joins.
-      if (live === "connected") return "connected";
       if (roster?.disconnected_at) return "disconnected";
+      if (live === "connected") return "connected";
       if (live === "reconnecting") return "reconnecting";
       if (roster?.disconnect_reason) return "reconnecting";
 
