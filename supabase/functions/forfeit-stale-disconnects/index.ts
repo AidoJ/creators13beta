@@ -13,16 +13,8 @@
  *      bumps last_seen_at; we only convert it into a disconnect once it's
  *      been silent long enough.
  *
- *   2. ALL-DISCONNECT FINALISATION (single SQL per match): for any active
- *      multiplayer match where EVERY active roster member has
- *      `disconnected_at IS NOT NULL`, finalise the match in a single
- *      transaction with placements ranked by `disconnected_at DESC` (last
- *      to leave wins; ties = draw). Single SQL eliminates the race where
- *      two sweep ticks 30s apart could each forfeit one player and
- *      miscompute "latest".
- *
- *   3. PAST-GRACE AUTO-SKIP: if the match is NOT all-disconnected and the
- *      current `state.turn` slot is held by a player whose disconnect age
+ *   2. PAST-GRACE AUTO-SKIP: if the current `state.turn` slot is held by a
+ *      player whose disconnect age
  *      exceeds `disconnect_grace_seconds`, the sweep deserialises the state,
  *      injects roster disconnect stamps + grace, calls the engine's
  *      `forceAdvanceTurn`, and commits the result through `commit_move` —
@@ -155,7 +147,6 @@ Deno.serve(async (req) => {
 
   const summary = {
     stamped: 0,
-    all_disconnect_finalised: 0,
     past_grace_forfeited: 0,
     matches_scanned: 0,
     debounce_sec: debounceSec,
@@ -239,100 +230,16 @@ Deno.serve(async (req) => {
     const activeRoster = roster.filter((r) => (r.status ?? "active") === "active");
     if (activeRoster.length === 0) continue;
 
-    const allDisconnected = activeRoster.every(
-      (r) => r.disconnected_at !== null && r.disconnected_at !== undefined,
-    );
-
     // ---------------------------------------------------------------
-    // ALL-DISCONNECT: single-transaction finalisation. Ranked by
-    // disconnected_at DESC; last to leave wins; ties share rank (draw at
-    // the top).
-    // ---------------------------------------------------------------
-    if (allDisconnected) {
-      const ranked = [...activeRoster].sort((a, b) => {
-        const at = Date.parse(a.disconnected_at!);
-        const bt = Date.parse(b.disconnected_at!);
-        return bt - at;
-      });
-      // Tie-aware ranking: equal timestamps share the higher rank.
-      let cursor = 1;
-      let prevTime: number | null = null;
-      const placements = ranked.map((r, i) => {
-        const t = Date.parse(r.disconnected_at!);
-        if (prevTime !== null && t !== prevTime) cursor = i + 1;
-        prevTime = t;
-        return { user_id: r.user_id, rank: cursor, status: "finalised" as const };
-      });
-      const winner = placements[0];
-      // Single UPDATE for the match row + roster updates batched.
-      try {
-        // Engine `finished` flag only. Do NOT set `__finalised` here —
-        // that flag is finalise_ranked_match's OUTPUT (it tags the state
-        // AFTER awards commit, and short-circuits on subsequent calls).
-        // Setting it pre-RPC would block the very award we're about to fire.
-        const newState = { ...(match.state ?? {}), finished: true };
-        // Atomic guard: WHERE status='active' ensures only one sweep tick
-        // can flip the match to 'finished'. A concurrent tick's UPDATE
-        // matches 0 rows because Postgres' row lock serialises them and
-        // the second sees status='finished'. We check rowcount and skip
-        // the per-player + ranked-points writes if we lost the race.
-        const { data: claimed, error: claimErr } = await svc
-          .from("game_matches")
-          .update({
-            status: "finished",
-            winner_user_id: placements.length > 1 && placements[0].rank === placements[1].rank
-              ? null // top tie = draw
-              : winner.user_id,
-            state: newState,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", match.id)
-          .eq("status", "active")
-          .select("id");
-        if (claimErr) throw claimErr;
-        if (!claimed || claimed.length === 0) {
-          console.log(`[sweep] all-disconnect race-lost match=${match.id} (already finalised)`);
-          continue;
-        }
-        for (const p of placements) {
-          await svc
-            .from("game_match_players")
-            .update({
-              rank: p.rank,
-              status: "finalised",
-              finalised_at: new Date().toISOString(),
-            })
-            .eq("match_id", match.id)
-            .eq("user_id", p.user_id);
-        }
-        if (match.is_ranked) {
-          await svc.rpc("finalise_ranked_match", {
-            _match_id: match.id,
-            _reason: "all_disconnect",
-            _placements: placements as any,
-          });
-        }
-        summary.all_disconnect_finalised += 1;
-        console.log(
-          `[sweep] all-disconnect finalise match=${match.id} winner=${
-            placements[0].rank === (placements[1]?.rank ?? -1) ? "DRAW" : winner.user_id
-          }`,
-        );
-      } catch (e) {
-        console.error(`[sweep] all-disconnect finalise failed match=${match.id}`, e);
-      }
-      continue;
-    }
-
-    // ---------------------------------------------------------------
-    // PAST-GRACE AUTO-SKIP: the sweep NEVER writes finished-state here.
+    // PAST-GRACE AUTO-SKIP: the sweep NEVER writes finished-state directly.
     // It only auto-skips the current turn when that turn is held by a
-    // past-grace disconnected seat (the match would otherwise hang
-    // forever because the disconnected player will never call apply-move
-    // to trigger advanceTurn). The engine's advanceTurn handles the
-    // ≤1-active end via its existing finalise() path — placements,
-    // winnerId, lastEvent all populated correctly, identical shape to a
-    // normal match end.
+    // past-grace disconnected seat (the match would otherwise hang forever
+    // because the disconnected player will never call apply-move to trigger
+    // advanceTurn). The engine's advanceTurn handles the ≤1-active end via
+    // its existing finalise() path — placements, winnerId, lastEvent all
+    // populated correctly, identical shape to a normal match end. This also
+    // covers the all-disconnected case: wait until the current turn-holder is
+    // past grace, then route the finalisation through the engine.
     //
     // If state.turn is held by a CONNECTED player while a different
     // seat is past-grace, do nothing: their next real move will fire
