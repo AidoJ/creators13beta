@@ -1411,16 +1411,45 @@ export default function Play() {
               {opponents.map((op) => {
                 const isMulti = opponents.length >= 2;
                 const hexSize = opponents.length >= 4 ? 36 : opponents.length === 3 ? 44 : isMulti ? 52 : 60;
+                const opPresence = getPresenceStatusForPlayer(op.id);
+                const isReconnecting = opPresence === "reconnecting";
+                const isDisconnected = opPresence === "disconnected" || opPresence === "missing";
                 return (
-                  <Card key={op.id} className="p-2 flex flex-col min-h-0 min-w-0">
+                  <Card
+                    key={op.id}
+                    className={
+                      "p-2 flex flex-col min-h-0 min-w-0 " +
+                      (isDisconnected
+                        ? "ring-2 ring-destructive/60 bg-destructive/5"
+                        : isReconnecting
+                          ? "ring-2 ring-amber-500/60 bg-amber-500/5"
+                          : "")
+                    }
+                  >
                     <button
                       type="button"
                       onClick={() => { setExpandedOpponentId(op.id); setOpponentPanelOpen(true); }}
                       className="w-full flex items-center justify-between gap-2 mb-1 group text-left"
                       aria-label={`Pop out ${op.name}'s ecosystem`}
                     >
-                      <span className="font-display text-sm truncate group-hover:text-foreground transition-colors">
-                        {op.name}
+                      <span className="font-display text-sm truncate group-hover:text-foreground transition-colors min-w-0 flex items-center gap-1.5">
+                        <span className="truncate">{op.name}</span>
+                        {isDisconnected && (
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide border border-destructive/50 bg-destructive/15 text-destructive shrink-0"
+                            title="Player is disconnected"
+                          >
+                            <WifiOff className="w-2.5 h-2.5" /> Disconnected
+                          </span>
+                        )}
+                        {isReconnecting && (
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide border border-amber-500/50 bg-amber-500/15 text-amber-300 shrink-0"
+                            title="Player is reconnecting"
+                          >
+                            <Loader2 className="w-2.5 h-2.5 animate-spin" /> Reconnecting
+                          </span>
+                        )}
                       </span>
                       <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
                         {op.ecosystem.placed.size}/16 · {op.hand.length}h <Maximize2 className="w-3 h-3" />
