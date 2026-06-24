@@ -140,11 +140,36 @@ export function useMatchRealtime(
       ]);
       if (rowRes.error || !rowRes.data) return;
       const row = rowRes.data as unknown as GameMatchRow;
+      const prevStatus = lastRow?.status;
       lastRow = row;
       if (row.updated_at === lastUpdatedAt) return;
       lastUpdatedAt = row.updated_at;
-      if (row.last_action_by && row.last_action_by === selfUserId) return;
       const stateRow = stateRes.data as { state: any } | null;
+      // Status flipped to 'finished' since last poll — synthesise a finished
+      // state push so the dialog opens even if the sweep didn't touch our
+      // player_states row.
+      if (row.status === "finished" && prevStatus !== "finished" && stateRow) {
+        try {
+          const state = deserializeMatch(stateRow.state);
+          const { data: players } = await supabase
+            .from("game_match_players")
+            .select("user_id, slot")
+            .eq("match_id", matchId);
+          const slotByUser = new Map<string, number>(
+            (players ?? []).map((r: any) => [r.user_id as string, r.slot as number]),
+          );
+          const winnerSlot = row.winner_user_id
+            ? slotByUser.get(row.winner_user_id)
+            : undefined;
+          const winnerPlayerId =
+            winnerSlot === 0 ? "host" : winnerSlot != null ? `guest${winnerSlot}` : null;
+          onRemoteUpdate({ ...state, finished: true, winnerId: winnerPlayerId }, row);
+        } catch (e) {
+          console.error("[match-realtime] poll finished-synth failed", e);
+        }
+        return;
+      }
+      if (row.last_action_by && row.last_action_by === selfUserId) return;
       if (!stateRow) return;
       try {
         onRemoteUpdate(deserializeMatch(stateRow.state), row);
