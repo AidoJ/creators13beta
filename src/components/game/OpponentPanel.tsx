@@ -118,6 +118,16 @@ export function OpponentPanel({ open, onClose, player, opponentUserId, presenceS
               </span>
             </>
           )}
+          {presenceStatus === "reconnecting" && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border border-amber-500/40 bg-amber-500/10 text-amber-300">
+              <Loader2 className="w-3 h-3 animate-spin" /> Reconnecting…
+            </span>
+          )}
+          {(presenceStatus === "disconnected" || presenceStatus === "missing") && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border border-destructive/40 bg-destructive/10 text-destructive">
+              <WifiOff className="w-3 h-3" /> Disconnected
+            </span>
+          )}
         </div>
         <button
           type="button"
