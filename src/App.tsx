@@ -104,6 +104,7 @@ const App = () => (
                 <Route path="/play/new" element={<RequiresCompletedProfile><ErrorBoundary><Play /></ErrorBoundary></RequiresCompletedProfile>} />
                 <Route path="/play/m/:matchId" element={<ProtectedRoute><RequiresCompletedProfile><ErrorBoundary><Play /></ErrorBoundary></RequiresCompletedProfile></ProtectedRoute>} />
                 <Route path="/play/join/:token" element={<JoinMatch />} />
+                <Route path="/play/lobby/:matchId" element={<ProtectedRoute><RequiresCompletedProfile><Lobby /></RequiresCompletedProfile></ProtectedRoute>} />
                 <Route
                   path="/member/:userId"
                   element={
