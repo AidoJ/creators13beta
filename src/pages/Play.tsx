@@ -65,6 +65,7 @@ import { HandTile } from "@/components/game/cards/HandTile";
 import { RuleBookSheet } from "@/components/game/RuleBookSheet";
 import PlayerProfileDiscountCTA from "@/components/dashboard/PlayerProfileDiscountCTA";
 import { OpponentPanel } from "@/components/game/OpponentPanel";
+import { useMatchPresence } from "@/hooks/useMatchPresence";
 import { GameModeSelector } from "@/components/game/GameModeSelector";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
