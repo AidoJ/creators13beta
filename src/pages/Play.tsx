@@ -149,7 +149,7 @@ export default function Play() {
   }, []);
 
   const [ruleBookOpen, setRuleBookOpen] = useState(false);
-  const [lobbyOpen, setLobbyOpen] = useState(false);
+  
   const [waitingForGuest, setWaitingForGuest] = useState(false);
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
   const [stealVictimKey, setStealVictimKey] = useState<string | null>(null);
