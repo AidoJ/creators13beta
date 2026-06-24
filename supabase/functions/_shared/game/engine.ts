@@ -1289,6 +1289,27 @@ function afterAction(state: MatchState): MatchState {
   return state;
 }
 
+/** A.4 — true iff the seat is currently disconnected (server stamps
+ *  `disconnectedAt` from the realtime presence layer). NOT the same as
+ *  "stuck": a disconnected player may still have legal moves on the board;
+ *  we just can't ask them. Same forward-scan SKIP mechanism, distinct
+ *  semantic. Past-grace handling is separate (see `isDisconnectedPastGrace`).
+ */
+function isDisconnected(state: MatchState, slot: number): boolean {
+  const at = state.players[slot]?.disconnectedAt;
+  return typeof at === "number" && at > 0;
+}
+
+/** A.4 — true iff the seat has been disconnected long enough that the sweep
+ *  is allowed to forfeit them and end the match if only one connected
+ *  active player remains. Uses `state.disconnectGraceMs` (default 5 min). */
+function isDisconnectedPastGrace(state: MatchState, slot: number): boolean {
+  const at = state.players[slot]?.disconnectedAt;
+  if (typeof at !== "number" || at <= 0) return false;
+  const grace = state.disconnectGraceMs ?? 5 * 60 * 1000;
+  return Date.now() - at > grace;
+}
+
 function advanceTurn(state: MatchState): void {
   // Clear pickedUpThisTurn flags so cards picked up last turn become
   // Disaster-eligible again from this point onward.
@@ -1297,16 +1318,21 @@ function advanceTurn(state: MatchState): void {
   }
 
   // A.2 — N-player rotation. Walk `turnOrder` from the current player and
-  // pick the next slot whose player is still 'active'. If only one active
-  // player remains, finalise the match (they take the next available rank).
+  // pick the next slot whose player is still 'active' AND not past the
+  // disconnect grace window. If ≤1 such player remains, finalise the match
+  // (they take the next available rank; past-grace disconnects are ranked
+  // by score in finalise() — NOT routed through the quitter bottom-band
+  // path, which is reserved for explicit Leave Match / concede).
   const order =
     state.turnOrder && state.turnOrder.length === state.players.length
       ? state.turnOrder
       : state.players.map((_, i) => i);
   const isActive = (slot: number) => (state.players[slot]?.status ?? "active") === "active";
+  const canStillContinue = (slot: number) =>
+    isActive(slot) && !isDisconnectedPastGrace(state, slot);
 
-  const activeSlots = order.filter(isActive);
-  if (activeSlots.length <= 1) {
+  const continuingSlots = order.filter(canStillContinue);
+  if (continuingSlots.length <= 1) {
     finalise(state);
     return;
   }
@@ -1315,14 +1341,16 @@ function advanceTurn(state: MatchState): void {
   const startFrom = currentOrderIdx < 0 ? 0 : currentOrderIdx;
 
   // Auto-pass scan: walk forward through `turnOrder` and stop on the first
-  // ACTIVE player who has at least one legal move available. Active players
-  // we step past with no legal move are auto-passed (NOT conceded) — they
-  // remain active and eligible to play once state changes (a disaster wipes
-  // the used top, an opponent discards, etc.) make a move legal again. If
-  // the scan completes a full lap without finding a player who can act,
-  // every active player is stuck → fall through to the stalemate backstop,
-  // which finalises by score through the same path used elsewhere. Bounded
-  // by `order.length`, so it cannot loop.
+  // ACTIVE, CONNECTED player who has at least one legal move available.
+  // Skipped seats fall into one of two categories:
+  //   (a) stuck: no legal move available right now (e.g. hive-only hand).
+  //   (b) disconnected: presence layer says they're not here to play.
+  // Both are auto-passed (NOT conceded) — same skip mechanism, distinct
+  // semantic. A stuck seat may become unstuck when an opponent's move
+  // changes the board; a disconnected seat may rejoin within grace. If the
+  // scan completes a full lap without finding a player who can act, every
+  // continuing player is stuck → stalemate backstop finalises by score.
+  // Bounded by `order.length`, so it cannot loop.
   let nextSlot = state.turn;
   const passedNames: string[] = [];
   let landed = false;
@@ -1331,6 +1359,14 @@ function advanceTurn(state: MatchState): void {
     const candidate = order[(startFrom + step) % order.length];
     if (!isActive(candidate)) continue;
     if (firstActiveFallback < 0) firstActiveFallback = candidate;
+    // Disconnect-within-grace: skip the seat (auto-pass) but keep them in
+    // the match. Past-grace seats were already excluded from `continuingSlots`
+    // above and contribute to the ≤1 match-end check there.
+    if (isDisconnected(state, candidate)) {
+      const skipped = state.players[candidate];
+      if (skipped?.name) passedNames.push(`${skipped.name} (disconnected)`);
+      continue;
+    }
     if (playerHasAnyLegalMove(state, candidate)) {
       nextSlot = candidate;
       landed = true;
@@ -1339,10 +1375,10 @@ function advanceTurn(state: MatchState): void {
     const skipped = state.players[candidate];
     if (skipped?.name) passedNames.push(skipped.name);
   }
-  // No active player has a legal move — every skip we just recorded is a
-  // would-be auto-pass that the stalemate backstop will roll up into a
-  // finalise-by-score below. Park `state.turn` on the first active slot so
-  // downstream consumers don't see a finalised player as "current".
+  // No connected active player has a legal move — every skip we just
+  // recorded is a would-be auto-pass that the stalemate backstop will roll
+  // up into a finalise-by-score below. Park `state.turn` on the first active
+  // slot so downstream consumers don't see a finalised player as "current".
   if (!landed && firstActiveFallback >= 0) nextSlot = firstActiveFallback;
   state.turn = nextSlot;
   state.phase = "draw";
@@ -1353,8 +1389,8 @@ function advanceTurn(state: MatchState): void {
   if (landed && passedNames.length > 0) {
     const label =
       passedNames.length === 1
-        ? `${passedNames[0]} — no legal move, turn passed.`
-        : `No legal move — turn passed for ${passedNames.join(", ")}.`;
+        ? `${passedNames[0]} — turn passed.`
+        : `Turn passed for ${passedNames.join(", ")}.`;
     state.lastEvent = label;
   }
 

@@ -1,5 +1,5 @@
 /**
-// engine-mirror-hash: dddcb181ba1d5225
+// engine-mirror-hash: d462e8074246d7da
  * apply-move — server-authoritative move processor.
  *
  * Step 3 of the server-authoritative migration (see
@@ -261,7 +261,7 @@ Deno.serve(async (req) => {
   // back to the legacy host_user_id check for the human side.
   const { data: roster, error: rosterErr } = await svc
     .from("game_match_players")
-    .select("user_id, slot, display_name")
+    .select("user_id, slot, display_name, disconnected_at")
     .eq("match_id", body.match_id)
     .order("slot", { ascending: true });
   if (rosterErr) {
@@ -269,7 +269,29 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "roster fetch failed" }, 500);
   }
 
-  const rosterRows = (roster ?? []) as Array<{ user_id: string; slot: number; display_name: string }>;
+  // A.4 — load disconnect grace window from game_settings so the engine's
+  // ≤1-active match-end check uses the tunable value. Read once per request.
+  let disconnectGraceMs = 5 * 60 * 1000;
+  try {
+    const { data: settings } = await svc
+      .from("game_settings")
+      .select("disconnect_grace_seconds")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const secs = Number(settings?.disconnect_grace_seconds);
+    if (Number.isFinite(secs) && secs > 0) disconnectGraceMs = secs * 1000;
+  } catch (e) {
+    console.warn("[apply-move] game_settings read failed, using default grace", e);
+  }
+
+
+  const rosterRows = (roster ?? []) as Array<{
+    user_id: string;
+    slot: number;
+    display_name: string;
+    disconnected_at: string | null;
+  }>;
   const callerRosterRow = rosterRows.find((r) => r.user_id === userId);
   const isLegacyHost = match.host_user_id === userId && rosterRows.length === 0;
   if (!callerRosterRow && !isLegacyHost) {
@@ -329,6 +351,18 @@ Deno.serve(async (req) => {
     return p;
   });
   if (namesPatched) console.log("[apply-move] patched player names from roster");
+
+  // A.4 — inject disconnect state from the roster into each player so the
+  // engine's auto-pass scan and ≤1-active match-end check can see it.
+  // Transient: never persisted by the engine; overwritten on every load.
+  // The presence layer (report-presence + forfeit-stale-disconnects sweep)
+  // is the source of truth for `disconnected_at`.
+  state.disconnectGraceMs = disconnectGraceMs;
+  state.players = state.players.map((p, i) => {
+    const r = rosterRows.find((x) => x.slot === i);
+    const at = r?.disconnected_at ? Date.parse(r.disconnected_at) : null;
+    return { ...p, disconnectedAt: Number.isFinite(at) ? at : null };
+  });
 
   // Build a map of slot → user_id for per-player state writes.
   const userIdForSlot = (slot: number): string | null => {

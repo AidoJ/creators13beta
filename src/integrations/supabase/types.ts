@@ -903,6 +903,8 @@ export type Database = {
           bot_think_ms: number
           creators_needed: number
           default_mode: string
+          disconnect_grace_seconds: number
+          disconnect_sweep_interval_seconds: number
           ecosystem_target: number
           elo_loss: number
           elo_win: number
@@ -925,6 +927,7 @@ export type Database = {
           play_disabled: boolean
           play_disabled_message: string
           points_per_win: number
+          presence_debounce_seconds: number
           profile_discount_cta_body: string
           profile_discount_cta_title: string
           profile_discount_enabled: boolean
@@ -956,6 +959,8 @@ export type Database = {
           bot_think_ms?: number
           creators_needed?: number
           default_mode?: string
+          disconnect_grace_seconds?: number
+          disconnect_sweep_interval_seconds?: number
           ecosystem_target?: number
           elo_loss?: number
           elo_win?: number
@@ -978,6 +983,7 @@ export type Database = {
           play_disabled?: boolean
           play_disabled_message?: string
           points_per_win?: number
+          presence_debounce_seconds?: number
           profile_discount_cta_body?: string
           profile_discount_cta_title?: string
           profile_discount_enabled?: boolean
@@ -1009,6 +1015,8 @@ export type Database = {
           bot_think_ms?: number
           creators_needed?: number
           default_mode?: string
+          disconnect_grace_seconds?: number
+          disconnect_sweep_interval_seconds?: number
           ecosystem_target?: number
           elo_loss?: number
           elo_win?: number
@@ -1031,6 +1039,7 @@ export type Database = {
           play_disabled?: boolean
           play_disabled_message?: string
           points_per_win?: number
+          presence_debounce_seconds?: number
           profile_discount_cta_body?: string
           profile_discount_cta_title?: string
           profile_discount_enabled?: boolean

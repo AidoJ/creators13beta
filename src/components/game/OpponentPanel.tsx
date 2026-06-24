@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { GripHorizontal, X, Trophy, Bot } from "lucide-react";
+import { GripHorizontal, X, Trophy, Bot, WifiOff, Loader2 } from "lucide-react";
 import { Ecosystem } from "@/components/game/Ecosystem";
 import type { PlayerState } from "@/lib/game/types";
 import { supabase } from "@/integrations/supabase/client";
+import type { PresenceStatus } from "@/hooks/useMatchPresence";
 
 interface OpponentPanelProps {
   open: boolean;
@@ -10,6 +11,8 @@ interface OpponentPanelProps {
   player: PlayerState | null;
   /** When set (PvP only), the panel fetches public stats (ELO + bot wins) for the opponent. */
   opponentUserId?: string | null;
+  /** A.4 — realtime presence indicator. Omit for solo bot matches. */
+  presenceStatus?: PresenceStatus | "missing" | null;
 }
 
 interface PublicStats {
@@ -21,7 +24,7 @@ interface PublicStats {
  * Floating, draggable + resizable panel for previewing another player's ecosystem.
  * Drag the header to move; drag the bottom-right grip to resize.
  */
-export function OpponentPanel({ open, onClose, player, opponentUserId }: OpponentPanelProps) {
+export function OpponentPanel({ open, onClose, player, opponentUserId, presenceStatus }: OpponentPanelProps) {
   const [stats, setStats] = useState<PublicStats | null>(null);
   useEffect(() => {
     setStats(null);
@@ -114,6 +117,16 @@ export function OpponentPanel({ open, onClose, player, opponentUserId }: Opponen
                 <Bot className="w-3 h-3" /> {stats.total_bot_wins} bot win{stats.total_bot_wins === 1 ? "" : "s"}
               </span>
             </>
+          )}
+          {presenceStatus === "reconnecting" && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border border-amber-500/40 bg-amber-500/10 text-amber-300">
+              <Loader2 className="w-3 h-3 animate-spin" /> Reconnecting…
+            </span>
+          )}
+          {(presenceStatus === "disconnected" || presenceStatus === "missing") && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border border-destructive/40 bg-destructive/10 text-destructive">
+              <WifiOff className="w-3 h-3" /> Disconnected
+            </span>
           )}
         </div>
         <button

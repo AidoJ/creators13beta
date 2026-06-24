@@ -65,6 +65,7 @@ import { HandTile } from "@/components/game/cards/HandTile";
 import { RuleBookSheet } from "@/components/game/RuleBookSheet";
 import PlayerProfileDiscountCTA from "@/components/dashboard/PlayerProfileDiscountCTA";
 import { OpponentPanel } from "@/components/game/OpponentPanel";
+import { useMatchPresence } from "@/hooks/useMatchPresence";
 import { GameModeSelector } from "@/components/game/GameModeSelector";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
@@ -105,6 +106,16 @@ export default function Play() {
 
   const [opponentPanelOpen, setOpponentPanelOpen] = useState(false);
   const [expandedOpponentId, setExpandedOpponentId] = useState<string | null>(null);
+
+  // A.4 — realtime presence for the current PvP match. No-op for solo bot
+  // matches (enabled=false when not PvP). The same channel name and payload
+  // shape will be consumed by the B lobby and the C in-match indicators.
+  const presence = useMatchPresence({
+    matchId: matchRow?.id ?? null,
+    userId: user?.id ?? null,
+    seat: rosterSlot ?? undefined,
+    enabled: matchRow?.mode === "pvp",
+  });
   // Resizable opponents-rail width (% of stage). Persisted across sessions.
   const [opponentPct, setOpponentPct] = useState<number>(() => {
     if (typeof window === "undefined") return 40;
@@ -1642,6 +1653,18 @@ export default function Play() {
             ? (expandedOpponent.id === "host" ? matchRow.host_user_id : matchRow.guest_user_id)
             : null
         }
+        presenceStatus={(() => {
+          if (matchRow?.mode !== "pvp" || !expandedOpponent) return null;
+          const uid =
+            expandedOpponent.id === "host"
+              ? matchRow.host_user_id
+              : matchRow.guest_user_id;
+          if (!uid) return null;
+          if (presence.isReconnecting(uid)) return "reconnecting";
+          if (presence.isMissing(uid)) return "missing";
+          if (presence.isConnected(uid)) return "connected";
+          return null;
+        })()}
       />
       <MultiplayerLobby
         open={lobbyOpen}
