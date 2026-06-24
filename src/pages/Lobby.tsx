@@ -145,7 +145,7 @@ export default function Lobby() {
     try {
       const result = await applyMoveServer(matchId, row.seq, { type: "start_lobby_match" });
       if (!result.ok) {
-        toast.error(result.message ?? "Could not start the match");
+        toast.error((!result.ok && result.message) || "Could not start the match");
         setStarting(false);
         return;
       }
