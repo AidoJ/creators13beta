@@ -1722,6 +1722,7 @@ export default function Play() {
           open
           onCancel={() => setModeSelectorOpen(false)}
           onChoose={(m, c, d) => startSoloMatch(m, c, d)}
+          onChooseMultiplayer={(m, c) => createMultiplayerLobby(m, c)}
         />
       )}
 
