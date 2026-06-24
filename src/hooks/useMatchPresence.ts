@@ -31,6 +31,8 @@ export interface PresencePayload {
 export interface MatchPresenceState {
   /** Map of user_id → latest presence payload from any of their devices. */
   byUser: Record<string, PresencePayload>;
+  /** True after the channel has delivered at least one authoritative presence snapshot. */
+  presenceSynced: boolean;
   /** Durable roster evidence from the database; survives missed realtime leave events. */
   rosterByUser: Record<string, RosterPresence>;
   /** Tracking own user as "connected" once the channel has joined. */
@@ -63,6 +65,7 @@ export function useMatchPresence({
 }: Options) {
   const [state, setState] = useState<MatchPresenceState>({
     byUser: {},
+    presenceSynced: false,
     rosterByUser: {},
     selfConnected: false,
   });
@@ -141,6 +144,7 @@ export function useMatchPresence({
         setState((prev) => ({
           ...prev,
           byUser: projectByUser(raw),
+          presenceSynced: true,
         }));
       })
       .on("presence", { event: "join" }, ({ newPresences }) => {
@@ -220,6 +224,13 @@ export function useMatchPresence({
       if (live === "reconnecting") return "reconnecting";
       if (roster?.disconnect_reason) return "reconnecting";
 
+      // Immediate visual disconnect state must come from live Realtime
+      // presence, not from disconnected_at. disconnected_at is only stamped
+      // later by the grace-period sweep; after the channel has synced, a
+      // rostered player missing from the live presence snapshot is currently
+      // away/reconnecting even while disconnected_at is still null.
+      if (state.presenceSynced && roster && !live) return "reconnecting";
+
       // Heartbeat is every 20s. If DB evidence is stale but the sweep has not
       // stamped disconnected_at yet, show reconnecting rather than silence.
       const lastSeen = roster?.last_seen_at ? Date.parse(roster.last_seen_at) : NaN;
@@ -237,7 +248,7 @@ export function useMatchPresence({
       return Object.values(state.rosterByUser).find((row) => row.slot === slot)?.user_id ?? null;
     };
     return { statusFor, userIdForSlot, isConnected, isReconnecting, isDisconnected, isMissing };
-  }, [state.byUser, state.rosterByUser]);
+  }, [state.byUser, state.presenceSynced, state.rosterByUser]);
 
   return { ...state, ...helpers };
 }
