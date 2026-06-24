@@ -32,7 +32,8 @@ export type ServerMove =
   | { type: "concede" }
   | { type: "rotate_hex"; pos_key: string }
   | { type: "move_hex"; from_key: string; to_pos: { q: number; r: number } }
-  | { type: "finalise_by_score" };
+  | { type: "finalise_by_score" }
+  | { type: "start_lobby_match" };
 
 export type ApplyMoveResult =
   | { ok: true; seq: number; publicState: any; finished: boolean }
