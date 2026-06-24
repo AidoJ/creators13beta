@@ -220,7 +220,12 @@ Deno.serve(async (req) => {
       try {
         // Mark state as finalised so apply-move idempotency check works.
         const newState = { ...(match.state ?? {}), __finalised: true, finished: true };
-        await svc
+        // Atomic guard: WHERE status='active' ensures only one sweep tick
+        // can flip the match to 'finished'. A concurrent tick's UPDATE
+        // matches 0 rows because Postgres' row lock serialises them and
+        // the second sees status='finished'. We check rowcount and skip
+        // the per-player + ranked-points writes if we lost the race.
+        const { data: claimed, error: claimErr } = await svc
           .from("game_matches")
           .update({
             status: "finished",
@@ -230,7 +235,14 @@ Deno.serve(async (req) => {
             state: newState,
             updated_at: new Date().toISOString(),
           })
-          .eq("id", match.id);
+          .eq("id", match.id)
+          .eq("status", "active")
+          .select("id");
+        if (claimErr) throw claimErr;
+        if (!claimed || claimed.length === 0) {
+          console.log(`[sweep] all-disconnect race-lost match=${match.id} (already finalised)`);
+          continue;
+        }
         for (const p of placements) {
           await svc
             .from("game_match_players")
@@ -313,7 +325,8 @@ Deno.serve(async (req) => {
             ? placements[0].user_id
             : null;
         const newState = { ...state, __finalised: true, finished: true };
-        await svc
+        // Same atomic guard as the all-disconnect branch above.
+        const { data: claimed2, error: claim2Err } = await svc
           .from("game_matches")
           .update({
             status: "finished",
@@ -321,7 +334,14 @@ Deno.serve(async (req) => {
             state: newState,
             updated_at: new Date().toISOString(),
           })
-          .eq("id", match.id);
+          .eq("id", match.id)
+          .eq("status", "active")
+          .select("id");
+        if (claim2Err) throw claim2Err;
+        if (!claimed2 || claimed2.length === 0) {
+          console.log(`[sweep] past-grace race-lost match=${match.id} (already finalised)`);
+          continue;
+        }
         for (const p of placements) {
           await svc
             .from("game_match_players")
