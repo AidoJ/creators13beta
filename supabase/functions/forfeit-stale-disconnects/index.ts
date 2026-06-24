@@ -327,7 +327,10 @@ Deno.serve(async (req) => {
           placements[0] && placements[0].rank !== (placements[1]?.rank ?? -1)
             ? placements[0].user_id
             : null;
-        const newState = { ...state, __finalised: true, finished: true };
+        // Engine `finished` flag only — see all-disconnect branch above
+        // for why we must NOT pre-set `__finalised` (would short-circuit
+        // finalise_ranked_match and skip awards).
+        const newState = { ...state, finished: true };
         // Same atomic guard as the all-disconnect branch above.
         const { data: claimed2, error: claim2Err } = await svc
           .from("game_matches")
