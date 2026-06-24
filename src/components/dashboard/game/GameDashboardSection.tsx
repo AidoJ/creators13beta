@@ -478,6 +478,9 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
         })()}
       </Card>
 
+      {/* ROW 1.5 — Join via code (Batch B) */}
+      <JoinByCodeRow />
+
       {/* ROW 2 — Active games */}
       <Card className="p-5">
         <div className="flex items-center justify-between mb-3">
