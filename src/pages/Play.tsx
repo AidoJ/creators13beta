@@ -62,7 +62,8 @@ import { BoardHexPiece } from "@/components/game/BoardHexPiece";
 import { MatchOverDialog } from "@/components/game/MatchOverDialog";
 
 import { TutorialOverlay, resetTutorial } from "@/components/game/TutorialOverlay";
-import { MultiplayerLobby } from "@/components/game/MultiplayerLobby";
+// (legacy MultiplayerLobby dialog removed in Batch B — multiplayer now flows
+// through the route-based /play/lobby/:matchId page.)
 import { HandTile } from "@/components/game/cards/HandTile";
 import { RuleBookSheet } from "@/components/game/RuleBookSheet";
 import PlayerProfileDiscountCTA from "@/components/dashboard/PlayerProfileDiscountCTA";
