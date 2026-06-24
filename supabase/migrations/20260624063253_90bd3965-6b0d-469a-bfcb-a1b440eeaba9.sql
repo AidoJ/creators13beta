@@ -1,0 +1,1 @@
+UPDATE public.game_settings SET disconnect_grace_seconds = 300, updated_at = now();

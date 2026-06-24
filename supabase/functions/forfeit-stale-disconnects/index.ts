@@ -1,5 +1,5 @@
 /**
-// engine-mirror-hash: d462e8074246d7da
+// engine-mirror-hash: 4feb47126459928b
  * forfeit-stale-disconnects — A.4 disconnect sweep.
  *
  * Cron-invoked every 30s (see migration). Three responsibilities, run in
@@ -21,12 +21,24 @@
  *      two sweep ticks 30s apart could each forfeit one player and
  *      miscompute "latest".
  *
- *   3. PAST-GRACE FORFEIT: for matches not all-disconnected, any player
- *      whose `now() - disconnected_at > disconnect_grace_seconds` is
- *      ranked-by-score into the middle band via the engine's `finalise()`
- *      path. Disconnects are NOT routed through the conceded/forfeit
- *      bottom-band path — that's reserved for explicit Leave Match (which
- *      A.4 doesn't add). A dropped connection is not a deliberate quit.
+ *   3. PAST-GRACE AUTO-SKIP: if the match is NOT all-disconnected and the
+ *      current `state.turn` slot is held by a player whose disconnect age
+ *      exceeds `disconnect_grace_seconds`, the sweep deserialises the state,
+ *      injects roster disconnect stamps + grace, calls the engine's
+ *      `forceAdvanceTurn`, and commits the result through `commit_move` —
+ *      identical to a normal apply-move. The engine's existing ≤1-active
+ *      check inside `advanceTurn` is what ends the match (with proper
+ *      placements / winnerId / lastEvent), NOT this sweep. The sweep never
+ *      writes finished-state directly in this branch.
+ *
+ *      Idempotency: only fires when `state.turn` is held by a past-grace
+ *      seat. After a successful auto-skip, `state.turn` belongs to a
+ *      connected player — the next sweep tick observes that and no-ops.
+ *      Two concurrent ticks → second one hits `commit_move`'s `stale seq`
+ *      (40001) and is caught + ignored. If `state.turn` is held by a
+ *      connected player while a different seat is past-grace, we do
+ *      nothing: their next real move will run `advanceTurn`, which sees
+ *      the past-grace seat and finalises through the same engine path.
  *
  * The engine import below is what binds this function to the engine-mirror
  * hash marker (auto-stamped by scripts/sync-game-engine.sh on line 2 of
@@ -36,13 +48,9 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-// Engine import: binds the marker. The actual finalisation work is done by
-// the SQL `commit_move` + `finalise_ranked_match` RPCs (which already use
-// the canonical ranking logic), but importing from the mirror means this
-// function is forced to redeploy when the engine changes — which is what we
-// want, since the auto-pass / grace semantics live there.
-// deno-lint-ignore no-unused-vars
-import type { MatchState } from "../_shared/game/types.ts";
+import { forceAdvanceTurn } from "../_shared/game/engine.ts";
+import type { Ecosystem, MatchState, PlacedCard } from "../_shared/game/types.ts";
+
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -53,6 +61,46 @@ function jsonResponse(body: unknown, status = 200) {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
+
+/* --- serialize/deserialize: mirror of apply-move's inlined helpers so the
+   engine input/output shapes are byte-identical between the two callers.
+   If you edit one, edit both (or extract to _shared). --- */
+function deserialise(raw: any): MatchState {
+  return {
+    ...raw,
+    players: (raw.players ?? []).map((p: any) => ({
+      ...p,
+      firstPickupDone: p.firstPickupDone ?? true,
+      ecosystem: {
+        placed: new Map<string, PlacedCard>(p.ecosystem?.placed ?? []),
+      } as Ecosystem,
+    })),
+    pendingDisaster: raw.pendingDisaster ?? null,
+  };
+}
+
+function serialise(state: MatchState): any {
+  return {
+    ...state,
+    players: state.players.map((p) => ({
+      ...p,
+      ecosystem: { placed: Array.from(p.ecosystem.placed.entries()) },
+    })),
+  };
+}
+
+function redactFor(serialisedState: any, recipientPlayerId: string | null) {
+  if (!serialisedState?.players) return serialisedState;
+  return {
+    ...serialisedState,
+    players: serialisedState.players.map((p: any) =>
+      p.id === recipientPlayerId
+        ? p
+        : { ...p, hand: [], handCount: Array.isArray(p.hand) ? p.hand.length : 0 },
+    ),
+  };
+}
+
 
 interface SettingsRow {
   presence_debounce_seconds: number | null;
@@ -277,11 +325,18 @@ Deno.serve(async (req) => {
     }
 
     // ---------------------------------------------------------------
-    // PAST-GRACE FORFEIT: any seat whose disconnect age exceeds grace
-    // is finalised by score (middle band) — NOT bottom-banded as a
-    // quitter. We do this by directly updating game_match_players +
-    // game_matches state so that the next apply-move (or this sweep on
-    // the next tick) sees an updated active set.
+    // PAST-GRACE AUTO-SKIP: the sweep NEVER writes finished-state here.
+    // It only auto-skips the current turn when that turn is held by a
+    // past-grace disconnected seat (the match would otherwise hang
+    // forever because the disconnected player will never call apply-move
+    // to trigger advanceTurn). The engine's advanceTurn handles the
+    // ≤1-active end via its existing finalise() path — placements,
+    // winnerId, lastEvent all populated correctly, identical shape to a
+    // normal match end.
+    //
+    // If state.turn is held by a CONNECTED player while a different
+    // seat is past-grace, do nothing: their next real move will fire
+    // advanceTurn and the engine will end the match cleanly.
     // ---------------------------------------------------------------
     const pastGrace = activeRoster.filter((r) => {
       const t = r.disconnected_at ? Date.parse(r.disconnected_at) : NaN;
@@ -289,99 +344,113 @@ Deno.serve(async (req) => {
     });
     if (pastGrace.length === 0) continue;
 
-    // Compute remaining still-connected actives after this sweep applies
-    // the forfeits. If only one (or zero) survive, finalise the whole
-    // match by score; otherwise just mark the past-grace seats and let
-    // the next move's engine advanceTurn observe them.
-    const survivingActives = activeRoster.filter((r) => !pastGrace.includes(r));
+    const stateTurn = Number((match.state ?? {}).turn);
+    if (!Number.isFinite(stateTurn)) continue;
+    const turnIsPastGrace = pastGrace.some((r) => r.slot === stateTurn);
+    if (!turnIsPastGrace) {
+      // Engine will handle on the next real move from a connected player.
+      continue;
+    }
+
+    const actorRow = activeRoster.find((r) => r.slot === stateTurn);
+    if (!actorRow) continue;
 
     try {
-      if (survivingActives.length <= 1) {
-        // Match ends. Build placements by score from match.state.
-        const state = match.state ?? {};
-        const players: any[] = Array.isArray(state.players) ? state.players : [];
-        const slotByUser = new Map<string, number>();
-        for (const r of activeRoster) slotByUser.set(r.user_id, r.slot);
-        const scoreFor = (uid: string) => {
-          const slot = slotByUser.get(uid);
-          if (slot === undefined) return 0;
-          const p = players[slot];
-          if (!p) return 0;
-          const placedSize = Array.isArray(p.ecosystem?.placed)
-            ? p.ecosystem.placed.length
-            : 0;
-          return placedSize * 2 + (Number(p.score) || 0);
-        };
-        const ranked = [...activeRoster].sort(
-          (a, b) => scoreFor(b.user_id) - scoreFor(a.user_id),
-        );
-        let cursor = 1;
-        let prevScore: number | null = null;
-        const placements = ranked.map((r, i) => {
-          const s = scoreFor(r.user_id);
-          if (prevScore !== null && s !== prevScore) cursor = i + 1;
-          prevScore = s;
-          return { user_id: r.user_id, rank: cursor, status: "finalised" as const };
-        });
-        const winnerUid =
-          placements[0] && placements[0].rank !== (placements[1]?.rank ?? -1)
-            ? placements[0].user_id
-            : null;
-        // Engine `finished` flag only — see all-disconnect branch above
-        // for why we must NOT pre-set `__finalised` (would short-circuit
-        // finalise_ranked_match and skip awards).
-        const newState = { ...state, finished: true };
-        // Same atomic guard as the all-disconnect branch above.
-        const { data: claimed2, error: claim2Err } = await svc
-          .from("game_matches")
-          .update({
-            status: "finished",
-            winner_user_id: winnerUid,
-            state: newState,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", match.id)
-          .eq("status", "active")
-          .select("id");
-        if (claim2Err) throw claim2Err;
-        if (!claimed2 || claimed2.length === 0) {
-          console.log(`[sweep] past-grace race-lost match=${match.id} (already finalised)`);
+      // Build the engine state exactly the way apply-move does: inject
+      // grace + per-slot disconnectedAt from the roster so advanceTurn
+      // sees who's past-grace.
+      let state: MatchState;
+      try {
+        state = deserialise(match.state);
+      } catch (e) {
+        console.error(`[sweep] deserialise failed match=${match.id}`, e);
+        continue;
+      }
+      state.disconnectGraceMs = graceMs;
+      state.players = state.players.map((p, i) => {
+        const r = roster.find((x) => x.slot === i);
+        const at = r?.disconnected_at ? Date.parse(r.disconnected_at) : null;
+        return { ...p, disconnectedAt: Number.isFinite(at) ? at : null };
+      });
+
+      const nextState = forceAdvanceTurn(state, nowMs);
+      // Guard: if forceAdvanceTurn no-op'd (shouldn't happen given the
+      // turnIsPastGrace check, but defensive), skip.
+      if (nextState === state) {
+        console.log(`[sweep] past-grace force-advance no-op match=${match.id}`);
+        continue;
+      }
+
+      const finished = !!nextState.finished;
+      const userIdForSlot = (slot: number): string | null =>
+        roster.find((r) => r.slot === slot)?.user_id ?? null;
+
+      let winnerUserId: string | null = null;
+      if (finished && nextState.winnerId) {
+        const wSlot = nextState.players.findIndex((p) => p.id === nextState.winnerId);
+        if (wSlot >= 0) winnerUserId = userIdForSlot(wSlot);
+      }
+
+      const serialisedNext = serialise(nextState);
+      const playerStates: Array<{ user_id: string; state: any }> = [];
+      for (let slot = 0; slot < nextState.players.length; slot++) {
+        const uid = userIdForSlot(slot);
+        if (!uid) continue;
+        const pid = nextState.players[slot]?.id;
+        if (!pid) continue;
+        playerStates.push({ user_id: uid, state: redactFor(serialisedNext, pid) });
+      }
+
+      const placementsSnapshot = (nextState.placements ?? [])
+        .map((pl) => {
+          const slot = nextState.players.findIndex((p) => p.id === pl.playerId);
+          if (slot < 0) return null;
+          const uid = userIdForSlot(slot);
+          if (!uid) return null;
+          const status = nextState.players[slot]?.status ?? "finalised";
+          return { user_id: uid, rank: pl.rank, status };
+        })
+        .filter((x): x is { user_id: string; rank: number; status: string } => !!x);
+
+      const { error: commitErr } = await svc.rpc("commit_move", {
+        _match_id: match.id,
+        _expected_seq: Number(match.seq ?? 0),
+        _actor: actorRow.user_id,
+        _move: { type: "sweep_skip_disconnected", slot: stateTurn } as any,
+        _new_state: serialisedNext,
+        _player_states: playerStates as any,
+        _winner: winnerUserId,
+        _finished: finished,
+        _placements: placementsSnapshot.length > 0 ? (placementsSnapshot as any) : null,
+      });
+      if (commitErr) {
+        const code = (commitErr as any).code ?? "";
+        const msg = String(commitErr.message ?? "");
+        if (code === "40001" || msg.includes("stale seq")) {
+          console.log(`[sweep] past-grace skip race-lost match=${match.id} (concurrent commit)`);
           continue;
         }
-        for (const p of placements) {
-          await svc
-            .from("game_match_players")
-            .update({
-              rank: p.rank,
-              status: "finalised",
-              finalised_at: new Date().toISOString(),
-            })
-            .eq("match_id", match.id)
-            .eq("user_id", p.user_id);
-        }
-        if (match.is_ranked) {
-          await svc.rpc("finalise_ranked_match", {
-            _match_id: match.id,
-            _reason: "past_grace_disconnect",
-            _placements: placements as any,
-          });
-        }
-        summary.past_grace_forfeited += pastGrace.length;
-        console.log(
-          `[sweep] past-grace match-end match=${match.id} forfeited=${pastGrace.length} winner=${winnerUid ?? "DRAW"}`,
-        );
-      } else {
-        // Match continues. Don't mutate state.players[].status here — the
-        // engine's auto-pass scan uses disconnectedAt directly, and the
-        // ≤1-active check sees past-grace via state.disconnectGraceMs that
-        // apply-move injects each call. We just keep the disconnected_at
-        // stamp so the engine sees it. Nothing to write.
-        summary.past_grace_forfeited += 0;
+        throw commitErr;
       }
+
+      if (finished && match.is_ranked) {
+        const { error: finErr } = await svc.rpc("finalise_ranked_match", {
+          _match_id: match.id,
+          _reason: "past_grace_disconnect",
+          _placements: placementsSnapshot.length > 0 ? (placementsSnapshot as any) : null,
+        });
+        if (finErr) console.error(`[sweep] finalise_ranked_match failed match=${match.id}`, finErr);
+      }
+
+      summary.past_grace_forfeited += 1;
+      console.log(
+        `[sweep] past-grace auto-skip match=${match.id} skipped_slot=${stateTurn} finished=${finished}${finished ? ` winner=${winnerUserId ?? "DRAW"}` : ""}`,
+      );
     } catch (e) {
-      console.error(`[sweep] past-grace handling failed match=${match.id}`, e);
+      console.error(`[sweep] past-grace auto-skip failed match=${match.id}`, e);
     }
   }
+
 
   console.log("[sweep] done", summary);
   return jsonResponse({ ok: true, ...summary });
