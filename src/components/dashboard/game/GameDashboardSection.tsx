@@ -478,6 +478,9 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
         })()}
       </Card>
 
+      {/* ROW 1.5 — Join via code (Batch B) */}
+      <JoinByCodeRow />
+
       {/* ROW 2 — Active games */}
       <Card className="p-5">
         <div className="flex items-center justify-between mb-3">
@@ -602,5 +605,65 @@ function Row({ label, value }: { label: string; value: string | number }) {
       <span className="text-muted-foreground">{label}</span>
       <strong className="text-foreground">{value}</strong>
     </div>
+  );
+}
+
+/**
+ * Batch B — small inline "Join with code" panel for invitees who got a
+ * 6-char invite code instead of a link. Resolves the code to the long
+ * token via the resolve_match_invite_code RPC, then routes through the
+ * normal /play/join/:token flow.
+ */
+function JoinByCodeRow() {
+  const navigate = useNavigate();
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = code.trim().toUpperCase();
+    if (trimmed.length < 4) {
+      toast.error("Enter the 6-character code");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { data: token, error } = await supabase.rpc("resolve_match_invite_code", { _code: trimmed });
+      if (error) throw error;
+      if (!token) {
+        toast.error("Code not found (it may have been cancelled or used).");
+        return;
+      }
+      navigate(`/play/join/${token}`);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Could not look up code");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card className="p-4">
+      <form className="flex items-center gap-2 flex-wrap" onSubmit={submit}>
+        <div className="flex-1 min-w-[180px]">
+          <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold block mb-1">
+            Got an invite code?
+          </label>
+          <input
+            type="text"
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))}
+            placeholder="ABC123"
+            maxLength={6}
+            className="w-full bg-background border border-border rounded-md px-3 py-1.5 font-mono uppercase tracking-[0.3em] text-center text-base"
+            autoComplete="off"
+          />
+        </div>
+        <Button type="submit" disabled={busy} size="sm" className="mt-5">
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
+          Join
+        </Button>
+      </form>
+    </Card>
   );
 }

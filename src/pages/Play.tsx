@@ -37,10 +37,12 @@ import {
 } from "@/lib/game";
 import {
   createMatchRow,
+  createLobbyMatch,
   loadMatch,
   inviteUrl,
   type GameMatchRow,
 } from "@/lib/game/persistence";
+import { isPaidTier } from "@/lib/clientClassification";
 import { type ServerMove } from "@/lib/game/serverMoves";
 import { logClientStateChange } from "@/lib/game/debugLog";
 import { deserializeMatch } from "@/lib/game/serialize";
@@ -60,7 +62,8 @@ import { BoardHexPiece } from "@/components/game/BoardHexPiece";
 import { MatchOverDialog } from "@/components/game/MatchOverDialog";
 
 import { TutorialOverlay, resetTutorial } from "@/components/game/TutorialOverlay";
-import { MultiplayerLobby } from "@/components/game/MultiplayerLobby";
+// (legacy MultiplayerLobby dialog removed in Batch B — multiplayer now flows
+// through the route-based /play/lobby/:matchId page.)
 import { HandTile } from "@/components/game/cards/HandTile";
 import { RuleBookSheet } from "@/components/game/RuleBookSheet";
 import PlayerProfileDiscountCTA from "@/components/dashboard/PlayerProfileDiscountCTA";
@@ -146,7 +149,7 @@ export default function Play() {
   }, []);
 
   const [ruleBookOpen, setRuleBookOpen] = useState(false);
-  const [lobbyOpen, setLobbyOpen] = useState(false);
+  
   const [waitingForGuest, setWaitingForGuest] = useState(false);
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
   const [stealVictimKey, setStealVictimKey] = useState<string | null>(null);
@@ -787,27 +790,57 @@ export default function Play() {
       navigate(`/auth?returnTo=${encodeURIComponent("/play")}`);
       return;
     }
-    setLobbyOpen(true);
+    // Reuse GameModeSelector — its onChooseMultiplayer callback takes the
+    // selected mode/config and routes to lobby creation. Solo "Start match"
+    // still works alongside.
+    setModeSelectorOpen(true);
   }
 
-  async function handleCreatePvp() {
-    if (!user || !allCards) throw new Error("Not ready");
-    const deck = buildDeck(allCards, specialCards);
-    const hostName = await fetchPlayerShortName(user);
-    const initial = createMatch({
-      deck,
-      players: [
-        { id: "host", name: hostName },
-        { id: "guest", name: "Waiting…" },
-      ],
-    });
-    const row = await createMatchRow({
-      mode: "pvp",
-      hostUserId: user.id,
-      hostName,
-      state: initial,
-    });
-    return { matchId: row.id, token: row.invite_token! };
+  /**
+   * Batch B — create a multiplayer lobby and navigate to /play/lobby/:id.
+   * Host tier sets the lobby capacity (free → 2, paid → 4).
+   */
+  async function createMultiplayerLobby(mode: GameMode, config: GameConfig) {
+    if (!user || !allCards) {
+      toast.error("Not ready yet");
+      return;
+    }
+    try {
+      // Tier lookup — gates capacity. Only the host's tier matters.
+      const { data: sub } = await supabase
+        .from("subscriptions")
+        .select("tier")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const playerCount: 2 | 4 = isPaidTier(sub?.tier ?? null) ? 4 : 2;
+
+      const hostName = await fetchPlayerShortName(user);
+      const deck = buildDeck(allCards, specialCards);
+
+      // Build N player slots up-front; invitees fill via accept_game_invite.
+      const players = Array.from({ length: playerCount }, (_, i) =>
+        i === 0
+          ? { id: "host", name: hostName }
+          : { id: `guest${i}`, name: `Waiting ${i}…` },
+      );
+      const initial = createMatch({
+        deck,
+        players,
+        gameMode: mode,
+        gameConfig: config,
+      });
+      const row = await createLobbyMatch({
+        hostUserId: user.id,
+        hostName,
+        playerCount,
+        state: initial,
+      });
+      setModeSelectorOpen(false);
+      navigate(`/play/lobby/${row.id}`);
+    } catch (e: any) {
+      console.error("[multiplayer-lobby] create failed", e);
+      toast.error(e?.message ?? "Could not create lobby");
+    }
   }
 
   /* ----------- Render ----------- */
@@ -831,6 +864,7 @@ export default function Play() {
             open
             onCancel={() => { setModeSelectorOpen(false); navigate("/dashboard"); }}
             onChoose={(m, c, d) => startSoloMatch(m, c, d)}
+            onChooseMultiplayer={(m, c) => createMultiplayerLobby(m, c)}
           />
         ) : (
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -1688,6 +1722,7 @@ export default function Play() {
           open
           onCancel={() => setModeSelectorOpen(false)}
           onChoose={(m, c, d) => startSoloMatch(m, c, d)}
+          onChooseMultiplayer={(m, c) => createMultiplayerLobby(m, c)}
         />
       )}
 
@@ -1743,15 +1778,8 @@ export default function Play() {
           return getPresenceStatusForPlayer(expandedOpponent.id);
         })()}
       />
-      <MultiplayerLobby
-        open={lobbyOpen}
-        onOpenChange={setLobbyOpen}
-        onCreate={handleCreatePvp}
-        onOpenMatch={(matchId) => {
-          setLobbyOpen(false);
-          navigate(`/play/m/${matchId}`);
-        }}
-      />
+      {/* MultiplayerLobby dialog removed in Batch B — multiplayer now flows
+          through /play/lobby/:matchId. */}
 
       {/* PvP waiting overlay (host) */}
       {waitingForGuest && matchRow?.invite_token && (

@@ -813,9 +813,11 @@ export type Database = {
           host_name: string
           host_user_id: string
           id: string
+          invite_code: string | null
           invite_token: string | null
           is_ranked: boolean
           last_action_by: string | null
+          lobby_mode: boolean
           mode: Database["public"]["Enums"]["match_mode"]
           player_count: number
           rng_seed: number
@@ -832,9 +834,11 @@ export type Database = {
           host_name: string
           host_user_id: string
           id?: string
+          invite_code?: string | null
           invite_token?: string | null
           is_ranked?: boolean
           last_action_by?: string | null
+          lobby_mode?: boolean
           mode?: Database["public"]["Enums"]["match_mode"]
           player_count?: number
           rng_seed?: number
@@ -851,9 +855,11 @@ export type Database = {
           host_name?: string
           host_user_id?: string
           id?: string
+          invite_code?: string | null
           invite_token?: string | null
           is_ranked?: boolean
           last_action_by?: string | null
+          lobby_mode?: boolean
           mode?: Database["public"]["Enums"]["match_mode"]
           player_count?: number
           rng_seed?: number
@@ -2065,6 +2071,7 @@ export type Database = {
         }
       }
       bump_types_seen: { Args: { _types: string[] }; Returns: undefined }
+      cancel_lobby_match: { Args: { _match_id: string }; Returns: undefined }
       commit_move: {
         Args: {
           _actor: string
@@ -2109,6 +2116,7 @@ export type Database = {
         Returns: undefined
       }
       generate_invitation_code: { Args: never; Returns: string }
+      generate_match_invite_code: { Args: never; Returns: string }
       generate_practitioner_code:
         | { Args: never; Returns: string }
         | { Args: { _first_name?: string }; Returns: string }
@@ -2229,9 +2237,11 @@ export type Database = {
           host_name: string
           host_user_id: string
           id: string
+          invite_code: string | null
           invite_token: string | null
           is_ranked: boolean
           last_action_by: string | null
+          lobby_mode: boolean
           mode: Database["public"]["Enums"]["match_mode"]
           player_count: number
           rng_seed: number
@@ -2264,6 +2274,7 @@ export type Database = {
         Returns: undefined
       }
       resolve_invitation_code: { Args: { _code: string }; Returns: string }
+      resolve_match_invite_code: { Args: { _code: string }; Returns: string }
       revoke_contact_request: {
         Args: { _request_id: string }
         Returns: undefined

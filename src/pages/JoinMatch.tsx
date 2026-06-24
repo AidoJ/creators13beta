@@ -35,10 +35,16 @@ export default function JoinMatch() {
         // that looks like a solo game.
         try {
           const { row } = await loadMatch(matchId);
-          if (row.host_user_id === user.id && !row.guest_user_id) {
+          if (row.host_user_id === user.id && !row.guest_user_id && !row.lobby_mode) {
             setError(
               "You're signed in as the host of this match. Open the invite link in a different browser or have your friend sign in with their own account to join.",
             );
+            return;
+          }
+          // B — lobby matches go to the lobby UI, not the board.
+          if (row.lobby_mode && row.status === "waiting") {
+            toast.success("Joined lobby");
+            navigate(`/play/lobby/${matchId}`, { replace: true });
             return;
           }
         } catch {

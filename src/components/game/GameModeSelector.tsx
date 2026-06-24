@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trophy, Timer, Infinity as InfinityIcon, Bot } from "lucide-react";
+import { Trophy, Timer, Infinity as InfinityIcon, Bot, Users } from "lucide-react";
 import type { GameConfig, GameMode } from "@/lib/game/types";
 import { useGameSettings } from "@/lib/game/settings";
 import type { BotDifficulty } from "@/lib/game/bot";
@@ -12,9 +12,12 @@ interface Props {
   open: boolean;
   onCancel?: () => void;
   onChoose: (mode: GameMode, config: GameConfig, difficulty: BotDifficulty) => void;
+  /** B — fires when the user picks "Start multiplayer". The selected mode +
+   *  config are passed through so the lobby's match carries the same rules. */
+  onChooseMultiplayer?: (mode: GameMode, config: GameConfig) => void;
 }
 
-export function GameModeSelector({ open, onCancel, onChoose }: Props) {
+export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer }: Props) {
   const { settings } = useGameSettings();
   const [mode, setMode] = useState<GameMode>("end_of_days");
   const [targetScore, setTargetScore] = useState(50);
@@ -191,11 +194,32 @@ export function GameModeSelector({ open, onCancel, onChoose }: Props) {
         </div>
 
 
-        <DialogFooter>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
           {onCancel && (
             <Button variant="outline" onClick={onCancel}>Cancel</Button>
           )}
-          <Button onClick={confirm}>Start match</Button>
+          {onChooseMultiplayer && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                const config: GameConfig = {};
+                if (mode === "first_to_50") config.targetScore = targetScore;
+                if (mode === "beat_clock") {
+                  config.matchEndsAt = Date.now() + matchMinutes * 60_000;
+                  config.matchMinutes = matchMinutes;
+                  config.turnSeconds = turnSeconds;
+                }
+                onChooseMultiplayer(mode, config);
+              }}
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Start multiplayer
+            </Button>
+          )}
+          <Button onClick={confirm}>
+            <Bot className="w-4 h-4 mr-2" />
+            Start solo (vs bot)
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
