@@ -218,8 +218,11 @@ Deno.serve(async (req) => {
       const winner = placements[0];
       // Single UPDATE for the match row + roster updates batched.
       try {
-        // Mark state as finalised so apply-move idempotency check works.
-        const newState = { ...(match.state ?? {}), __finalised: true, finished: true };
+        // Engine `finished` flag only. Do NOT set `__finalised` here —
+        // that flag is finalise_ranked_match's OUTPUT (it tags the state
+        // AFTER awards commit, and short-circuits on subsequent calls).
+        // Setting it pre-RPC would block the very award we're about to fire.
+        const newState = { ...(match.state ?? {}), finished: true };
         // Atomic guard: WHERE status='active' ensures only one sweep tick
         // can flip the match to 'finished'. A concurrent tick's UPDATE
         // matches 0 rows because Postgres' row lock serialises them and
@@ -324,7 +327,10 @@ Deno.serve(async (req) => {
           placements[0] && placements[0].rank !== (placements[1]?.rank ?? -1)
             ? placements[0].user_id
             : null;
-        const newState = { ...state, __finalised: true, finished: true };
+        // Engine `finished` flag only — see all-disconnect branch above
+        // for why we must NOT pre-set `__finalised` (would short-circuit
+        // finalise_ranked_match and skip awards).
+        const newState = { ...state, finished: true };
         // Same atomic guard as the all-disconnect branch above.
         const { data: claimed2, error: claim2Err } = await svc
           .from("game_matches")
