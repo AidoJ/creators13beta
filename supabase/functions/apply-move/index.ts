@@ -70,7 +70,8 @@ type Move =
   | { type: "concede" }
   | { type: "rotate_hex"; pos_key: string }
   | { type: "move_hex"; from_key: string; to_pos: Axial }
-  | { type: "finalise_by_score" };
+  | { type: "finalise_by_score" }
+  | { type: "start_lobby_match" };
 
 interface ApplyBody {
   match_id: string;
