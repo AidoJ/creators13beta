@@ -88,6 +88,15 @@ export interface PlayerState {
   status?: PlayerStatus;
   /** A.2 — epoch ms when this player was finalised. */
   finalisedAt?: number | null;
+  /** A.4 — epoch ms when the realtime presence layer detected this player
+   *  dropped. Populated *transiently* on the server side from
+   *  `game_match_players.disconnected_at` before the engine runs; the engine
+   *  uses it to skip the seat in the auto-pass scan. NEVER trust client-set
+   *  values — apply-move and the sweep overwrite from the DB every load.
+   *  Disconnect-within-grace is NOT "stuck": the seat may have legal moves;
+   *  we just can't ask the player. Same forward-scan mechanism, distinct
+   *  semantic. */
+  disconnectedAt?: number | null;
 }
 
 export type TurnPhase = "draw" | "place";
@@ -166,6 +175,14 @@ export interface MatchState {
    *  `[0, 1, …, N-1]`. A.3/B will populate this with a randomised
    *  permutation; A.2 just reads it. */
   turnOrder?: number[];
+  /** A.4 — disconnect grace window (ms). Populated transiently on the server
+   *  side from `game_settings.disconnect_grace_seconds` before the engine
+   *  runs. The engine treats a seat with `disconnectedAt` set AND
+   *  `(now - disconnectedAt) > graceMs` as "past grace" — non-active for the
+   *  ≤1-active match-end check. Within grace, the seat stays active but is
+   *  auto-skipped by the turn-advance scan. Defaults to 5 minutes when
+   *  absent. */
+  disconnectGraceMs?: number;
 }
 
 /** Total score used for First-to-50 / Beat-the-Clock leaderboards.

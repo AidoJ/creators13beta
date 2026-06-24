@@ -1,139 +1,77 @@
-# Merge Plan v3: Promote Beta → Live (hardened, on-the-shelf)
+# A.4 — Presence & Disconnect Handling
 
-**Status:** strategy locked, **not yet scheduled**. Beta still has game work to finish. This plan sits ready for when you give the cutover green light.
+## 1. Config (migration)
 
-Strategy: beta becomes the new live. Beta's backend stays; live's data is migrated *in*; the custom domain is re-pointed.
+Add tunables to `game_settings` so the debounce/grace can be adjusted from evidence without redeploy:
 
----
+- `presence_debounce_seconds` int, default `15`
+- `disconnect_grace_seconds` int, default `300`
+- `disconnect_sweep_interval_seconds` int, default `30` (informational; cron schedule is fixed at 30s, value documents intent)
 
-## Phase 0 — Trigger (when beta game work is done)
+Schedule `pg_cron` job `forfeit_stale_disconnects` every 30s that POSTs to the sweep edge function (uses the same `net.http_post` pattern as existing scheduled functions).
 
-Before phase 1 starts, confirm:
-- Beta game build is feature-complete and stable on 3-client live test.
-- No further structural schema changes planned on beta in the cutover window.
-- No further code/content changes planned on live in the cutover window (110 users, low-traffic — easy to freeze).
+## 2. New edge functions
 
----
+### `supabase/functions/report-presence/index.ts`
+Called by clients on presence `join` / `leave` events for `match:{match_id}`.
 
-## Phase 1 — Pre-flight (no production touch)
+- `join` → clear `disconnected_at`, `disconnect_reason`; update `last_seen_at`.
+- `leave` → **server-side debounce**: set `last_seen_at = now()`, do NOT stamp `disconnected_at` immediately. Instead enqueue a deferred check by writing `last_seen_at` and letting the sweep stamp `disconnected_at` only if `now() - last_seen_at > presence_debounce_seconds` AND no fresh presence has arrived.
+  - This collapses "debounce" into the sweep: a single source of truth, no in-memory timers in the edge runtime (which won't survive between invocations anyway).
+- Authenticates via JWT; verifies caller is a participant of the match.
 
-### 1a. Schema diff — DB-to-DB, not repo-to-repo
+### `supabase/functions/forfeit-stale-disconnects/index.ts`
+Invoked by cron. Single pass:
 
-The diff source is **`pg_dump --schema-only` against both Cloud projects**, not the `supabase/migrations/` folders.
+1. **Stamp**: for any active player whose `last_seen_at < now() - presence_debounce_seconds` and `disconnected_at IS NULL`, set `disconnected_at = last_seen_at` (stable start time, not `now()`).
+2. **All-disconnect check (per match, single SQL)**: if every active player in a match has `disconnected_at IS NOT NULL`, finalise the match in one statement using `MAX(disconnected_at)` as the winner tiebreak, ties = draw. Marks state `__finalised`.
+3. **Past-grace forfeit**: for matches not all-disconnected, players with `now() - disconnected_at > disconnect_grace_seconds` are finalised via the score-ranked path (NOT the quitter band — see engine note).
 
-Why: migrations are append-only history. Beta has 145 migration files; live has its own separate set. Replaying them doesn't give you a side-by-side current state, and a repo-level diff is messy for renames/drops and blind to any drift between migration history and live DB state.
+Imports from `_shared/game/engine.ts` for the ranking call → marker line added so any engine change forces this function to redeploy.
 
-The repo migrations are still useful — as a **cross-check** that beta has no out-of-band changes — but not as the diff source.
+## 3. Engine predicate change (mirrored)
 
-Note: Lovable Cloud's agent tooling doesn't expose full `pg_dump`. The dumps need to be pulled directly using each project's DB connection string (from Cloud settings) or coordinated via Lovable support. This is a manual step, owned by you, not something I can run from here.
+In both `src/lib/game/engine.ts` and `supabase/functions/_shared/game/engine.ts`:
 
-Two diff reports produced:
-- **live → beta**: additions/changes beta has (expected — beta is ahead).
-- **beta → live**: anything live has that beta dropped/renamed in refactors. Every entry needs an explicit rule in the migration script: transform, rename, drop with confirmation, or block migration. Live data in a dropped column has nowhere to land otherwise.
+- Add helper `isDisconnectedWithinGrace(state, seat, graceSeconds)` reading `state.players[seat].disconnectedAt`.
+- Forward-scan predicate becomes `isStuck(seat) OR isDisconnectedWithinGrace(seat)` — single function, two callers. Comment block explains: "Disconnect-within-grace is NOT stuck (player may have legal moves); we just can't ask them. Same skip mechanism, distinct semantic."
+- Sweep's score-ranking call documents next to it: **"Disconnects MUST NOT route through the conceded/forfeit bottom-band path. A dropped connection is not a deliberate quit. Route only explicit Leave Match through `finalisePlayer(reason='conceded')`."**
 
-Diff scope (all of these matter, not just tables/columns):
-- Tables, columns, types, defaults, nullability, enums
-- FKs, indexes, unique constraints, CHECK constraints
-- RLS policies (per-table, per-role, per-action)
-- Trigger definitions and function bodies (full source, not just signatures — `types.ts` is blind to bodies)
-- Storage bucket names, privacy flags, MIME/size limits, and `storage.objects` RLS policies
-- Sequences and grants
+Update the mirror-hash marker in `apply-move/index.ts` (already wired) plus add the same marker line to `report-presence` and `forfeit-stale-disconnects` so CI catches drift on all three.
 
-### 1b. Code parity check
-Confirm every fix/content change made on live since the fork is already in beta. Anything missing gets ported into beta **before** cutover, not after.
+## 4. Instant-win composition (verify at source)
 
-### 1c. Storage sizing
-Measure object count + total bytes per bucket on live (profiling-photos, recordings, attachments, avatars, etc.). "Copy objects" could be many GBs — sizing drives whether we stream in parallel, chunk by bucket, or pre-stage incrementally before the freeze.
+Read `finaliseByScore` and the apply-move completion path. If either filters seats on `disconnected_at IS NULL`, change to filter on `status='active'` (disconnect-within-grace stays `active` until the sweep forfeits). If already `status='active'`, leave alone and note in comment.
 
-Carry bucket-level settings too: privacy, MIME types, size limits, and `storage.objects` policies. Not just the objects.
+## 5. Frontend
 
-### 1d. Profiling-photos privacy fix — sequenced
-**Recommendation: out of this cutover, scheduled immediately after.** Reasons: signed-URL code path needs testing in beta against migrated data first; bundling two disruptions doubles rollback complexity. Bucket migrates with current privacy setting; a follow-up flips it once signed URLs are verified.
+### `src/hooks/useMatchPresence.ts` (new)
+- Subscribes to `supabase.channel('match:' + matchId, { config: { presence: { key: userId } } })`.
+- Tracks `{ user_id, seat, status: 'connected'|'reconnecting'|'disconnected', last_seen_at, ready?: boolean }` per seat.
+- On own `join`/`leave`, calls `report-presence` edge function.
+- Exposes `{ presenceBySeat, isReconnecting(seat), isDisconnected(seat) }`.
+- Channel name shared with future B (lobby) and C (in-match) — payload includes `ready` even though A.4 doesn't set it.
 
----
+### UI indicator
+- `src/components/game/OpponentPanel.tsx` + `OpponentSheet.tsx`: when `isReconnecting(seat)` show "Player X reconnecting…" badge; when `isDisconnected(seat)` show "Disconnected — Xm remaining". Tiny status dot (green/amber/grey). No layout shift.
+- `src/components/game/MatchOverDialog.tsx` already handles finalised matches — no change needed; sweep finalises via existing path.
 
-## Phase 2 — Auth migration (the hard part, spelled out)
+## 6. Deploy & CI
 
-This gets its own sub-phase with its own smoke tests.
+- `report-presence` and `forfeit-stale-disconnects` are new files → auto-deploy on creation.
+- Marker line in both, plus updated marker in `apply-move`, ensures future `_shared/game/` changes force all three to redeploy.
+- Mirror sync script runs as part of the engine edit; CI mirror-hash check fails build if drift.
 
-### What actually moves
+## 7. Out of scope (explicit)
 
-For every user in `auth.users` on live, preserve on beta:
-1. **`auth.users` row** — same UID (critical: every public FK and storage object path keys off it), email, phone, `email_confirmed_at`, `created_at`, `last_sign_in_at`, `raw_user_meta_data`, `raw_app_meta_data`.
-2. **`auth.identities` rows** — one per linked provider per user. `provider`, `provider_id`, `identity_data`, `last_sign_in_at`. **Without these, OAuth users cannot sign in.**
-3. **`encrypted_password`** — bcrypt hash for email/password users, portable across Supabase projects.
+- No "Leave Match" button (that's the explicit-quit path).
+- No spectator / late-join (B territory).
+- No Beat-the-Clock timer changes (per decision: timer ignores disconnect).
+- No `ready` flag wiring (B will flip it; payload shape reserves the field).
 
-### Email/password vs OAuth — separate paths
+## Technical notes
 
-- **Email/password users**: migrate `auth.users` row + `encrypted_password` + `auth.identities` row of `provider='email'`.
-- **Google OAuth users**: migrate `auth.users` row (no password) + `auth.identities` row of `provider='google'` with exact `provider_id` (Google's `sub` claim) and `identity_data` intact. Wrong/missing `provider_id` → Google sign-in creates a *new* user on next login, original is orphaned.
-- **Discord OAuth users**: same as Google — preserve `provider_id` exactly.
-- **Mixed-identity users** (email + linked Google): both identity rows must move together.
-
-### Providers configured on beta BEFORE auth import
-Google + Discord OAuth client IDs/secrets configured on beta, redirect URLs whitelisted (including the production custom domain). If a provider is missing when identity rows are imported, users of that provider can't sign in.
-
-### Three separate auth smoke tests
-1. Email/password — known user, password unchanged.
-2. Google — known Google-only user.
-3. Mixed — user with both providers, both methods.
-Plus: password reset → email lands → reset completes.
-
----
-
-## Phase 3 — Full dry-run rehearsal
-
-**Mandatory gate.** The real cutover is the **second** time the script runs.
-
-1. Clone live data (DB + storage) into a scratch Cloud project (or wiped/restored copy of beta).
-2. Run the migration script end-to-end against it.
-3. Run the full smoke suite (auth ×3 + profile/photos/subscription/case-study/practitioner-linkage/training/recordings).
-4. Fix every script issue. Re-run until clean.
-5. Throw the rehearsal data away.
-6. Time the rehearsal end-to-end → real window's duration.
-
----
-
-## Phase 4 — Cutover (the real window)
-
-### Before the window
-- Drop DNS TTL on the custom domain(s) to 60–300s **several days ahead** → fast propagation on the day.
-- Pre-stage storage objects if sizing showed large volume; final delta pass during the freeze.
-
-### During the window
-1. **Freeze live**: maintenance banner + block writes (revoke `INSERT`/`UPDATE`/`DELETE` for `authenticated`, or take auth offline). Must hold through DNS propagation overlap — any write to old-live after this point is lost.
-2. **Disable** (don't delete) Stripe webhook on live → retries queue up.
-3. Migration script: auth → public tables in FK order → storage delta.
-4. Smoke suite on beta against migrated data. **Go/no-go decision happens here, while maintenance is still up.** Rollback is only clean until the first user writes to the new system.
-5. Re-point DNS to beta.
-6. Swap Stripe webhook endpoint URL to beta's edge function.
-7. Update OAuth redirect URLs (Google, Discord) to beta.
-
-### Stripe event replay — explicit
-- Stripe does **not** auto-replay events that succeeded before the URL changed; it does retry **failed/pending** deliveries on its normal schedule (up to ~3 days). Update the *existing* endpoint URL on the Stripe side rather than creating a new endpoint — preserves the retry queue.
-- Manually replay any events missed entirely from Stripe Dashboard → Developers → Events, filtered to the freeze window.
-- **Real-data webhook test, not generic**: pick one migrated paying subscriber, trigger a real event for *their* customer ID (e.g. `customer.subscription.updated` via Dashboard), confirm beta's webhook processes it correctly against the migrated `subscriptions` row. Generic test events don't prove the FK linkage survived.
-
-### Lifting maintenance
-Only after smoke suite + Stripe replay test on a migrated customer both pass. Once lifted, rollback effectively closes (new writes on beta won't exist on old-live).
-
----
-
-## Phase 5 — Post-cutover
-
-- Old-live archived read-only for 30 days as a reference, not a live rollback target.
-- Monitor edge function logs + Stripe webhook deliveries for 48h.
-- Restore DNS TTL.
-- Schedule profiling-photos → private follow-up (per 1d).
-
----
-
-## What I still need from you (when you trigger phase 0)
-
-1. **Live code/content delta since fork** — anything on live that isn't in beta yet?
-2. **Domain(s)** to re-point — confirm exact hostnames currently on live.
-3. **Stripe webhook swap** — confirm we update the *existing* endpoint URL (preserves retry queue) rather than creating a new endpoint + deleting the old one.
-
----
-
-**Approval semantics:** approving this plan **does not** start phase 1. It locks the strategy on the shelf. When beta game work is done and you message "kick off the merge," I begin phase 1 with the three answers above.
+- Debounce architecture: collapsing the "enqueue 15s, cancel on rejoin" into "sweep stamps based on `last_seen_at` age" is functionally equivalent and avoids relying on edge-function instance lifetime (which Supabase doesn't guarantee).
+- All-disconnect finalisation SQL runs inside the sweep function in one statement per affected match, so two sweep ticks can't miscompute MAX.
+- `state.__finalised` idempotency tag (already in apply-move) prevents double-finalisation if sweep and instant-win race.
+- Config reads: edge functions fetch the 3 ints from `game_settings` once per invocation (negligible cost, allows live tuning).
