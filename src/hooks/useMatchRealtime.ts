@@ -66,7 +66,10 @@ export function useMatchRealtime(
         },
       )
       // Meta updates (status / winner / seq) — keeps lastRow current and
-      // catches finished-match transitions even if no state row writes after.
+      // catches finished-match transitions even if no state row writes after
+      // (e.g. forfeit sweep updates game_matches but not player_states, so
+      // the state-row channel above never fires and the client would hang
+      // on "Disconnected" forever).
       .on(
         "postgres_changes",
         {
@@ -75,8 +78,47 @@ export function useMatchRealtime(
           table: "game_matches",
           filter: `id=eq.${matchId}`,
         },
-        (payload) => {
-          lastRow = payload.new as unknown as GameMatchRow;
+        async (payload) => {
+          const newRow = payload.new as unknown as GameMatchRow;
+          const prevStatus = lastRow?.status;
+          lastRow = newRow;
+          if (newRow.status === "finished" && prevStatus !== "finished") {
+            try {
+              const [stateRes, playersRes] = await Promise.all([
+                supabase
+                  .from("game_match_player_states")
+                  .select("state")
+                  .eq("match_id", matchId)
+                  .eq("user_id", selfUserId)
+                  .maybeSingle(),
+                supabase
+                  .from("game_match_players")
+                  .select("user_id, slot")
+                  .eq("match_id", matchId),
+              ]);
+              const raw = (stateRes.data as { state: any } | null)?.state;
+              if (!raw) return;
+              const state = deserializeMatch(raw);
+              const slotByUser = new Map<string, number>(
+                (playersRes.data ?? []).map((r: any) => [r.user_id as string, r.slot as number]),
+              );
+              const winnerSlot = newRow.winner_user_id
+                ? slotByUser.get(newRow.winner_user_id)
+                : undefined;
+              const winnerPlayerId =
+                winnerSlot === 0
+                  ? "host"
+                  : winnerSlot != null
+                  ? `guest${winnerSlot}`
+                  : null;
+              onRemoteUpdate(
+                { ...state, finished: true, winnerId: winnerPlayerId },
+                newRow,
+              );
+            } catch (e) {
+              console.error("[match-realtime] finished-status synth failed", e);
+            }
+          }
         },
       )
       .subscribe((status) => {
