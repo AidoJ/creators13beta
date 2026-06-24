@@ -516,7 +516,9 @@ export default function Play() {
         slot === 0
           ? matchRow.host_user_id
           : slot === 1
-            ? matchRow.guest_user_id
+            ? matchRow.guest_user_id ?? presence.userIdForSlot(slot)
+            : slot > 1
+              ? presence.userIdForSlot(slot)
             : null;
       if (!uid) return null;
       const status = presence.statusFor(uid);
@@ -1704,7 +1706,14 @@ export default function Play() {
         player={expandedOpponent}
         opponentUserId={
           matchRow && matchRow.mode === "pvp" && expandedOpponent
-            ? (expandedOpponent.id === "host" ? matchRow.host_user_id : matchRow.guest_user_id)
+            ? (() => {
+                const slot = state.players.findIndex((p) => p.id === expandedOpponent.id);
+                return slot === 0
+                  ? matchRow.host_user_id
+                  : slot === 1
+                    ? matchRow.guest_user_id ?? presence.userIdForSlot(slot)
+                    : presence.userIdForSlot(slot);
+              })()
             : null
         }
         presenceStatus={(() => {
