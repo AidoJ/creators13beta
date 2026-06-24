@@ -1286,10 +1286,32 @@ export default function Play() {
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 h-7 text-[11px] px-2 truncate"
+              className={
+                "flex-1 min-h-7 h-auto text-[11px] px-2 justify-start " +
+                ((getPresenceStatusForPlayer(opponent.id) === "disconnected" || getPresenceStatusForPlayer(opponent.id) === "missing")
+                  ? "border-destructive/60 bg-destructive/10 text-destructive"
+                  : getPresenceStatusForPlayer(opponent.id) === "reconnecting"
+                    ? "border-amber-500/60 bg-amber-500/10 text-amber-300"
+                    : "")
+              }
               onClick={() => { setExpandedOpponentId(opponent.id); setOpponentPanelOpen(true); }}
             >
-              <Maximize2 className="w-3 h-3 mr-1 shrink-0" /> {opponent.name}
+              <span className="min-w-0 flex-1 text-left">
+                <span className="flex items-center gap-1 min-w-0">
+                  <Maximize2 className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{opponent.name}</span>
+                </span>
+                {(getPresenceStatusForPlayer(opponent.id) === "disconnected" || getPresenceStatusForPlayer(opponent.id) === "missing") && (
+                  <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
+                    <WifiOff className="w-2.5 h-2.5" /> Disconnected
+                  </span>
+                )}
+                {getPresenceStatusForPlayer(opponent.id) === "reconnecting" && (
+                  <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
+                    <Loader2 className="w-2.5 h-2.5 animate-spin" /> Reconnecting
+                  </span>
+                )}
+              </span>
             </Button>
             <button
               type="button"
@@ -1434,8 +1456,8 @@ export default function Play() {
                       className="w-full flex items-center justify-between gap-2 mb-1 group text-left"
                       aria-label={`Pop out ${op.name}'s ecosystem`}
                     >
-                      <span className="font-display text-sm truncate group-hover:text-foreground transition-colors min-w-0 flex items-center gap-1.5">
-                        <span className="truncate">{op.name}</span>
+                      <span className="font-display text-sm group-hover:text-foreground transition-colors min-w-0 flex flex-col items-start gap-0.5">
+                        <span className="truncate max-w-full">{op.name}</span>
                         {isDisconnected && (
                           <span
                             className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide border border-destructive/50 bg-destructive/15 text-destructive shrink-0"
