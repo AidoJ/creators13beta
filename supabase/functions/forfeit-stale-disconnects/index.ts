@@ -49,7 +49,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 import { forceAdvanceTurn } from "../_shared/game/engine.ts";
-import type { DeckCard, Ecosystem, MatchState, PlacedCard } from "../_shared/game/types.ts";
+import type { Ecosystem, MatchState, PlacedCard } from "../_shared/game/types.ts";
 
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
