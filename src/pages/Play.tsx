@@ -1746,15 +1746,8 @@ export default function Play() {
           return getPresenceStatusForPlayer(expandedOpponent.id);
         })()}
       />
-      <MultiplayerLobby
-        open={lobbyOpen}
-        onOpenChange={setLobbyOpen}
-        onCreate={handleCreatePvp}
-        onOpenMatch={(matchId) => {
-          setLobbyOpen(false);
-          navigate(`/play/m/${matchId}`);
-        }}
-      />
+      {/* MultiplayerLobby dialog removed in Batch B — multiplayer now flows
+          through /play/lobby/:matchId. */}
 
       {/* PvP waiting overlay (host) */}
       {waitingForGuest && matchRow?.invite_token && (
