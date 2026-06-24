@@ -1,4 +1,5 @@
 /**
+// engine-mirror-hash: d462e8074246d7da
  * forfeit-stale-disconnects — A.4 disconnect sweep.
  *
  * Cron-invoked every 30s (see migration). Three responsibilities, run in
