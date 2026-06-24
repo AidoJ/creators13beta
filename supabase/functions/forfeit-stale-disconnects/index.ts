@@ -40,7 +40,7 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-import { forceAdvanceTurn } from "../_shared/game/engine.ts";
+import { forceAdvanceTurn, forceFinaliseDisconnect2p } from "../_shared/game/engine.ts";
 import type { Ecosystem, MatchState, PlacedCard } from "../_shared/game/types.ts";
 
 
@@ -230,25 +230,135 @@ Deno.serve(async (req) => {
     const activeRoster = roster.filter((r) => (r.status ?? "active") === "active");
     if (activeRoster.length === 0) continue;
 
+    const playerCount = match.player_count ?? 2;
+    const anyDisconnected = activeRoster.filter((r) => !!r.disconnected_at);
+    const pastGrace = anyDisconnected.filter((r) => {
+      const t = r.disconnected_at ? Date.parse(r.disconnected_at) : NaN;
+      return Number.isFinite(t) && nowMs - t > graceMs;
+    });
+
     // ---------------------------------------------------------------
-    // PAST-GRACE AUTO-SKIP: the sweep NEVER writes finished-state directly.
-    // It only auto-skips the current turn when that turn is held by a
-    // past-grace disconnected seat (the match would otherwise hang forever
-    // because the disconnected player will never call apply-move to trigger
-    // advanceTurn). The engine's advanceTurn handles the ≤1-active end via
-    // its existing finalise() path — placements, winnerId, lastEvent all
-    // populated correctly, identical shape to a normal match end. This also
-    // covers the all-disconnected case: wait until the current turn-holder is
-    // past grace, then route the finalisation through the engine.
+    // 2-PLAYER INSTANT-END: as soon as `disconnected_at` is stamped
+    // (post-debounce, ~15s after the drop), end the match regardless
+    // of whose turn it is — the survivor wins, no grace wait. Routed
+    // through the engine via forceFinaliseDisconnect2p so the same
+    // advanceTurn ≤1-active finalise path runs that the past-grace
+    // sweep uses for 3+ player matches. No new 2-player finalise
+    // codepath is introduced.
+    // ---------------------------------------------------------------
+    if (playerCount <= 2 && anyDisconnected.length > 0) {
+      // Pick any roster row as the actor for commit_move (service-role
+      // bypasses the auth.uid check; commit_move only requires the
+      // actor be a player in the match). Use the disconnected seat to
+      // mirror the past-grace pattern semantically.
+      const actorRow = anyDisconnected[0];
+      try {
+        let state: MatchState;
+        try {
+          state = deserialise(match.state);
+        } catch (e) {
+          console.error(`[sweep] 2p deserialise failed match=${match.id}`, e);
+          continue;
+        }
+        state.disconnectGraceMs = graceMs;
+        state.players = state.players.map((p, i) => {
+          const r = roster.find((x) => x.slot === i);
+          const at = r?.disconnected_at ? Date.parse(r.disconnected_at) : null;
+          return { ...p, disconnectedAt: Number.isFinite(at) ? at : null };
+        });
+
+        const nextState = forceFinaliseDisconnect2p(state, nowMs);
+        if (!nextState.finished) {
+          // Defensive: in 2-player, with one disconnected and grace=0,
+          // advanceTurn must finalise. If it didn't, log and skip.
+          console.warn(`[sweep] 2p force-finalise produced non-finished state match=${match.id}`);
+          continue;
+        }
+
+        const userIdForSlot = (slot: number): string | null =>
+          roster.find((r) => r.slot === slot)?.user_id ?? null;
+
+        let winnerUserId: string | null = null;
+        if (nextState.winnerId) {
+          const wSlot = nextState.players.findIndex((p) => p.id === nextState.winnerId);
+          if (wSlot >= 0) winnerUserId = userIdForSlot(wSlot);
+        }
+
+        const serialisedNext = serialise(nextState);
+        const playerStates: Array<{ user_id: string; state: any }> = [];
+        for (let slot = 0; slot < nextState.players.length; slot++) {
+          const uid = userIdForSlot(slot);
+          if (!uid) continue;
+          const pid = nextState.players[slot]?.id;
+          if (!pid) continue;
+          playerStates.push({ user_id: uid, state: redactFor(serialisedNext, pid) });
+        }
+
+        const placementsSnapshot = (nextState.placements ?? [])
+          .map((pl) => {
+            const slot = nextState.players.findIndex((p) => p.id === pl.playerId);
+            if (slot < 0) return null;
+            const uid = userIdForSlot(slot);
+            if (!uid) return null;
+            const status = nextState.players[slot]?.status ?? "finalised";
+            return { user_id: uid, rank: pl.rank, status };
+          })
+          .filter((x): x is { user_id: string; rank: number; status: string } => !!x);
+
+        const { error: commitErr } = await svc.rpc("commit_move", {
+          _match_id: match.id,
+          _expected_seq: Number(match.seq ?? 0),
+          _actor: actorRow.user_id,
+          _move: { type: "sweep_2p_disconnect_end" } as any,
+          _new_state: serialisedNext,
+          _player_states: playerStates as any,
+          _winner: winnerUserId,
+          _finished: true,
+          _placements: placementsSnapshot.length > 0 ? (placementsSnapshot as any) : null,
+        });
+        if (commitErr) {
+          const code = (commitErr as any).code ?? "";
+          const msg = String(commitErr.message ?? "");
+          if (code === "40001" || msg.includes("stale seq")) {
+            console.log(`[sweep] 2p instant-end race-lost match=${match.id} (concurrent commit)`);
+            continue;
+          }
+          throw commitErr;
+        }
+
+        if (match.is_ranked) {
+          const { error: finErr } = await svc.rpc("finalise_ranked_match", {
+            _match_id: match.id,
+            _reason: "two_player_disconnect",
+            _placements: placementsSnapshot.length > 0 ? (placementsSnapshot as any) : null,
+          });
+          if (finErr) console.error(`[sweep] 2p finalise_ranked_match failed match=${match.id}`, finErr);
+        }
+
+        summary.past_grace_forfeited += 1;
+        console.log(
+          `[sweep] 2p instant-end match=${match.id} winner=${winnerUserId ?? "DRAW"}`,
+        );
+      } catch (e) {
+        console.error(`[sweep] 2p instant-end failed match=${match.id}`, e);
+      }
+      continue;
+    }
+
+    // ---------------------------------------------------------------
+    // PAST-GRACE AUTO-SKIP (3+ players): the sweep NEVER writes
+    // finished-state directly. It only auto-skips the current turn
+    // when that turn is held by a past-grace disconnected seat (the
+    // match would otherwise hang forever because the disconnected
+    // player will never call apply-move to trigger advanceTurn). The
+    // engine's advanceTurn handles the ≤1-active end via its existing
+    // finalise() path — placements, winnerId, lastEvent all populated
+    // correctly, identical shape to a normal match end.
     //
     // If state.turn is held by a CONNECTED player while a different
     // seat is past-grace, do nothing: their next real move will fire
     // advanceTurn and the engine will end the match cleanly.
     // ---------------------------------------------------------------
-    const pastGrace = activeRoster.filter((r) => {
-      const t = r.disconnected_at ? Date.parse(r.disconnected_at) : NaN;
-      return Number.isFinite(t) && nowMs - t > graceMs;
-    });
     if (pastGrace.length === 0) continue;
 
     const stateTurn = Number((match.state ?? {}).turn);
