@@ -31,8 +31,18 @@ export interface PresencePayload {
 export interface MatchPresenceState {
   /** Map of user_id → latest presence payload from any of their devices. */
   byUser: Record<string, PresencePayload>;
+  /** Durable roster evidence from the database; survives missed realtime leave events. */
+  rosterByUser: Record<string, RosterPresence>;
   /** Tracking own user as "connected" once the channel has joined. */
   selfConnected: boolean;
+}
+
+interface RosterPresence {
+  user_id: string;
+  status: string | null;
+  last_seen_at: string | null;
+  disconnected_at: string | null;
+  disconnect_reason: string | null;
 }
 
 interface Options {
@@ -52,6 +62,7 @@ export function useMatchPresence({
 }: Options) {
   const [state, setState] = useState<MatchPresenceState>({
     byUser: {},
+    rosterByUser: {},
     selfConnected: false,
   });
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -79,6 +90,28 @@ export function useMatchPresence({
       config: { presence: { key: userId } },
     });
     channelRef.current = channel;
+
+    const mergeRosterRows = (rows: RosterPresence[]) => {
+      setState((prev) => {
+        const next = { ...prev.rosterByUser };
+        for (const row of rows) next[row.user_id] = row;
+        return { ...prev, rosterByUser: next };
+      });
+    };
+
+    const fetchRoster = async () => {
+      const { data, error } = await supabase
+        .from("game_match_players")
+        .select("user_id, status, last_seen_at, disconnected_at, disconnect_reason")
+        .eq("match_id", matchId);
+      if (error) {
+        console.warn("[presence] roster fetch failed", error);
+        return;
+      }
+      mergeRosterRows((data ?? []) as RosterPresence[]);
+    };
+
+    void fetchRoster();
 
     const projectByUser = (
       raw: Record<string, Array<PresencePayload>>,
@@ -142,8 +175,27 @@ export function useMatchPresence({
         await channel.track(payload);
         setState((prev) => ({ ...prev, selfConnected: true }));
         void reportPresence("join");
+        void fetchRoster();
       }
     });
+
+    const rosterChannel = supabase
+      .channel(`match-roster-presence:${matchId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "game_match_players",
+          filter: `match_id=eq.${matchId}`,
+        },
+        (payload) => {
+          const row = (payload.new ?? payload.old) as Partial<RosterPresence> | null;
+          if (!row?.user_id) return;
+          mergeRosterRows([row as RosterPresence]);
+        },
+      )
+      .subscribe();
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -158,24 +210,50 @@ export function useMatchPresence({
       void reportPresence("heartbeat");
     }, 20_000);
 
+    // Poll durable roster evidence too: publication/realtime can lag or be
+    // unavailable, but the UI must still surface reconnect/disconnected state.
+    const rosterPoll = window.setInterval(() => {
+      void fetchRoster();
+    }, 5_000);
+
     return () => {
       window.clearInterval(heartbeat);
+      window.clearInterval(rosterPoll);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       void reportPresence("leave", "unmount");
       supabase.removeChannel(channel);
+      supabase.removeChannel(rosterChannel);
       channelRef.current = null;
     };
   }, [matchId, userId, seat, enabled, reportPresence]);
 
   const helpers = useMemo(() => {
-    const isConnected = (uid: string | null | undefined) =>
-      !!uid && state.byUser[uid]?.status === "connected";
-    const isReconnecting = (uid: string | null | undefined) =>
-      !!uid && state.byUser[uid]?.status === "reconnecting";
-    const isMissing = (uid: string | null | undefined) =>
-      !!uid && !state.byUser[uid];
-    return { isConnected, isReconnecting, isMissing };
-  }, [state.byUser]);
+    const statusFor = (uid: string | null | undefined): PresenceStatus | "missing" | null => {
+      if (!uid) return null;
+      const live = state.byUser[uid]?.status;
+      const roster = state.rosterByUser[uid];
+
+      // Live presence wins over stale DB stamps; report-presence join clears
+      // disconnected_at, but the UI should recover immediately when realtime joins.
+      if (live === "connected") return "connected";
+      if (roster?.disconnected_at) return "disconnected";
+      if (live === "reconnecting") return "reconnecting";
+      if (roster?.disconnect_reason) return "reconnecting";
+
+      // Heartbeat is every 20s. If DB evidence is stale but the sweep has not
+      // stamped disconnected_at yet, show reconnecting rather than silence.
+      const lastSeen = roster?.last_seen_at ? Date.parse(roster.last_seen_at) : NaN;
+      if (Number.isFinite(lastSeen) && Date.now() - lastSeen > 30_000) return "reconnecting";
+
+      if (live) return live;
+      return "missing";
+    };
+    const isConnected = (uid: string | null | undefined) => statusFor(uid) === "connected";
+    const isReconnecting = (uid: string | null | undefined) => statusFor(uid) === "reconnecting";
+    const isDisconnected = (uid: string | null | undefined) => statusFor(uid) === "disconnected";
+    const isMissing = (uid: string | null | undefined) => statusFor(uid) === "missing";
+    return { statusFor, isConnected, isReconnecting, isDisconnected, isMissing };
+  }, [state.byUser, state.rosterByUser]);
 
   return { ...state, ...helpers };
 }
