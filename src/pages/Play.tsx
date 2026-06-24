@@ -508,6 +508,23 @@ export default function Play() {
     opponents.find((p) => p.id === expandedOpponentId) ?? opponent ?? null;
   const isYourTurn =
     !!state && !state.finished && state.players[state.turn].id === selfSlot && !waitingForGuest;
+  const getPresenceStatusForPlayer = useCallback(
+    (playerId: string | null | undefined) => {
+      if (matchRow?.mode !== "pvp" || !playerId) return null;
+      const uid =
+        playerId === "host"
+          ? matchRow.host_user_id
+          : playerId === "guest"
+            ? matchRow.guest_user_id
+            : null;
+      if (!uid) return null;
+      if (presence.isReconnecting(uid)) return "reconnecting" as const;
+      if (presence.isMissing(uid)) return "missing" as const;
+      if (presence.isConnected(uid)) return "connected" as const;
+      return null;
+    },
+    [matchRow, presence],
+  );
   const selectedCard: DeckCard | undefined = useMemo(
     () => selfPlayer?.hand.find((c) => c.uid === selectedUid),
     [selfPlayer, selectedUid],
@@ -826,7 +843,15 @@ export default function Play() {
   } else if (state.finished) {
     phaseHint = `Match over — winner: ${state.players.find((p) => p.id === state.winnerId)?.name ?? "—"}`;
   } else if (!isYourTurn) {
-    phaseHint = `${opponent.name} is ${isPvp ? "thinking" : "thinking…"}`;
+    const turnPlayer = state.players[state.turn] ?? opponent;
+    const turnPresence = getPresenceStatusForPlayer(turnPlayer?.id);
+    if (turnPresence === "reconnecting") {
+      phaseHint = `${turnPlayer.name} is reconnecting…`;
+    } else if (turnPresence === "missing" || turnPresence === "disconnected") {
+      phaseHint = `${turnPlayer.name} disconnected — waiting to reconnect…`;
+    } else {
+      phaseHint = `${turnPlayer.name} is ${isPvp ? "thinking" : "thinking…"}`;
+    }
   } else if (state.phase === "draw") {
     phaseHint = `Pick up ${2 - state.drawnThisTurn} more card${2 - state.drawnThisTurn === 1 ? "" : "s"} (draw 1 at a time from either pile).`;
   } else if (mode === "steal") {
@@ -1654,16 +1679,8 @@ export default function Play() {
             : null
         }
         presenceStatus={(() => {
-          if (matchRow?.mode !== "pvp" || !expandedOpponent) return null;
-          const uid =
-            expandedOpponent.id === "host"
-              ? matchRow.host_user_id
-              : matchRow.guest_user_id;
-          if (!uid) return null;
-          if (presence.isReconnecting(uid)) return "reconnecting";
-          if (presence.isMissing(uid)) return "missing";
-          if (presence.isConnected(uid)) return "connected";
-          return null;
+          if (!expandedOpponent) return null;
+          return getPresenceStatusForPlayer(expandedOpponent.id);
         })()}
       />
       <MultiplayerLobby
