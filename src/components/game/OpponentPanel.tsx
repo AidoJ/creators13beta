@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { GripHorizontal, X, Trophy, Bot } from "lucide-react";
+import { GripHorizontal, X, Trophy, Bot, WifiOff, Loader2 } from "lucide-react";
 import { Ecosystem } from "@/components/game/Ecosystem";
 import type { PlayerState } from "@/lib/game/types";
 import { supabase } from "@/integrations/supabase/client";
+import type { PresenceStatus } from "@/hooks/useMatchPresence";
 
 interface OpponentPanelProps {
   open: boolean;
@@ -10,6 +11,8 @@ interface OpponentPanelProps {
   player: PlayerState | null;
   /** When set (PvP only), the panel fetches public stats (ELO + bot wins) for the opponent. */
   opponentUserId?: string | null;
+  /** A.4 — realtime presence indicator. Omit for solo bot matches. */
+  presenceStatus?: PresenceStatus | "missing" | null;
 }
 
 interface PublicStats {
