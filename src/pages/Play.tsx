@@ -106,6 +106,16 @@ export default function Play() {
 
   const [opponentPanelOpen, setOpponentPanelOpen] = useState(false);
   const [expandedOpponentId, setExpandedOpponentId] = useState<string | null>(null);
+
+  // A.4 — realtime presence for the current PvP match. No-op for solo bot
+  // matches (enabled=false when not PvP). The same channel name and payload
+  // shape will be consumed by the B lobby and the C in-match indicators.
+  const presence = useMatchPresence({
+    matchId: matchRow?.id ?? null,
+    userId: user?.id ?? null,
+    seat: rosterSlot ?? undefined,
+    enabled: matchRow?.mode === "pvp",
+  });
   // Resizable opponents-rail width (% of stage). Persisted across sessions.
   const [opponentPct, setOpponentPct] = useState<number>(() => {
     if (typeof window === "undefined") return 40;
