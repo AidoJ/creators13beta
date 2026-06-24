@@ -396,6 +396,7 @@ Deno.serve(async (req) => {
     "concede",
     "rotate_hex",
     "finalise_by_score",
+    "start_lobby_match",
   ]);
   if (!NON_TURN_MOVES.has(body.move.type)) {
     if (state.turn !== callerSlot) {
