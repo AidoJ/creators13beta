@@ -39,6 +39,7 @@ export interface MatchPresenceState {
 
 interface RosterPresence {
   user_id: string;
+  slot: number | null;
   status: string | null;
   last_seen_at: string | null;
   disconnected_at: string | null;
@@ -102,7 +103,7 @@ export function useMatchPresence({
     const fetchRoster = async () => {
       const { data, error } = await supabase
         .from("game_match_players")
-        .select("user_id, status, last_seen_at, disconnected_at, disconnect_reason")
+        .select("user_id, slot, status, last_seen_at, disconnected_at, disconnect_reason")
         .eq("match_id", matchId);
       if (error) {
         console.warn("[presence] roster fetch failed", error);
@@ -252,7 +253,11 @@ export function useMatchPresence({
     const isReconnecting = (uid: string | null | undefined) => statusFor(uid) === "reconnecting";
     const isDisconnected = (uid: string | null | undefined) => statusFor(uid) === "disconnected";
     const isMissing = (uid: string | null | undefined) => statusFor(uid) === "missing";
-    return { statusFor, isConnected, isReconnecting, isDisconnected, isMissing };
+    const userIdForSlot = (slot: number | null | undefined): string | null => {
+      if (slot == null) return null;
+      return Object.values(state.rosterByUser).find((row) => row.slot === slot)?.user_id ?? null;
+    };
+    return { statusFor, userIdForSlot, isConnected, isReconnecting, isDisconnected, isMissing };
   }, [state.byUser, state.rosterByUser]);
 
   return { ...state, ...helpers };
