@@ -62,6 +62,50 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
+/* --- serialize/deserialize: mirror of apply-move's inlined helpers so the
+   engine input/output shapes are byte-identical between the two callers.
+   If you edit one, edit both (or extract to _shared). --- */
+function deserialise(raw: any): MatchState {
+  return {
+    ...raw,
+    players: (raw.players ?? []).map((p: any) => ({
+      ...p,
+      firstPickupDone: p.firstPickupDone ?? true,
+      ecosystem: {
+        placed: new Map<string, PlacedCard>(p.ecosystem?.placed ?? []),
+      } as Ecosystem,
+    })),
+    pendingDisaster: raw.pendingDisaster ?? null,
+  };
+}
+
+function serialise(state: MatchState): any {
+  return {
+    ...state,
+    players: state.players.map((p) => ({
+      ...p,
+      ecosystem: { placed: Array.from(p.ecosystem.placed.entries()) },
+    })),
+  };
+}
+
+function redactFor(serialisedState: any, recipientPlayerId: string | null) {
+  if (!serialisedState?.players) return serialisedState;
+  return {
+    ...serialisedState,
+    players: serialisedState.players.map((p: any) =>
+      p.id === recipientPlayerId
+        ? p
+        : { ...p, hand: [], handCount: Array.isArray(p.hand) ? p.hand.length : 0 },
+    ),
+  };
+}
+// `DeckCard` only referenced through the type signature above to satisfy
+// no-unused; keep the import.
+// deno-lint-ignore no-unused-vars
+type _DeckCardKeep = DeckCard;
+
+
 interface SettingsRow {
   presence_debounce_seconds: number | null;
   disconnect_grace_seconds: number | null;
