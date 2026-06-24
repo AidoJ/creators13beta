@@ -423,11 +423,57 @@ Deno.serve(async (req) => {
 
   // ----- apply -----
   let nextState: MatchState;
+  let lobbyJustStarted = false;
   if (body.move.type === "concede") {
     // A.3 — route concede through the engine so ranking direction (bottom-up
     // for quitters) and N-player partial finalisation are handled correctly.
     // For N=2 the engine collapses to identical legacy behaviour.
     nextState = concedePlayer(state, callerPlayerId);
+  } else if (body.move.type === "start_lobby_match") {
+    // B — host-only lobby start trigger.
+    //
+    //   1. Authority: caller MUST be slot 0 (host). Invitees can never start.
+    //   2. Match must be a lobby_mode match still in 'waiting' status.
+    //   3. Roster must be FULL (player_count slots filled) — partial-fill
+    //      starts are out of scope for B.
+    //   4. Shuffle turn order across all slots (Fisher–Yates). The host
+    //      triggers the start but doesn't necessarily go first.
+    //   5. Status flip to 'active' happens AFTER commit_move below.
+    if (callerSlot !== 0) {
+      return jsonResponse({ error: "host only", message: "Only the host can start the match" }, 403);
+    }
+    if (!(match as any).lobby_mode) {
+      return jsonResponse({ error: "not a lobby match" }, 400);
+    }
+    if (match.status !== "waiting") {
+      return jsonResponse({ error: "lobby already started or closed" }, 400);
+    }
+    const expectedCount = Number(match.player_count ?? 2);
+    if (rosterRows.length < expectedCount) {
+      return jsonResponse({
+        error: "lobby not full",
+        message: `Need ${expectedCount} players to start (have ${rosterRows.length})`,
+      }, 400);
+    }
+    const slotOrder = rosterRows.map((r) => r.slot).sort((a, b) => a - b);
+    const shuffled = [...slotOrder];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    nextState = {
+      ...state,
+      turnOrder: shuffled,
+      turn: shuffled[0],
+      phase: "draw",
+      turnNumber: 1,
+    };
+    lobbyJustStarted = true;
+    console.log("[apply-move] start_lobby_match", {
+      match_id: body.match_id,
+      shuffled,
+      first_turn_slot: shuffled[0],
+    });
   } else {
     try {
       nextState = applyMove(state, body.move, callerPlayerId);
