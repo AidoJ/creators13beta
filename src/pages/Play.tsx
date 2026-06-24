@@ -864,6 +864,7 @@ export default function Play() {
             open
             onCancel={() => { setModeSelectorOpen(false); navigate("/dashboard"); }}
             onChoose={(m, c, d) => startSoloMatch(m, c, d)}
+            onChooseMultiplayer={(m, c) => createMultiplayerLobby(m, c)}
           />
         ) : (
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
