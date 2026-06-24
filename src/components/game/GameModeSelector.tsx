@@ -194,11 +194,32 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
         </div>
 
 
-        <DialogFooter>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
           {onCancel && (
             <Button variant="outline" onClick={onCancel}>Cancel</Button>
           )}
-          <Button onClick={confirm}>Start match</Button>
+          {onChooseMultiplayer && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                const config: GameConfig = {};
+                if (mode === "first_to_50") config.targetScore = targetScore;
+                if (mode === "beat_clock") {
+                  config.matchEndsAt = Date.now() + matchMinutes * 60_000;
+                  config.matchMinutes = matchMinutes;
+                  config.turnSeconds = turnSeconds;
+                }
+                onChooseMultiplayer(mode, config);
+              }}
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Start multiplayer
+            </Button>
+          )}
+          <Button onClick={confirm}>
+            <Bot className="w-4 h-4 mr-2" />
+            Start solo (vs bot)
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
