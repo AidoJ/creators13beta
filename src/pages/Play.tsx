@@ -1653,6 +1653,18 @@ export default function Play() {
             ? (expandedOpponent.id === "host" ? matchRow.host_user_id : matchRow.guest_user_id)
             : null
         }
+        presenceStatus={(() => {
+          if (matchRow?.mode !== "pvp" || !expandedOpponent) return null;
+          const uid =
+            expandedOpponent.id === "host"
+              ? matchRow.host_user_id
+              : matchRow.guest_user_id;
+          if (!uid) return null;
+          if (presence.isReconnecting(uid)) return "reconnecting";
+          if (presence.isMissing(uid)) return "missing";
+          if (presence.isConnected(uid)) return "connected";
+          return null;
+        })()}
       />
       <MultiplayerLobby
         open={lobbyOpen}
