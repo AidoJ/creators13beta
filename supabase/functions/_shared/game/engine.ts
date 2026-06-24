@@ -1302,15 +1302,38 @@ function isDisconnected(state: MatchState, slot: number): boolean {
 
 /** A.4 — true iff the seat has been disconnected long enough that the sweep
  *  is allowed to forfeit them and end the match if only one connected
- *  active player remains. Uses `state.disconnectGraceMs` (default 5 min). */
-function isDisconnectedPastGrace(state: MatchState, slot: number): boolean {
+ *  active player remains. Uses `state.disconnectGraceMs` (default 5 min).
+ *  `now` is injectable for deterministic tests; defaults to wall clock. */
+function isDisconnectedPastGrace(
+  state: MatchState,
+  slot: number,
+  now: number = Date.now(),
+): boolean {
   const at = state.players[slot]?.disconnectedAt;
   if (typeof at !== "number" || at <= 0) return false;
   const grace = state.disconnectGraceMs ?? 5 * 60 * 1000;
-  return Date.now() - at > grace;
+  return now - at > grace;
 }
 
-function advanceTurn(state: MatchState): void {
+/** Server-side: trigger the engine's normal turn-advance on behalf of a
+ *  disconnected, past-grace seat whose turn would otherwise hang forever.
+ *  Idempotent: if `state.turn` is not currently held by a past-grace
+ *  disconnected seat, returns the state unchanged. When it does fire, the
+ *  result is identical to a connected player completing their turn — the
+ *  same `advanceTurn` path runs, so ≤1-active finalisation, placements,
+ *  winnerId, and `lastEvent` are all populated through normal engine logic.
+ *  Called by `forfeit-stale-disconnects` to unstick idle past-grace turns. */
+export function forceAdvanceTurn(state: MatchState, now: number = Date.now()): MatchState {
+  if (!isDisconnectedPastGrace(state, state.turn, now)) return state;
+  const next: MatchState = {
+    ...state,
+    players: state.players.map((p) => ({ ...p, hand: [...p.hand] })),
+  };
+  advanceTurn(next, now);
+  return next;
+}
+
+function advanceTurn(state: MatchState, now: number = Date.now()): void {
   // Clear pickedUpThisTurn flags so cards picked up last turn become
   // Disaster-eligible again from this point onward.
   for (const p of state.players) {
@@ -1329,13 +1352,14 @@ function advanceTurn(state: MatchState): void {
       : state.players.map((_, i) => i);
   const isActive = (slot: number) => (state.players[slot]?.status ?? "active") === "active";
   const canStillContinue = (slot: number) =>
-    isActive(slot) && !isDisconnectedPastGrace(state, slot);
+    isActive(slot) && !isDisconnectedPastGrace(state, slot, now);
 
   const continuingSlots = order.filter(canStillContinue);
   if (continuingSlots.length <= 1) {
     finalise(state);
     return;
   }
+
 
   const currentOrderIdx = order.indexOf(state.turn);
   const startFrom = currentOrderIdx < 0 ? 0 : currentOrderIdx;
