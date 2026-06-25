@@ -43,6 +43,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { forceAdvanceTurn, forceFinaliseDisconnect2p } from "../_shared/game/engine.ts";
 import type { Ecosystem, MatchState, PlacedCard } from "../_shared/game/types.ts";
 
+// engine-mirror dispatch shape for the idle auto-pass synthetic move.
+type IdleSweepMove = { type: "sweep_idle_autopass" | "sweep_idle_departed"; slot: number };
+
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -97,6 +100,8 @@ function redactFor(serialisedState: any, recipientPlayerId: string | null) {
 interface SettingsRow {
   presence_debounce_seconds: number | null;
   disconnect_grace_seconds: number | null;
+  idle_turn_seconds: number | null;
+  idle_turn_strikes_limit: number | null;
 }
 
 interface MatchSweepRow {
@@ -129,18 +134,24 @@ Deno.serve(async (req) => {
   // 1. Load tunables.
   let debounceSec = 15;
   let graceSec = 300;
+  let idleSec = 90;
+  let idleStrikesLimit = 3;
   try {
     const { data: settings } = await svc
       .from("game_settings")
-      .select("presence_debounce_seconds, disconnect_grace_seconds")
+      .select("presence_debounce_seconds, disconnect_grace_seconds, idle_turn_seconds, idle_turn_strikes_limit")
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle<SettingsRow>();
     if (settings) {
       const d = Number(settings.presence_debounce_seconds);
       const g = Number(settings.disconnect_grace_seconds);
+      const i = Number(settings.idle_turn_seconds);
+      const k = Number(settings.idle_turn_strikes_limit);
       if (Number.isFinite(d) && d > 0) debounceSec = d;
       if (Number.isFinite(g) && g > 0) graceSec = g;
+      if (Number.isFinite(i) && i > 0) idleSec = i;
+      if (Number.isFinite(k) && k > 0) idleStrikesLimit = k;
     }
   } catch (e) {
     console.warn("[sweep] settings read failed; using defaults", e);
@@ -159,9 +170,13 @@ Deno.serve(async (req) => {
     past_grace_forfeited: 0,
     matches_scanned: 0,
     matches_skipped_startup_grace: 0,
+    idle_auto_passed: 0,
+    idle_departed: 0,
     debounce_sec: debounceSec,
     grace_sec: graceSec,
     startup_grace_sec: startupGraceSec,
+    idle_sec: idleSec,
+    idle_strikes_limit: idleStrikesLimit,
   };
 
   // Build the set of match ids currently in startup grace, so we can skip
