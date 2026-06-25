@@ -1491,12 +1491,12 @@ export default function Play() {
               eco={selfPlayer.ecosystem}
               size={72}
               autoFit
-              selectable={isYourTurn || canUseBoard}
+              selectable={canTakeTurn || canUseBoard}
               onPlace={onPlace}
               showEmpties
-              onRotateClick={isYourTurn ? onPlacedHexClick : undefined}
-              onMoveDragStart={isYourTurn ? (posKey) => setMoveFromKey(posKey) : undefined}
-              onMoveDragEnd={isYourTurn ? () => setMoveFromKey(null) : undefined}
+              onRotateClick={canTakeTurn ? onPlacedHexClick : undefined}
+              onMoveDragStart={canTakeTurn ? (posKey) => setMoveFromKey(posKey) : undefined}
+              onMoveDragEnd={canTakeTurn ? () => setMoveFromKey(null) : undefined}
               minHeight={0}
               moveFromKey={moveFromKey}
               legalForCard={
@@ -1549,7 +1549,7 @@ export default function Play() {
             hand={selfPlayer.hand}
             selectedUid={selectedUid}
             onSelect={(uid) => setSelectedUid(uid)}
-            disabled={!isYourTurn || state.phase !== "place"}
+            disabled={!canTakeTurn || state.phase !== "place"}
             size={62}
             stuckUids={stuckUids}
           />
@@ -1655,12 +1655,12 @@ export default function Play() {
                   eco={selfPlayer.ecosystem}
                   size={110}
                   autoFit
-                  selectable={isYourTurn || canUseBoard}
+                  selectable={canTakeTurn || canUseBoard}
                   onPlace={onPlace}
                   showEmpties
-                  onRotateClick={isYourTurn ? onPlacedHexClick : undefined}
-                  onMoveDragStart={isYourTurn ? (posKey) => setMoveFromKey(posKey) : undefined}
-                  onMoveDragEnd={isYourTurn ? () => setMoveFromKey(null) : undefined}
+                  onRotateClick={canTakeTurn ? onPlacedHexClick : undefined}
+                  onMoveDragStart={canTakeTurn ? (posKey) => setMoveFromKey(posKey) : undefined}
+                  onMoveDragEnd={canTakeTurn ? () => setMoveFromKey(null) : undefined}
                   minHeight={0}
                   moveFromKey={moveFromKey}
                   legalForCard={
@@ -1711,7 +1711,7 @@ export default function Play() {
                   hand={selfPlayer.hand}
                   selectedUid={selectedUid}
                   onSelect={(uid) => setSelectedUid(uid)}
-                  disabled={!isYourTurn || state.phase !== "place"}
+                  disabled={!canTakeTurn || state.phase !== "place"}
                   size={76}
                   stuckUids={stuckUids}
                 />
@@ -1750,7 +1750,7 @@ export default function Play() {
                       type="button"
                       onContextMenu={(e) => { e.preventDefault(); if (canTapDiscard && selectedUid) onDiscardUid(selectedUid); }}
                       onDragOver={(e) => {
-                        if (!isYourTurn || state.phase !== "place") return;
+                        if (!canTakeTurn || state.phase !== "place") return;
                         e.preventDefault();
                         e.dataTransfer.dropEffect = "move";
                         (e.currentTarget as HTMLElement).dataset.dropTarget = "true";
@@ -1794,7 +1794,7 @@ export default function Play() {
                           size="sm"
                           variant="outline"
                           className="mt-1 h-7 text-[11px]"
-                          disabled={!isYourTurn || state.phase !== "draw" || state.used.length === 0}
+                          disabled={!canTakeTurn || state.phase !== "draw" || state.used.length === 0}
                           onClick={onPickUsed}
                         >
                           Take top card
