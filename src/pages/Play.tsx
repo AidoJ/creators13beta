@@ -1184,14 +1184,14 @@ export default function Play() {
               {fmt(matchSecondsLeft)}
             </span>
           </div>
-          {turnSecs > 0 && isYourTurn && state.phase === "place" && (
+          {isYourTurn && phaseSecondsLeft > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Your turn</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{phaseLabel}</span>
               <span className={
                 "font-mono text-xl font-semibold tabular-nums px-2 py-0.5 rounded " +
-                (turnSecondsLeft <= 5 ? "bg-destructive text-destructive-foreground animate-pulse" : "bg-card text-foreground")
+                (phaseSecondsLeft <= 5 ? "bg-destructive text-destructive-foreground animate-pulse" : "bg-card text-foreground")
               }>
-                {turnSecondsLeft}s
+                {phaseSecondsLeft}s
               </span>
             </div>
           )}
