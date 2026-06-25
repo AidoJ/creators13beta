@@ -13,6 +13,7 @@ export interface GameSettings {
   top_score_default: number;
   beat_clock_match_minutes: number;
   beat_clock_turn_seconds: number;
+  beat_clock_draw_seconds: number;
   mode_end_of_days_enabled: boolean;
   mode_top_score_enabled: boolean;
   mode_beat_clock_enabled: boolean;
@@ -68,6 +69,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   top_score_default: 50,
   beat_clock_match_minutes: 20,
   beat_clock_turn_seconds: 20,
+  beat_clock_draw_seconds: 10,
   mode_end_of_days_enabled: true,
   mode_top_score_enabled: true,
   mode_beat_clock_enabled: true,

@@ -903,6 +903,7 @@ export type Database = {
           allow_guest_play: boolean
           allow_solo_vs_bot: boolean
           animals_per_creator: number
+          beat_clock_draw_seconds: number
           beat_clock_match_minutes: number
           beat_clock_turn_seconds: number
           bot_difficulty: string
@@ -959,6 +960,7 @@ export type Database = {
           allow_guest_play?: boolean
           allow_solo_vs_bot?: boolean
           animals_per_creator?: number
+          beat_clock_draw_seconds?: number
           beat_clock_match_minutes?: number
           beat_clock_turn_seconds?: number
           bot_difficulty?: string
@@ -1015,6 +1017,7 @@ export type Database = {
           allow_guest_play?: boolean
           allow_solo_vs_bot?: boolean
           animals_per_creator?: number
+          beat_clock_draw_seconds?: number
           beat_clock_match_minutes?: number
           beat_clock_turn_seconds?: number
           bot_difficulty?: string

@@ -517,6 +517,29 @@ export default function Play() {
       setLoggedState(next, "optimistic_engine");
       schedulePersist(next, { type: "end_turn" });
     },
+    onDrawExpired: () => {
+      // Beat-the-Clock draw-phase timeout. Force the engine forward so the
+      // game keeps moving:
+      //  - on the player's very first turn, auto-deal the opening 5
+      //  - otherwise just skip the pick-up (the player forfeits new cards
+      //    as the time penalty — same 1-move cost as a manual skip).
+      const s = state;
+      if (!s) return;
+      const me = s.players[s.turn];
+      if (!me || me.id !== selfSlot) return;
+      if (s.phase !== "draw") return;
+      try {
+        if (!me.firstPickupDone) {
+          const next = drawInitialFive(s);
+          setLoggedState(next, "optimistic_engine");
+          schedulePersist(next, { type: "draw_initial_5" });
+        } else {
+          const next = skipDraws(s);
+          setLoggedState(next, "optimistic_engine");
+          schedulePersist(next, { type: "skip_draws" });
+        }
+      } catch {/* ignore — state likely already advanced via realtime */}
+    },
   });
 
 
@@ -1087,12 +1110,18 @@ export default function Play() {
   const isBeatClock = state.gameMode === "beat_clock";
   const matchEndsAt = state.gameConfig?.matchEndsAt ?? 0;
   const turnSecs = state.gameConfig?.turnSeconds ?? 0;
+  const drawSecs = state.gameConfig?.drawSeconds ?? 0;
   const matchSecondsLeft = isBeatClock && matchEndsAt
     ? Math.max(0, Math.ceil((matchEndsAt - Date.now()) / 1000))
     : 0;
   const turnSecondsLeft = isBeatClock && turnSecs > 0 && isYourTurn && state.phase === "place"
     ? Math.max(0, Math.ceil((turnStartedAtRef.current + turnSecs * 1000 - Date.now()) / 1000))
     : 0;
+  const drawSecondsLeft = isBeatClock && drawSecs > 0 && isYourTurn && state.phase === "draw"
+    ? Math.max(0, Math.ceil((turnStartedAtRef.current + drawSecs * 1000 - Date.now()) / 1000))
+    : 0;
+  const phaseSecondsLeft = drawSecondsLeft || turnSecondsLeft;
+  const phaseLabel = state.phase === "draw" ? "Pick up" : "Your turn";
   const fmt = (s: number) => {
     const m = Math.floor(s / 60);
     const ss = (s % 60).toString().padStart(2, "0");
@@ -1155,14 +1184,14 @@ export default function Play() {
               {fmt(matchSecondsLeft)}
             </span>
           </div>
-          {turnSecs > 0 && isYourTurn && state.phase === "place" && (
+          {isYourTurn && phaseSecondsLeft > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Your turn</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{phaseLabel}</span>
               <span className={
                 "font-mono text-xl font-semibold tabular-nums px-2 py-0.5 rounded " +
-                (turnSecondsLeft <= 5 ? "bg-destructive text-destructive-foreground animate-pulse" : "bg-card text-foreground")
+                (phaseSecondsLeft <= 5 ? "bg-destructive text-destructive-foreground animate-pulse" : "bg-card text-foreground")
               }>
-                {turnSecondsLeft}s
+                {phaseSecondsLeft}s
               </span>
             </div>
           )}
@@ -1182,12 +1211,12 @@ export default function Play() {
               <span className="inline-flex items-center gap-1 text-foreground/90">
                 <Clock className="w-3.5 h-3.5" /> {fmt(matchSecondsLeft)}
               </span>
-              {turnSecondsLeft > 0 && (
+              {phaseSecondsLeft > 0 && (
                 <span className={
                   "inline-flex items-center gap-1 px-1.5 rounded " +
-                  (turnSecondsLeft <= 5 ? "bg-destructive/20 text-destructive animate-pulse" : "text-muted-foreground")
+                  (phaseSecondsLeft <= 5 ? "bg-destructive/20 text-destructive animate-pulse" : "text-muted-foreground")
                 }>
-                  turn {turnSecondsLeft}s
+                  {state.phase === "draw" ? "draw" : "turn"} {phaseSecondsLeft}s
                 </span>
               )}
             </div>

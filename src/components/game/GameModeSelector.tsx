@@ -23,6 +23,7 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
   const [targetScore, setTargetScore] = useState(50);
   const [matchMinutes, setMatchMinutes] = useState(20);
   const [turnSeconds, setTurnSeconds] = useState(20);
+  const [drawSeconds, setDrawSeconds] = useState(10);
   const [difficulty, setDifficulty] = useState<BotDifficulty>("medium");
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
     setTargetScore(settings.top_score_default);
     setMatchMinutes(settings.beat_clock_match_minutes);
     setTurnSeconds(settings.beat_clock_turn_seconds);
+    setDrawSeconds(settings.beat_clock_draw_seconds);
     // Default difficulty = admin's bot_difficulty, unless that tier is disabled.
     const adminPref = settings.bot_difficulty;
     const enabled = (d: BotDifficulty) =>
@@ -79,6 +81,7 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
       config.matchEndsAt = Date.now() + matchMinutes * 60_000;
       config.matchMinutes = matchMinutes;
       config.turnSeconds = turnSeconds;
+      config.drawSeconds = drawSeconds;
     }
     onChoose(mode, config, difficulty);
   }
@@ -158,6 +161,18 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
                 className="w-24"
               />
             </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="ds2" className="text-sm">Draw phase (seconds)</Label>
+              <Input
+                id="ds2"
+                type="number"
+                min={3}
+                max={120}
+                value={drawSeconds}
+                onChange={(e) => setDrawSeconds(Math.max(3, Number(e.target.value) || 0))}
+                className="w-24"
+              />
+            </div>
           </div>
         )}
 
@@ -208,6 +223,7 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
                   config.matchEndsAt = Date.now() + matchMinutes * 60_000;
                   config.matchMinutes = matchMinutes;
                   config.turnSeconds = turnSeconds;
+                  config.drawSeconds = drawSeconds;
                 }
                 onChooseMultiplayer(mode, config);
               }}
