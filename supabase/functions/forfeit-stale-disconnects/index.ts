@@ -107,6 +107,7 @@ interface MatchSweepRow {
   state: any;
   seq: number | null;
   host_user_id: string | null;
+  started_at: string | null;
 }
 
 interface RosterRow {
