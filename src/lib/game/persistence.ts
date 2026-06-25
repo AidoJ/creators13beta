@@ -154,7 +154,7 @@ export async function createLobbyMatch(args: {
 }
 
 const NON_STATE_COLS =
-  "id, mode, status, host_user_id, host_name, guest_user_id, guest_name, invite_token, invite_code, lobby_mode, seq, is_ranked, player_count, winner_user_id, last_action_by, created_at, updated_at";
+  "id, mode, status, host_user_id, host_name, guest_user_id, guest_name, invite_token, invite_code, lobby_mode, seq, is_ranked, player_count, winner_user_id, last_action_by, turn_started_at, created_at, updated_at";
 
 export async function loadMatch(matchId: string): Promise<{ row: GameMatchRow; state: MatchState }> {
   const [rowRes, stateRes] = await Promise.all([
