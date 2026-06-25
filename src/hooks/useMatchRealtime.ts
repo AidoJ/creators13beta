@@ -16,7 +16,7 @@ import type { MatchState } from "@/lib/game/types";
 import type { GameMatchRow } from "@/lib/game/persistence";
 
 const ROW_COLS =
-  "id, mode, status, host_user_id, host_name, guest_user_id, guest_name, invite_token, seq, is_ranked, player_count, winner_user_id, last_action_by, created_at, updated_at";
+  "id, mode, status, host_user_id, host_name, guest_user_id, guest_name, invite_token, seq, is_ranked, player_count, winner_user_id, last_action_by, turn_started_at, created_at, updated_at";
 
 export function useMatchRealtime(
   matchId: string | null,

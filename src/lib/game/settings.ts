@@ -14,6 +14,14 @@ export interface GameSettings {
   beat_clock_match_minutes: number;
   beat_clock_turn_seconds: number;
   beat_clock_draw_seconds: number;
+  /** Baseline per-turn idle timeout (End-of-Days + Top Score). Beat-the-Clock
+   *  uses its own turn timer instead. Seconds of inactivity on a turn before
+   *  the sweep auto-passes the seat (and counts a strike). */
+  idle_turn_seconds: number;
+  /** Consecutive idle-timeout strikes before the player is treated as
+   *  departed (reuses the disconnect rank-by-score path). Resets to 0 on any
+   *  real action by that player. */
+  idle_turn_strikes_limit: number;
   mode_end_of_days_enabled: boolean;
   mode_top_score_enabled: boolean;
   mode_beat_clock_enabled: boolean;
@@ -70,6 +78,8 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   beat_clock_match_minutes: 20,
   beat_clock_turn_seconds: 20,
   beat_clock_draw_seconds: 10,
+  idle_turn_seconds: 90,
+  idle_turn_strikes_limit: 3,
   mode_end_of_days_enabled: true,
   mode_top_score_enabled: true,
   mode_beat_clock_enabled: true,

@@ -43,6 +43,10 @@ export interface GameMatchRow {
   player_count: number;
   winner_user_id: string | null;
   last_action_by: string | null;
+  /** When the current `state.turn` seat last had any committed action. Bumped
+   *  by apply-move on every successful commit. The baseline idle sweep uses
+   *  this to detect stalled turns in non-beat_clock modes. */
+  turn_started_at: string | null;
   created_at: string;
   updated_at: string;
 }

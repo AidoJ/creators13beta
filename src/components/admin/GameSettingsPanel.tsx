@@ -15,6 +15,7 @@ import CreatorContentEditor from "./CreatorContentEditor";
 type Num = keyof Pick<GameSettings,
   "points_per_win" | "elo_win" | "elo_loss" | "perfect_eco_bonus"
   | "top_score_default" | "beat_clock_match_minutes" | "beat_clock_turn_seconds" | "beat_clock_draw_seconds"
+  | "idle_turn_seconds" | "idle_turn_strikes_limit"
   | "hand_size" | "hand_limit" | "ecosystem_target" | "creators_needed" | "animals_per_creator"
   | "bot_think_ms" | "max_players_per_match"
   | "profile_discount_threshold_1" | "profile_discount_percent_1"
@@ -189,6 +190,8 @@ export default function GameSettingsPanel() {
           <NumField k="beat_clock_match_minutes" label="Beat the Clock match (min)" min={1} max={120} />
           <NumField k="beat_clock_turn_seconds" label="Beat the Clock per turn (sec)" min={5} max={300} />
           <NumField k="beat_clock_draw_seconds" label="Beat the Clock draw phase (sec)" min={3} max={120} />
+          <NumField k="idle_turn_seconds" label="Baseline idle timeout (sec)" min={20} max={600} hint="End of Days & Top Score auto-pass after this much inactivity" />
+          <NumField k="idle_turn_strikes_limit" label="Idle strikes → departure" min={1} max={10} hint="Consecutive idle timeouts before player is treated as departed" />
         </div>
       </section>
 
