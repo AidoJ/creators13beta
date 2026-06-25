@@ -28,6 +28,7 @@ type Bool = keyof Pick<GameSettings,
   | "allow_guest_play" | "allow_solo_vs_bot"
   | "bot_easy_enabled" | "bot_medium_enabled" | "bot_hard_enabled"
   | "show_tutorial_overlay" | "show_review_boards" | "prompt_player_name" | "show_score_panel"
+  | "highlight_playable_cards" | "highlight_valid_placements"
   | "maintenance_banner_enabled" | "play_disabled" | "profile_discount_enabled">;
 
 export default function GameSettingsPanel() {
@@ -262,6 +263,16 @@ export default function GameSettingsPanel() {
           <BoolField k="show_review_boards" label="Review opponents dialog" hint="End-of-match tabbed boards" />
           <BoolField k="prompt_player_name" label="Prompt player name" hint="Ask new players for a display name" />
           <BoolField k="show_score_panel" label="Score panel" hint="Live in-match score widget" />
+        </div>
+        <div className="rounded-lg border border-border/60 bg-muted/30 p-3 mb-4">
+          <div className="text-xs font-semibold mb-1">Playability Aids</div>
+          <p className="text-[10px] text-muted-foreground mb-3">
+            Visual hints only — the engine still rejects every illegal move with a specific reason, regardless of these toggles. Turn off for a stricter, more educational game.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <BoolField k="highlight_playable_cards" label="Highlight playable cards" hint="When ON, unplayable hand cards are dimmed. OFF = players work out which cards are playable themselves." />
+            <BoolField k="highlight_valid_placements" label="Highlight valid placements" hint="When ON, valid hex spaces light up when a card is selected. OFF = no board hints; players must learn the connections." />
+          </div>
         </div>
         <div className="space-y-1 max-w-xs">
           <Label className="text-xs">Featured mode (optional)</Label>
