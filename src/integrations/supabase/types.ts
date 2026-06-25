@@ -822,6 +822,7 @@ export type Database = {
           player_count: number
           rng_seed: number
           seq: number
+          started_at: string | null
           state: Json
           status: Database["public"]["Enums"]["match_status"]
           updated_at: string
@@ -843,6 +844,7 @@ export type Database = {
           player_count?: number
           rng_seed?: number
           seq?: number
+          started_at?: string | null
           state: Json
           status?: Database["public"]["Enums"]["match_status"]
           updated_at?: string
@@ -864,6 +866,7 @@ export type Database = {
           player_count?: number
           rng_seed?: number
           seq?: number
+          started_at?: string | null
           state?: Json
           status?: Database["public"]["Enums"]["match_status"]
           updated_at?: string
@@ -2259,6 +2262,7 @@ export type Database = {
           player_count: number
           rng_seed: number
           seq: number
+          started_at: string | null
           state: Json
           status: Database["public"]["Enums"]["match_status"]
           updated_at: string

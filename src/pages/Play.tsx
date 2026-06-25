@@ -119,6 +119,28 @@ export default function Play() {
     seat: rosterSlot ?? undefined,
     enabled: matchRow?.mode === "pvp",
   });
+
+  // Fire an immediate report-presence "join" the instant the board mounts
+  // with a known PvP match + user — do not wait for the realtime channel
+  // SUBSCRIBED handshake (can take seconds on slow connections). This is the
+  // core fix for the post-start sweep race: it clears any stale
+  // disconnected_at carried over from the lobby and bumps last_seen_at now,
+  // long before the next sweep tick.
+  useEffect(() => {
+    if (matchRow?.mode !== "pvp") return;
+    if (!matchRow?.id || !user?.id) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        await supabase.functions.invoke("report-presence", {
+          body: { match_id: matchRow.id, event: "join" },
+        });
+      } catch (e) {
+        if (!cancelled) console.warn("[play] immediate presence ping failed", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [matchRow?.id, matchRow?.mode, user?.id]);
   // Resizable opponents-rail width (% of stage). Persisted across sessions.
   const [opponentPct, setOpponentPct] = useState<number>(() => {
     if (typeof window === "undefined") return 40;
