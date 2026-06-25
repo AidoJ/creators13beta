@@ -107,7 +107,7 @@ export function useMatchPresence({
     const fetchRoster = async () => {
       const { data, error } = await supabase
         .from("game_match_players")
-        .select("user_id, slot, status, last_seen_at, disconnected_at, disconnect_reason")
+        .select("user_id, slot, status, last_seen_at, disconnected_at, disconnect_reason, idle_strikes")
         .eq("match_id", matchId);
       if (error) {
         console.warn("[presence] roster fetch failed", error);
