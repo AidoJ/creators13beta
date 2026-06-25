@@ -118,6 +118,9 @@ export interface GameConfig {
   matchMinutes?: number;
   /** For beat_clock: seconds allowed per turn before auto-end-turn. */
   turnSeconds?: number;
+  /** For beat_clock: seconds allowed in the draw phase before the engine
+   *  auto-skips/auto-deals so a player can't stall by not picking up cards. */
+  drawSeconds?: number;
 }
 
 /** A disaster waiting on the (at most one) Hive-holding victim's decision
