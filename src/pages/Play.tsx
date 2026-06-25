@@ -1128,6 +1128,25 @@ export default function Play() {
     return `${m}:${ss}`;
   };
 
+  /* ----------- Baseline idle warning (End-of-Days + Top Score) -----------
+   * Only shown in the last 30s of the idle window when it's the local
+   * player's turn. Casual play stays unpressured before that.
+   */
+  const idleWindowSec = Math.max(20, Number(gameSettings.idle_turn_seconds ?? 90));
+  const turnStartedMs = matchRow?.turn_started_at ? Date.parse(matchRow.turn_started_at) : 0;
+  const showIdleWarning =
+    isPvp &&
+    !isBeatClock &&
+    !state.finished &&
+    isYourTurn &&
+    Number.isFinite(turnStartedMs) &&
+    turnStartedMs > 0;
+  const idleSecondsLeft = showIdleWarning
+    ? Math.max(0, Math.ceil((turnStartedMs + idleWindowSec * 1000 - Date.now()) / 1000))
+    : 0;
+  const idleWarnVisible = showIdleWarning && idleSecondsLeft > 0 && idleSecondsLeft <= 30;
+
+
 
   return (
     <div className="h-[100dvh] flex flex-col bg-background overflow-hidden">
@@ -1197,6 +1216,21 @@ export default function Play() {
           )}
         </div>
       )}
+
+      {/* Baseline idle warning — only last 30s of the idle window */}
+      {idleWarnVisible && (
+        <div className={
+          "px-3 py-1.5 text-xs sm:text-sm text-center border-b " +
+          (idleSecondsLeft <= 10
+            ? "bg-destructive/20 text-destructive border-destructive/30 animate-pulse"
+            : "bg-amber-500/10 text-amber-200 border-amber-500/30")
+        }>
+          <Clock className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />
+          Your turn — auto-pass in <span className="font-mono font-semibold tabular-nums">{idleSecondsLeft}s</span>
+        </div>
+      )}
+
+
 
 
       {!ribbonHidden && (

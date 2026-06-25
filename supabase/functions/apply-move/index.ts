@@ -645,12 +645,37 @@ Deno.serve(async (req) => {
     if (finErr) console.error("[apply-move] finalise_ranked_match failed", finErr);
   }
 
+  // Baseline per-turn idle stopwatch + strike reset.
+  //   - Bump game_matches.turn_started_at on every committed action so the
+  //     sweep's idle test ("time since last action by this seat") restarts.
+  //   - Reset the caller's consecutive idle strikes — strikes are CONSECUTIVE
+  //     and zero out on any real action by that player.
+  // Skipped only on finished matches (no more turns) and lobby start (handled
+  // alongside the lobby flip below).
+  if (!finished && !lobbyJustStarted) {
+    const nowIso = new Date().toISOString();
+    const { error: bumpErr } = await svc
+      .from("game_matches")
+      .update({ turn_started_at: nowIso })
+      .eq("id", body.match_id);
+    if (bumpErr) console.warn("[apply-move] turn_started_at bump failed", bumpErr);
+    if (callerRosterRow) {
+      const { error: strikeErr } = await svc
+        .from("game_match_players")
+        .update({ idle_strikes: 0 })
+        .eq("match_id", body.match_id)
+        .eq("user_id", userId)
+        .gt("idle_strikes", 0);
+      if (strikeErr) console.warn("[apply-move] idle_strikes reset failed", strikeErr);
+    }
+  }
+
   // B — flip lobby match to 'active' once the host has triggered start.
   // commit_move preserves status for non-finished moves, so we do it here.
   if (lobbyJustStarted) {
     const { error: statusErr } = await svc
       .from("game_matches")
-      .update({ status: "active", updated_at: new Date().toISOString() })
+      .update({ status: "active", turn_started_at: new Date().toISOString(), updated_at: new Date().toISOString() })
       .eq("id", body.match_id)
       .eq("status", "waiting");
     if (statusErr) console.error("[apply-move] lobby status flip failed", statusErr);
