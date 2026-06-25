@@ -1444,8 +1444,10 @@ function advanceTurn(state: MatchState, now: number = Date.now()): void {
   // slot so downstream consumers don't see a finalised player as "current".
   if (!landed && firstActiveFallback >= 0) nextSlot = firstActiveFallback;
   state.turn = nextSlot;
-  state.phase = "draw";
-  state.drawnThisTurn = 0;
+  const nextPlayer = state.players[nextSlot];
+  const startsFull = !!nextPlayer?.firstPickupDone && (nextPlayer.hand?.length ?? 0) >= HAND_LIMIT;
+  state.phase = startsFull ? "place" : "draw";
+  state.drawnThisTurn = startsFull ? 2 : 0;
   state.placedThisTurn = 0;
   state.turnNumber += 1;
 
