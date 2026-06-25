@@ -161,6 +161,18 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
                 className="w-24"
               />
             </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="ds2" className="text-sm">Draw phase (seconds)</Label>
+              <Input
+                id="ds2"
+                type="number"
+                min={3}
+                max={120}
+                value={drawSeconds}
+                onChange={(e) => setDrawSeconds(Math.max(3, Number(e.target.value) || 0))}
+                className="w-24"
+              />
+            </div>
           </div>
         )}
 
