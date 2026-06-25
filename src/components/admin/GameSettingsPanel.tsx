@@ -166,7 +166,23 @@ export default function GameSettingsPanel() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
+      {dirty && (
+        <div className="sticky top-0 z-30 -mx-4 sm:mx-0 rounded-none sm:rounded-lg border border-amber-500/50 bg-amber-500/15 backdrop-blur px-3 py-2 flex items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-2 text-xs text-amber-200">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>You have unsaved changes.</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button size="sm" variant="ghost" onClick={discardChanges} disabled={saving} className="h-7 px-2 text-xs">
+              Discard
+            </Button>
+            <Button size="sm" onClick={save} disabled={saving} className="h-7 px-3 text-xs">
+              <Save className="w-3 h-3 mr-1" />{saving ? "Saving…" : "Save changes"}
+            </Button>
+          </div>
+        </div>
+      )}
       {/* Scoring */}
       <section className="rounded-xl border border-border bg-card p-4">
         <div className="flex items-center gap-2 mb-3">
