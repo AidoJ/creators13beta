@@ -51,6 +51,9 @@ export interface GameSettings {
   show_review_boards: boolean;
   prompt_player_name: boolean;
   show_score_panel: boolean;
+  /** Playability aids — presentation only; engine still enforces all rules. */
+  highlight_playable_cards: boolean;
+  highlight_valid_placements: boolean;
   featured_mode: "end_of_days" | "first_to_50" | "beat_clock" | null;
   // Live ops
   maintenance_banner_enabled: boolean;
@@ -107,6 +110,8 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   show_review_boards: true,
   prompt_player_name: true,
   show_score_panel: true,
+  highlight_playable_cards: true,
+  highlight_valid_placements: true,
   featured_mode: null,
   maintenance_banner_enabled: false,
   maintenance_banner_text: "",
