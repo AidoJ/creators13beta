@@ -2286,6 +2286,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      register_lobby_host_roster: {
+        Args: { _match_id: string }
+        Returns: undefined
+      }
       resolve_invitation_code: { Args: { _code: string }; Returns: string }
       resolve_match_invite_code: { Args: { _code: string }; Returns: string }
       revoke_contact_request: {
