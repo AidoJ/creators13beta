@@ -1110,12 +1110,18 @@ export default function Play() {
   const isBeatClock = state.gameMode === "beat_clock";
   const matchEndsAt = state.gameConfig?.matchEndsAt ?? 0;
   const turnSecs = state.gameConfig?.turnSeconds ?? 0;
+  const drawSecs = state.gameConfig?.drawSeconds ?? 0;
   const matchSecondsLeft = isBeatClock && matchEndsAt
     ? Math.max(0, Math.ceil((matchEndsAt - Date.now()) / 1000))
     : 0;
   const turnSecondsLeft = isBeatClock && turnSecs > 0 && isYourTurn && state.phase === "place"
     ? Math.max(0, Math.ceil((turnStartedAtRef.current + turnSecs * 1000 - Date.now()) / 1000))
     : 0;
+  const drawSecondsLeft = isBeatClock && drawSecs > 0 && isYourTurn && state.phase === "draw"
+    ? Math.max(0, Math.ceil((turnStartedAtRef.current + drawSecs * 1000 - Date.now()) / 1000))
+    : 0;
+  const phaseSecondsLeft = drawSecondsLeft || turnSecondsLeft;
+  const phaseLabel = state.phase === "draw" ? "Pick up" : "Your turn";
   const fmt = (s: number) => {
     const m = Math.floor(s / 60);
     const ss = (s % 60).toString().padStart(2, "0");
