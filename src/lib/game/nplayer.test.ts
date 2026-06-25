@@ -10,6 +10,7 @@ import {
   endTurnEarly,
   createMatch,
   finaliseByScore,
+  forceAdvanceTurn,
   playDisaster,
   resolveDisaster,
 } from "./engine";
@@ -210,6 +211,35 @@ describe("A.2 — Disaster wipe in N=4 with single Hive-holder (single-Hive inva
 
 
 describe("A.2 — advanceTurn skips non-active players", () => {
+  it("starts a returned full-hand player in place phase after an auto-pass", () => {
+    const players = makePlayers(3);
+    players[0].hand = [
+      animal("full-0", ["Fire", "Sun"]),
+      animal("full-1", ["Lava", "Tree"]),
+      animal("full-2", ["Whirlwind", "Lake"]),
+      animal("full-3", ["Snow", "Lightning"]),
+      creator("Sky", "Air"),
+    ];
+    players[1].hand = [animal("p1-card", ["Fire", "Sun"])];
+    players[1].disconnectedAt = 1;
+    players[2].disconnectedAt = 1;
+
+    const state = baseState(players);
+    state.turnOrder = [1, 2, 0];
+    state.turn = 1;
+    state.phase = "place";
+    state.drawnThisTurn = 2;
+    state.placedThisTurn = 0;
+    state.disconnectGraceMs = 1000;
+
+    const next = forceAdvanceTurn(state, 5000);
+
+    expect(next.turn).toBe(0);
+    expect(next.phase).toBe("place");
+    expect(next.drawnThisTurn).toBe(2);
+    expect(next.placedThisTurn).toBe(0);
+  });
+
   it("rotates through turnOrder skipping finalised/conceded players", () => {
     const players = makePlayers(4);
     players[1].status = "finalised";
