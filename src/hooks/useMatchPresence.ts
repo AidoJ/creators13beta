@@ -191,11 +191,13 @@ export function useMatchPresence({
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    // Heartbeat every 20s so the sweep keeps last_seen_at fresh even when
-    // realtime is quiet (idle players). Cheap relative to the sweep cadence.
+    // Heartbeat every 10s — MUST be well under presence_debounce_seconds
+    // (default 15s) or the sweep's stamp step will false-positive a
+    // connected idle player as disconnected between heartbeats. 10s gives
+    // 1 retry headroom before debounce expires.
     const heartbeat = window.setInterval(() => {
       void reportPresence("heartbeat");
-    }, 20_000);
+    }, 10_000);
 
     // Poll durable roster evidence too: publication/realtime can lag or be
     // unavailable, but the UI must still surface reconnect/disconnected state.
