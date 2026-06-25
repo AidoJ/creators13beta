@@ -225,6 +225,175 @@ Deno.serve(async (req) => {
     console.error("[sweep] stamp step failed", e);
   }
 
+  // 2.5. IDLE SWEEP — baseline per-turn idle timeout for End-of-Days +
+  //      Top Score (Beat-the-Clock has its own turn timer in apply-move
+  //      + useBeatTheClockTimer and is skipped here).
+  //
+  //      For each active match whose current turn has been idle past
+  //      `idle_turn_seconds`:
+  //        - Increment the current-turn player's `idle_strikes`.
+  //        - If new strike count < limit: AUTO-PASS the seat (engine
+  //          forceAdvanceTurn with a transient injected past-grace
+  //          disconnect for that slot, exactly like the past-grace skip
+  //          flow below) and bump `turn_started_at`.
+  //        - If new strike count >= limit: ESCALATE — stamp the roster
+  //          row as departed (`disconnected_at = now - graceMs - 1s`,
+  //          `disconnect_reason = 'idle_departed'`) so the standard
+  //          disconnect path picks them up in the SAME tick (2-player
+  //          instant-end OR past-grace skip in 3+ player matches). The
+  //          rank-by-score finalisation is the same one used for genuine
+  //          disconnects — an absent player is not a quitter.
+  try {
+    const idleCutoffIso = new Date(Date.now() - idleSec * 1000).toISOString();
+    const { data: idleMatches } = await svc
+      .from("game_matches")
+      .select("id, state, seq, player_count, is_ranked, started_at, turn_started_at")
+      .eq("status", "active")
+      .not("turn_started_at", "is", null)
+      .lt("turn_started_at", idleCutoffIso);
+
+    for (const m of (idleMatches ?? []) as MatchSweepRow[]) {
+      if (startupGraceMatchIds.has(m.id)) continue;
+      const ms = (m.state ?? {}) as any;
+      // Skip Beat-the-Clock — its own turn timer is the strategic mechanism.
+      if (ms.gameMode === "beat_clock") continue;
+      // Skip finished states defensively (status=active should preclude this).
+      if (ms.finished) continue;
+      const slot = Number(ms.turn);
+      if (!Number.isFinite(slot)) continue;
+
+      const { data: rrow } = await svc
+        .from("game_match_players")
+        .select("user_id, slot, status, idle_strikes, disconnected_at")
+        .eq("match_id", m.id)
+        .eq("slot", slot)
+        .maybeSingle();
+      if (!rrow) continue;
+      if ((rrow.status ?? "active") !== "active") continue;
+      // If already disconnected, the existing disconnect path handles them.
+      if (rrow.disconnected_at) continue;
+
+      const newStrikes = Number(rrow.idle_strikes ?? 0) + 1;
+
+      if (newStrikes >= idleStrikesLimit) {
+        // ESCALATE → reuse disconnect rank-by-score path. Stamp with
+        // disconnected_at in the past so past-grace fires THIS tick.
+        const stampIso = new Date(Date.now() - graceSec * 1000 - 1000).toISOString();
+        const { error: stampErr } = await svc
+          .from("game_match_players")
+          .update({
+            disconnected_at: stampIso,
+            disconnect_reason: "idle_departed",
+            idle_strikes: newStrikes,
+          })
+          .eq("match_id", m.id)
+          .eq("user_id", rrow.user_id);
+        if (stampErr) {
+          console.error(`[sweep] idle escalate stamp failed match=${m.id}`, stampErr);
+          continue;
+        }
+        summary.idle_departed += 1;
+        console.log(
+          `[sweep] idle departed match=${m.id} slot=${slot} user=${rrow.user_id} strikes=${newStrikes}/${idleStrikesLimit}`,
+        );
+        // The downstream candidate fetch + 2p-instant-end / past-grace
+        // loop below will pick this up in the same invocation.
+        continue;
+      }
+
+      // AUTO-PASS: advance the turn without disconnecting. Inject a
+      // transient past-grace disconnectedAt for ONLY the current slot
+      // so the engine's advanceTurn skips it, then commit_move.
+      try {
+        let state: MatchState;
+        try {
+          state = deserialise(m.state);
+        } catch (e) {
+          console.error(`[sweep] idle deserialise failed match=${m.id}`, e);
+          continue;
+        }
+        const graceMs = graceSec * 1000;
+        state.disconnectGraceMs = graceMs;
+        state.players = state.players.map((p, i) =>
+          i === slot
+            ? { ...p, disconnectedAt: Date.now() - graceMs - 1000 }
+            : { ...p, disconnectedAt: null },
+        );
+
+        const nextState = forceAdvanceTurn(state, Date.now());
+        if (nextState === state) {
+          console.log(`[sweep] idle force-advance no-op match=${m.id}`);
+          continue;
+        }
+        // Strip the injected disconnect from the serialised result so we
+        // don't persist a false disconnect into match.state.
+        nextState.players = nextState.players.map((p) => ({ ...p, disconnectedAt: null }));
+
+        const { data: rosterAll } = await svc
+          .from("game_match_players")
+          .select("user_id, slot")
+          .eq("match_id", m.id);
+        const userIdForSlot = (s: number): string | null =>
+          (rosterAll ?? []).find((x: any) => x.slot === s)?.user_id ?? null;
+
+        const serialisedNext = serialise(nextState);
+        const playerStates: Array<{ user_id: string; state: any }> = [];
+        for (let s = 0; s < nextState.players.length; s++) {
+          const uid = userIdForSlot(s);
+          if (!uid) continue;
+          const pid = nextState.players[s]?.id;
+          if (!pid) continue;
+          playerStates.push({ user_id: uid, state: redactFor(serialisedNext, pid) });
+        }
+
+        const move: IdleSweepMove = { type: "sweep_idle_autopass", slot };
+        const { error: commitErr } = await svc.rpc("commit_move", {
+          _match_id: m.id,
+          _expected_seq: Number(m.seq ?? 0),
+          _actor: rrow.user_id,
+          _move: move as any,
+          _new_state: serialisedNext,
+          _player_states: playerStates as any,
+          _winner: null,
+          _finished: false,
+          _placements: null,
+        });
+        if (commitErr) {
+          const code = (commitErr as any).code ?? "";
+          const msg = String(commitErr.message ?? "");
+          if (code === "40001" || msg.includes("stale seq")) {
+            // A real move landed between our read and write — drop this
+            // strike (player did act after all). Don't bump idle_strikes.
+            console.log(`[sweep] idle auto-pass race-lost match=${m.id}`);
+            continue;
+          }
+          throw commitErr;
+        }
+
+        // Bump idle_strikes + refresh turn_started_at AFTER commit so the
+        // next sweep tick measures from now.
+        await svc
+          .from("game_match_players")
+          .update({ idle_strikes: newStrikes })
+          .eq("match_id", m.id)
+          .eq("user_id", rrow.user_id);
+        await svc
+          .from("game_matches")
+          .update({ turn_started_at: new Date().toISOString() })
+          .eq("id", m.id);
+
+        summary.idle_auto_passed += 1;
+        console.log(
+          `[sweep] idle auto-pass match=${m.id} slot=${slot} user=${rrow.user_id} strikes=${newStrikes}/${idleStrikesLimit}`,
+        );
+      } catch (e) {
+        console.error(`[sweep] idle auto-pass failed match=${m.id}`, e);
+      }
+    }
+  } catch (e) {
+    console.error("[sweep] idle step failed", e);
+  }
+
   // 3. Find every active multiplayer match with at least one disconnected
   //    active player.
   const { data: candidateRows, error: candErr } = await svc
