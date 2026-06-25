@@ -46,6 +46,7 @@ interface RosterPresence {
   last_seen_at: string | null;
   disconnected_at: string | null;
   disconnect_reason: string | null;
+  idle_strikes: number | null;
 }
 
 interface Options {
@@ -106,7 +107,7 @@ export function useMatchPresence({
     const fetchRoster = async () => {
       const { data, error } = await supabase
         .from("game_match_players")
-        .select("user_id, slot, status, last_seen_at, disconnected_at, disconnect_reason")
+        .select("user_id, slot, status, last_seen_at, disconnected_at, disconnect_reason, idle_strikes")
         .eq("match_id", matchId);
       if (error) {
         console.warn("[presence] roster fetch failed", error);
@@ -249,7 +250,15 @@ export function useMatchPresence({
       if (slot == null) return null;
       return Object.values(state.rosterByUser).find((row) => row.slot === slot)?.user_id ?? null;
     };
-    return { statusFor, userIdForSlot, isConnected, isReconnecting, isDisconnected, isMissing };
+    const strikesFor = (uid: string | null | undefined): number => {
+      if (!uid) return 0;
+      return Number(state.rosterByUser[uid]?.idle_strikes ?? 0);
+    };
+    const isDeparted = (uid: string | null | undefined): boolean => {
+      if (!uid) return false;
+      return state.rosterByUser[uid]?.disconnect_reason === "idle_departed";
+    };
+    return { statusFor, userIdForSlot, isConnected, isReconnecting, isDisconnected, isMissing, strikesFor, isDeparted };
   }, [state.byUser, state.presenceSynced, state.rosterByUser]);
 
   return { ...state, ...helpers };

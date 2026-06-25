@@ -583,26 +583,99 @@ export default function Play() {
     : 0;
   const idleTurnExpired = showIdleWarning && idleSecondsLeft <= 0;
   const canTakeTurn = isYourTurn && !idleTurnExpired;
+  const idleStrikesLimit = Math.max(1, Number(gameSettings.idle_turn_strikes_limit ?? 3));
+
+  const getUserIdForPlayer = useCallback(
+    (playerId: string | null | undefined): string | null => {
+      if (matchRow?.mode !== "pvp" || !playerId) return null;
+      const slot = state?.players.findIndex((p) => p.id === playerId) ?? -1;
+      if (slot < 0) return null;
+      if (slot === 0) return matchRow.host_user_id ?? null;
+      if (slot === 1) return matchRow.guest_user_id ?? presence.userIdForSlot(slot);
+      return presence.userIdForSlot(slot);
+    },
+    [matchRow, state?.players, presence],
+  );
 
   const getPresenceStatusForPlayer = useCallback(
     (playerId: string | null | undefined) => {
-      if (matchRow?.mode !== "pvp" || !playerId) return null;
-      const slot = state?.players.findIndex((p) => p.id === playerId) ?? -1;
-      const uid =
-        slot === 0
-          ? matchRow.host_user_id
-          : slot === 1
-            ? matchRow.guest_user_id ?? presence.userIdForSlot(slot)
-            : slot > 1
-              ? presence.userIdForSlot(slot)
-            : null;
+      const uid = getUserIdForPlayer(playerId);
       if (!uid) return null;
       const status = presence.statusFor(uid);
       if (status) return status;
       return null;
     },
-    [matchRow, state?.players, presence],
+    [getUserIdForPlayer, presence],
   );
+
+  const getStrikesForPlayer = useCallback(
+    (playerId: string | null | undefined): number => {
+      const uid = getUserIdForPlayer(playerId);
+      return presence.strikesFor(uid);
+    },
+    [getUserIdForPlayer, presence],
+  );
+
+  const isPlayerDeparted = useCallback(
+    (playerId: string | null | undefined): boolean => {
+      const uid = getUserIdForPlayer(playerId);
+      return presence.isDeparted(uid);
+    },
+    [getUserIdForPlayer, presence],
+  );
+
+  // Toast on strike/departure transitions. Strikes are CONSECUTIVE and reset
+  // to 0 on any real action — the badge & toasts must reflect the live roster
+  // value (not a high-water mark).
+  const prevStrikesRef = useRef<Record<string, number>>({});
+  const prevDepartedRef = useRef<Record<string, boolean>>({});
+  useEffect(() => {
+    if (!isPvp || !state) return;
+    const selfUid = getUserIdForPlayer(selfSlot);
+    for (const p of state.players) {
+      const uid = getUserIdForPlayer(p.id);
+      if (!uid) continue;
+      const cur = presence.strikesFor(uid);
+      const prev = prevStrikesRef.current[uid] ?? 0;
+      if (cur > prev && cur >= 1 && cur < idleStrikesLimit) {
+        if (uid === selfUid) {
+          toast.warning(`You timed out — turn passed (${cur}/${idleStrikesLimit})`);
+        } else {
+          toast(`${p.name} timed out (${cur}/${idleStrikesLimit})`);
+        }
+      }
+      prevStrikesRef.current[uid] = cur;
+
+      const departed = presence.isDeparted(uid);
+      const wasDeparted = prevDepartedRef.current[uid] ?? false;
+      if (departed && !wasDeparted) {
+        if (uid === selfUid) {
+          toast.error("You've been removed for inactivity", { duration: 6000 });
+        } else {
+          toast.error(`${p.name} has been removed for inactivity`, { duration: 6000 });
+        }
+      }
+      prevDepartedRef.current[uid] = departed;
+    }
+  }, [isPvp, state, selfSlot, getUserIdForPlayer, presence, idleStrikesLimit]);
+
+  // Blocked-action toast: if a player taps anywhere on the play surface while
+  // their turn has expired but auto-pass hasn't yet landed (1-2s gap), the
+  // disabled controls feel broken. Surface a single throttled toast so they
+  // understand what happened. Real actions are already blocked by canTakeTurn
+  // and by the server-side validation in apply-move.
+  const blockedToastAtRef = useRef<number>(0);
+  useEffect(() => {
+    if (!idleTurnExpired || !isYourTurn) return;
+    const onAnyClick = () => {
+      const now = Date.now();
+      if (now - blockedToastAtRef.current < 3000) return;
+      blockedToastAtRef.current = now;
+      toast.error("You timed out on this turn — waiting for next turn…");
+    };
+    document.addEventListener("pointerdown", onAnyClick, true);
+    return () => document.removeEventListener("pointerdown", onAnyClick, true);
+  }, [idleTurnExpired, isYourTurn]);
   const selectedCard: DeckCard | undefined = useMemo(
     () => selfPlayer?.hand.find((c) => c.uid === selectedUid),
     [selfPlayer, selectedUid],
@@ -1239,17 +1312,25 @@ export default function Play() {
       )}
 
       {/* Baseline idle warning — only last 30s of the idle window */}
-      {idleWarnVisible && (
-        <div className={
-          "px-3 py-2 text-sm sm:text-base font-semibold text-center border-y-2 shadow-lg " +
-          (idleSecondsLeft <= 10
-            ? "bg-red-600 text-white border-red-800 animate-pulse"
-            : "bg-red-500 text-white border-red-700")
-        }>
-          <Clock className="inline w-4 h-4 mr-1.5 -mt-0.5" />
-          Your turn — auto-pass in <span className="font-mono font-bold tabular-nums">{idleSecondsLeft}s</span>
-        </div>
-      )}
+      {idleWarnVisible && (() => {
+        const selfStrikes = getStrikesForPlayer(selfSlot);
+        return (
+          <div className={
+            "px-3 py-2 text-sm sm:text-base font-semibold text-center border-y-2 shadow-lg " +
+            (idleSecondsLeft <= 10
+              ? "bg-red-600 text-white border-red-800 animate-pulse"
+              : "bg-red-500 text-white border-red-700")
+          }>
+            <Clock className="inline w-4 h-4 mr-1.5 -mt-0.5" />
+            Your turn — auto-pass in <span className="font-mono font-bold tabular-nums">{idleSecondsLeft}s</span>
+            {selfStrikes >= 1 && (
+              <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/20 text-white text-[11px] font-bold uppercase tracking-wide">
+                Strike {selfStrikes + 1}/{idleStrikesLimit}
+              </span>
+            )}
+          </div>
+        );
+      })()}
 
 
 
@@ -1257,7 +1338,14 @@ export default function Play() {
       {!ribbonHidden && (
         <div className="px-3 py-1.5 bg-card/30 border-b border-border/40 flex items-center justify-between gap-3 flex-wrap">
           <div className="text-xs sm:text-sm flex-1 min-w-0 truncate">
-            {phaseHint}
+            {idleTurnExpired && isYourTurn ? (
+              <span className="inline-flex items-center gap-1.5 text-red-500 font-semibold">
+                <Clock className="w-4 h-4" />
+                Time ran out — waiting for auto-pass…
+              </span>
+            ) : (
+              phaseHint
+            )}
           </div>
 
           {/* Beat-the-Clock countdowns */}
@@ -1423,36 +1511,65 @@ export default function Play() {
         <>
           {/* Top utility row: opponent peek + draw/discard quick access */}
           <div className="flex items-center gap-1.5 px-2 pt-1.5 pb-1 border-b border-border/40">
-            <Button
-              variant="outline"
-              size="sm"
-              className={
-                "flex-1 min-h-7 h-auto text-[11px] px-2 justify-start " +
-                ((getPresenceStatusForPlayer(opponent.id) === "disconnected" || getPresenceStatusForPlayer(opponent.id) === "missing")
-                  ? "border-destructive/60 bg-destructive/10 text-destructive"
-                  : getPresenceStatusForPlayer(opponent.id) === "reconnecting"
-                    ? "border-amber-500/60 bg-amber-500/10 text-amber-300"
-                    : "")
-              }
-              onClick={() => { setExpandedOpponentId(opponent.id); setOpponentPanelOpen(true); }}
-            >
-              <span className="min-w-0 flex-1 text-left">
-                <span className="flex items-center gap-1 min-w-0">
-                  <Maximize2 className="w-3 h-3 shrink-0" />
-                  <span className="truncate">{opponent.name}</span>
-                </span>
-                {(getPresenceStatusForPlayer(opponent.id) === "disconnected" || getPresenceStatusForPlayer(opponent.id) === "missing") && (
-                  <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
-                    <WifiOff className="w-2.5 h-2.5" /> Disconnected
+            {(() => {
+              const opStatus = getPresenceStatusForPlayer(opponent.id);
+              const opDeparted = isPlayerDeparted(opponent.id);
+              const opStrikes = getStrikesForPlayer(opponent.id);
+              const opDisconnected = opStatus === "disconnected" || opStatus === "missing";
+              const opReconnecting = opStatus === "reconnecting";
+              return (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={
+                    "flex-1 min-h-7 h-auto text-[11px] px-2 justify-start " +
+                    (opDeparted
+                      ? "border-destructive/60 bg-destructive/10 text-destructive opacity-70"
+                      : opDisconnected
+                        ? "border-destructive/60 bg-destructive/10 text-destructive"
+                        : opReconnecting
+                          ? "border-amber-500/60 bg-amber-500/10 text-amber-300"
+                          : "")
+                  }
+                  onClick={() => { setExpandedOpponentId(opponent.id); setOpponentPanelOpen(true); }}
+                >
+                  <span className="min-w-0 flex-1 text-left">
+                    <span className="flex items-center gap-1 min-w-0">
+                      <Maximize2 className="w-3 h-3 shrink-0" />
+                      <span className={"truncate " + (opDeparted ? "line-through" : "")}>{opponent.name}</span>
+                      {!opDisconnected && !opDeparted && opStrikes >= 1 && (
+                        <span
+                          className={
+                            "ml-1 inline-flex items-center gap-0.5 px-1 py-0 rounded text-[9px] font-bold tabular-nums " +
+                            (opStrikes >= idleStrikesLimit - 1
+                              ? "bg-red-600 text-white"
+                              : opStrikes === idleStrikesLimit - 2
+                                ? "bg-orange-500 text-white"
+                                : "bg-amber-500 text-white")
+                          }
+                          title="Consecutive idle timeouts (resets on next action)"
+                        >
+                          <Clock className="w-2.5 h-2.5" />{opStrikes}/{idleStrikesLimit}
+                        </span>
+                      )}
+                    </span>
+                    {opDeparted ? (
+                      <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
+                        <WifiOff className="w-2.5 h-2.5" /> Removed (inactive)
+                      </span>
+                    ) : opDisconnected ? (
+                      <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
+                        <WifiOff className="w-2.5 h-2.5" /> Disconnected
+                      </span>
+                    ) : opReconnecting ? (
+                      <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
+                        <Loader2 className="w-2.5 h-2.5 animate-spin" /> Reconnecting
+                      </span>
+                    ) : null}
                   </span>
-                )}
-                {getPresenceStatusForPlayer(opponent.id) === "reconnecting" && (
-                  <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
-                    <Loader2 className="w-2.5 h-2.5 animate-spin" /> Reconnecting
-                  </span>
-                )}
-              </span>
-            </Button>
+                </Button>
+              );
+            })()}
             <button
               type="button"
               onClick={() => {
@@ -1578,16 +1695,20 @@ export default function Play() {
                 const opPresence = getPresenceStatusForPlayer(op.id);
                 const isReconnecting = opPresence === "reconnecting";
                 const isDisconnected = opPresence === "disconnected" || opPresence === "missing";
+                const isDeparted = isPlayerDeparted(op.id);
+                const opStrikes = getStrikesForPlayer(op.id);
                 return (
                   <Card
                     key={op.id}
                     className={
                       "p-2 flex flex-col min-h-0 min-w-0 " +
-                      (isDisconnected
-                        ? "ring-2 ring-destructive/60 bg-destructive/5"
-                        : isReconnecting
-                          ? "ring-2 ring-amber-500/60 bg-amber-500/5"
-                          : "")
+                      (isDeparted
+                        ? "ring-2 ring-destructive/60 bg-destructive/5 opacity-60 grayscale"
+                        : isDisconnected
+                          ? "ring-2 ring-destructive/60 bg-destructive/5"
+                          : isReconnecting
+                            ? "ring-2 ring-amber-500/60 bg-amber-500/5"
+                            : "")
                     }
                   >
                     <button
@@ -1597,23 +1718,46 @@ export default function Play() {
                       aria-label={`Pop out ${op.name}'s ecosystem`}
                     >
                       <span className="font-display text-sm group-hover:text-foreground transition-colors min-w-0 flex flex-col items-start gap-0.5">
-                        <span className="truncate max-w-full">{op.name}</span>
-                        {isDisconnected && (
+                        <span className="flex items-center gap-1.5 min-w-0 max-w-full">
+                          <span className={"truncate " + (isDeparted ? "line-through" : "")}>{op.name}</span>
+                          {!isDisconnected && !isDeparted && opStrikes >= 1 && (
+                            <span
+                              className={
+                                "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold tabular-nums shrink-0 " +
+                                (opStrikes >= idleStrikesLimit - 1
+                                  ? "bg-red-600 text-white"
+                                  : opStrikes === idleStrikesLimit - 2
+                                    ? "bg-orange-500 text-white"
+                                    : "bg-amber-500 text-white")
+                              }
+                              title="Consecutive idle timeouts (resets on next action)"
+                            >
+                              <Clock className="w-2.5 h-2.5" />{opStrikes}/{idleStrikesLimit}
+                            </span>
+                          )}
+                        </span>
+                        {isDeparted ? (
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide border border-destructive/50 bg-destructive/15 text-destructive shrink-0"
+                            title="Removed for inactivity"
+                          >
+                            <WifiOff className="w-2.5 h-2.5" /> Removed
+                          </span>
+                        ) : isDisconnected ? (
                           <span
                             className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide border border-destructive/50 bg-destructive/15 text-destructive shrink-0"
                             title="Player is disconnected"
                           >
                             <WifiOff className="w-2.5 h-2.5" /> Disconnected
                           </span>
-                        )}
-                        {isReconnecting && (
+                        ) : isReconnecting ? (
                           <span
                             className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide border border-amber-500/50 bg-amber-500/15 text-amber-300 shrink-0"
                             title="Player is reconnecting"
                           >
                             <Loader2 className="w-2.5 h-2.5 animate-spin" /> Reconnecting
                           </span>
-                        )}
+                        ) : null}
                       </span>
                       <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
                         {op.ecosystem.placed.size}/16 · {op.hand.length}h <Maximize2 className="w-3 h-3" />
