@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Save, RotateCcw, Trophy, Timer, Gamepad2, Bot, Eye, Library, AlertTrian
 import { DEFAULT_GAME_SETTINGS, invalidateGameSettings, type GameSettings } from "@/lib/game/settings";
 import CardEditorDialog from "./CardEditorDialog";
 import CreatorContentEditor from "./CreatorContentEditor";
+import { registerDirtyGetter } from "./unsavedChanges";
 
 type Num = keyof Pick<GameSettings,
   "points_per_win" | "elo_win" | "elo_loss" | "perfect_eco_bonus"
@@ -33,6 +34,8 @@ type Bool = keyof Pick<GameSettings,
 
 export default function GameSettingsPanel() {
   const [s, setS] = useState<GameSettings>(DEFAULT_GAME_SETTINGS);
+  // Last-saved snapshot — `s` differs from this iff there are unsaved edits.
+  const [initial, setInitial] = useState<GameSettings>(DEFAULT_GAME_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -52,11 +55,22 @@ export default function GameSettingsPanel() {
         supabase.from("game_settings" as any).select("*").eq("id", "global").maybeSingle(),
         supabase.from("game_cards").select("id", { count: "exact", head: true }),
       ]);
-      if (data) setS({ ...DEFAULT_GAME_SETTINGS, ...(data as any) });
+      const merged = { ...DEFAULT_GAME_SETTINGS, ...((data as any) || {}) } as GameSettings;
+      setS(merged);
+      setInitial(merged);
       setCardCount(count ?? null);
       setLoading(false);
     })();
   }, []);
+
+  const dirty = useMemo(() => !shallowEqual(s, initial), [s, initial]);
+
+  // Register with the admin shell so tab switches / page unloads can confirm.
+  useEffect(() => {
+    return registerDirtyGetter(() =>
+      dirty ? "Game settings have unsaved changes." : null,
+    );
+  }, [dirty]);
 
   function setNum(k: Num, v: string) {
     const n = Number(v);
@@ -66,18 +80,21 @@ export default function GameSettingsPanel() {
 
   async function save() {
     setSaving(true);
+    const payload = { ...s, id: "global", updated_at: new Date().toISOString() };
     const { error } = await supabase
       .from("game_settings" as any)
-      .upsert({ ...s, id: "global", updated_at: new Date().toISOString() } as any, { onConflict: "id" });
+      .upsert(payload as any, { onConflict: "id" });
     setSaving(false);
     if (error) toast({ title: "Save failed", description: error.message, variant: "destructive" });
     else {
       invalidateGameSettings();
+      setInitial(s);
       toast({ title: "Game settings saved" });
     }
   }
 
   function reset() { setS(DEFAULT_GAME_SETTINGS); }
+  function discardChanges() { setS(initial); }
 
   async function resetPlayer() {
     const email = resetEmail.trim().toLowerCase();
@@ -149,7 +166,23 @@ export default function GameSettingsPanel() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
+      {dirty && (
+        <div className="sticky top-0 z-30 -mx-4 sm:mx-0 rounded-none sm:rounded-lg border border-amber-500/50 bg-amber-500/15 backdrop-blur px-3 py-2 flex items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-2 text-xs text-amber-200">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>You have unsaved changes.</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button size="sm" variant="ghost" onClick={discardChanges} disabled={saving} className="h-7 px-2 text-xs">
+              Discard
+            </Button>
+            <Button size="sm" onClick={save} disabled={saving} className="h-7 px-3 text-xs">
+              <Save className="w-3 h-3 mr-1" />{saving ? "Saving…" : "Save changes"}
+            </Button>
+          </div>
+        </div>
+      )}
       {/* Scoring */}
       <section className="rounded-xl border border-border bg-card p-4">
         <div className="flex items-center gap-2 mb-3">
@@ -553,3 +586,14 @@ function DeckCompositionSection() {
 }
 
 
+
+function shallowEqual(a: Record<string, any>, b: Record<string, any>): boolean {
+  if (a === b) return true;
+  const ka = Object.keys(a);
+  const kb = Object.keys(b);
+  if (ka.length !== kb.length) return false;
+  for (const k of ka) {
+    if (a[k] !== b[k]) return false;
+  }
+  return true;
+}
