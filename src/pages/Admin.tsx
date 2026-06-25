@@ -21,6 +21,7 @@ import PractitionersTab from "@/components/admin/PractitionersTab";
 import SubscribersTab from "@/components/admin/SubscribersTab";
 import EmailTemplateEditor from "@/components/admin/EmailTemplateEditor";
 import InvitationsManager from "@/components/admin/InvitationsManager";
+import { getDirtyMessage, confirmDiscardIfDirty } from "@/components/admin/unsavedChanges";
 import { capitaliseTypeName } from "@/lib/creatorTypes";
 
 
@@ -368,7 +369,14 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs
+          value={activeTab}
+          onValueChange={(next) => {
+            if (next === activeTab) return;
+            if (!confirmDiscardIfDirty()) return;
+            setActiveTab(next);
+          }}
+        >
            <TabsList className="mb-4 flex-wrap">
             <TabsTrigger value="practitioners"><Briefcase className="h-3.5 w-3.5 mr-1" />Practitioners</TabsTrigger>
             <TabsTrigger value="subscribers"><CreditCard className="h-3.5 w-3.5 mr-1" />Subscribers</TabsTrigger>
