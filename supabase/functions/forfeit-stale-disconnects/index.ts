@@ -250,6 +250,15 @@ Deno.serve(async (req) => {
   const graceMs = graceSec * 1000;
 
   for (const match of (matches ?? []) as MatchSweepRow[]) {
+    // Startup grace: don't end (or auto-skip in) a match whose clients
+    // may not have established presence on /play yet.
+    if (match.started_at) {
+      const startedMs = Date.parse(match.started_at);
+      if (Number.isFinite(startedMs) && nowMs - startedMs < startupGraceSec * 1000) {
+        summary.matches_skipped_startup_grace += 1;
+        continue;
+      }
+    }
     const roster = rosterByMatch.get(match.id) ?? [];
     const activeRoster = roster.filter((r) => (r.status ?? "active") === "active");
     if (activeRoster.length === 0) continue;
