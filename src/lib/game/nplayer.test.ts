@@ -222,7 +222,6 @@ describe("A.2 — advanceTurn skips non-active players", () => {
     ];
     players[1].hand = [animal("p1-card", ["Fire", "Sun"])];
     players[1].disconnectedAt = 1;
-    players[2].disconnectedAt = 1;
 
     const state = baseState(players);
     state.turnOrder = [1, 2, 0];
