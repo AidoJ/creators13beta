@@ -968,6 +968,8 @@ export default function Play() {
     } else {
       phaseHint = `${turnPlayer.name} is ${isPvp ? "thinking" : "thinking…"}`;
     }
+  } else if (idleTurnExpired) {
+    phaseHint = "Time ran out — waiting for auto-pass…";
   } else if (state.phase === "draw") {
     phaseHint = `Pick up ${2 - state.drawnThisTurn} more card${2 - state.drawnThisTurn === 1 ? "" : "s"} (draw 1 at a time from either pile).`;
   } else if (mode === "steal") {
@@ -984,24 +986,24 @@ export default function Play() {
     phaseHint = `Select a card from your hand to play it. (${2 - state.placedThisTurn} play${2 - state.placedThisTurn === 1 ? "" : "s"} left this turn.)`;
   }
 
-  const canUseBoard = !!isYourTurn && state.phase === "place" && mode === "place";
+  const canUseBoard = !!canTakeTurn && state.phase === "place" && mode === "place";
   // Stage 2 of a steal: the stolen card waiting to be placed on your board.
   const stolenPendingCard: DeckCard | undefined =
     mode === "steal" && stealVictimKey
       ? opponent.ecosystem.placed.get(stealVictimKey)?.card
       : undefined;
-  const canDiscard = isYourTurn && state.phase === "place" && !!selectedCard;
-  const canDisaster = isYourTurn && state.phase === "place" && !!selectedCard
+  const canDiscard = canTakeTurn && state.phase === "place" && !!selectedCard;
+  const canDisaster = canTakeTurn && state.phase === "place" && !!selectedCard
     && (selectedCard.kind === "creator" || selectedCard.kind === "sky_creator");
-  const canSteal = isYourTurn && state.phase === "place" && !!selectedCard
+  const canSteal = canTakeTurn && state.phase === "place" && !!selectedCard
     && selectedCard.kind === "sky_creature";
 
   const handAtLimit = selfPlayer.hand.length >= 5; // HAND_LIMIT
-  const needsOpeningDraw = !selfPlayer.firstPickupDone && state.phase === "draw" && isYourTurn;
-  const canDrawOne = isYourTurn && state.phase === "draw" && selfPlayer.firstPickupDone && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2 && !handAtLimit;
+  const needsOpeningDraw = !selfPlayer.firstPickupDone && state.phase === "draw" && canTakeTurn;
+  const canDrawOne = canTakeTurn && state.phase === "draw" && selfPlayer.firstPickupDone && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2 && !handAtLimit;
 
 
-  const canTapDiscard = isYourTurn && state.phase === "place" && !!selectedUid;
+  const canTapDiscard = canTakeTurn && state.phase === "place" && !!selectedUid;
   const pilesBlock = (
     <Card
       className={
@@ -1018,7 +1020,7 @@ export default function Play() {
         if (canTapDiscard && selectedUid) onDiscardUid(selectedUid);
       }}
       onDragOver={(e) => {
-        if (!isYourTurn || state.phase !== "place") return;
+        if (!canTakeTurn || state.phase !== "place") return;
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
         e.currentTarget.dataset.dropTarget = "true";
@@ -1039,7 +1041,7 @@ export default function Play() {
         )}
       </div>
       <Button variant="outline" size="sm" className="w-full text-xs"
-        disabled={!isYourTurn || state.phase !== "draw" || state.used.length === 0}
+        disabled={!canTakeTurn || state.phase !== "draw" || state.used.length === 0}
         onClick={(e) => { e.stopPropagation(); onPickUsed(); }}>
         Take top card ({state.used.length})
       </Button>
