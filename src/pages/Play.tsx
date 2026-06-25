@@ -187,6 +187,14 @@ export default function Play() {
   const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
   const turnStartedAtRef = useRef<number>(Date.now());
 
+  // 1Hz ticker so the idle-warning ribbon (End-of-Days + Top Score) re-evaluates
+  // `idleSecondsLeft` once per second without depending on matchRow churn.
+  // Beat-the-Clock has its own ticker (useBeatTheClockTimer) and doesn't need this.
+  useEffect(() => {
+    const id = setInterval(() => setNowTick((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+
   // Tick every 250ms while quick-undo is active so the countdown re-renders.
   useEffect(() => {
     if (quickUndoUntil <= 0) return;
