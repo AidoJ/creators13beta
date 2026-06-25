@@ -194,6 +194,10 @@ export default function Lobby() {
   const playerCount = row.player_count ?? 2;
   const filled = roster.length;
   const isFull = filled >= playerCount;
+  // Host-start-with-2+: lobby is startable as soon as 2 players are present.
+  // Empty slots are trimmed away at start by the server (commit_start_lobby),
+  // so a paid host doesn't have to wait for a full 4-slot lobby to fill.
+  const canStart = filled >= 2;
   const link = row.invite_token ? inviteUrl(row.invite_token) : "";
 
   // Render a fixed-size roster: filled slots show name + connection dot,
@@ -213,14 +217,17 @@ export default function Lobby() {
               <Users className="h-3.5 w-3.5" /> Multiplayer lobby
             </div>
             <h1 className="font-display text-2xl">
-              {isFull ? (isHost ? "Ready to start" : "Waiting for host…") : "Waiting for players…"}
+              {canStart ? (isHost ? "Ready to start" : "Waiting for host…") : "Waiting for players…"}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               {isHost
-                ? `Share the invite. You'll start the match once all ${playerCount} players are in.`
+                ? canStart
+                  ? `You can begin now with ${filled} player${filled === 1 ? "" : "s"}, or wait for up to ${playerCount}. Empty seats are removed at start.`
+                  : `Share the invite. You can start once at least 2 players are in (up to ${playerCount}).`
                 : "The host will begin the match shortly."}
             </p>
           </header>
+
 
           {/* Roster */}
           <section className="mb-5">
