@@ -1865,7 +1865,7 @@ export default function Play() {
                   onSelect={(uid) => setSelectedUid(uid)}
                   disabled={!canTakeTurn || state.phase !== "place"}
                   size={76}
-                  stuckUids={stuckUids}
+                  stuckUids={gameSettings.highlight_playable_cards ? stuckUids : undefined}
                 />
               </div>
 
