@@ -136,15 +136,15 @@ export async function createLobbyMatch(args: {
     .single();
   if (error) throw error;
 
-  const { error: rosterErr } = await supabase
-    .from("game_match_players")
-    .insert({
-      match_id: (data as any).id,
-      user_id: args.hostUserId,
-      slot: 0,
-      display_name: args.hostName,
-    });
-  if (rosterErr) console.error("[createLobbyMatch] roster insert failed", rosterErr);
+  // RLS blocks direct INSERT on game_match_players; bootstrap host slot via
+  // a security-definer RPC that re-checks ownership server-side.
+  const { error: rosterErr } = await supabase.rpc("register_lobby_host_roster", {
+    _match_id: (data as any).id,
+  });
+  if (rosterErr) {
+    console.error("[createLobbyMatch] host roster register failed", rosterErr);
+    throw rosterErr;
+  }
 
   return data as unknown as GameMatchRow;
 }
