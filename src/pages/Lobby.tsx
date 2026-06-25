@@ -332,11 +332,16 @@ export default function Lobby() {
                   {cancelling && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                   Cancel lobby
                 </Button>
-                <Button onClick={handleStart} disabled={!isFull || starting}>
+                <Button onClick={handleStart} disabled={!canStart || starting}>
                   {starting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                   <PlayIcon className="w-4 h-4 mr-2" />
-                  {isFull ? "Begin match" : `Need ${playerCount - filled} more`}
+                  {canStart
+                    ? isFull
+                      ? "Begin match"
+                      : `Begin with ${filled}`
+                    : `Need ${2 - filled} more`}
                 </Button>
+
               </>
             ) : (
               <>
