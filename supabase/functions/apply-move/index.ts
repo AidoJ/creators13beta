@@ -677,8 +677,10 @@ Deno.serve(async (req) => {
   //     and zero out on any real action by that player.
   // Skipped only on finished matches (no more turns) and lobby start (handled
   // alongside the lobby flip below).
+  let committedTurnStartedAt: string | null = null;
   if (!finished && !lobbyJustStarted && isTurnBoundMove) {
     const nowIso = new Date().toISOString();
+    committedTurnStartedAt = nowIso;
     const { error: bumpErr } = await svc
       .from("game_matches")
       .update({ turn_started_at: nowIso })
@@ -698,9 +700,11 @@ Deno.serve(async (req) => {
   // B — flip lobby match to 'active' once the host has triggered start.
   // commit_move preserves status for non-finished moves, so we do it here.
   if (lobbyJustStarted) {
+    const nowIso = new Date().toISOString();
+    committedTurnStartedAt = nowIso;
     const { error: statusErr } = await svc
       .from("game_matches")
-      .update({ status: "active", turn_started_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .update({ status: "active", turn_started_at: nowIso, updated_at: nowIso })
       .eq("id", body.match_id)
       .eq("status", "waiting");
     if (statusErr) console.error("[apply-move] lobby status flip failed", statusErr);
@@ -712,6 +716,7 @@ Deno.serve(async (req) => {
     public_state: publicStateForCaller,
     finished,
     winner_user_id: winnerUserId,
+    turn_started_at: committedTurnStartedAt ?? (match as any).turn_started_at ?? null,
     lobby_started: lobbyJustStarted,
   });
 });

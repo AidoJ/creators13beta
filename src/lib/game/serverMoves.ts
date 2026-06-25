@@ -36,7 +36,7 @@ export type ServerMove =
   | { type: "start_lobby_match" };
 
 export type ApplyMoveResult =
-  | { ok: true; seq: number; publicState: any; finished: boolean }
+  | { ok: true; seq: number; publicState: any; finished: boolean; turnStartedAt?: string | null }
   | { ok: false; rejected: true; reason: "stale" | "not_implemented" | "auth" | "server"; currentSeq?: number; message?: string };
 
 export async function applyMoveServer(
@@ -82,7 +82,7 @@ export async function applyMoveServer(
     if (!data?.ok) {
       return { ok: false, rejected: true, reason: "server", message: "no ok flag" };
     }
-    return { ok: true, seq: data.seq, publicState: data.public_state, finished: !!data.finished };
+    return { ok: true, seq: data.seq, publicState: data.public_state, finished: !!data.finished, turnStartedAt: data.turn_started_at ?? null };
   } catch (e) {
     return { ok: false, rejected: true, reason: "server", message: (e as Error).message };
   }
