@@ -31,6 +31,7 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
     setTargetScore(settings.top_score_default);
     setMatchMinutes(settings.beat_clock_match_minutes);
     setTurnSeconds(settings.beat_clock_turn_seconds);
+    setDrawSeconds(settings.beat_clock_draw_seconds);
     // Default difficulty = admin's bot_difficulty, unless that tier is disabled.
     const adminPref = settings.bot_difficulty;
     const enabled = (d: BotDifficulty) =>
