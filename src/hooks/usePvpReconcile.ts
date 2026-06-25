@@ -70,6 +70,11 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
         const result = await applyMoveServer(matchId, expected, move);
         if (result.ok === true) {
           serverSeqRef.current = result.seq;
+          setMatchRow({
+            ...matchRow,
+            seq: result.seq,
+            turn_started_at: result.turnStartedAt ?? matchRow.turn_started_at,
+          });
           // CRITICAL: replace the client's optimistic state with the server's
           // authoritative redacted view. The client engine uses local
           // randomness for draws, so without this re-hydration our hand

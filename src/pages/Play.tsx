@@ -564,6 +564,26 @@ export default function Play() {
     opponents.find((p) => p.id === expandedOpponentId) ?? opponent ?? null;
   const isYourTurn =
     !!state && !state.finished && state.players[state.turn].id === selfSlot && !waitingForGuest;
+
+  const isBeatClock = state?.gameMode === "beat_clock";
+  const matchEndsAt = state?.gameConfig?.matchEndsAt ?? 0;
+  const turnSecs = state?.gameConfig?.turnSeconds ?? 0;
+  const drawSecs = state?.gameConfig?.drawSeconds ?? 0;
+  const idleWindowSec = Math.max(20, Number(gameSettings.idle_turn_seconds ?? 90));
+  const turnStartedMs = matchRow?.turn_started_at ? Date.parse(matchRow.turn_started_at) : 0;
+  const showIdleWarning =
+    isPvp &&
+    !isBeatClock &&
+    !state?.finished &&
+    isYourTurn &&
+    Number.isFinite(turnStartedMs) &&
+    turnStartedMs > 0;
+  const idleSecondsLeft = showIdleWarning
+    ? Math.max(0, Math.ceil((turnStartedMs + idleWindowSec * 1000 - Date.now()) / 1000))
+    : 0;
+  const idleTurnExpired = showIdleWarning && idleSecondsLeft <= 0;
+  const canTakeTurn = isYourTurn && !idleTurnExpired;
+
   const getPresenceStatusForPlayer = useCallback(
     (playerId: string | null | undefined) => {
       if (matchRow?.mode !== "pvp" || !playerId) return null;
@@ -627,6 +647,13 @@ export default function Play() {
 
 
   const guarded = (fn: () => MatchState, move?: ServerMove) => {
+    const isTurnBoundMove =
+      !!move &&
+      !["resolve_disaster", "concede", "rotate_hex", "finalise_by_score", "start_lobby_match"].includes(move.type);
+    if (isPvp && idleTurnExpired && isTurnBoundMove) {
+      toast.error("Time ran out — waiting for auto-pass.");
+      return;
+    }
     try {
       const snap = state;
       const next = fn();
@@ -941,6 +968,8 @@ export default function Play() {
     } else {
       phaseHint = `${turnPlayer.name} is ${isPvp ? "thinking" : "thinking…"}`;
     }
+  } else if (idleTurnExpired) {
+    phaseHint = "Time ran out — waiting for auto-pass…";
   } else if (state.phase === "draw") {
     phaseHint = `Pick up ${2 - state.drawnThisTurn} more card${2 - state.drawnThisTurn === 1 ? "" : "s"} (draw 1 at a time from either pile).`;
   } else if (mode === "steal") {
@@ -957,24 +986,24 @@ export default function Play() {
     phaseHint = `Select a card from your hand to play it. (${2 - state.placedThisTurn} play${2 - state.placedThisTurn === 1 ? "" : "s"} left this turn.)`;
   }
 
-  const canUseBoard = !!isYourTurn && state.phase === "place" && mode === "place";
+  const canUseBoard = !!canTakeTurn && state.phase === "place" && mode === "place";
   // Stage 2 of a steal: the stolen card waiting to be placed on your board.
   const stolenPendingCard: DeckCard | undefined =
     mode === "steal" && stealVictimKey
       ? opponent.ecosystem.placed.get(stealVictimKey)?.card
       : undefined;
-  const canDiscard = isYourTurn && state.phase === "place" && !!selectedCard;
-  const canDisaster = isYourTurn && state.phase === "place" && !!selectedCard
+  const canDiscard = canTakeTurn && state.phase === "place" && !!selectedCard;
+  const canDisaster = canTakeTurn && state.phase === "place" && !!selectedCard
     && (selectedCard.kind === "creator" || selectedCard.kind === "sky_creator");
-  const canSteal = isYourTurn && state.phase === "place" && !!selectedCard
+  const canSteal = canTakeTurn && state.phase === "place" && !!selectedCard
     && selectedCard.kind === "sky_creature";
 
   const handAtLimit = selfPlayer.hand.length >= 5; // HAND_LIMIT
-  const needsOpeningDraw = !selfPlayer.firstPickupDone && state.phase === "draw" && isYourTurn;
-  const canDrawOne = isYourTurn && state.phase === "draw" && selfPlayer.firstPickupDone && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2 && !handAtLimit;
+  const needsOpeningDraw = !selfPlayer.firstPickupDone && state.phase === "draw" && canTakeTurn;
+  const canDrawOne = canTakeTurn && state.phase === "draw" && selfPlayer.firstPickupDone && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2 && !handAtLimit;
 
 
-  const canTapDiscard = isYourTurn && state.phase === "place" && !!selectedUid;
+  const canTapDiscard = canTakeTurn && state.phase === "place" && !!selectedUid;
   const pilesBlock = (
     <Card
       className={
@@ -991,7 +1020,7 @@ export default function Play() {
         if (canTapDiscard && selectedUid) onDiscardUid(selectedUid);
       }}
       onDragOver={(e) => {
-        if (!isYourTurn || state.phase !== "place") return;
+        if (!canTakeTurn || state.phase !== "place") return;
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
         e.currentTarget.dataset.dropTarget = "true";
@@ -1012,7 +1041,7 @@ export default function Play() {
         )}
       </div>
       <Button variant="outline" size="sm" className="w-full text-xs"
-        disabled={!isYourTurn || state.phase !== "draw" || state.used.length === 0}
+        disabled={!canTakeTurn || state.phase !== "draw" || state.used.length === 0}
         onClick={(e) => { e.stopPropagation(); onPickUsed(); }}>
         Take top card ({state.used.length})
       </Button>
@@ -1115,10 +1144,6 @@ export default function Play() {
 
 
   /* ----------- Beat-the-Clock countdown labels ----------- */
-  const isBeatClock = state.gameMode === "beat_clock";
-  const matchEndsAt = state.gameConfig?.matchEndsAt ?? 0;
-  const turnSecs = state.gameConfig?.turnSeconds ?? 0;
-  const drawSecs = state.gameConfig?.drawSeconds ?? 0;
   const matchSecondsLeft = isBeatClock && matchEndsAt
     ? Math.max(0, Math.ceil((matchEndsAt - Date.now()) / 1000))
     : 0;
@@ -1140,18 +1165,6 @@ export default function Play() {
    * Only shown in the last 30s of the idle window when it's the local
    * player's turn. Casual play stays unpressured before that.
    */
-  const idleWindowSec = Math.max(20, Number(gameSettings.idle_turn_seconds ?? 90));
-  const turnStartedMs = matchRow?.turn_started_at ? Date.parse(matchRow.turn_started_at) : 0;
-  const showIdleWarning =
-    isPvp &&
-    !isBeatClock &&
-    !state.finished &&
-    isYourTurn &&
-    Number.isFinite(turnStartedMs) &&
-    turnStartedMs > 0;
-  const idleSecondsLeft = showIdleWarning
-    ? Math.max(0, Math.ceil((turnStartedMs + idleWindowSec * 1000 - Date.now()) / 1000))
-    : 0;
   const idleWarnVisible = showIdleWarning && idleSecondsLeft > 0 && idleSecondsLeft <= 30;
 
 
@@ -1478,12 +1491,12 @@ export default function Play() {
               eco={selfPlayer.ecosystem}
               size={72}
               autoFit
-              selectable={isYourTurn || canUseBoard}
+              selectable={canTakeTurn || canUseBoard}
               onPlace={onPlace}
               showEmpties
-              onRotateClick={isYourTurn ? onPlacedHexClick : undefined}
-              onMoveDragStart={isYourTurn ? (posKey) => setMoveFromKey(posKey) : undefined}
-              onMoveDragEnd={isYourTurn ? () => setMoveFromKey(null) : undefined}
+              onRotateClick={canTakeTurn ? onPlacedHexClick : undefined}
+              onMoveDragStart={canTakeTurn ? (posKey) => setMoveFromKey(posKey) : undefined}
+              onMoveDragEnd={canTakeTurn ? () => setMoveFromKey(null) : undefined}
               minHeight={0}
               moveFromKey={moveFromKey}
               legalForCard={
@@ -1536,7 +1549,7 @@ export default function Play() {
             hand={selfPlayer.hand}
             selectedUid={selectedUid}
             onSelect={(uid) => setSelectedUid(uid)}
-            disabled={!isYourTurn || state.phase !== "place"}
+            disabled={!canTakeTurn || state.phase !== "place"}
             size={62}
             stuckUids={stuckUids}
           />
@@ -1642,12 +1655,12 @@ export default function Play() {
                   eco={selfPlayer.ecosystem}
                   size={110}
                   autoFit
-                  selectable={isYourTurn || canUseBoard}
+                  selectable={canTakeTurn || canUseBoard}
                   onPlace={onPlace}
                   showEmpties
-                  onRotateClick={isYourTurn ? onPlacedHexClick : undefined}
-                  onMoveDragStart={isYourTurn ? (posKey) => setMoveFromKey(posKey) : undefined}
-                  onMoveDragEnd={isYourTurn ? () => setMoveFromKey(null) : undefined}
+                  onRotateClick={canTakeTurn ? onPlacedHexClick : undefined}
+                  onMoveDragStart={canTakeTurn ? (posKey) => setMoveFromKey(posKey) : undefined}
+                  onMoveDragEnd={canTakeTurn ? () => setMoveFromKey(null) : undefined}
                   minHeight={0}
                   moveFromKey={moveFromKey}
                   legalForCard={
@@ -1698,7 +1711,7 @@ export default function Play() {
                   hand={selfPlayer.hand}
                   selectedUid={selectedUid}
                   onSelect={(uid) => setSelectedUid(uid)}
-                  disabled={!isYourTurn || state.phase !== "place"}
+                  disabled={!canTakeTurn || state.phase !== "place"}
                   size={76}
                   stuckUids={stuckUids}
                 />
@@ -1737,7 +1750,7 @@ export default function Play() {
                       type="button"
                       onContextMenu={(e) => { e.preventDefault(); if (canTapDiscard && selectedUid) onDiscardUid(selectedUid); }}
                       onDragOver={(e) => {
-                        if (!isYourTurn || state.phase !== "place") return;
+                        if (!canTakeTurn || state.phase !== "place") return;
                         e.preventDefault();
                         e.dataTransfer.dropEffect = "move";
                         (e.currentTarget as HTMLElement).dataset.dropTarget = "true";
@@ -1781,7 +1794,7 @@ export default function Play() {
                           size="sm"
                           variant="outline"
                           className="mt-1 h-7 text-[11px]"
-                          disabled={!isYourTurn || state.phase !== "draw" || state.used.length === 0}
+                          disabled={!canTakeTurn || state.phase !== "draw" || state.used.length === 0}
                           onClick={onPickUsed}
                         >
                           Take top card
