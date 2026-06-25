@@ -46,6 +46,7 @@ interface RosterPresence {
   last_seen_at: string | null;
   disconnected_at: string | null;
   disconnect_reason: string | null;
+  idle_strikes: number | null;
 }
 
 interface Options {
