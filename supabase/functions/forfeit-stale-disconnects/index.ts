@@ -146,42 +146,65 @@ Deno.serve(async (req) => {
     console.warn("[sweep] settings read failed; using defaults", e);
   }
 
+  // Startup grace: a freshly-started match must not be swept before its
+  // clients have had time to establish presence on /play. We use 2x the
+  // debounce (with a 30s floor) so even a slow first ping after start
+  // can't be misread as "disconnected". This is the structural fix —
+  // start-time last_seen_at refresh in commit_start_lobby is only belt.
+  const startupGraceSec = Math.max(debounceSec * 2, 30);
+  const startupCutoffIso = new Date(Date.now() - startupGraceSec * 1000).toISOString();
+
   const summary = {
     stamped: 0,
     past_grace_forfeited: 0,
     matches_scanned: 0,
+    matches_skipped_startup_grace: 0,
     debounce_sec: debounceSec,
     grace_sec: graceSec,
+    startup_grace_sec: startupGraceSec,
   };
+
+  // Build the set of match ids currently in startup grace, so we can skip
+  // them in both the stamp step and the per-match loop below.
+  const startupGraceMatchIds = new Set<string>();
+  try {
+    const { data: youngMatches } = await svc
+      .from("game_matches")
+      .select("id")
+      .eq("status", "active")
+      .not("started_at", "is", null)
+      .gt("started_at", startupCutoffIso);
+    for (const r of (youngMatches ?? []) as Array<{ id: string }>) {
+      startupGraceMatchIds.add(r.id);
+    }
+  } catch (e) {
+    console.warn("[sweep] startup-grace lookup failed", e);
+  }
 
   // 2. STAMP: convert silent last_seen_at into disconnected_at.
   //    disconnected_at = last_seen_at (stable start; NOT now()).
   try {
-    const { data: stamped, error: stampErr } = await svc.rpc("sweep_stamp_disconnects", {
-      _debounce_seconds: debounceSec,
-    });
-    if (stampErr) {
-      // RPC may not exist in dev; fall back to inline SQL via .from(...).update with a filter.
-      // Use a single UPDATE bounded by ages computed in JS to avoid a custom RPC dependency.
-      const cutoff = new Date(Date.now() - debounceSec * 1000).toISOString();
-      const { data: rows, error: selErr } = await svc
-        .from("game_match_players")
-        .select("match_id, user_id, last_seen_at")
-        .is("disconnected_at", null)
-        .eq("status", "active")
-        .lt("last_seen_at", cutoff);
-      if (selErr) throw selErr;
-      for (const r of rows ?? []) {
-        await svc
-          .from("game_match_players")
-          .update({ disconnected_at: r.last_seen_at })
-          .eq("match_id", r.match_id)
-          .eq("user_id", r.user_id)
-          .is("disconnected_at", null);
-        summary.stamped += 1;
+    const cutoff = new Date(Date.now() - debounceSec * 1000).toISOString();
+    const { data: rows, error: selErr } = await svc
+      .from("game_match_players")
+      .select("match_id, user_id, last_seen_at")
+      .is("disconnected_at", null)
+      .eq("status", "active")
+      .lt("last_seen_at", cutoff);
+    if (selErr) throw selErr;
+    for (const r of rows ?? []) {
+      if (startupGraceMatchIds.has(r.match_id as string)) {
+        // Don't penalise a match that just started — clients may not have
+        // pinged /play yet. The next sweep will catch real silence.
+        continue;
       }
-    } else {
-      summary.stamped = Number(stamped ?? 0);
+      await svc
+        .from("game_match_players")
+        .update({ disconnected_at: r.last_seen_at })
+        .eq("match_id", r.match_id)
+        .eq("user_id", r.user_id)
+        .is("disconnected_at", null);
+      summary.stamped += 1;
     }
   } catch (e) {
     console.error("[sweep] stamp step failed", e);
