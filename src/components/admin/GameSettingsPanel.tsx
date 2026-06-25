@@ -80,18 +80,21 @@ export default function GameSettingsPanel() {
 
   async function save() {
     setSaving(true);
+    const payload = { ...s, id: "global", updated_at: new Date().toISOString() };
     const { error } = await supabase
       .from("game_settings" as any)
-      .upsert({ ...s, id: "global", updated_at: new Date().toISOString() } as any, { onConflict: "id" });
+      .upsert(payload as any, { onConflict: "id" });
     setSaving(false);
     if (error) toast({ title: "Save failed", description: error.message, variant: "destructive" });
     else {
       invalidateGameSettings();
+      setInitial(s);
       toast({ title: "Game settings saved" });
     }
   }
 
   function reset() { setS(DEFAULT_GAME_SETTINGS); }
+  function discardChanges() { setS(initial); }
 
   async function resetPlayer() {
     const email = resetEmail.trim().toLowerCase();
