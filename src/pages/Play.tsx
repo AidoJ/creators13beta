@@ -1511,36 +1511,65 @@ export default function Play() {
         <>
           {/* Top utility row: opponent peek + draw/discard quick access */}
           <div className="flex items-center gap-1.5 px-2 pt-1.5 pb-1 border-b border-border/40">
-            <Button
-              variant="outline"
-              size="sm"
-              className={
-                "flex-1 min-h-7 h-auto text-[11px] px-2 justify-start " +
-                ((getPresenceStatusForPlayer(opponent.id) === "disconnected" || getPresenceStatusForPlayer(opponent.id) === "missing")
-                  ? "border-destructive/60 bg-destructive/10 text-destructive"
-                  : getPresenceStatusForPlayer(opponent.id) === "reconnecting"
-                    ? "border-amber-500/60 bg-amber-500/10 text-amber-300"
-                    : "")
-              }
-              onClick={() => { setExpandedOpponentId(opponent.id); setOpponentPanelOpen(true); }}
-            >
-              <span className="min-w-0 flex-1 text-left">
-                <span className="flex items-center gap-1 min-w-0">
-                  <Maximize2 className="w-3 h-3 shrink-0" />
-                  <span className="truncate">{opponent.name}</span>
-                </span>
-                {(getPresenceStatusForPlayer(opponent.id) === "disconnected" || getPresenceStatusForPlayer(opponent.id) === "missing") && (
-                  <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
-                    <WifiOff className="w-2.5 h-2.5" /> Disconnected
+            {(() => {
+              const opStatus = getPresenceStatusForPlayer(opponent.id);
+              const opDeparted = isPlayerDeparted(opponent.id);
+              const opStrikes = getStrikesForPlayer(opponent.id);
+              const opDisconnected = opStatus === "disconnected" || opStatus === "missing";
+              const opReconnecting = opStatus === "reconnecting";
+              return (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={
+                    "flex-1 min-h-7 h-auto text-[11px] px-2 justify-start " +
+                    (opDeparted
+                      ? "border-destructive/60 bg-destructive/10 text-destructive opacity-70"
+                      : opDisconnected
+                        ? "border-destructive/60 bg-destructive/10 text-destructive"
+                        : opReconnecting
+                          ? "border-amber-500/60 bg-amber-500/10 text-amber-300"
+                          : "")
+                  }
+                  onClick={() => { setExpandedOpponentId(opponent.id); setOpponentPanelOpen(true); }}
+                >
+                  <span className="min-w-0 flex-1 text-left">
+                    <span className="flex items-center gap-1 min-w-0">
+                      <Maximize2 className="w-3 h-3 shrink-0" />
+                      <span className={"truncate " + (opDeparted ? "line-through" : "")}>{opponent.name}</span>
+                      {!opDisconnected && !opDeparted && opStrikes >= 1 && (
+                        <span
+                          className={
+                            "ml-1 inline-flex items-center gap-0.5 px-1 py-0 rounded text-[9px] font-bold tabular-nums " +
+                            (opStrikes >= idleStrikesLimit - 1
+                              ? "bg-red-600 text-white"
+                              : opStrikes === idleStrikesLimit - 2
+                                ? "bg-orange-500 text-white"
+                                : "bg-amber-500 text-white")
+                          }
+                          title="Consecutive idle timeouts (resets on next action)"
+                        >
+                          <Clock className="w-2.5 h-2.5" />{opStrikes}/{idleStrikesLimit}
+                        </span>
+                      )}
+                    </span>
+                    {opDeparted ? (
+                      <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
+                        <WifiOff className="w-2.5 h-2.5" /> Removed (inactive)
+                      </span>
+                    ) : opDisconnected ? (
+                      <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
+                        <WifiOff className="w-2.5 h-2.5" /> Disconnected
+                      </span>
+                    ) : opReconnecting ? (
+                      <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
+                        <Loader2 className="w-2.5 h-2.5 animate-spin" /> Reconnecting
+                      </span>
+                    ) : null}
                   </span>
-                )}
-                {getPresenceStatusForPlayer(opponent.id) === "reconnecting" && (
-                  <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
-                    <Loader2 className="w-2.5 h-2.5 animate-spin" /> Reconnecting
-                  </span>
-                )}
-              </span>
-            </Button>
+                </Button>
+              );
+            })()}
             <button
               type="button"
               onClick={() => {
