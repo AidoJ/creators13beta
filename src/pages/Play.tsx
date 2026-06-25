@@ -564,6 +564,26 @@ export default function Play() {
     opponents.find((p) => p.id === expandedOpponentId) ?? opponent ?? null;
   const isYourTurn =
     !!state && !state.finished && state.players[state.turn].id === selfSlot && !waitingForGuest;
+
+  const isBeatClock = state.gameMode === "beat_clock";
+  const matchEndsAt = state.gameConfig?.matchEndsAt ?? 0;
+  const turnSecs = state.gameConfig?.turnSeconds ?? 0;
+  const drawSecs = state.gameConfig?.drawSeconds ?? 0;
+  const idleWindowSec = Math.max(20, Number(gameSettings.idle_turn_seconds ?? 90));
+  const turnStartedMs = matchRow?.turn_started_at ? Date.parse(matchRow.turn_started_at) : 0;
+  const showIdleWarning =
+    isPvp &&
+    !isBeatClock &&
+    !state.finished &&
+    isYourTurn &&
+    Number.isFinite(turnStartedMs) &&
+    turnStartedMs > 0;
+  const idleSecondsLeft = showIdleWarning
+    ? Math.max(0, Math.ceil((turnStartedMs + idleWindowSec * 1000 - Date.now()) / 1000))
+    : 0;
+  const idleTurnExpired = showIdleWarning && idleSecondsLeft <= 0;
+  const canTakeTurn = isYourTurn && !idleTurnExpired;
+
   const getPresenceStatusForPlayer = useCallback(
     (playerId: string | null | undefined) => {
       if (matchRow?.mode !== "pvp" || !playerId) return null;
