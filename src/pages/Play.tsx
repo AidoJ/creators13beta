@@ -1217,6 +1217,21 @@ export default function Play() {
         </div>
       )}
 
+      {/* Baseline idle warning — only last 30s of the idle window */}
+      {idleWarnVisible && (
+        <div className={
+          "px-3 py-1.5 text-xs sm:text-sm text-center border-b " +
+          (idleSecondsLeft <= 10
+            ? "bg-destructive/20 text-destructive border-destructive/30 animate-pulse"
+            : "bg-amber-500/10 text-amber-200 border-amber-500/30")
+        }>
+          <Clock className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />
+          Your turn — auto-pass in <span className="font-mono font-semibold tabular-nums">{idleSecondsLeft}s</span>
+        </div>
+      )}
+
+
+
 
       {!ribbonHidden && (
         <div className="px-3 py-1.5 bg-card/30 border-b border-border/40 flex items-center justify-between gap-3 flex-wrap">
