@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Save, RotateCcw, Trophy, Timer, Gamepad2, Bot, Eye, Library, AlertTrian
 import { DEFAULT_GAME_SETTINGS, invalidateGameSettings, type GameSettings } from "@/lib/game/settings";
 import CardEditorDialog from "./CardEditorDialog";
 import CreatorContentEditor from "./CreatorContentEditor";
+import { registerDirtyGetter } from "./unsavedChanges";
 
 type Num = keyof Pick<GameSettings,
   "points_per_win" | "elo_win" | "elo_loss" | "perfect_eco_bonus"
@@ -33,6 +34,8 @@ type Bool = keyof Pick<GameSettings,
 
 export default function GameSettingsPanel() {
   const [s, setS] = useState<GameSettings>(DEFAULT_GAME_SETTINGS);
+  // Last-saved snapshot — `s` differs from this iff there are unsaved edits.
+  const [initial, setInitial] = useState<GameSettings>(DEFAULT_GAME_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -52,11 +55,22 @@ export default function GameSettingsPanel() {
         supabase.from("game_settings" as any).select("*").eq("id", "global").maybeSingle(),
         supabase.from("game_cards").select("id", { count: "exact", head: true }),
       ]);
-      if (data) setS({ ...DEFAULT_GAME_SETTINGS, ...(data as any) });
+      const merged = { ...DEFAULT_GAME_SETTINGS, ...((data as any) || {}) } as GameSettings;
+      setS(merged);
+      setInitial(merged);
       setCardCount(count ?? null);
       setLoading(false);
     })();
   }, []);
+
+  const dirty = useMemo(() => !shallowEqual(s, initial), [s, initial]);
+
+  // Register with the admin shell so tab switches / page unloads can confirm.
+  useEffect(() => {
+    return registerDirtyGetter(() =>
+      dirty ? "Game settings have unsaved changes." : null,
+    );
+  }, [dirty]);
 
   function setNum(k: Num, v: string) {
     const n = Number(v);
