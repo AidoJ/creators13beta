@@ -250,7 +250,15 @@ export function useMatchPresence({
       if (slot == null) return null;
       return Object.values(state.rosterByUser).find((row) => row.slot === slot)?.user_id ?? null;
     };
-    return { statusFor, userIdForSlot, isConnected, isReconnecting, isDisconnected, isMissing };
+    const strikesFor = (uid: string | null | undefined): number => {
+      if (!uid) return 0;
+      return Number(state.rosterByUser[uid]?.idle_strikes ?? 0);
+    };
+    const isDeparted = (uid: string | null | undefined): boolean => {
+      if (!uid) return false;
+      return state.rosterByUser[uid]?.disconnect_reason === "idle_departed";
+    };
+    return { statusFor, userIdForSlot, isConnected, isReconnecting, isDisconnected, isMissing, strikesFor, isDeparted };
   }, [state.byUser, state.presenceSynced, state.rosterByUser]);
 
   return { ...state, ...helpers };
