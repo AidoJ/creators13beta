@@ -583,26 +583,99 @@ export default function Play() {
     : 0;
   const idleTurnExpired = showIdleWarning && idleSecondsLeft <= 0;
   const canTakeTurn = isYourTurn && !idleTurnExpired;
+  const idleStrikesLimit = Math.max(1, Number(gameSettings.idle_turn_strikes_limit ?? 3));
+
+  const getUserIdForPlayer = useCallback(
+    (playerId: string | null | undefined): string | null => {
+      if (matchRow?.mode !== "pvp" || !playerId) return null;
+      const slot = state?.players.findIndex((p) => p.id === playerId) ?? -1;
+      if (slot < 0) return null;
+      if (slot === 0) return matchRow.host_user_id ?? null;
+      if (slot === 1) return matchRow.guest_user_id ?? presence.userIdForSlot(slot);
+      return presence.userIdForSlot(slot);
+    },
+    [matchRow, state?.players, presence],
+  );
 
   const getPresenceStatusForPlayer = useCallback(
     (playerId: string | null | undefined) => {
-      if (matchRow?.mode !== "pvp" || !playerId) return null;
-      const slot = state?.players.findIndex((p) => p.id === playerId) ?? -1;
-      const uid =
-        slot === 0
-          ? matchRow.host_user_id
-          : slot === 1
-            ? matchRow.guest_user_id ?? presence.userIdForSlot(slot)
-            : slot > 1
-              ? presence.userIdForSlot(slot)
-            : null;
+      const uid = getUserIdForPlayer(playerId);
       if (!uid) return null;
       const status = presence.statusFor(uid);
       if (status) return status;
       return null;
     },
-    [matchRow, state?.players, presence],
+    [getUserIdForPlayer, presence],
   );
+
+  const getStrikesForPlayer = useCallback(
+    (playerId: string | null | undefined): number => {
+      const uid = getUserIdForPlayer(playerId);
+      return presence.strikesFor(uid);
+    },
+    [getUserIdForPlayer, presence],
+  );
+
+  const isPlayerDeparted = useCallback(
+    (playerId: string | null | undefined): boolean => {
+      const uid = getUserIdForPlayer(playerId);
+      return presence.isDeparted(uid);
+    },
+    [getUserIdForPlayer, presence],
+  );
+
+  // Toast on strike/departure transitions. Strikes are CONSECUTIVE and reset
+  // to 0 on any real action — the badge & toasts must reflect the live roster
+  // value (not a high-water mark).
+  const prevStrikesRef = useRef<Record<string, number>>({});
+  const prevDepartedRef = useRef<Record<string, boolean>>({});
+  useEffect(() => {
+    if (!isPvp || !state) return;
+    const selfUid = getUserIdForPlayer(selfSlot);
+    for (const p of state.players) {
+      const uid = getUserIdForPlayer(p.id);
+      if (!uid) continue;
+      const cur = presence.strikesFor(uid);
+      const prev = prevStrikesRef.current[uid] ?? 0;
+      if (cur > prev && cur >= 1 && cur < idleStrikesLimit) {
+        if (uid === selfUid) {
+          toast.warning(`You timed out — turn passed (${cur}/${idleStrikesLimit})`);
+        } else {
+          toast(`${p.name} timed out (${cur}/${idleStrikesLimit})`);
+        }
+      }
+      prevStrikesRef.current[uid] = cur;
+
+      const departed = presence.isDeparted(uid);
+      const wasDeparted = prevDepartedRef.current[uid] ?? false;
+      if (departed && !wasDeparted) {
+        if (uid === selfUid) {
+          toast.error("You've been removed for inactivity", { duration: 6000 });
+        } else {
+          toast.error(`${p.name} has been removed for inactivity`, { duration: 6000 });
+        }
+      }
+      prevDepartedRef.current[uid] = departed;
+    }
+  }, [isPvp, state, selfSlot, getUserIdForPlayer, presence, idleStrikesLimit]);
+
+  // Blocked-action toast: if a player taps anywhere on the play surface while
+  // their turn has expired but auto-pass hasn't yet landed (1-2s gap), the
+  // disabled controls feel broken. Surface a single throttled toast so they
+  // understand what happened. Real actions are already blocked by canTakeTurn
+  // and by the server-side validation in apply-move.
+  const blockedToastAtRef = useRef<number>(0);
+  useEffect(() => {
+    if (!idleTurnExpired || !isYourTurn) return;
+    const onAnyClick = () => {
+      const now = Date.now();
+      if (now - blockedToastAtRef.current < 3000) return;
+      blockedToastAtRef.current = now;
+      toast.error("You timed out on this turn — waiting for next turn…");
+    };
+    document.addEventListener("pointerdown", onAnyClick, true);
+    return () => document.removeEventListener("pointerdown", onAnyClick, true);
+  }, [idleTurnExpired, isYourTurn]);
   const selectedCard: DeckCard | undefined = useMemo(
     () => selfPlayer?.hand.find((c) => c.uid === selectedUid),
     [selfPlayer, selectedUid],
