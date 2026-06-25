@@ -223,6 +223,7 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
                   config.matchEndsAt = Date.now() + matchMinutes * 60_000;
                   config.matchMinutes = matchMinutes;
                   config.turnSeconds = turnSeconds;
+                  config.drawSeconds = drawSeconds;
                 }
                 onChooseMultiplayer(mode, config);
               }}
