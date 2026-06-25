@@ -270,20 +270,23 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "roster fetch failed" }, 500);
   }
 
-  // A.4 — load disconnect grace window from game_settings so the engine's
-  // ≤1-active match-end check uses the tunable value. Read once per request.
+  // A.4 — load turn/disconnect timers from game_settings so server-side move
+  // validation uses the same admin-configured idle window as the sweep/UI.
   let disconnectGraceMs = 5 * 60 * 1000;
+  let idleTurnMs = 90 * 1000;
   try {
     const { data: settings } = await svc
       .from("game_settings")
-      .select("disconnect_grace_seconds")
+      .select("disconnect_grace_seconds, idle_turn_seconds")
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    const secs = Number(settings?.disconnect_grace_seconds);
-    if (Number.isFinite(secs) && secs > 0) disconnectGraceMs = secs * 1000;
+    const disconnectSecs = Number(settings?.disconnect_grace_seconds);
+    const idleSecs = Number(settings?.idle_turn_seconds);
+    if (Number.isFinite(disconnectSecs) && disconnectSecs > 0) disconnectGraceMs = disconnectSecs * 1000;
+    if (Number.isFinite(idleSecs) && idleSecs > 0) idleTurnMs = idleSecs * 1000;
   } catch (e) {
-    console.warn("[apply-move] game_settings read failed, using default grace", e);
+    console.warn("[apply-move] game_settings read failed, using default timers", e);
   }
 
 
@@ -398,7 +401,8 @@ Deno.serve(async (req) => {
     "finalise_by_score",
     "start_lobby_match",
   ]);
-  if (!NON_TURN_MOVES.has(body.move.type)) {
+  const isTurnBoundMove = !NON_TURN_MOVES.has(body.move.type);
+  if (isTurnBoundMove) {
     if (state.turn !== callerSlot) {
       console.warn("[apply-move] not your turn", {
         match_id: body.match_id,
@@ -408,6 +412,27 @@ Deno.serve(async (req) => {
       });
       return jsonResponse({ error: "not your turn", message: "Not your turn yet" }, 400);
     }
+  }
+  const turnStartedRaw = (match as any).turn_started_at;
+  const turnStartedAt = typeof turnStartedRaw === "string" ? Date.parse(turnStartedRaw) : NaN;
+  const callerTurnExpired =
+    match.status === "active" &&
+    state.gameMode !== "beat_clock" &&
+    state.turn === callerSlot &&
+    Number.isFinite(turnStartedAt) &&
+    Date.now() >= turnStartedAt + idleTurnMs;
+  if (callerTurnExpired && body.move.type !== "concede" && body.move.type !== "resolve_disaster") {
+    console.warn("[apply-move] idle turn expired", {
+      match_id: body.match_id,
+      move: body.move.type,
+      callerSlot,
+      stateTurn: state.turn,
+      idle_ms: idleTurnMs,
+    });
+    return jsonResponse(
+      { error: "turn expired", message: "Time ran out — waiting for auto-pass." },
+      400,
+    );
   }
   if (body.move.type === "resolve_disaster") {
     // A.3 — use victimIds (source of truth post-A.2); victimId is a
@@ -652,7 +677,7 @@ Deno.serve(async (req) => {
   //     and zero out on any real action by that player.
   // Skipped only on finished matches (no more turns) and lobby start (handled
   // alongside the lobby flip below).
-  if (!finished && !lobbyJustStarted) {
+  if (!finished && !lobbyJustStarted && isTurnBoundMove) {
     const nowIso = new Date().toISOString();
     const { error: bumpErr } = await svc
       .from("game_matches")
