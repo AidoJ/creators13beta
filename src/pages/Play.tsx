@@ -647,6 +647,13 @@ export default function Play() {
 
 
   const guarded = (fn: () => MatchState, move?: ServerMove) => {
+    const isTurnBoundMove =
+      !!move &&
+      !["resolve_disaster", "concede", "rotate_hex", "finalise_by_score", "start_lobby_match"].includes(move.type);
+    if (isPvp && idleTurnExpired && isTurnBoundMove) {
+      toast.error("Time ran out — waiting for auto-pass.");
+      return;
+    }
     try {
       const snap = state;
       const next = fn();
