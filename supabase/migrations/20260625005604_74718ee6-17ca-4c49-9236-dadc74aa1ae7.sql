@@ -1,0 +1,2 @@
+ALTER TABLE public.game_match_players DROP CONSTRAINT IF EXISTS game_match_players_slot_check;
+ALTER TABLE public.game_match_players ADD CONSTRAINT game_match_players_slot_check CHECK (slot >= -10 AND slot <= 3);
