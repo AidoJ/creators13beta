@@ -434,11 +434,17 @@ Deno.serve(async (req) => {
     //
     //   1. Authority: caller MUST be slot 0 (host). Invitees can never start.
     //   2. Match must be a lobby_mode match still in 'waiting' status.
-    //   3. Roster must be FULL (player_count slots filled) — partial-fill
-    //      starts are out of scope for B.
-    //   4. Shuffle turn order across all slots (Fisher–Yates). The host
-    //      triggers the start but doesn't necessarily go first.
-    //   5. Status flip to 'active' happens AFTER commit_move below.
+    //   3. Roster must have AT LEAST 2 filled slots. Host-start-with-2+:
+    //      empty slots are TRIMMED at start so the engine sees a clean
+    //      N-player match with no phantom seats.
+    //   4. Trim is one atomic transaction across four things via the
+    //      commit_start_lobby RPC: (a) filter state.players to filled slots,
+    //      (b) re-index game_match_players.slot contiguously 0..N-1,
+    //      (c) update game_matches.player_count to actual count,
+    //      (d) write per-player redacted states. All commit together with
+    //      status='active' and seq+1.
+    //   5. Shuffle turn order across the trimmed slots (Fisher–Yates). The
+    //      host triggers the start but doesn't necessarily go first.
     if (callerSlot !== 0) {
       return jsonResponse({ error: "host only", message: "Only the host can start the match" }, 403);
     }
@@ -448,32 +454,100 @@ Deno.serve(async (req) => {
     if (match.status !== "waiting") {
       return jsonResponse({ error: "lobby already started or closed" }, 400);
     }
-    const expectedCount = Number(match.player_count ?? 2);
-    if (rosterRows.length < expectedCount) {
+    if (rosterRows.length < 2) {
       return jsonResponse({
-        error: "lobby not full",
-        message: `Need ${expectedCount} players to start (have ${rosterRows.length})`,
+        error: "lobby needs 2+ players",
+        message: `Need at least 2 players to start (have ${rosterRows.length})`,
       }, 400);
     }
-    const slotOrder = rosterRows.map((r) => r.slot).sort((a, b) => a - b);
-    const shuffled = [...slotOrder];
-    for (let i = shuffled.length - 1; i > 0; i--) {
+
+    // --- Build the trimmed state ---
+    // rosterRows is already ordered by slot ascending. Map old slot -> new
+    // contiguous slot, keeping the existing player objects (with their
+    // user-supplied id/name) for filled slots only.
+    const filledOldSlots = rosterRows
+      .map((r) => r.slot)
+      .filter((s) => s < state.players.length)
+      .sort((a, b) => a - b);
+    const slotRemap = filledOldSlots.map((oldSlot, newSlot) => ({
+      old_slot: oldSlot,
+      new_slot: newSlot,
+    }));
+    const trimmedPlayers = filledOldSlots.map((oldSlot) => state.players[oldSlot]);
+    const newPlayerCount = trimmedPlayers.length;
+
+    // Fisher–Yates over the NEW contiguous slot indices.
+    const newSlotOrder = trimmedPlayers.map((_, i) => i);
+    for (let i = newSlotOrder.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      [newSlotOrder[i], newSlotOrder[j]] = [newSlotOrder[j], newSlotOrder[i]];
     }
-    nextState = {
+
+    const trimmedState: MatchState = {
       ...state,
-      turnOrder: shuffled,
-      turn: shuffled[0],
+      players: trimmedPlayers,
+      turnOrder: newSlotOrder,
+      turn: newSlotOrder[0],
       phase: "draw",
       turnNumber: 1,
     };
-    lobbyJustStarted = true;
-    console.log("[apply-move] start_lobby_match", {
+
+    const serialisedTrimmed = serialise(trimmedState);
+    // Per-player redacted states using NEW slot indices.
+    const lobbyPlayerStates: Array<{ user_id: string; state: any }> = [];
+    for (let newSlot = 0; newSlot < trimmedPlayers.length; newSlot++) {
+      const oldSlot = filledOldSlots[newSlot];
+      const rosterRow = rosterRows.find((r) => r.slot === oldSlot);
+      if (!rosterRow) continue;
+      const pid = trimmedPlayers[newSlot]?.id;
+      if (!pid) continue;
+      lobbyPlayerStates.push({
+        user_id: rosterRow.user_id,
+        state: redactFor(serialisedTrimmed, pid),
+      });
+    }
+
+    console.log("[apply-move] start_lobby_match (trim+start)", {
       match_id: body.match_id,
-      shuffled,
-      first_turn_slot: shuffled[0],
+      filled_old_slots: filledOldSlots,
+      slot_remap: slotRemap,
+      new_player_count: newPlayerCount,
+      shuffled_turn_order: newSlotOrder,
+      first_turn_new_slot: newSlotOrder[0],
     });
+
+    const { error: startErr } = await svc.rpc("commit_start_lobby", {
+      _match_id: body.match_id,
+      _expected_seq: body.expected_seq,
+      _actor: userId,
+      _move: body.move as any,
+      _new_state: serialisedTrimmed,
+      _player_states: lobbyPlayerStates as any,
+      _slot_remap: slotRemap as any,
+      _new_player_count: newPlayerCount,
+    });
+    if (startErr) {
+      const code = (startErr as any).code ?? "";
+      const msg = String(startErr.message ?? "");
+      if (code === "40001" || msg.includes("stale seq")) {
+        return jsonResponse({ error: "stale", message: msg }, 409);
+      }
+      console.error("[apply-move] commit_start_lobby failed", startErr);
+      return jsonResponse({ error: "commit failed", detail: msg }, 500);
+    }
+
+    // The host's redacted view of the trimmed state.
+    const hostNewSlot = filledOldSlots.indexOf(0);
+    const hostPid = hostNewSlot >= 0 ? trimmedPlayers[hostNewSlot]?.id ?? null : null;
+    return jsonResponse({
+      ok: true,
+      seq: body.expected_seq + 1,
+      public_state: redactFor(serialisedTrimmed, hostPid),
+      finished: false,
+      winner_user_id: null,
+      lobby_started: true,
+    });
+
   } else {
     try {
       nextState = applyMove(state, body.move, callerPlayerId);

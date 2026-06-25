@@ -2086,6 +2086,19 @@ export type Database = {
         }
         Returns: Json
       }
+      commit_start_lobby: {
+        Args: {
+          _actor: string
+          _expected_seq: number
+          _match_id: string
+          _move: Json
+          _new_player_count: number
+          _new_state: Json
+          _player_states: Json
+          _slot_remap: Json
+        }
+        Returns: Json
+      }
       complete_profile: { Args: { _payload: Json }; Returns: undefined }
       compute_creator_of_the_month: {
         Args: { _for_date?: string }
