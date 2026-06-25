@@ -761,6 +761,7 @@ export type Database = {
           disconnected_at: string | null
           display_name: string
           finalised_at: string | null
+          idle_strikes: number
           joined_at: string
           last_seen_at: string | null
           match_id: string
@@ -774,6 +775,7 @@ export type Database = {
           disconnected_at?: string | null
           display_name: string
           finalised_at?: string | null
+          idle_strikes?: number
           joined_at?: string
           last_seen_at?: string | null
           match_id: string
@@ -787,6 +789,7 @@ export type Database = {
           disconnected_at?: string | null
           display_name?: string
           finalised_at?: string | null
+          idle_strikes?: number
           joined_at?: string
           last_seen_at?: string | null
           match_id?: string
@@ -825,6 +828,7 @@ export type Database = {
           started_at: string | null
           state: Json
           status: Database["public"]["Enums"]["match_status"]
+          turn_started_at: string | null
           updated_at: string
           winner_user_id: string | null
         }
@@ -847,6 +851,7 @@ export type Database = {
           started_at?: string | null
           state: Json
           status?: Database["public"]["Enums"]["match_status"]
+          turn_started_at?: string | null
           updated_at?: string
           winner_user_id?: string | null
         }
@@ -869,6 +874,7 @@ export type Database = {
           started_at?: string | null
           state?: Json
           status?: Database["public"]["Enums"]["match_status"]
+          turn_started_at?: string | null
           updated_at?: string
           winner_user_id?: string | null
         }
@@ -927,6 +933,8 @@ export type Database = {
           hand_limit: number
           hand_size: number
           id: string
+          idle_turn_seconds: number
+          idle_turn_strikes_limit: number
           maintenance_banner_enabled: boolean
           maintenance_banner_text: string
           max_players_per_match: number
@@ -984,6 +992,8 @@ export type Database = {
           hand_limit?: number
           hand_size?: number
           id?: string
+          idle_turn_seconds?: number
+          idle_turn_strikes_limit?: number
           maintenance_banner_enabled?: boolean
           maintenance_banner_text?: string
           max_players_per_match?: number
@@ -1041,6 +1051,8 @@ export type Database = {
           hand_limit?: number
           hand_size?: number
           id?: string
+          idle_turn_seconds?: number
+          idle_turn_strikes_limit?: number
           maintenance_banner_enabled?: boolean
           maintenance_banner_text?: string
           max_players_per_match?: number
@@ -2268,6 +2280,7 @@ export type Database = {
           started_at: string | null
           state: Json
           status: Database["public"]["Enums"]["match_status"]
+          turn_started_at: string | null
           updated_at: string
           winner_user_id: string | null
         }[]
