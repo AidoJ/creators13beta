@@ -1312,17 +1312,25 @@ export default function Play() {
       )}
 
       {/* Baseline idle warning — only last 30s of the idle window */}
-      {idleWarnVisible && (
-        <div className={
-          "px-3 py-2 text-sm sm:text-base font-semibold text-center border-y-2 shadow-lg " +
-          (idleSecondsLeft <= 10
-            ? "bg-red-600 text-white border-red-800 animate-pulse"
-            : "bg-red-500 text-white border-red-700")
-        }>
-          <Clock className="inline w-4 h-4 mr-1.5 -mt-0.5" />
-          Your turn — auto-pass in <span className="font-mono font-bold tabular-nums">{idleSecondsLeft}s</span>
-        </div>
-      )}
+      {idleWarnVisible && (() => {
+        const selfStrikes = getStrikesForPlayer(selfSlot);
+        return (
+          <div className={
+            "px-3 py-2 text-sm sm:text-base font-semibold text-center border-y-2 shadow-lg " +
+            (idleSecondsLeft <= 10
+              ? "bg-red-600 text-white border-red-800 animate-pulse"
+              : "bg-red-500 text-white border-red-700")
+          }>
+            <Clock className="inline w-4 h-4 mr-1.5 -mt-0.5" />
+            Your turn — auto-pass in <span className="font-mono font-bold tabular-nums">{idleSecondsLeft}s</span>
+            {selfStrikes >= 1 && (
+              <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/20 text-white text-[11px] font-bold uppercase tracking-wide">
+                Strike {selfStrikes + 1}/{idleStrikesLimit}
+              </span>
+            )}
+          </div>
+        );
+      })()}
 
 
 
@@ -1330,7 +1338,14 @@ export default function Play() {
       {!ribbonHidden && (
         <div className="px-3 py-1.5 bg-card/30 border-b border-border/40 flex items-center justify-between gap-3 flex-wrap">
           <div className="text-xs sm:text-sm flex-1 min-w-0 truncate">
-            {phaseHint}
+            {idleTurnExpired && isYourTurn ? (
+              <span className="inline-flex items-center gap-1.5 text-red-500 font-semibold">
+                <Clock className="w-4 h-4" />
+                Time ran out — waiting for auto-pass…
+              </span>
+            ) : (
+              phaseHint
+            )}
           </div>
 
           {/* Beat-the-Clock countdowns */}
