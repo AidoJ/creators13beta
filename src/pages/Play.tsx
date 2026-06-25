@@ -565,16 +565,16 @@ export default function Play() {
   const isYourTurn =
     !!state && !state.finished && state.players[state.turn].id === selfSlot && !waitingForGuest;
 
-  const isBeatClock = state.gameMode === "beat_clock";
-  const matchEndsAt = state.gameConfig?.matchEndsAt ?? 0;
-  const turnSecs = state.gameConfig?.turnSeconds ?? 0;
-  const drawSecs = state.gameConfig?.drawSeconds ?? 0;
+  const isBeatClock = state?.gameMode === "beat_clock";
+  const matchEndsAt = state?.gameConfig?.matchEndsAt ?? 0;
+  const turnSecs = state?.gameConfig?.turnSeconds ?? 0;
+  const drawSecs = state?.gameConfig?.drawSeconds ?? 0;
   const idleWindowSec = Math.max(20, Number(gameSettings.idle_turn_seconds ?? 90));
   const turnStartedMs = matchRow?.turn_started_at ? Date.parse(matchRow.turn_started_at) : 0;
   const showIdleWarning =
     isPvp &&
     !isBeatClock &&
-    !state.finished &&
+    !state?.finished &&
     isYourTurn &&
     Number.isFinite(turnStartedMs) &&
     turnStartedMs > 0;
