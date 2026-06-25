@@ -1228,13 +1228,13 @@ export default function Play() {
       {/* Baseline idle warning — only last 30s of the idle window */}
       {idleWarnVisible && (
         <div className={
-          "px-3 py-1.5 text-xs sm:text-sm text-center border-b " +
+          "px-3 py-2 text-sm sm:text-base font-semibold text-center border-y-2 shadow-lg " +
           (idleSecondsLeft <= 10
-            ? "bg-destructive/20 text-destructive border-destructive/30 animate-pulse"
-            : "bg-amber-500/10 text-amber-200 border-amber-500/30")
+            ? "bg-red-600 text-white border-red-800 animate-pulse"
+            : "bg-red-500 text-white border-red-700")
         }>
-          <Clock className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />
-          Your turn — auto-pass in <span className="font-mono font-semibold tabular-nums">{idleSecondsLeft}s</span>
+          <Clock className="inline w-4 h-4 mr-1.5 -mt-0.5" />
+          Your turn — auto-pass in <span className="font-mono font-bold tabular-nums">{idleSecondsLeft}s</span>
         </div>
       )}
 
