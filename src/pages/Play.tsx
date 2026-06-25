@@ -517,6 +517,29 @@ export default function Play() {
       setLoggedState(next, "optimistic_engine");
       schedulePersist(next, { type: "end_turn" });
     },
+    onDrawExpired: () => {
+      // Beat-the-Clock draw-phase timeout. Force the engine forward so the
+      // game keeps moving:
+      //  - on the player's very first turn, auto-deal the opening 5
+      //  - otherwise just skip the pick-up (the player forfeits new cards
+      //    as the time penalty — same 1-move cost as a manual skip).
+      const s = state;
+      if (!s) return;
+      const me = s.players[s.turn];
+      if (!me || me.id !== selfSlot) return;
+      if (s.phase !== "draw") return;
+      try {
+        if (!me.firstPickupDone) {
+          const next = drawInitialFive(s);
+          setLoggedState(next, "optimistic_engine");
+          schedulePersist(next, { type: "draw_initial_5" });
+        } else {
+          const next = skipDraws(s);
+          setLoggedState(next, "optimistic_engine");
+          schedulePersist(next, { type: "skip_draws" });
+        }
+      } catch {/* ignore — state likely already advanced via realtime */}
+    },
   });
 
 
