@@ -1617,25 +1617,29 @@ export default function Play() {
               minHeight={0}
               moveFromKey={moveFromKey}
               legalForCard={
-                mode === "place"
-                  ? legalForSelectedCard
-                  : stolenPendingCard
-                    ? (pos: Axial) => placementMatchesNeighbours(selfPlayer.ecosystem, stolenPendingCard, pos)
-                    : undefined
+                gameSettings.highlight_valid_placements
+                  ? (mode === "place"
+                      ? legalForSelectedCard
+                      : stolenPendingCard
+                        ? (pos: Axial) => placementMatchesNeighbours(selfPlayer.ecosystem, stolenPendingCard, pos)
+                        : undefined)
+                  : undefined
               }
               illegalReason={
-                stolenPendingCard
-                  ? `${stolenPendingCard.name} needs at least one neighbour that shares a Creator Type`
-                  : selectedCard
-                    ? `${selectedCard.name} needs at least one neighbour that shares a Creator Type`
-                    : undefined
+                gameSettings.highlight_valid_placements
+                  ? (stolenPendingCard
+                      ? `${stolenPendingCard.name} needs at least one neighbour that shares a Creator Type`
+                      : selectedCard
+                        ? `${selectedCard.name} needs at least one neighbour that shares a Creator Type`
+                        : undefined)
+                  : undefined
               }
-              tooltipForCell={(() => {
+              tooltipForCell={gameSettings.highlight_valid_placements ? (() => {
                 const cardForTip = mode === "place" ? selectedCard : stolenPendingCard;
                 if (!cardForTip) return undefined;
                 return (pos: Axial) =>
                   placementReason(selfPlayer.ecosystem, cardForTip, pos).text;
-              })()}
+              })() : undefined}
             />
           </div>
 
@@ -1668,7 +1672,7 @@ export default function Play() {
             onSelect={(uid) => setSelectedUid(uid)}
             disabled={!canTakeTurn || state.phase !== "place"}
             size={62}
-            stuckUids={stuckUids}
+            stuckUids={gameSettings.highlight_playable_cards ? stuckUids : undefined}
           />
         </>
 
@@ -1808,25 +1812,29 @@ export default function Play() {
                   minHeight={0}
                   moveFromKey={moveFromKey}
                   legalForCard={
-                    mode === "place"
-                      ? legalForSelectedCard
-                      : stolenPendingCard
-                        ? (pos: Axial) => placementMatchesNeighbours(selfPlayer.ecosystem, stolenPendingCard, pos)
-                        : undefined
+                    gameSettings.highlight_valid_placements
+                      ? (mode === "place"
+                          ? legalForSelectedCard
+                          : stolenPendingCard
+                            ? (pos: Axial) => placementMatchesNeighbours(selfPlayer.ecosystem, stolenPendingCard, pos)
+                            : undefined)
+                      : undefined
                   }
                   illegalReason={
-                    stolenPendingCard
-                      ? `${stolenPendingCard.name} needs at least one neighbour that shares a Creator Type`
-                      : selectedCard
-                        ? `${selectedCard.name} needs at least one neighbour that shares a Creator Type`
-                        : undefined
+                    gameSettings.highlight_valid_placements
+                      ? (stolenPendingCard
+                          ? `${stolenPendingCard.name} needs at least one neighbour that shares a Creator Type`
+                          : selectedCard
+                            ? `${selectedCard.name} needs at least one neighbour that shares a Creator Type`
+                            : undefined)
+                      : undefined
                   }
-                  tooltipForCell={(() => {
+                  tooltipForCell={gameSettings.highlight_valid_placements ? (() => {
                     const cardForTip = mode === "place" ? selectedCard : stolenPendingCard;
                     if (!cardForTip) return undefined;
                     return (pos: Axial) =>
                       placementReason(selfPlayer.ecosystem, cardForTip, pos).text;
-                  })()}
+                  })() : undefined}
                 />
               </div>
             </Card>
@@ -1857,7 +1865,7 @@ export default function Play() {
                   onSelect={(uid) => setSelectedUid(uid)}
                   disabled={!canTakeTurn || state.phase !== "place"}
                   size={76}
-                  stuckUids={stuckUids}
+                  stuckUids={gameSettings.highlight_playable_cards ? stuckUids : undefined}
                 />
               </div>
 

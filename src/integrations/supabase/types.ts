@@ -932,6 +932,8 @@ export type Database = {
           featured_mode: string | null
           hand_limit: number
           hand_size: number
+          highlight_playable_cards: boolean
+          highlight_valid_placements: boolean
           id: string
           idle_turn_seconds: number
           idle_turn_strikes_limit: number
@@ -991,6 +993,8 @@ export type Database = {
           featured_mode?: string | null
           hand_limit?: number
           hand_size?: number
+          highlight_playable_cards?: boolean
+          highlight_valid_placements?: boolean
           id?: string
           idle_turn_seconds?: number
           idle_turn_strikes_limit?: number
@@ -1050,6 +1054,8 @@ export type Database = {
           featured_mode?: string | null
           hand_limit?: number
           hand_size?: number
+          highlight_playable_cards?: boolean
+          highlight_valid_placements?: boolean
           id?: string
           idle_turn_seconds?: number
           idle_turn_strikes_limit?: number

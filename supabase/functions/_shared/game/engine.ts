@@ -507,7 +507,8 @@ function adjacencyError(
 
   if (neighbourCount === 0) return null;
   if (anchorMatches === 0) {
-    return `${card.name} needs at least one neighbour that shares a Creator Type.`;
+    const typeList = myTypes.length ? myTypes.join(" or ") : "any Creator Type";
+    return `Can't place ${card.name} here — none of the touching neighbours share ${typeList}.`;
   }
   return null;
 }
@@ -725,7 +726,10 @@ export function placeOnEcosystem(
   // Only allow placement on a legal (adjacent) empty cell.
   const legal = legalEcoCells(player.ecosystem);
   if (!legal.some((c) => c.q === pos.q && c.r === pos.r)) {
-    throw new Error("Hex must be empty and adjacent to your ecosystem");
+    if (player.ecosystem.placed.has(keyOf(pos))) {
+      throw new Error("That hex already has a card — pick an empty one.");
+    }
+    throw new Error("Cards must be placed touching your existing ecosystem.");
   }
 
   // Adjacency-match rule: every neighbouring card must share a Creator Type
