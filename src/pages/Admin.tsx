@@ -88,6 +88,19 @@ export default function AdminDashboard() {
   const [viewingClientId, setViewingClientId] = useState<string | null>(null);
   const [viewingClientName, setViewingClientName] = useState<string>("");
 
+  // Warn before browser tab close / reload / hard navigation when any admin
+  // panel has unsaved local edits.
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (getDirtyMessage()) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, []);
+
   const fetchUsers = useCallback(async () => {
     const [profilesRes, rolesRes, subsRes] = await Promise.all([
       supabase.from("profiles").select("user_id, first_name, last_name, email, enrollment_step, practitioner_code, practitioner_status, training_started_at").order("created_at", { ascending: false }),
