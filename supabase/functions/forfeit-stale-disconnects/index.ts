@@ -231,7 +231,7 @@ Deno.serve(async (req) => {
   // Pull match rows + full rosters for the affected matches.
   const { data: matches } = await svc
     .from("game_matches")
-    .select("id, is_ranked, status, player_count, state, seq, host_user_id")
+    .select("id, is_ranked, status, player_count, state, seq, host_user_id, started_at")
     .in("id", matchIds)
     .eq("status", "active");
   const { data: rosters } = await svc
