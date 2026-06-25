@@ -23,6 +23,7 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
   const [targetScore, setTargetScore] = useState(50);
   const [matchMinutes, setMatchMinutes] = useState(20);
   const [turnSeconds, setTurnSeconds] = useState(20);
+  const [drawSeconds, setDrawSeconds] = useState(10);
   const [difficulty, setDifficulty] = useState<BotDifficulty>("medium");
 
   useEffect(() => {
