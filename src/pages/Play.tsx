@@ -1211,12 +1211,12 @@ export default function Play() {
               <span className="inline-flex items-center gap-1 text-foreground/90">
                 <Clock className="w-3.5 h-3.5" /> {fmt(matchSecondsLeft)}
               </span>
-              {turnSecondsLeft > 0 && (
+              {phaseSecondsLeft > 0 && (
                 <span className={
                   "inline-flex items-center gap-1 px-1.5 rounded " +
-                  (turnSecondsLeft <= 5 ? "bg-destructive/20 text-destructive animate-pulse" : "text-muted-foreground")
+                  (phaseSecondsLeft <= 5 ? "bg-destructive/20 text-destructive animate-pulse" : "text-muted-foreground")
                 }>
-                  turn {turnSecondsLeft}s
+                  {state.phase === "draw" ? "draw" : "turn"} {phaseSecondsLeft}s
                 </span>
               )}
             </div>
