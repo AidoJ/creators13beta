@@ -188,6 +188,7 @@ export default function GameSettingsPanel() {
           <NumField k="top_score_default" label="Top Score default (pts)" min={10} max={500} />
           <NumField k="beat_clock_match_minutes" label="Beat the Clock match (min)" min={1} max={120} />
           <NumField k="beat_clock_turn_seconds" label="Beat the Clock per turn (sec)" min={5} max={300} />
+          <NumField k="beat_clock_draw_seconds" label="Beat the Clock draw phase (sec)" min={3} max={120} />
         </div>
       </section>
 
