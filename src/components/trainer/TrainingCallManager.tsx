@@ -1053,7 +1053,12 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onReschedule, onResen
             <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{timeStr}</span>
             <span>{call.duration_minutes}min</span>
           </div>
-          {call.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{call.description}</p>}
+          {call.description && (
+            <div
+              className="prose prose-sm dark:prose-invert max-w-none text-xs text-muted-foreground mt-1 line-clamp-2 [&_a]:text-primary [&_a]:underline [&_img]:max-h-16 [&_img]:inline-block"
+              dangerouslySetInnerHTML={{ __html: sanitizeEventHtml(call.description) }}
+            />
+          )}
           {/* Invitee list */}
           {invitees && invitees.length > 0 && (
             <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
