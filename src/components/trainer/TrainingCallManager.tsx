@@ -1350,63 +1350,121 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onEdit, onResend, sen
           )}
           {!past && !cancelled && (
             <>
-              <Button size="sm" className="h-7 text-xs bg-orange-500 text-white hover:bg-orange-600" onClick={() => {
-                const dt = new Date(call.scheduled_at);
-                setRescheduleDate(dt.toISOString().slice(0, 10));
-                setRescheduleTime(dt.toTimeString().slice(0, 5));
-                setShowReschedule(true);
-              }}>
-                <CalendarClock className="h-3 w-3 mr-1" />Reschedule
-              </Button>
+              {onEdit && (
+                <Button size="sm" className="h-7 text-xs bg-orange-500 text-white hover:bg-orange-600" onClick={() => onEdit(call)}>
+                  <Edit className="h-3 w-3 mr-1" />Edit
+                </Button>
+              )}
               <Button size="sm" className="h-7 text-xs bg-green-600 text-white hover:bg-green-700" onClick={handleOpenInviteMore}>
                 <UserPlus className="h-3 w-3 mr-1" />Invite More
               </Button>
               <Button size="sm" className="h-7 text-xs bg-yellow-500 text-white hover:bg-yellow-600" onClick={() => onResend(call)} disabled={sending}>
                 <Send className="h-3 w-3 mr-1" />{sending ? "Sending…" : "Resend All"}
               </Button>
-              {onDuplicate && (
-                <Button size="sm" className="h-7 text-xs bg-blue-900 text-white hover:bg-blue-950" onClick={() => onDuplicate(call.id)}>
-                  <Copy className="h-3 w-3 mr-1" />Duplicate
-                </Button>
-              )}
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button size="sm" className="h-7 text-xs bg-red-600 text-white hover:bg-red-700">
-                    Cancel
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-7 w-7 p-0" aria-label="More actions">
+                    <MoreHorizontal className="h-3.5 w-3.5" />
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Cancel this training call?</AlertDialogTitle>
-                    <AlertDialogDescription>All invitees will be notified by email that this call has been cancelled.</AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Keep Call</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => onCancel(call.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Cancel Call</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  {onDuplicate && (
+                    <DropdownMenuItem onSelect={() => onDuplicate(call.id)}>
+                      <Copy className="h-3.5 w-3.5 mr-2" />Duplicate
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setShowCancelConfirm(true); }} className="text-orange-600 focus:text-orange-700">
+                    <XCircle className="h-3.5 w-3.5 mr-2" />Cancel event
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      if (hasInvitees) setShowDeleteBlocked(true);
+                      else setShowDeleteConfirm(true);
+                    }}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-2" />Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           )}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive">
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete this call?</AlertDialogTitle>
-                <AlertDialogDescription>This will permanently remove this training call.</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => onDelete(call.id)}>Delete</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          {(past || cancelled) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-7 w-7 p-0" aria-label="More actions">
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                {onDuplicate && (
+                  <DropdownMenuItem onSelect={() => onDuplicate(call.id)}>
+                    <Copy className="h-3.5 w-3.5 mr-2" />Duplicate
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    if (hasInvitees) setShowDeleteBlocked(true);
+                    else setShowDeleteConfirm(true);
+                  }}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-2" />Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
+
+      {/* Cancel confirmation */}
+      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel this event?</AlertDialogTitle>
+            <AlertDialogDescription>All invitees will be notified by email that this event has been cancelled. You can still see the event in the Cancelled section afterwards.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep event</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { onCancel(call.id); setShowCancelConfirm(false); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Cancel event</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete confirmation (only allowed when there are no invitees) */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this event?</AlertDialogTitle>
+            <AlertDialogDescription>This permanently removes the event. This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { onDelete(call.id); setShowDeleteConfirm(false); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete blocked (invitees exist) — steer to Cancel */}
+      <AlertDialog open={showDeleteBlocked} onOpenChange={setShowDeleteBlocked}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>This event has invitees</AlertDialogTitle>
+            <AlertDialogDescription>
+              {invitees?.length} {invitees?.length === 1 ? "person has" : "people have"} been invited to this event. To preserve their record and notify them, please use <span className="font-semibold text-foreground">Cancel event</span> instead. Hard delete is only available for events with no invitees.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Close</AlertDialogCancel>
+            {!past && !cancelled && (
+              <AlertDialogAction onClick={() => { setShowDeleteBlocked(false); setShowCancelConfirm(true); }}>Cancel event instead</AlertDialogAction>
+            )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Timeline */}
       {(() => {
