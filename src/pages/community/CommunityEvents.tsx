@@ -174,9 +174,15 @@ export default function CommunityEvents() {
 }
 
 function EventCard({ ev, past }: { ev: CommunityEvent; past?: boolean }) {
-  const dt = new Date(ev.scheduled_at);
-  const dateLabel = dt.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
-  const timeLabel = dt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  const start = eventStart(ev);
+  const end = eventEnd(ev);
+  const fmtDate = (d: Date) =>
+    d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+  const fmtTime = (d: Date) =>
+    d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+
+  const sameDay = start.toDateString() === end.toDateString();
+  const isMulti = !!ev.is_multi_day && !sameDay;
 
   return (
     <Card className={`p-4 ${past ? "opacity-70" : ""}`}>
@@ -184,16 +190,54 @@ function EventCard({ ev, past }: { ev: CommunityEvent; past?: boolean }) {
         <div className="min-w-0 flex-1">
           <h3 className="text-base font-semibold text-foreground">{ev.title}</h3>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{dateLabel}</span>
-            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{timeLabel} · {ev.duration_minutes}m</span>
+            {isMulti ? (
+              <>
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {fmtDate(start)} – {fmtDate(end)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {fmtTime(start)} → {fmtTime(end)}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {fmtDate(start)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {fmtTime(start)} – {fmtTime(end)}
+                </span>
+              </>
+            )}
           </div>
+          {isMulti && Array.isArray(ev.sessions) && ev.sessions.length > 0 && (
+            <ul className="mt-2 text-xs text-muted-foreground space-y-0.5">
+              {ev.sessions.map((s, i) => {
+                const [y, m, d] = s.date.split("-").map(Number);
+                const label = new Date(Date.UTC(y, (m || 1) - 1, d || 1)).toLocaleDateString(undefined, {
+                  weekday: "short", day: "numeric", month: "short", timeZone: "UTC",
+                });
+                return (
+                  <li key={i} className="flex items-center gap-1.5">
+                    <span className="font-medium text-foreground/80">{label}</span>
+                    <span>· {s.startTime} – {s.endTime}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
           {ev.description && (
             <div
-              className="text-sm text-foreground/80 mt-2 prose prose-sm max-w-none prose-img:rounded-md prose-img:my-2 prose-img:max-h-80 prose-a:text-primary"
+              className="text-sm text-foreground/80 mt-3 prose prose-sm max-w-none prose-img:rounded-md prose-img:my-2 prose-img:max-h-80 prose-a:text-primary [&_*]:!bg-transparent [&_p]:!my-1.5 [&_p:empty]:hidden"
               dangerouslySetInnerHTML={{ __html: sanitizeEventHtml(ev.description) }}
             />
           )}
         </div>
+
         {ev.has_access ? (
           <Badge className="bg-primary/15 text-primary border-primary/30">Joinable</Badge>
         ) : (
