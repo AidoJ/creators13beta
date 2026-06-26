@@ -19,6 +19,10 @@ interface TrainingCall {
   title: string;
   description: string | null;
   scheduled_at: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  is_multi_day: boolean;
+  event_type: string;
   duration_minutes: number;
   zoom_link: string | null;
   recurrence_rule: string;
@@ -47,6 +51,7 @@ interface PractitionerOption {
   user_id: string;
   email: string;
   name: string;
+  tier: "wren" | "robin" | "cockatoo" | "owl";
 }
 
 interface TrainingCallManagerProps {
@@ -71,9 +76,13 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [eventsByCall, setEventsByCall] = useState<Record<string, CallEvent[]>>({});
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [eventType, setEventType] = useState("training_call");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [duration, setDuration] = useState("60");
+  const [isMultiDay, setIsMultiDay] = useState(false);
+  const [endDate, setEndDate] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [zoomLink, setZoomLink] = useState("");
   const [recurrence, setRecurrence] = useState("none");
   const [recurrenceEnd, setRecurrenceEnd] = useState("");
@@ -83,6 +92,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [externalEmails, setExternalEmails] = useState<string[]>([]);
   const [newExternalEmail, setNewExternalEmail] = useState("");
+  const [bulkInvitedTiers, setBulkInvitedTiers] = useState<Set<"wren"|"robin"|"cockatoo"|"owl">>(new Set());
 
   // Community audience tier grid (Wren/Robin/Cockatoo/Owl × visible/access)
   type TierKey = "wren" | "robin" | "cockatoo" | "owl";
@@ -156,14 +166,24 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       .in("role", ["practitioner", "trainee"]);
     if (!roles || roles.length === 0) { setPractLoading(false); return; }
     const userIds = [...new Set(roles.map(r => r.user_id))];
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("user_id, email, first_name, last_name")
-      .in("user_id", userIds);
+    const [{ data: profiles }, { data: subs }] = await Promise.all([
+      supabase.from("profiles").select("user_id, email, first_name, last_name").in("user_id", userIds),
+      supabase.from("subscriptions").select("user_id, tier, status, current_period_end").in("user_id", userIds),
+    ]);
+    const tierByUser = new Map<string, PractitionerOption["tier"]>();
+    const validTiers = new Set(["wren","robin","cockatoo","owl"]);
+    const activeStatuses = new Set(["active","trialing","past_due"]);
+    (subs || []).forEach((s: any) => {
+      const periodOk = !s.current_period_end || new Date(s.current_period_end) > new Date();
+      if (s.tier && validTiers.has(s.tier) && activeStatuses.has(s.status) && periodOk) {
+        tierByUser.set(s.user_id, s.tier);
+      }
+    });
     const list: PractitionerOption[] = (profiles || []).map(p => ({
       user_id: p.user_id,
       email: p.email || "",
       name: `${p.first_name || ""} ${p.last_name || ""}`.trim() || p.email || "Unknown",
+      tier: tierByUser.get(p.user_id) || "wren",
     })).filter(p => p.email);
     setPractitioners(list);
     // Default: select all
@@ -178,11 +198,40 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   }, [showForm, practitioners.length, fetchPractitioners]);
 
   function resetForm() {
-    setTitle(""); setDescription(""); setDate(""); setTime("");
+    setTitle(""); setDescription(""); setEventType("training_call");
+    setDate(""); setTime(""); setEndDate(""); setEndTime(""); setIsMultiDay(false);
     setDuration("60"); setZoomLink(""); setRecurrence("none"); setRecurrenceEnd("");
     setExternalEmails([]); setNewExternalEmail("");
     setTierGrid(emptyTierGrid());
+    setBulkInvitedTiers(new Set());
     setShowForm(false);
+  }
+
+  function bulkInviteTier(tier: TierKey) {
+    const ids = practitioners.filter(p => p.tier === tier).map(p => p.user_id);
+    if (ids.length === 0) {
+      toast({ title: `No ${TIER_LABELS[tier]} members`, description: "No platform users currently on this tier to invite.", variant: "destructive" });
+      return;
+    }
+    setSelectedUserIds(prev => {
+      const next = new Set(prev);
+      ids.forEach(id => next.add(id));
+      return next;
+    });
+    setBulkInvitedTiers(prev => {
+      const next = new Set(prev);
+      next.add(tier);
+      return next;
+    });
+    const g = tierGrid[tier];
+    if (!g.access) {
+      toast({
+        title: `Heads up — ${TIER_LABELS[tier]} has no Access`,
+        description: `${ids.length} member${ids.length===1?"":"s"} will get the email but can't join (no Zoom link). Grant Access in the grid above to fix.`,
+      });
+    } else {
+      toast({ title: `Added ${ids.length} ${TIER_LABELS[tier]} member${ids.length===1?"":"s"}`, description: "They'll receive the invite email when you create the event." });
+    }
   }
 
   function toggleUser(userId: string) {
@@ -221,49 +270,61 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
   async function handleCreate() {
     if (!title.trim() || !date || !time || !user) return;
+    if (isMultiDay && (!endDate || !endTime)) {
+      toast({ title: "Set the end date & time", description: "Multi-day events need a finish date and time.", variant: "destructive" });
+      return;
+    }
     if (selectedUserIds.size === 0 && externalEmails.length === 0 && !anyTierVisible) {
       toast({ title: "Add invitees or open to a community tier", description: "Pick at least one practitioner, external guest, or community tier (Visible).", variant: "destructive" });
       return;
     }
     setSubmitting(true);
 
-    const scheduledAt = new Date(`${date}T${time}`).toISOString();
+    const startsAt = new Date(`${date}T${time}`);
+    const endsAt = isMultiDay
+      ? new Date(`${endDate}T${endTime}`)
+      : new Date(startsAt.getTime() + parseInt(duration) * 60000);
+    if (endsAt <= startsAt) {
+      toast({ title: "End must be after start", variant: "destructive" });
+      setSubmitting(false);
+      return;
+    }
+    const computedDuration = Math.max(1, Math.round((endsAt.getTime() - startsAt.getTime()) / 60000));
+    const scheduledAt = startsAt.toISOString();
 
-    const callsToCreate: Array<{ title: string; description: string | null; scheduled_at: string; duration_minutes: number; zoom_link: string | null; recurrence_rule: string; recurrence_end_date?: string | null; created_by: string }> = [];
-    
+    const baseRow = (start: Date, end: Date) => ({
+      title: title.trim(),
+      description: description.trim() || null,
+      event_type: eventType,
+      scheduled_at: start.toISOString(),
+      starts_at: start.toISOString(),
+      ends_at: end.toISOString(),
+      is_multi_day: isMultiDay,
+      duration_minutes: isMultiDay ? Math.round((end.getTime()-start.getTime())/60000) : parseInt(duration),
+      zoom_link: zoomLink.trim() || null,
+      recurrence_rule: recurrence,
+      created_by: user.id,
+    });
+
+    const callsToCreate: Array<ReturnType<typeof baseRow> & { recurrence_end_date?: string | null }> = [];
+
     if (recurrence === "none") {
-      callsToCreate.push({
-        title: title.trim(),
-        description: description.trim() || null,
-        scheduled_at: scheduledAt,
-        duration_minutes: parseInt(duration),
-        zoom_link: zoomLink.trim() || null,
-        recurrence_rule: "none",
-        created_by: user.id,
-      });
+      callsToCreate.push(baseRow(startsAt, endsAt));
     } else {
       const intervals: Record<string, number> = { weekly: 7, fortnightly: 14, monthly: 30 };
       const intervalDays = intervals[recurrence] || 7;
-      const endDate = recurrenceEnd ? new Date(recurrenceEnd) : new Date(Date.now() + 90 * 86400000);
-      const startDate = new Date(`${date}T${time}`);
-      
-      let currentDate = new Date(startDate);
-      while (currentDate <= endDate) {
-        callsToCreate.push({
-          title: title.trim(),
-          description: description.trim() || null,
-          scheduled_at: currentDate.toISOString(),
-          duration_minutes: parseInt(duration),
-          zoom_link: zoomLink.trim() || null,
-          recurrence_rule: recurrence,
-          recurrence_end_date: recurrenceEnd || null,
-          created_by: user.id,
-        });
+      const seriesEnd = recurrenceEnd ? new Date(recurrenceEnd) : new Date(Date.now() + 90 * 86400000);
+      const durMs = endsAt.getTime() - startsAt.getTime();
+      let cur = new Date(startsAt);
+      while (cur <= seriesEnd) {
+        const curEnd = new Date(cur.getTime() + durMs);
+        callsToCreate.push({ ...baseRow(cur, curEnd), recurrence_end_date: recurrenceEnd || null });
         if (recurrence === "monthly") {
-          currentDate = new Date(currentDate);
-          currentDate.setMonth(currentDate.getMonth() + 1);
+          const next = new Date(cur);
+          next.setMonth(next.getMonth() + 1);
+          cur = next;
         } else {
-          currentDate = new Date(currentDate.getTime() + intervalDays * 86400000);
+          cur = new Date(cur.getTime() + intervalDays * 86400000);
         }
       }
     }
@@ -271,19 +332,18 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     const { data: insertedCalls, error } = await supabase.from("training_calls").insert(callsToCreate).select("id");
 
     if (error) {
-      toast({ title: "Error creating call", description: error.message, variant: "destructive" });
+      toast({ title: "Error creating event", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: `Training call${callsToCreate.length > 1 ? "s" : ""} created`, description: `${callsToCreate.length} session${callsToCreate.length > 1 ? "s" : ""} scheduled.` });
+      toast({ title: `Event${callsToCreate.length > 1 ? "s" : ""} created`, description: `${callsToCreate.length} session${callsToCreate.length > 1 ? "s" : ""} scheduled.` });
 
       // Record created events
       if (insertedCalls) {
         await supabase.from("training_call_events").insert(
-          insertedCalls.map((c: any) => ({ call_id: c.id, event_type: "created", details: "Training call scheduled" }))
+          insertedCalls.map((c: any) => ({ call_id: c.id, event_type: "created", details: "Event scheduled" }))
         );
       }
 
       // Insert per-tier community access rows for each created call.
-      // Only rows where visible=true are written; absent rows = hidden for that tier.
       if (insertedCalls && anyTierVisible) {
         const tierRows: Array<{ training_call_id: string; tier: TierKey; visible: boolean; access: boolean }> = [];
         for (const inserted of insertedCalls) {
@@ -294,11 +354,19 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
         }
         if (tierRows.length > 0) {
           const { error: tierErr } = await supabase.from("training_call_tier_access").insert(tierRows);
-          if (tierErr) {
-            toast({ title: "Saved call, but tier access failed", description: tierErr.message, variant: "destructive" });
-          }
+          if (tierErr) toast({ title: "Saved event, but tier access failed", description: tierErr.message, variant: "destructive" });
         }
       }
+
+      // Record bulk tier-invite usage (audit only — does not change email send list)
+      if (insertedCalls && bulkInvitedTiers.size > 0) {
+        const invRows: Array<{ training_call_id: string; tier: TierKey; invited_by: string }> = [];
+        for (const inserted of insertedCalls) {
+          for (const t of bulkInvitedTiers) invRows.push({ training_call_id: inserted.id, tier: t, invited_by: user.id });
+        }
+        await supabase.from("training_call_tier_invites").insert(invRows);
+      }
+
 
 
       // Build recipient lists
@@ -536,10 +604,10 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2">
           <Calendar className="h-5 w-5 text-primary" />
-          Training Calls
+          Events
         </h2>
         <Button size="sm" onClick={() => setShowForm(true)} className="rounded-full">
-          <Plus className="h-3.5 w-3.5 mr-1" /> Schedule Call
+          <Plus className="h-3.5 w-3.5 mr-1" /> Schedule Event
         </Button>
       </div>
 
@@ -563,12 +631,33 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       {showForm && (
         <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">New Training Call</h3>
+            <h3 className="text-sm font-semibold text-foreground">New Event</h3>
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={resetForm}>
               <X className="h-4 w-4" />
             </Button>
           </div>
+
+          {/* Core event fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Event Type</label>
+              <Select value={eventType} onValueChange={setEventType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="training_call">Training Call</SelectItem>
+                  <SelectItem value="book_launch">Book Launch</SelectItem>
+                  <SelectItem value="workshop">Workshop</SelectItem>
+                  <SelectItem value="masterclass">Masterclass</SelectItem>
+                  <SelectItem value="community_gathering">Community Gathering</SelectItem>
+                  <SelectItem value="qa_session">Q&amp;A Session</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Zoom Link</label>
+              <Input value={zoomLink} onChange={e => setZoomLink(e.target.value)} placeholder="https://zoom.us/j/..." />
+            </div>
             <div className="sm:col-span-2">
               <label className="text-xs text-muted-foreground mb-1 block">Title *</label>
               <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Weekly Training Session" />
@@ -577,34 +666,52 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
               <label className="text-xs text-muted-foreground mb-1 block">Description</label>
               <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Optional agenda or notes…" rows={2} />
             </div>
+
+            <div className="sm:col-span-2 flex items-center gap-2 pt-1">
+              <Checkbox id="multi-day" checked={isMultiDay} onCheckedChange={(v) => setIsMultiDay(v === true)} />
+              <Label htmlFor="multi-day" className="text-xs cursor-pointer">Multi-day event (spans more than one day)</Label>
+            </div>
+
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Date *</label>
+              <label className="text-xs text-muted-foreground mb-1 block">Start Date *</label>
               <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Time *</label>
+              <label className="text-xs text-muted-foreground mb-1 block">Start Time *</label>
               <Input type="time" value={time} onChange={e => setTime(e.target.value)} />
             </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Duration</label>
-              <Select value={duration} onValueChange={setDuration}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="30">30 minutes</SelectItem>
-                  <SelectItem value="45">45 minutes</SelectItem>
-                  <SelectItem value="60">1 hour</SelectItem>
-                  <SelectItem value="90">1.5 hours</SelectItem>
-                  <SelectItem value="120">2 hours</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Zoom Link</label>
-              <Input value={zoomLink} onChange={e => setZoomLink(e.target.value)} placeholder="https://zoom.us/j/..." />
-            </div>
+
+            {isMultiDay ? (
+              <>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Finish Date *</label>
+                  <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Finish Time *</label>
+                  <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} />
+                </div>
+              </>
+            ) : (
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Duration</label>
+                <Select value={duration} onValueChange={setDuration}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="30">30 minutes</SelectItem>
+                    <SelectItem value="45">45 minutes</SelectItem>
+                    <SelectItem value="60">1 hour</SelectItem>
+                    <SelectItem value="90">1.5 hours</SelectItem>
+                    <SelectItem value="120">2 hours</SelectItem>
+                    <SelectItem value="180">3 hours</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Recurrence</label>
-              <Select value={recurrence} onValueChange={setRecurrence}>
+              <Select value={recurrence} onValueChange={setRecurrence} disabled={isMultiDay}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">One-off</SelectItem>
@@ -613,8 +720,9 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
                   <SelectItem value="monthly">Monthly</SelectItem>
                 </SelectContent>
               </Select>
+              {isMultiDay && <p className="text-[10px] text-muted-foreground mt-1">Recurrence disabled for multi-day events.</p>}
             </div>
-            {recurrence !== "none" && (
+            {recurrence !== "none" && !isMultiDay && (
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Repeat until</label>
                 <Input type="date" value={recurrenceEnd} onChange={e => setRecurrenceEnd(e.target.value)} />
@@ -622,12 +730,50 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
             )}
           </div>
 
-          {/* Invitee selection */}
+          {/* 1. Community audience tier grid — FIRST so trainer decides scope before picking invitees */}
+          <div className="border-t border-border pt-4 space-y-2">
+            <h4 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Users className="h-4 w-4 text-primary" />
+              Community Audience
+            </h4>
+            <p className="text-[11px] text-muted-foreground">
+              Choose which membership tiers can <span className="font-medium text-foreground">see</span> this event on their community calendar, and which can <span className="font-medium text-foreground">join</span> (Zoom link delivered). Access requires Visible. Leave all blank to keep this event off the community calendar.
+            </p>
+            <div className="rounded-lg border border-border bg-muted/20 overflow-hidden">
+              <div className="grid grid-cols-[1fr_80px_80px] items-center text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/40 px-3 py-1.5">
+                <span>Tier</span>
+                <span className="text-center">Visible</span>
+                <span className="text-center">Access</span>
+              </div>
+              {TIER_KEYS.map(tier => (
+                <div key={tier} className="grid grid-cols-[1fr_80px_80px] items-center px-3 py-2 border-t border-border/60 text-xs">
+                  <span className="text-foreground">{TIER_LABELS[tier]}</span>
+                  <div className="flex justify-center">
+                    <Checkbox
+                      checked={tierGrid[tier].visible}
+                      onCheckedChange={(v) => setTierFlag(tier, "visible", v === true)}
+                      aria-label={`${TIER_LABELS[tier]} visible`}
+                    />
+                  </div>
+                  <div className="flex justify-center">
+                    <Checkbox
+                      checked={tierGrid[tier].access}
+                      onCheckedChange={(v) => setTierFlag(tier, "access", v === true)}
+                      disabled={!tierGrid[tier].visible}
+                      aria-label={`${TIER_LABELS[tier]} access`}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 2. Direct invitees — bulk-by-tier, practitioner picker, external emails */}
           <div className="border-t border-border pt-4 space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
                 <Users className="h-4 w-4 text-primary" />
-                Select Invitees
+                Direct Invitees (email)
               </h4>
               <div className="flex gap-1.5">
                 <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={selectAll}>Select All</Button>
@@ -635,11 +781,46 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
               </div>
             </div>
 
+            {/* Bulk invite by tier */}
+            <div className="rounded-lg border border-dashed border-border bg-muted/10 p-2.5 space-y-1.5">
+              <p className="text-[11px] text-muted-foreground">
+                <span className="font-medium text-foreground">Invite all by tier</span> — adds every platform member of that tier to the email list below.
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {TIER_KEYS.map(tier => {
+                  const count = practitioners.filter(p => p.tier === tier).length;
+                  const grantedAccess = tierGrid[tier].access;
+                  const alreadyInvited = bulkInvitedTiers.has(tier);
+                  return (
+                    <Button
+                      key={tier}
+                      type="button"
+                      variant={alreadyInvited ? "default" : "outline"}
+                      size="sm"
+                      className="h-7 text-[11px]"
+                      disabled={count === 0}
+                      onClick={() => bulkInviteTier(tier)}
+                      title={!grantedAccess ? `Heads up: ${TIER_LABELS[tier]} doesn't have Access in the grid above — they'll get the email but can't join.` : undefined}
+                    >
+                      <UserPlus className="h-3 w-3 mr-1" />
+                      {TIER_LABELS[tier]} ({count})
+                      {!grantedAccess && count > 0 && <span className="ml-1 text-amber-500">⚠</span>}
+                    </Button>
+                  );
+                })}
+              </div>
+              {[...bulkInvitedTiers].some(t => !tierGrid[t].access) && (
+                <p className="text-[10px] text-amber-500">
+                  ⚠ Some bulk-invited tiers don't have Access in the grid — those recipients will get the email but no Zoom link.
+                </p>
+              )}
+            </div>
+
             {/* Practitioner checkboxes */}
             {practLoading ? (
-              <p className="text-xs text-muted-foreground">Loading practitioners…</p>
+              <p className="text-xs text-muted-foreground">Loading members…</p>
             ) : practitioners.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No practitioners found.</p>
+              <p className="text-xs text-muted-foreground">No members found.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto rounded-lg border border-border p-2 bg-muted/20">
                 {practitioners.map(p => (
@@ -648,16 +829,17 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
                       checked={selectedUserIds.has(p.user_id)}
                       onCheckedChange={() => toggleUser(p.user_id)}
                     />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <span className="text-foreground text-xs font-medium truncate block">{p.name}</span>
                       <span className="text-muted-foreground text-[10px] truncate block">{p.email}</span>
                     </div>
+                    <Badge variant="outline" className="text-[9px] capitalize h-4 px-1">{p.tier}</Badge>
                   </label>
                 ))}
               </div>
             )}
             <p className="text-[10px] text-muted-foreground">
-              {selectedUserIds.size} of {practitioners.length} practitioners selected
+              {selectedUserIds.size} of {practitioners.length} members selected
             </p>
 
             {/* External email invites */}
@@ -694,44 +876,6 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
             </div>
           </div>
 
-          {/* Community audience tier grid */}
-          <div className="border-t border-border pt-4 space-y-2">
-            <h4 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-              <Users className="h-4 w-4 text-primary" />
-              Community audience
-            </h4>
-            <p className="text-[11px] text-muted-foreground">
-              Choose which membership tiers can <span className="font-medium text-foreground">see</span> this event on their community calendar, and which can <span className="font-medium text-foreground">join</span> (Zoom link delivered). Access requires Visible. Leave all blank to keep this event off the community calendar.
-            </p>
-            <div className="rounded-lg border border-border bg-muted/20 overflow-hidden">
-              <div className="grid grid-cols-[1fr_80px_80px] items-center text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/40 px-3 py-1.5">
-                <span>Tier</span>
-                <span className="text-center">Visible</span>
-                <span className="text-center">Access</span>
-              </div>
-              {TIER_KEYS.map(tier => (
-                <div key={tier} className="grid grid-cols-[1fr_80px_80px] items-center px-3 py-2 border-t border-border/60 text-xs">
-                  <span className="text-foreground">{TIER_LABELS[tier]}</span>
-                  <div className="flex justify-center">
-                    <Checkbox
-                      checked={tierGrid[tier].visible}
-                      onCheckedChange={(v) => setTierFlag(tier, "visible", v === true)}
-                      aria-label={`${TIER_LABELS[tier]} visible`}
-                    />
-                  </div>
-                  <div className="flex justify-center">
-                    <Checkbox
-                      checked={tierGrid[tier].access}
-                      onCheckedChange={(v) => setTierFlag(tier, "access", v === true)}
-                      disabled={!tierGrid[tier].visible}
-                      aria-label={`${TIER_LABELS[tier]} access`}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
           <div className="flex gap-2 pt-2">
             <Button onClick={handleCreate} disabled={!title.trim() || !date || !time || (selectedUserIds.size === 0 && externalEmails.length === 0 && !anyTierVisible) || submitting} className="rounded-full">
               <Send className="h-3.5 w-3.5 mr-1" /> {submitting ? "Creating…" : `Create${(selectedUserIds.size + externalEmails.length) > 0 ? ` & Send (${selectedUserIds.size + externalEmails.length})` : ""}`}
@@ -740,6 +884,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
           </div>
         </div>
       )}
+
 
       {/* Upcoming calls */}
       {loading ? (

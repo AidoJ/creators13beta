@@ -242,7 +242,7 @@ export default function TrainingCalendar({ compact = false, refreshKey = 0 }: Tr
       <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
         <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
           <Calendar className="h-4 w-4 text-primary" />
-          Upcoming Training Calls
+          Upcoming Events
         </h2>
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
@@ -283,7 +283,7 @@ export default function TrainingCalendar({ compact = false, refreshKey = 0 }: Tr
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2">
           <Calendar className="h-5 w-5 text-primary" />
-          Training Calendar
+          Events Calendar
         </h2>
         <div className="flex items-center gap-4">
           {/* View toggle */}
