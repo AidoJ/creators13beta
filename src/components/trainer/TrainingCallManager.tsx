@@ -779,18 +779,8 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
               </>
             ) : (
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Duration</label>
-                <Select value={duration} onValueChange={setDuration}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="30">30 minutes</SelectItem>
-                    <SelectItem value="45">45 minutes</SelectItem>
-                    <SelectItem value="60">1 hour</SelectItem>
-                    <SelectItem value="90">1.5 hours</SelectItem>
-                    <SelectItem value="120">2 hours</SelectItem>
-                    <SelectItem value="180">3 hours</SelectItem>
-                  </SelectContent>
-                </Select>
+                <label className="text-xs text-muted-foreground mb-1 block">Finish Time *</label>
+                <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} />
               </div>
             )}
 
