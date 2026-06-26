@@ -84,6 +84,36 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [externalEmails, setExternalEmails] = useState<string[]>([]);
   const [newExternalEmail, setNewExternalEmail] = useState("");
 
+  // Community audience tier grid (Wren/Robin/Cockatoo/Owl × visible/access)
+  type TierKey = "wren" | "robin" | "cockatoo" | "owl";
+  const TIER_KEYS: TierKey[] = ["wren", "robin", "cockatoo", "owl"];
+  const TIER_LABELS: Record<TierKey, string> = { wren: "Wren (free)", robin: "Robin", cockatoo: "Cockatoo", owl: "Owl" };
+  type TierGrid = Record<TierKey, { visible: boolean; access: boolean }>;
+  const emptyTierGrid = (): TierGrid => ({
+    wren: { visible: false, access: false },
+    robin: { visible: false, access: false },
+    cockatoo: { visible: false, access: false },
+    owl: { visible: false, access: false },
+  });
+  const [tierGrid, setTierGrid] = useState<TierGrid>(emptyTierGrid);
+  const anyTierVisible = TIER_KEYS.some(t => tierGrid[t].visible);
+
+  function setTierFlag(tier: TierKey, field: "visible" | "access", value: boolean) {
+    setTierGrid(prev => {
+      const next = { ...prev, [tier]: { ...prev[tier] } };
+      if (field === "visible") {
+        next[tier].visible = value;
+        // Access requires visible — clear access if visible is turned off
+        if (!value) next[tier].access = false;
+      } else {
+        next[tier].access = value;
+        // Granting access auto-grants visible
+        if (value) next[tier].visible = true;
+      }
+      return next;
+    });
+  }
+
   const fetchInvitees = useCallback(async (callIds: string[]) => {
     if (callIds.length === 0) return;
     const [{ data: invData }, { data: evtData }] = await Promise.all([
