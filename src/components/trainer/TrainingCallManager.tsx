@@ -1129,10 +1129,25 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
             </div>
           </div>
 
+          {editingCallId && (
+            <div className="flex items-center gap-2 pt-1 border-t border-border">
+              <Checkbox id="notify-invitees" checked={notifyOnEdit} onCheckedChange={(v) => setNotifyOnEdit(v === true)} />
+              <Label htmlFor="notify-invitees" className="text-xs cursor-pointer">
+                Notify invitees by email if the date/time or Zoom link changed
+              </Label>
+            </div>
+          )}
+
           <div className="flex gap-2 pt-2">
-            <Button onClick={handleCreate} disabled={!title.trim() || !date || !time || (selectedUserIds.size === 0 && externalEmails.length === 0 && !anyTierVisible) || submitting} className="rounded-full">
-              <Send className="h-3.5 w-3.5 mr-1" /> {submitting ? "Creating…" : `Create${(selectedUserIds.size + externalEmails.length) > 0 ? ` & Send (${selectedUserIds.size + externalEmails.length})` : ""}`}
-            </Button>
+            {editingCallId ? (
+              <Button onClick={handleSave} disabled={!title.trim() || !date || !time || submitting} className="rounded-full">
+                <Edit className="h-3.5 w-3.5 mr-1" /> {submitting ? "Saving…" : "Save Changes"}
+              </Button>
+            ) : (
+              <Button onClick={handleCreate} disabled={!title.trim() || !date || !time || (selectedUserIds.size === 0 && externalEmails.length === 0 && !anyTierVisible) || submitting} className="rounded-full">
+                <Send className="h-3.5 w-3.5 mr-1" /> {submitting ? "Creating…" : `Create${(selectedUserIds.size + externalEmails.length) > 0 ? ` & Send (${selectedUserIds.size + externalEmails.length})` : ""}`}
+              </Button>
+            )}
             <Button variant="ghost" onClick={resetForm}>Cancel</Button>
           </div>
         </div>
