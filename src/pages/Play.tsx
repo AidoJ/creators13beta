@@ -1676,7 +1676,9 @@ export default function Play() {
             disabled={!canTakeTurn || state.phase !== "place"}
             size={62}
             stuckUids={gameSettings.highlight_playable_cards ? stuckUids : undefined}
+            onTouchDropDiscard={(uid) => onDiscardUid(uid)}
           />
+
         </>
 
       ) : (
