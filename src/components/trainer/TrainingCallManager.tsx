@@ -1167,7 +1167,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
             <div className="space-y-2">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Upcoming</h3>
               {upcomingCalls.map(call => (
-                <CallCard key={call.id} call={call} onCancel={handleCancel} onDelete={handleDelete} onDuplicate={openDuplicateDialog} onReschedule={handleReschedule} onResend={handleResendAll} sending={sending === call.id} practitioners={practitioners} onSendInvites={sendInvites} onLoadPractitioners={fetchPractitioners} practLoading={practLoading} invitees={inviteesByCall[call.id] || []} events={eventsByCall[call.id] || []} onInvitesSent={() => fetchInvitees(calls.map(c => c.id))} />
+                <CallCard key={call.id} call={call} onCancel={handleCancel} onDelete={handleDelete} onDuplicate={openDuplicateDialog} onEdit={openEditDialog} onResend={handleResendAll} sending={sending === call.id} practitioners={practitioners} onSendInvites={sendInvites} onLoadPractitioners={fetchPractitioners} practLoading={practLoading} invitees={inviteesByCall[call.id] || []} events={eventsByCall[call.id] || []} onInvitesSent={() => fetchInvitees(calls.map(c => c.id))} />
               ))}
             </div>
           )}
