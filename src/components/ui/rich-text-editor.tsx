@@ -295,8 +295,11 @@ function escapeHtml(s: string) {
 /** Sanitize stored HTML before rendering. */
 export function sanitizeEventHtml(html: string | null | undefined): string {
   if (!html) return "";
-  return DOMPurify.sanitize(html, {
+  // Strip pasted inline backgrounds / colors / fonts so descriptions
+  // inherit the card's theme instead of showing white bands from Word/email paste.
+  const cleaned = html.replace(/\s(style|bgcolor|color|face)\s*=\s*("[^"]*"|'[^']*')/gi, "");
+  return DOMPurify.sanitize(cleaned, {
     ALLOWED_TAGS: ["b","strong","i","em","u","a","p","br","ul","ol","li","h2","h3","blockquote","img","span","div"],
-    ALLOWED_ATTR: ["href","target","rel","src","alt","style"],
+    ALLOWED_ATTR: ["href","target","rel","src","alt"],
   });
 }
