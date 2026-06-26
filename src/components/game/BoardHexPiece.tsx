@@ -6,6 +6,7 @@ import type { DeckCard } from "@/lib/game/types";
 import { TypeGlyphMark, displayCardName } from "./cards/TypeGlyphMark";
 import { cardCodeLabel } from "@/lib/creatorTypeCode";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
+import { startTouchDragGhost, updateTouchDragGhost, endTouchDragGhost } from "@/lib/touchDrag";
 import goldenBodyArt from "@/assets/golden-body-card.webp";
 import goldenHiveArt from "@/assets/golden-hive-card.webp";
 
