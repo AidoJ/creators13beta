@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ArrowLeft, Calendar, Video, Clock, Lock, CalendarPlus, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { sanitizeEventHtml } from "@/components/ui/rich-text-editor";
 
 interface CommunityEvent {
   id: string;
@@ -162,7 +163,10 @@ function EventCard({ ev, past }: { ev: CommunityEvent; past?: boolean }) {
             <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{timeLabel} · {ev.duration_minutes}m</span>
           </div>
           {ev.description && (
-            <p className="text-sm text-foreground/80 mt-2 whitespace-pre-wrap">{ev.description}</p>
+            <div
+              className="text-sm text-foreground/80 mt-2 prose prose-sm max-w-none prose-img:rounded-md prose-img:my-2 prose-img:max-h-80 prose-a:text-primary"
+              dangerouslySetInnerHTML={{ __html: sanitizeEventHtml(ev.description) }}
+            />
           )}
         </div>
         {ev.has_access ? (
