@@ -283,7 +283,7 @@ export default function TrainingCalendar({ compact = false, refreshKey = 0 }: Tr
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2">
           <Calendar className="h-5 w-5 text-primary" />
-          Training Calendar
+          Events Calendar
         </h2>
         <div className="flex items-center gap-4">
           {/* View toggle */}
