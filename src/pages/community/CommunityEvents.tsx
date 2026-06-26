@@ -10,6 +10,12 @@ import { ArrowLeft, Calendar, Video, Clock, Lock, CalendarPlus, ExternalLink } f
 import { toast } from "@/hooks/use-toast";
 import { sanitizeEventHtml } from "@/components/ui/rich-text-editor";
 
+interface EventSession {
+  date: string;
+  startTime: string;
+  endTime: string;
+}
+
 interface CommunityEvent {
   id: string;
   title: string;
@@ -19,16 +25,35 @@ interface CommunityEvent {
   zoom_link: string | null;
   has_access: boolean;
   caller_tier: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  is_multi_day: boolean | null;
+  sessions: EventSession[] | null;
+  event_type: string | null;
+}
+
+function eventStart(ev: CommunityEvent): Date {
+  return new Date(ev.starts_at ?? ev.scheduled_at);
+}
+function eventEnd(ev: CommunityEvent): Date {
+  if (ev.ends_at) return new Date(ev.ends_at);
+  const s = eventStart(ev);
+  return new Date(s.getTime() + (ev.duration_minutes || 0) * 60000);
 }
 
 function formatICSDate(d: Date): string {
   return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 }
 
+function stripHtml(html: string | null | undefined): string {
+  if (!html) return "";
+  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
 function buildGoogleCalendarUrl(ev: CommunityEvent): string {
-  const start = new Date(ev.scheduled_at);
-  const end = new Date(start.getTime() + ev.duration_minutes * 60000);
-  const details = [ev.description, ev.zoom_link ? `Join: ${ev.zoom_link}` : ""].filter(Boolean).join("\n");
+  const start = eventStart(ev);
+  const end = eventEnd(ev);
+  const details = [stripHtml(ev.description), ev.zoom_link ? `Join: ${ev.zoom_link}` : ""].filter(Boolean).join("\n");
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: ev.title,
@@ -39,9 +64,9 @@ function buildGoogleCalendarUrl(ev: CommunityEvent): string {
 }
 
 function downloadICS(ev: CommunityEvent) {
-  const start = new Date(ev.scheduled_at);
-  const end = new Date(start.getTime() + ev.duration_minutes * 60000);
-  const desc = [ev.description, ev.zoom_link ? `Join: ${ev.zoom_link}` : ""].filter(Boolean).join("\\n");
+  const start = eventStart(ev);
+  const end = eventEnd(ev);
+  const desc = [stripHtml(ev.description), ev.zoom_link ? `Join: ${ev.zoom_link}` : ""].filter(Boolean).join("\\n");
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -84,7 +109,7 @@ export default function CommunityEvents() {
         toast({ title: "Couldn't load events", description: error.message, variant: "destructive" });
         setEvents([]);
       } else {
-        const rows = (data || []) as CommunityEvent[];
+        const rows = ((data || []) as unknown) as CommunityEvent[];
         setEvents(rows);
         if (rows[0]?.caller_tier) setTier(rows[0].caller_tier);
       }
@@ -149,9 +174,15 @@ export default function CommunityEvents() {
 }
 
 function EventCard({ ev, past }: { ev: CommunityEvent; past?: boolean }) {
-  const dt = new Date(ev.scheduled_at);
-  const dateLabel = dt.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
-  const timeLabel = dt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  const start = eventStart(ev);
+  const end = eventEnd(ev);
+  const fmtDate = (d: Date) =>
+    d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+  const fmtTime = (d: Date) =>
+    d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+
+  const sameDay = start.toDateString() === end.toDateString();
+  const isMulti = !!ev.is_multi_day && !sameDay;
 
   return (
     <Card className={`p-4 ${past ? "opacity-70" : ""}`}>
@@ -159,16 +190,54 @@ function EventCard({ ev, past }: { ev: CommunityEvent; past?: boolean }) {
         <div className="min-w-0 flex-1">
           <h3 className="text-base font-semibold text-foreground">{ev.title}</h3>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{dateLabel}</span>
-            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{timeLabel} · {ev.duration_minutes}m</span>
+            {isMulti ? (
+              <>
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {fmtDate(start)} – {fmtDate(end)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {fmtTime(start)} → {fmtTime(end)}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {fmtDate(start)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {fmtTime(start)} – {fmtTime(end)}
+                </span>
+              </>
+            )}
           </div>
+          {isMulti && Array.isArray(ev.sessions) && ev.sessions.length > 0 && (
+            <ul className="mt-2 text-xs text-muted-foreground space-y-0.5">
+              {ev.sessions.map((s, i) => {
+                const [y, m, d] = s.date.split("-").map(Number);
+                const label = new Date(Date.UTC(y, (m || 1) - 1, d || 1)).toLocaleDateString(undefined, {
+                  weekday: "short", day: "numeric", month: "short", timeZone: "UTC",
+                });
+                return (
+                  <li key={i} className="flex items-center gap-1.5">
+                    <span className="font-medium text-foreground/80">{label}</span>
+                    <span>· {s.startTime} – {s.endTime}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
           {ev.description && (
             <div
-              className="text-sm text-foreground/80 mt-2 prose prose-sm max-w-none prose-img:rounded-md prose-img:my-2 prose-img:max-h-80 prose-a:text-primary"
+              className="text-sm text-foreground/80 mt-3 prose prose-sm max-w-none prose-img:rounded-md prose-img:my-2 prose-img:max-h-80 prose-a:text-primary [&_*]:!bg-transparent [&_p]:!my-1.5 [&_p:empty]:hidden"
               dangerouslySetInnerHTML={{ __html: sanitizeEventHtml(ev.description) }}
             />
           )}
         </div>
+
         {ev.has_access ? (
           <Badge className="bg-primary/15 text-primary border-primary/30">Joinable</Badge>
         ) : (
