@@ -143,3 +143,12 @@
 #stripe-checkout-container > div {
   position: relative !important;
 }
+
+/* Touch drag — visible drop-target hover state (mobile/iPad).
+ * Works in tandem with the floating ghost in src/lib/touchDrag.ts. */
+[data-legal-drop="true"][data-touch-over="true"] {
+  transform: scale(1.12);
+  transition: transform 120ms ease;
+  filter: drop-shadow(0 0 12px hsl(var(--primary) / 0.85));
+  z-index: 20;
+}
