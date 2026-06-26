@@ -35,7 +35,7 @@ interface PointerTrack {
   suppressClick: boolean;
 }
 
-export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd, disabled, size = 104, stuckUids }: Props) {
+export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd, disabled, size = 104, stuckUids, onTouchDropDiscard }: Props) {
   const coarse = useCoarsePointer();
   // Track which card uids have completed their draw-in animation.
   const revealedRef = useRef<Set<string>>(new Set());
