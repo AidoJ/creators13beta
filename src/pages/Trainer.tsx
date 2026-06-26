@@ -262,7 +262,7 @@ export default function TrainerDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4 flex-wrap">
             <TabsTrigger value="pipeline"><GitBranch className="h-3.5 w-3.5 mr-1" />Pipeline</TabsTrigger>
-            <TabsTrigger value="training-calls"><Calendar className="h-3.5 w-3.5 mr-1" />Training Calls</TabsTrigger>
+            <TabsTrigger value="training-calls"><Calendar className="h-3.5 w-3.5 mr-1" />Events</TabsTrigger>
             <TabsTrigger value="cases-profile"><FileText className="h-3.5 w-3.5 mr-1" />CS (Profile) {profilingCaseStudies > 0 && <Badge className="ml-1 h-5 text-[10px]" variant="secondary">{profilingCaseStudies}</Badge>}</TabsTrigger>
             <TabsTrigger value="cases-pr"><FileText className="h-3.5 w-3.5 mr-1" />CS (Approve) {pendingCaseStudies > 0 && <Badge className="ml-1 h-5 text-[10px]" variant="destructive">{pendingCaseStudies}</Badge>}</TabsTrigger>
             <TabsTrigger value="cases-dt"><FileText className="h-3.5 w-3.5 mr-1" />CS (Draft) {draftCaseStudies > 0 && <Badge className="ml-1 h-5 text-[10px]" variant="outline">{draftCaseStudies}</Badge>}</TabsTrigger>
