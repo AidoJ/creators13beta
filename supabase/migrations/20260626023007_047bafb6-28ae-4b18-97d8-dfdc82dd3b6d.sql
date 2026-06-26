@@ -1,0 +1,1 @@
+ALTER TABLE public.training_calls ADD COLUMN IF NOT EXISTS sessions jsonb;

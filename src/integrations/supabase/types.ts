@@ -1887,6 +1887,7 @@ export type Database = {
           recurrence_end_date: string | null
           recurrence_rule: string | null
           scheduled_at: string
+          sessions: Json | null
           starts_at: string | null
           title: string
           updated_at: string
@@ -1906,6 +1907,7 @@ export type Database = {
           recurrence_end_date?: string | null
           recurrence_rule?: string | null
           scheduled_at: string
+          sessions?: Json | null
           starts_at?: string | null
           title: string
           updated_at?: string
@@ -1925,6 +1927,7 @@ export type Database = {
           recurrence_end_date?: string | null
           recurrence_rule?: string | null
           scheduled_at?: string
+          sessions?: Json | null
           starts_at?: string | null
           title?: string
           updated_at?: string

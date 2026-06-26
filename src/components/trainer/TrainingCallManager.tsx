@@ -84,6 +84,9 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [isMultiDay, setIsMultiDay] = useState(false);
   const [endDate, setEndDate] = useState("");
   const [endTime, setEndTime] = useState("");
+  // Multi-day per-day sessions: each entry has its own start/end time.
+  type DaySession = { date: string; startTime: string; endTime: string };
+  const [daySessions, setDaySessions] = useState<DaySession[]>([]);
   const [zoomLink, setZoomLink] = useState("");
   const [recurrence, setRecurrence] = useState("none");
   const [recurrenceEnd, setRecurrenceEnd] = useState("");
@@ -201,11 +204,39 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   function resetForm() {
     setTitle(""); setDescription(""); setEventType("training_call");
     setDate(""); setTime(""); setEndDate(""); setEndTime(""); setIsMultiDay(false);
+    setDaySessions([]);
     setDuration("60"); setZoomLink(""); setRecurrence("none"); setRecurrenceEnd("");
     setExternalEmails([]); setNewExternalEmail("");
     setTierGrid(emptyTierGrid());
     setBulkInvitedTiers(new Set());
     setShowForm(false);
+  }
+
+  // Auto-regenerate the per-day session list when start/end date or start time changes.
+  // Preserves any per-day times the user has already edited for matching dates.
+  useEffect(() => {
+    if (!isMultiDay) return;
+    if (!date || !endDate) return;
+    const start = new Date(`${date}T00:00:00`);
+    const end = new Date(`${endDate}T00:00:00`);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return;
+    const days: DaySession[] = [];
+    const defaultStart = time || "09:00";
+    const defaultEnd = endTime || "17:00";
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const iso = d.toISOString().slice(0, 10);
+      const existing = daySessions.find(s => s.date === iso);
+      days.push(existing || { date: iso, startTime: defaultStart, endTime: defaultEnd });
+    }
+    // Only update if structurally different to avoid re-render loops.
+    const sameLen = days.length === daySessions.length;
+    const sameDates = sameLen && days.every((d, i) => d.date === daySessions[i].date);
+    if (!sameDates) setDaySessions(days);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMultiDay, date, endDate]);
+
+  function updateDaySession(idx: number, field: "startTime" | "endTime", value: string) {
+    setDaySessions(prev => prev.map((s, i) => i === idx ? { ...s, [field]: value } : s));
   }
 
   function bulkInviteTier(tier: TierKey) {
@@ -271,9 +302,25 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
   async function handleCreate() {
     if (!title.trim() || !date || !time || !user) return;
-    if (isMultiDay && (!endDate || !endTime)) {
-      toast({ title: "Set the end date & time", description: "Multi-day events need a finish date and time.", variant: "destructive" });
-      return;
+    if (isMultiDay) {
+      if (!endDate) {
+        toast({ title: "Set the finish date", description: "Multi-day events need a finish date.", variant: "destructive" });
+        return;
+      }
+      if (daySessions.length === 0) {
+        toast({ title: "No days configured", description: "Pick a start and finish date to generate days.", variant: "destructive" });
+        return;
+      }
+      for (const s of daySessions) {
+        if (!s.startTime || !s.endTime) {
+          toast({ title: "Set times for every day", description: `Day ${s.date} is missing a start or finish time.`, variant: "destructive" });
+          return;
+        }
+        if (s.endTime <= s.startTime) {
+          toast({ title: "Finish must be after start", description: `Check times on ${s.date}.`, variant: "destructive" });
+          return;
+        }
+      }
     }
     if (selectedUserIds.size === 0 && externalEmails.length === 0 && !anyTierVisible) {
       toast({ title: "Add invitees or open to a community tier", description: "Pick at least one practitioner, external guest, or community tier (Visible).", variant: "destructive" });
@@ -281,17 +328,28 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     }
     setSubmitting(true);
 
-    const startsAt = new Date(`${date}T${time}`);
-    const endsAt = isMultiDay
-      ? new Date(`${endDate}T${endTime}`)
-      : new Date(startsAt.getTime() + parseInt(duration) * 60000);
+    // For multi-day, span = earliest session start → latest session end.
+    let startsAt: Date;
+    let endsAt: Date;
+    let sessionsPayload: Array<{ date: string; starts_at: string; ends_at: string }> | null = null;
+    if (isMultiDay) {
+      const ordered = [...daySessions].sort((a, b) => a.date.localeCompare(b.date));
+      sessionsPayload = ordered.map(s => ({
+        date: s.date,
+        starts_at: new Date(`${s.date}T${s.startTime}`).toISOString(),
+        ends_at: new Date(`${s.date}T${s.endTime}`).toISOString(),
+      }));
+      startsAt = new Date(sessionsPayload[0].starts_at);
+      endsAt = new Date(sessionsPayload[sessionsPayload.length - 1].ends_at);
+    } else {
+      startsAt = new Date(`${date}T${time}`);
+      endsAt = new Date(startsAt.getTime() + parseInt(duration) * 60000);
+    }
     if (endsAt <= startsAt) {
       toast({ title: "End must be after start", variant: "destructive" });
       setSubmitting(false);
       return;
     }
-    const computedDuration = Math.max(1, Math.round((endsAt.getTime() - startsAt.getTime()) / 60000));
-    const scheduledAt = startsAt.toISOString();
 
     const baseRow = (start: Date, end: Date) => ({
       title: title.trim(),
@@ -301,6 +359,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       starts_at: start.toISOString(),
       ends_at: end.toISOString(),
       is_multi_day: isMultiDay,
+      sessions: sessionsPayload,
       duration_minutes: isMultiDay ? Math.round((end.getTime()-start.getTime())/60000) : parseInt(duration),
       zoom_link: zoomLink.trim() || null,
       recurrence_rule: recurrence,
@@ -686,11 +745,32 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
               <>
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Finish Date *</label>
-                  <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                  <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} min={date || undefined} />
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Finish Time *</label>
-                  <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} />
+                <div className="sm:col-span-2 rounded-lg border border-border bg-muted/20 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-foreground">Per-day schedule</p>
+                    <p className="text-[10px] text-muted-foreground">Set a start &amp; finish time for each day</p>
+                  </div>
+                  {daySessions.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground">Pick a start and finish date above to generate days.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {daySessions.map((s, i) => {
+                        const label = new Date(`${s.date}T00:00:00`).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" });
+                        return (
+                          <div key={s.date} className="grid grid-cols-[1fr_auto_auto] items-center gap-2">
+                            <div className="text-xs text-foreground">
+                              <span className="font-medium">Day {i + 1}</span>
+                              <span className="text-muted-foreground ml-2">{label}</span>
+                            </div>
+                            <Input type="time" className="h-8 w-28" value={s.startTime} onChange={e => updateDaySession(i, "startTime", e.target.value)} />
+                            <Input type="time" className="h-8 w-28" value={s.endTime} onChange={e => updateDaySession(i, "endTime", e.target.value)} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </>
             ) : (
