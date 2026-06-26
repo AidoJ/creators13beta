@@ -388,7 +388,10 @@ export default function TrainingCalendar({ compact = false, refreshKey = 0 }: Tr
                           <span>{call.duration_minutes} minutes</span>
                         </div>
                         {call.description && (
-                          <p className="text-xs text-muted-foreground mt-1">{call.description}</p>
+                          <div
+                            className="text-xs text-muted-foreground mt-1 prose prose-sm max-w-none prose-img:rounded-md prose-img:my-2 prose-a:text-primary"
+                            dangerouslySetInnerHTML={{ __html: sanitizeEventHtml(call.description) }}
+                          />
                         )}
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
