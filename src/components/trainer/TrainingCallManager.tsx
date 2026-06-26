@@ -368,7 +368,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       ends_at: end.toISOString(),
       is_multi_day: isMultiDay,
       sessions: sessionsPayload,
-      duration_minutes: isMultiDay ? Math.round((end.getTime()-start.getTime())/60000) : parseInt(duration),
+      duration_minutes: Math.round((end.getTime()-start.getTime())/60000),
       zoom_link: zoomLink.trim() || null,
       recurrence_rule: recurrence,
       created_by: user.id,
