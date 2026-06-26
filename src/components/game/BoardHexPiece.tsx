@@ -6,6 +6,7 @@ import type { DeckCard } from "@/lib/game/types";
 import { TypeGlyphMark, displayCardName } from "./cards/TypeGlyphMark";
 import { cardCodeLabel } from "@/lib/creatorTypeCode";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
+import { startTouchDragGhost, updateTouchDragGhost, endTouchDragGhost } from "@/lib/touchDrag";
 import goldenBodyArt from "@/assets/golden-body-card.webp";
 import goldenHiveArt from "@/assets/golden-hive-card.webp";
 
@@ -125,9 +126,13 @@ function BoardHexPieceImpl({ card, size = 110, onClick, onDragStart, onDragEnd, 
             p.suppressClick = true;
             onTouchDragStart?.();
             (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+            startTouchDragGhost(e.currentTarget as HTMLElement, e.clientX, e.clientY);
           }
         }
-        if (p.dragging) e.preventDefault();
+        if (p.dragging) {
+          e.preventDefault();
+          updateTouchDragGhost(e.clientX, e.clientY);
+        }
       } : undefined}
       onPointerUp={draggable ? (e) => {
         const p = ptrRef.current;
@@ -137,6 +142,7 @@ function BoardHexPieceImpl({ card, size = 110, onClick, onDragStart, onDragEnd, 
           const dropTarget = document
             .elementFromPoint(e.clientX, e.clientY)
             ?.closest('[data-legal-drop="true"]') as HTMLElement | null;
+          endTouchDragGhost();
           dropTarget?.click();
           onTouchDragEnd?.();
         }
@@ -144,7 +150,10 @@ function BoardHexPieceImpl({ card, size = 110, onClick, onDragStart, onDragEnd, 
       onPointerCancel={draggable ? () => {
         const p = ptrRef.current;
         ptrRef.current = null;
-        if (p?.dragging) onTouchDragEnd?.();
+        if (p?.dragging) {
+          endTouchDragGhost();
+          onTouchDragEnd?.();
+        }
       } : undefined}
       className={`group relative inline-block select-none ${(onClick || draggable) ? "cursor-pointer transition-transform hover:scale-105" : ""} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
       style={{

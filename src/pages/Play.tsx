@@ -1080,7 +1080,7 @@ export default function Play() {
   const pilesBlock = (
     <Card
       className={
-        "p-3 transition-colors data-[drop-target=true]:ring-2 data-[drop-target=true]:ring-destructive/60 " +
+        "p-3 transition-colors data-[drop-target=true]:ring-2 data-[drop-target=true]:ring-destructive/60 data-[touch-over=true]:ring-2 data-[touch-over=true]:ring-destructive data-[touch-over=true]:scale-[1.02] " +
         (isStuck
           ? "ring-2 ring-destructive bg-destructive/10 animate-pulse cursor-pointer "
           : canTapDiscard
@@ -1089,6 +1089,7 @@ export default function Play() {
       }
       role={canTapDiscard ? "button" : undefined}
       aria-label={canTapDiscard ? "Discard selected card" : undefined}
+      data-legal-drop={canTakeTurn && state.phase === "place" ? "true" : "false"}
       onClick={() => {
         if (canTapDiscard && selectedUid) onDiscardUid(selectedUid);
       }}

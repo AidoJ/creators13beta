@@ -165,7 +165,7 @@ export function Ecosystem({
               data-legal-drop={canDrop ? "true" : "false"}
               title={tooltip}
               tabIndex={canDrop ? 0 : -1}
-              className="absolute"
+              className="absolute data-[touch-over=true]:z-10"
               style={{
                 left: x + offX,
                 top: y + offY,
@@ -173,6 +173,7 @@ export function Ecosystem({
                 transition: "transform 120ms",
                 opacity: isIllegalForCard ? 0.35 : 1,
                 cursor: isIllegalForCard ? "not-allowed" : undefined,
+                filter: undefined,
               }}
               onDragOver={canDrop ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverKey(k); } : undefined}
               onDragLeave={canDrop ? () => setDragOverKey((cur) => (cur === k ? null : cur)) : undefined}
