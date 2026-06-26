@@ -2245,9 +2245,14 @@ export type Database = {
           caller_tier: Database["public"]["Enums"]["subscription_tier"]
           description: string
           duration_minutes: number
+          ends_at: string
+          event_type: string
           has_access: boolean
           id: string
+          is_multi_day: boolean
           scheduled_at: string
+          sessions: Json
+          starts_at: string
           title: string
           zoom_link: string
         }[]
