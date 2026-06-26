@@ -84,6 +84,36 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [externalEmails, setExternalEmails] = useState<string[]>([]);
   const [newExternalEmail, setNewExternalEmail] = useState("");
 
+  // Community audience tier grid (Wren/Robin/Cockatoo/Owl × visible/access)
+  type TierKey = "wren" | "robin" | "cockatoo" | "owl";
+  const TIER_KEYS: TierKey[] = ["wren", "robin", "cockatoo", "owl"];
+  const TIER_LABELS: Record<TierKey, string> = { wren: "Wren (free)", robin: "Robin", cockatoo: "Cockatoo", owl: "Owl" };
+  type TierGrid = Record<TierKey, { visible: boolean; access: boolean }>;
+  const emptyTierGrid = (): TierGrid => ({
+    wren: { visible: false, access: false },
+    robin: { visible: false, access: false },
+    cockatoo: { visible: false, access: false },
+    owl: { visible: false, access: false },
+  });
+  const [tierGrid, setTierGrid] = useState<TierGrid>(emptyTierGrid);
+  const anyTierVisible = TIER_KEYS.some(t => tierGrid[t].visible);
+
+  function setTierFlag(tier: TierKey, field: "visible" | "access", value: boolean) {
+    setTierGrid(prev => {
+      const next = { ...prev, [tier]: { ...prev[tier] } };
+      if (field === "visible") {
+        next[tier].visible = value;
+        // Access requires visible — clear access if visible is turned off
+        if (!value) next[tier].access = false;
+      } else {
+        next[tier].access = value;
+        // Granting access auto-grants visible
+        if (value) next[tier].visible = true;
+      }
+      return next;
+    });
+  }
+
   const fetchInvitees = useCallback(async (callIds: string[]) => {
     if (callIds.length === 0) return;
     const [{ data: invData }, { data: evtData }] = await Promise.all([
@@ -151,6 +181,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     setTitle(""); setDescription(""); setDate(""); setTime("");
     setDuration("60"); setZoomLink(""); setRecurrence("none"); setRecurrenceEnd("");
     setExternalEmails([]); setNewExternalEmail("");
+    setTierGrid(emptyTierGrid());
     setShowForm(false);
   }
 
@@ -190,8 +221,8 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
   async function handleCreate() {
     if (!title.trim() || !date || !time || !user) return;
-    if (selectedUserIds.size === 0 && externalEmails.length === 0) {
-      toast({ title: "Select at least one invitee", variant: "destructive" });
+    if (selectedUserIds.size === 0 && externalEmails.length === 0 && !anyTierVisible) {
+      toast({ title: "Add invitees or open to a community tier", description: "Pick at least one practitioner, external guest, or community tier (Visible).", variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -251,11 +282,31 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
         );
       }
 
+      // Insert per-tier community access rows for each created call.
+      // Only rows where visible=true are written; absent rows = hidden for that tier.
+      if (insertedCalls && anyTierVisible) {
+        const tierRows: Array<{ training_call_id: string; tier: TierKey; visible: boolean; access: boolean }> = [];
+        for (const inserted of insertedCalls) {
+          for (const tier of TIER_KEYS) {
+            const g = tierGrid[tier];
+            if (g.visible) tierRows.push({ training_call_id: inserted.id, tier, visible: true, access: g.access });
+          }
+        }
+        if (tierRows.length > 0) {
+          const { error: tierErr } = await supabase.from("training_call_tier_access").insert(tierRows);
+          if (tierErr) {
+            toast({ title: "Saved call, but tier access failed", description: tierErr.message, variant: "destructive" });
+          }
+        }
+      }
+
+
       // Build recipient lists
       const selectedPractitionerUserIds = Array.from(selectedUserIds);
 
-      // Send invites for every created call (important for recurring series)
-      if (insertedCalls && insertedCalls.length > 0) {
+      // Send invites for every created call (important for recurring series).
+      // Skip when this is a community-tier-only event with no direct invitees.
+      if (insertedCalls && insertedCalls.length > 0 && (selectedPractitionerUserIds.length > 0 || externalEmails.length > 0)) {
         for (let idx = 0; idx < insertedCalls.length; idx++) {
           const inserted = insertedCalls[idx];
           const callForInvite = {
@@ -643,9 +694,47 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
             </div>
           </div>
 
+          {/* Community audience tier grid */}
+          <div className="border-t border-border pt-4 space-y-2">
+            <h4 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Users className="h-4 w-4 text-primary" />
+              Community audience
+            </h4>
+            <p className="text-[11px] text-muted-foreground">
+              Choose which membership tiers can <span className="font-medium text-foreground">see</span> this event on their community calendar, and which can <span className="font-medium text-foreground">join</span> (Zoom link delivered). Access requires Visible. Leave all blank to keep this event off the community calendar.
+            </p>
+            <div className="rounded-lg border border-border bg-muted/20 overflow-hidden">
+              <div className="grid grid-cols-[1fr_80px_80px] items-center text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/40 px-3 py-1.5">
+                <span>Tier</span>
+                <span className="text-center">Visible</span>
+                <span className="text-center">Access</span>
+              </div>
+              {TIER_KEYS.map(tier => (
+                <div key={tier} className="grid grid-cols-[1fr_80px_80px] items-center px-3 py-2 border-t border-border/60 text-xs">
+                  <span className="text-foreground">{TIER_LABELS[tier]}</span>
+                  <div className="flex justify-center">
+                    <Checkbox
+                      checked={tierGrid[tier].visible}
+                      onCheckedChange={(v) => setTierFlag(tier, "visible", v === true)}
+                      aria-label={`${TIER_LABELS[tier]} visible`}
+                    />
+                  </div>
+                  <div className="flex justify-center">
+                    <Checkbox
+                      checked={tierGrid[tier].access}
+                      onCheckedChange={(v) => setTierFlag(tier, "access", v === true)}
+                      disabled={!tierGrid[tier].visible}
+                      aria-label={`${TIER_LABELS[tier]} access`}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="flex gap-2 pt-2">
-            <Button onClick={handleCreate} disabled={!title.trim() || !date || !time || (selectedUserIds.size === 0 && externalEmails.length === 0) || submitting} className="rounded-full">
-              <Send className="h-3.5 w-3.5 mr-1" /> {submitting ? "Creating…" : `Create & Send (${selectedUserIds.size + externalEmails.length})`}
+            <Button onClick={handleCreate} disabled={!title.trim() || !date || !time || (selectedUserIds.size === 0 && externalEmails.length === 0 && !anyTierVisible) || submitting} className="rounded-full">
+              <Send className="h-3.5 w-3.5 mr-1" /> {submitting ? "Creating…" : `Create${(selectedUserIds.size + externalEmails.length) > 0 ? ` & Send (${selectedUserIds.size + externalEmails.length})` : ""}`}
             </Button>
             <Button variant="ghost" onClick={resetForm}>Cancel</Button>
           </div>

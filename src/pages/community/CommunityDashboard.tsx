@@ -466,7 +466,7 @@ export default function CommunityDashboard() {
             <TooltipProvider delayDuration={150}>
               <nav aria-label="Community quick nav" className="flex flex-col items-center gap-3">
                 {[
-                  { label: "Events", img: eventsIcon.url, soon: true, onClick: () => {}, badge: 0 },
+                  { label: "Events", img: eventsIcon.url, soon: false, onClick: () => navigate("/community/events"), badge: 0 },
                   {
                     label: "Connections",
                     Icon: MessageCircle,
