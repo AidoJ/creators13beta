@@ -631,12 +631,33 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       {showForm && (
         <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">New Training Call</h3>
+            <h3 className="text-sm font-semibold text-foreground">New Event</h3>
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={resetForm}>
               <X className="h-4 w-4" />
             </Button>
           </div>
+
+          {/* Core event fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Event Type</label>
+              <Select value={eventType} onValueChange={setEventType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="training_call">Training Call</SelectItem>
+                  <SelectItem value="book_launch">Book Launch</SelectItem>
+                  <SelectItem value="workshop">Workshop</SelectItem>
+                  <SelectItem value="masterclass">Masterclass</SelectItem>
+                  <SelectItem value="community_gathering">Community Gathering</SelectItem>
+                  <SelectItem value="qa_session">Q&amp;A Session</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Zoom Link</label>
+              <Input value={zoomLink} onChange={e => setZoomLink(e.target.value)} placeholder="https://zoom.us/j/..." />
+            </div>
             <div className="sm:col-span-2">
               <label className="text-xs text-muted-foreground mb-1 block">Title *</label>
               <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Weekly Training Session" />
@@ -645,34 +666,52 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
               <label className="text-xs text-muted-foreground mb-1 block">Description</label>
               <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Optional agenda or notes…" rows={2} />
             </div>
+
+            <div className="sm:col-span-2 flex items-center gap-2 pt-1">
+              <Checkbox id="multi-day" checked={isMultiDay} onCheckedChange={(v) => setIsMultiDay(v === true)} />
+              <Label htmlFor="multi-day" className="text-xs cursor-pointer">Multi-day event (spans more than one day)</Label>
+            </div>
+
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Date *</label>
+              <label className="text-xs text-muted-foreground mb-1 block">Start Date *</label>
               <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Time *</label>
+              <label className="text-xs text-muted-foreground mb-1 block">Start Time *</label>
               <Input type="time" value={time} onChange={e => setTime(e.target.value)} />
             </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Duration</label>
-              <Select value={duration} onValueChange={setDuration}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="30">30 minutes</SelectItem>
-                  <SelectItem value="45">45 minutes</SelectItem>
-                  <SelectItem value="60">1 hour</SelectItem>
-                  <SelectItem value="90">1.5 hours</SelectItem>
-                  <SelectItem value="120">2 hours</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Zoom Link</label>
-              <Input value={zoomLink} onChange={e => setZoomLink(e.target.value)} placeholder="https://zoom.us/j/..." />
-            </div>
+
+            {isMultiDay ? (
+              <>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Finish Date *</label>
+                  <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Finish Time *</label>
+                  <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} />
+                </div>
+              </>
+            ) : (
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Duration</label>
+                <Select value={duration} onValueChange={setDuration}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="30">30 minutes</SelectItem>
+                    <SelectItem value="45">45 minutes</SelectItem>
+                    <SelectItem value="60">1 hour</SelectItem>
+                    <SelectItem value="90">1.5 hours</SelectItem>
+                    <SelectItem value="120">2 hours</SelectItem>
+                    <SelectItem value="180">3 hours</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Recurrence</label>
-              <Select value={recurrence} onValueChange={setRecurrence}>
+              <Select value={recurrence} onValueChange={setRecurrence} disabled={isMultiDay}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">One-off</SelectItem>
@@ -681,8 +720,9 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
                   <SelectItem value="monthly">Monthly</SelectItem>
                 </SelectContent>
               </Select>
+              {isMultiDay && <p className="text-[10px] text-muted-foreground mt-1">Recurrence disabled for multi-day events.</p>}
             </div>
-            {recurrence !== "none" && (
+            {recurrence !== "none" && !isMultiDay && (
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Repeat until</label>
                 <Input type="date" value={recurrenceEnd} onChange={e => setRecurrenceEnd(e.target.value)} />
@@ -690,12 +730,50 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
             )}
           </div>
 
-          {/* Invitee selection */}
+          {/* 1. Community audience tier grid — FIRST so trainer decides scope before picking invitees */}
+          <div className="border-t border-border pt-4 space-y-2">
+            <h4 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Users className="h-4 w-4 text-primary" />
+              Community Audience
+            </h4>
+            <p className="text-[11px] text-muted-foreground">
+              Choose which membership tiers can <span className="font-medium text-foreground">see</span> this event on their community calendar, and which can <span className="font-medium text-foreground">join</span> (Zoom link delivered). Access requires Visible. Leave all blank to keep this event off the community calendar.
+            </p>
+            <div className="rounded-lg border border-border bg-muted/20 overflow-hidden">
+              <div className="grid grid-cols-[1fr_80px_80px] items-center text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/40 px-3 py-1.5">
+                <span>Tier</span>
+                <span className="text-center">Visible</span>
+                <span className="text-center">Access</span>
+              </div>
+              {TIER_KEYS.map(tier => (
+                <div key={tier} className="grid grid-cols-[1fr_80px_80px] items-center px-3 py-2 border-t border-border/60 text-xs">
+                  <span className="text-foreground">{TIER_LABELS[tier]}</span>
+                  <div className="flex justify-center">
+                    <Checkbox
+                      checked={tierGrid[tier].visible}
+                      onCheckedChange={(v) => setTierFlag(tier, "visible", v === true)}
+                      aria-label={`${TIER_LABELS[tier]} visible`}
+                    />
+                  </div>
+                  <div className="flex justify-center">
+                    <Checkbox
+                      checked={tierGrid[tier].access}
+                      onCheckedChange={(v) => setTierFlag(tier, "access", v === true)}
+                      disabled={!tierGrid[tier].visible}
+                      aria-label={`${TIER_LABELS[tier]} access`}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 2. Direct invitees — bulk-by-tier, practitioner picker, external emails */}
           <div className="border-t border-border pt-4 space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
                 <Users className="h-4 w-4 text-primary" />
-                Select Invitees
+                Direct Invitees (email)
               </h4>
               <div className="flex gap-1.5">
                 <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={selectAll}>Select All</Button>
@@ -703,11 +781,46 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
               </div>
             </div>
 
+            {/* Bulk invite by tier */}
+            <div className="rounded-lg border border-dashed border-border bg-muted/10 p-2.5 space-y-1.5">
+              <p className="text-[11px] text-muted-foreground">
+                <span className="font-medium text-foreground">Invite all by tier</span> — adds every platform member of that tier to the email list below.
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {TIER_KEYS.map(tier => {
+                  const count = practitioners.filter(p => p.tier === tier).length;
+                  const grantedAccess = tierGrid[tier].access;
+                  const alreadyInvited = bulkInvitedTiers.has(tier);
+                  return (
+                    <Button
+                      key={tier}
+                      type="button"
+                      variant={alreadyInvited ? "default" : "outline"}
+                      size="sm"
+                      className="h-7 text-[11px]"
+                      disabled={count === 0}
+                      onClick={() => bulkInviteTier(tier)}
+                      title={!grantedAccess ? `Heads up: ${TIER_LABELS[tier]} doesn't have Access in the grid above — they'll get the email but can't join.` : undefined}
+                    >
+                      <UserPlus className="h-3 w-3 mr-1" />
+                      {TIER_LABELS[tier]} ({count})
+                      {!grantedAccess && count > 0 && <span className="ml-1 text-amber-500">⚠</span>}
+                    </Button>
+                  );
+                })}
+              </div>
+              {[...bulkInvitedTiers].some(t => !tierGrid[t].access) && (
+                <p className="text-[10px] text-amber-500">
+                  ⚠ Some bulk-invited tiers don't have Access in the grid — those recipients will get the email but no Zoom link.
+                </p>
+              )}
+            </div>
+
             {/* Practitioner checkboxes */}
             {practLoading ? (
-              <p className="text-xs text-muted-foreground">Loading practitioners…</p>
+              <p className="text-xs text-muted-foreground">Loading members…</p>
             ) : practitioners.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No practitioners found.</p>
+              <p className="text-xs text-muted-foreground">No members found.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto rounded-lg border border-border p-2 bg-muted/20">
                 {practitioners.map(p => (
@@ -716,16 +829,17 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
                       checked={selectedUserIds.has(p.user_id)}
                       onCheckedChange={() => toggleUser(p.user_id)}
                     />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <span className="text-foreground text-xs font-medium truncate block">{p.name}</span>
                       <span className="text-muted-foreground text-[10px] truncate block">{p.email}</span>
                     </div>
+                    <Badge variant="outline" className="text-[9px] capitalize h-4 px-1">{p.tier}</Badge>
                   </label>
                 ))}
               </div>
             )}
             <p className="text-[10px] text-muted-foreground">
-              {selectedUserIds.size} of {practitioners.length} practitioners selected
+              {selectedUserIds.size} of {practitioners.length} members selected
             </p>
 
             {/* External email invites */}
@@ -762,44 +876,6 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
             </div>
           </div>
 
-          {/* Community audience tier grid */}
-          <div className="border-t border-border pt-4 space-y-2">
-            <h4 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-              <Users className="h-4 w-4 text-primary" />
-              Community audience
-            </h4>
-            <p className="text-[11px] text-muted-foreground">
-              Choose which membership tiers can <span className="font-medium text-foreground">see</span> this event on their community calendar, and which can <span className="font-medium text-foreground">join</span> (Zoom link delivered). Access requires Visible. Leave all blank to keep this event off the community calendar.
-            </p>
-            <div className="rounded-lg border border-border bg-muted/20 overflow-hidden">
-              <div className="grid grid-cols-[1fr_80px_80px] items-center text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/40 px-3 py-1.5">
-                <span>Tier</span>
-                <span className="text-center">Visible</span>
-                <span className="text-center">Access</span>
-              </div>
-              {TIER_KEYS.map(tier => (
-                <div key={tier} className="grid grid-cols-[1fr_80px_80px] items-center px-3 py-2 border-t border-border/60 text-xs">
-                  <span className="text-foreground">{TIER_LABELS[tier]}</span>
-                  <div className="flex justify-center">
-                    <Checkbox
-                      checked={tierGrid[tier].visible}
-                      onCheckedChange={(v) => setTierFlag(tier, "visible", v === true)}
-                      aria-label={`${TIER_LABELS[tier]} visible`}
-                    />
-                  </div>
-                  <div className="flex justify-center">
-                    <Checkbox
-                      checked={tierGrid[tier].access}
-                      onCheckedChange={(v) => setTierFlag(tier, "access", v === true)}
-                      disabled={!tierGrid[tier].visible}
-                      aria-label={`${TIER_LABELS[tier]} access`}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
           <div className="flex gap-2 pt-2">
             <Button onClick={handleCreate} disabled={!title.trim() || !date || !time || (selectedUserIds.size === 0 && externalEmails.length === 0 && !anyTierVisible) || submitting} className="rounded-full">
               <Send className="h-3.5 w-3.5 mr-1" /> {submitting ? "Creating…" : `Create${(selectedUserIds.size + externalEmails.length) > 0 ? ` & Send (${selectedUserIds.size + externalEmails.length})` : ""}`}
@@ -808,6 +884,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
           </div>
         </div>
       )}
+
 
       {/* Upcoming calls */}
       {loading ? (
