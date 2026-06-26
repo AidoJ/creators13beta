@@ -167,9 +167,13 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                     onSelect(card.uid);
                     onDragStart?.(card.uid);
                     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+                    startTouchDragGhost(e.currentTarget as HTMLElement, e.clientX, e.clientY);
                   }
                 }
-                if (p.dragging) e.preventDefault();
+                if (p.dragging) {
+                  e.preventDefault();
+                  updateTouchDragGhost(e.clientX, e.clientY);
+                }
               }}
               onPointerUp={(e) => {
                 const p = pointersRef.current.get(e.pointerId);
@@ -180,6 +184,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                   const dropTarget = document
                     .elementFromPoint(e.clientX, e.clientY)
                     ?.closest('[data-legal-drop="true"]') as HTMLElement | null;
+                  endTouchDragGhost();
                   dropTarget?.click();
                   onDragEnd?.();
                 }
@@ -187,7 +192,10 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
               onPointerCancel={(e) => {
                 const p = pointersRef.current.get(e.pointerId);
                 pointersRef.current.delete(e.pointerId);
-                if (p?.dragging) onDragEnd?.();
+                if (p?.dragging) {
+                  endTouchDragGhost();
+                  onDragEnd?.();
+                }
               }}
               onDragStart={(e) => {
                 if (disabled || isAnimating) return;
