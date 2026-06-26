@@ -1232,12 +1232,12 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   );
 }
 
-function CallCard({ call, onCancel, onDelete, onDuplicate, onReschedule, onResend, sending, past, cancelled, practitioners, onSendInvites, onLoadPractitioners, practLoading, invitees, events, onInvitesSent }: {
+function CallCard({ call, onCancel, onDelete, onDuplicate, onEdit, onResend, sending, past, cancelled, practitioners, onSendInvites, onLoadPractitioners, practLoading, invitees, events, onInvitesSent }: {
   call: TrainingCall;
   onCancel: (id: string) => void;
   onDelete: (id: string) => void;
   onDuplicate?: (id: string) => void;
-  onReschedule?: (id: string, newDate: string, newTime: string) => void;
+  onEdit?: (call: TrainingCall) => void;
   onResend: (call: TrainingCall) => void;
   sending: boolean;
   past?: boolean;
