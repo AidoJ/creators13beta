@@ -181,6 +181,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     setTitle(""); setDescription(""); setDate(""); setTime("");
     setDuration("60"); setZoomLink(""); setRecurrence("none"); setRecurrenceEnd("");
     setExternalEmails([]); setNewExternalEmail("");
+    setTierGrid(emptyTierGrid());
     setShowForm(false);
   }
 
