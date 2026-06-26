@@ -657,32 +657,122 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     }
   }
 
-  async function handleReschedule(id: string, newDate: string, newTime: string) {
-    const call = calls.find(c => c.id === id);
-    if (!call) return;
-    const previousScheduledAt = call.scheduled_at;
-    const newScheduledAt = new Date(`${newDate}T${newTime}`).toISOString();
+  async function handleSave() {
+    if (!editingCallId || !user) return;
+    if (!title.trim() || !date || !time) return;
 
-    const updatePayload: { scheduled_at: string; title?: string } = { scheduled_at: newScheduledAt };
-    if (call.title.startsWith("[DUPLICATE]")) {
-      updatePayload.title = call.title.replace(/^\[DUPLICATE\]\s*/, '');
+    // Validate multi-day rules (same as create)
+    if (isMultiDay) {
+      if (!endDate) {
+        toast({ title: "Set the finish date", variant: "destructive" });
+        return;
+      }
+      if (daySessions.length === 0) {
+        toast({ title: "No days configured", variant: "destructive" });
+        return;
+      }
+      for (const s of daySessions) {
+        if (!s.startTime || !s.endTime) {
+          toast({ title: "Set times for every day", description: `Day ${s.date} is missing a time.`, variant: "destructive" });
+          return;
+        }
+        if (s.endTime <= s.startTime) {
+          toast({ title: "Finish must be after start", description: `Check times on ${s.date}.`, variant: "destructive" });
+          return;
+        }
+      }
     }
-    const { error } = await supabase.from("training_calls").update(updatePayload).eq("id", id);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+
+    setSubmitting(true);
+
+    let startsAt: Date;
+    let endsAt: Date;
+    let sessionsPayload: Array<{ date: string; starts_at: string; ends_at: string }> | null = null;
+    if (isMultiDay) {
+      const ordered = [...daySessions].sort((a, b) => a.date.localeCompare(b.date));
+      sessionsPayload = ordered.map(s => ({
+        date: s.date,
+        starts_at: new Date(`${s.date}T${s.startTime}`).toISOString(),
+        ends_at: new Date(`${s.date}T${s.endTime}`).toISOString(),
+      }));
+      startsAt = new Date(sessionsPayload[0].starts_at);
+      endsAt = new Date(sessionsPayload[sessionsPayload.length - 1].ends_at);
+    } else {
+      if (!endTime) {
+        toast({ title: "Set the finish time", variant: "destructive" });
+        setSubmitting(false);
+        return;
+      }
+      startsAt = new Date(`${date}T${time}`);
+      endsAt = new Date(`${date}T${endTime}`);
+    }
+    if (endsAt <= startsAt) {
+      toast({ title: "End must be after start", variant: "destructive" });
+      setSubmitting(false);
       return;
     }
-    await supabase.from("training_call_events").insert({ call_id: id, event_type: "updated", details: `Rescheduled from ${new Date(previousScheduledAt).toLocaleString("en-AU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}` });
-    // Notify invitees
-    try {
-      await supabase.functions.invoke("send-training-update", {
-        body: { callId: id, updateType: "rescheduled", previousScheduledAt },
-      });
-    } catch (e) { console.error("Error sending reschedule notifications:", e); }
-    toast({ title: "Call rescheduled", description: "All invitees have been notified." });
+
+    const updatePayload: Record<string, any> = {
+      title: title.trim(),
+      description: description.replace(/<[^>]*>/g, "").trim() ? description : null,
+      event_type: eventType,
+      scheduled_at: startsAt.toISOString(),
+      starts_at: startsAt.toISOString(),
+      ends_at: endsAt.toISOString(),
+      is_multi_day: isMultiDay,
+      sessions: sessionsPayload,
+      duration_minutes: Math.round((endsAt.getTime() - startsAt.getTime()) / 60000),
+      zoom_link: zoomLink.trim() || null,
+      recurrence_rule: recurrence,
+      recurrence_end_date: recurrenceEnd || null,
+    };
+
+    const { error } = await supabase.from("training_calls").update(updatePayload).eq("id", editingCallId);
+    if (error) {
+      toast({ title: "Error saving event", description: error.message, variant: "destructive" });
+      setSubmitting(false);
+      return;
+    }
+
+    // Replace tier_access rows
+    await supabase.from("training_call_tier_access").delete().eq("training_call_id", editingCallId);
+    const tierRows: Array<{ training_call_id: string; tier: TierKey; visible: boolean; access: boolean }> = [];
+    for (const tier of TIER_KEYS) {
+      const g = tierGrid[tier];
+      if (g.visible) tierRows.push({ training_call_id: editingCallId, tier, visible: true, access: g.access });
+    }
+    if (tierRows.length > 0) {
+      const { error: tierErr } = await supabase.from("training_call_tier_access").insert(tierRows);
+      if (tierErr) toast({ title: "Saved event, but tier access failed", description: tierErr.message, variant: "destructive" });
+    }
+
+    await supabase.from("training_call_events").insert({ call_id: editingCallId, event_type: "updated", details: "Event edited" });
+
+    // Detect meaningful change for notification
+    const dateChanged = editOriginal && editOriginal.scheduled_at !== startsAt.toISOString();
+    const endChanged = editOriginal && (editOriginal.ends_at || null) !== endsAt.toISOString();
+    const zoomChanged = editOriginal && (editOriginal.zoom_link || null) !== (zoomLink.trim() || null);
+
+    if (notifyOnEdit && (dateChanged || endChanged || zoomChanged)) {
+      try {
+        await supabase.functions.invoke("send-training-update", {
+          body: { callId: editingCallId, updateType: "rescheduled", previousScheduledAt: editOriginal?.scheduled_at },
+        });
+        toast({ title: "Event updated", description: "Invitees have been notified by email." });
+      } catch (e) {
+        console.error("Error notifying invitees:", e);
+        toast({ title: "Event saved, notification failed", description: "Invitees were not notified.", variant: "destructive" });
+      }
+    } else {
+      toast({ title: "Event updated" });
+    }
+
+    resetForm();
     await fetchCalls();
     onCallsChanged?.();
+    setSubmitting(false);
   }
+
 
   // Duplicate dialog state
   const [duplicateSource, setDuplicateSource] = useState<TrainingCall | null>(null);
