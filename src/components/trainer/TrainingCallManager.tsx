@@ -221,8 +221,8 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
   async function handleCreate() {
     if (!title.trim() || !date || !time || !user) return;
-    if (selectedUserIds.size === 0 && externalEmails.length === 0) {
-      toast({ title: "Select at least one invitee", variant: "destructive" });
+    if (selectedUserIds.size === 0 && externalEmails.length === 0 && !anyTierVisible) {
+      toast({ title: "Add invitees or open to a community tier", description: "Pick at least one practitioner, external guest, or community tier (Visible).", variant: "destructive" });
       return;
     }
     setSubmitting(true);
