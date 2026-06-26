@@ -19,6 +19,10 @@ interface TrainingCall {
   title: string;
   description: string | null;
   scheduled_at: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  is_multi_day: boolean;
+  event_type: string;
   duration_minutes: number;
   zoom_link: string | null;
   recurrence_rule: string;
@@ -47,6 +51,7 @@ interface PractitionerOption {
   user_id: string;
   email: string;
   name: string;
+  tier: "wren" | "robin" | "cockatoo" | "owl";
 }
 
 interface TrainingCallManagerProps {
