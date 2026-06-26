@@ -282,6 +282,25 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
         );
       }
 
+      // Insert per-tier community access rows for each created call.
+      // Only rows where visible=true are written; absent rows = hidden for that tier.
+      if (insertedCalls && anyTierVisible) {
+        const tierRows: Array<{ training_call_id: string; tier: TierKey; visible: boolean; access: boolean }> = [];
+        for (const inserted of insertedCalls) {
+          for (const tier of TIER_KEYS) {
+            const g = tierGrid[tier];
+            if (g.visible) tierRows.push({ training_call_id: inserted.id, tier, visible: true, access: g.access });
+          }
+        }
+        if (tierRows.length > 0) {
+          const { error: tierErr } = await supabase.from("training_call_tier_access").insert(tierRows);
+          if (tierErr) {
+            toast({ title: "Saved call, but tier access failed", description: tierErr.message, variant: "destructive" });
+          }
+        }
+      }
+
+
       // Build recipient lists
       const selectedPractitionerUserIds = Array.from(selectedUserIds);
 
