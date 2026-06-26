@@ -694,9 +694,47 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
             </div>
           </div>
 
+          {/* Community audience tier grid */}
+          <div className="border-t border-border pt-4 space-y-2">
+            <h4 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Users className="h-4 w-4 text-primary" />
+              Community audience
+            </h4>
+            <p className="text-[11px] text-muted-foreground">
+              Choose which membership tiers can <span className="font-medium text-foreground">see</span> this event on their community calendar, and which can <span className="font-medium text-foreground">join</span> (Zoom link delivered). Access requires Visible. Leave all blank to keep this event off the community calendar.
+            </p>
+            <div className="rounded-lg border border-border bg-muted/20 overflow-hidden">
+              <div className="grid grid-cols-[1fr_80px_80px] items-center text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/40 px-3 py-1.5">
+                <span>Tier</span>
+                <span className="text-center">Visible</span>
+                <span className="text-center">Access</span>
+              </div>
+              {TIER_KEYS.map(tier => (
+                <div key={tier} className="grid grid-cols-[1fr_80px_80px] items-center px-3 py-2 border-t border-border/60 text-xs">
+                  <span className="text-foreground">{TIER_LABELS[tier]}</span>
+                  <div className="flex justify-center">
+                    <Checkbox
+                      checked={tierGrid[tier].visible}
+                      onCheckedChange={(v) => setTierFlag(tier, "visible", v === true)}
+                      aria-label={`${TIER_LABELS[tier]} visible`}
+                    />
+                  </div>
+                  <div className="flex justify-center">
+                    <Checkbox
+                      checked={tierGrid[tier].access}
+                      onCheckedChange={(v) => setTierFlag(tier, "access", v === true)}
+                      disabled={!tierGrid[tier].visible}
+                      aria-label={`${TIER_LABELS[tier]} access`}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="flex gap-2 pt-2">
-            <Button onClick={handleCreate} disabled={!title.trim() || !date || !time || (selectedUserIds.size === 0 && externalEmails.length === 0) || submitting} className="rounded-full">
-              <Send className="h-3.5 w-3.5 mr-1" /> {submitting ? "Creating…" : `Create & Send (${selectedUserIds.size + externalEmails.length})`}
+            <Button onClick={handleCreate} disabled={!title.trim() || !date || !time || (selectedUserIds.size === 0 && externalEmails.length === 0 && !anyTierVisible) || submitting} className="rounded-full">
+              <Send className="h-3.5 w-3.5 mr-1" /> {submitting ? "Creating…" : `Create${(selectedUserIds.size + externalEmails.length) > 0 ? ` & Send (${selectedUserIds.size + externalEmails.length})` : ""}`}
             </Button>
             <Button variant="ghost" onClick={resetForm}>Cancel</Button>
           </div>
