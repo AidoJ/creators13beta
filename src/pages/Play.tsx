@@ -1698,7 +1698,7 @@ export default function Play() {
                 const hexSize = opponents.length >= 4 ? 36 : opponents.length === 3 ? 44 : isMulti ? 52 : 60;
                 const opPresence = getPresenceStatusForPlayer(op.id);
                 const isReconnecting = opPresence === "reconnecting";
-                const isDisconnected = opPresence === "disconnected" || opPresence === "missing";
+                const isDisconnected = opPresence === "disconnected";
                 const isDeparted = isPlayerDeparted(op.id);
                 const opStrikes = getStrikesForPlayer(op.id);
                 return (
