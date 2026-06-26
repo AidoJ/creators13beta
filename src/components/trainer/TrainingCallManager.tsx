@@ -166,14 +166,24 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       .in("role", ["practitioner", "trainee"]);
     if (!roles || roles.length === 0) { setPractLoading(false); return; }
     const userIds = [...new Set(roles.map(r => r.user_id))];
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("user_id, email, first_name, last_name")
-      .in("user_id", userIds);
+    const [{ data: profiles }, { data: subs }] = await Promise.all([
+      supabase.from("profiles").select("user_id, email, first_name, last_name").in("user_id", userIds),
+      supabase.from("subscriptions").select("user_id, tier, status, current_period_end").in("user_id", userIds),
+    ]);
+    const tierByUser = new Map<string, PractitionerOption["tier"]>();
+    const validTiers = new Set(["wren","robin","cockatoo","owl"]);
+    const activeStatuses = new Set(["active","trialing","past_due"]);
+    (subs || []).forEach((s: any) => {
+      const periodOk = !s.current_period_end || new Date(s.current_period_end) > new Date();
+      if (s.tier && validTiers.has(s.tier) && activeStatuses.has(s.status) && periodOk) {
+        tierByUser.set(s.user_id, s.tier);
+      }
+    });
     const list: PractitionerOption[] = (profiles || []).map(p => ({
       user_id: p.user_id,
       email: p.email || "",
       name: `${p.first_name || ""} ${p.last_name || ""}`.trim() || p.email || "Unknown",
+      tier: tierByUser.get(p.user_id) || "wren",
     })).filter(p => p.email);
     setPractitioners(list);
     // Default: select all
