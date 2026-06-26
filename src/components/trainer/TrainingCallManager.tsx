@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { RichTextEditor, sanitizeEventHtml } from "@/components/ui/rich-text-editor";
 
 interface TrainingCall {
   id: string;
@@ -294,7 +295,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
     const baseRow = (start: Date, end: Date) => ({
       title: title.trim(),
-      description: description.trim() || null,
+      description: description.replace(/<[^>]*>/g, "").trim() ? description : null,
       event_type: eventType,
       scheduled_at: start.toISOString(),
       starts_at: start.toISOString(),
@@ -664,7 +665,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
             </div>
             <div className="sm:col-span-2">
               <label className="text-xs text-muted-foreground mb-1 block">Description</label>
-              <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Optional agenda or notes…" rows={2} />
+              <RichTextEditor value={description} onChange={setDescription} placeholder="Agenda, notes, images, links…" minHeight={160} />
             </div>
 
             <div className="sm:col-span-2 flex items-center gap-2 pt-1">
@@ -1052,7 +1053,12 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onReschedule, onResen
             <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{timeStr}</span>
             <span>{call.duration_minutes}min</span>
           </div>
-          {call.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{call.description}</p>}
+          {call.description && (
+            <div
+              className="prose prose-sm dark:prose-invert max-w-none text-xs text-muted-foreground mt-1 line-clamp-2 [&_a]:text-primary [&_a]:underline [&_img]:max-h-16 [&_img]:inline-block"
+              dangerouslySetInnerHTML={{ __html: sanitizeEventHtml(call.description) }}
+            />
+          )}
           {/* Invitee list */}
           {invitees && invitees.length > 0 && (
             <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
