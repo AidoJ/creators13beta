@@ -760,7 +760,8 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
                   ) : (
                     <div className="space-y-1.5">
                       {daySessions.map((s, i) => {
-                        const label = new Date(`${s.date}T00:00:00`).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" });
+                        const [py, pm, pd] = s.date.split("-").map(Number);
+                        const label = new Date(Date.UTC(py, pm - 1, pd)).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
                         return (
                           <div key={s.date} className="grid grid-cols-[1fr_auto_auto] items-center gap-2">
                             <div className="text-xs text-foreground">
