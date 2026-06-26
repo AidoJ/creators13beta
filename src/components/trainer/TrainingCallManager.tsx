@@ -76,9 +76,13 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [eventsByCall, setEventsByCall] = useState<Record<string, CallEvent[]>>({});
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [eventType, setEventType] = useState("training_call");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [duration, setDuration] = useState("60");
+  const [isMultiDay, setIsMultiDay] = useState(false);
+  const [endDate, setEndDate] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [zoomLink, setZoomLink] = useState("");
   const [recurrence, setRecurrence] = useState("none");
   const [recurrenceEnd, setRecurrenceEnd] = useState("");
@@ -88,6 +92,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [externalEmails, setExternalEmails] = useState<string[]>([]);
   const [newExternalEmail, setNewExternalEmail] = useState("");
+  const [bulkInvitedTiers, setBulkInvitedTiers] = useState<Set<"wren"|"robin"|"cockatoo"|"owl">>(new Set());
 
   // Community audience tier grid (Wren/Robin/Cockatoo/Owl × visible/access)
   type TierKey = "wren" | "robin" | "cockatoo" | "owl";
