@@ -270,49 +270,61 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
   async function handleCreate() {
     if (!title.trim() || !date || !time || !user) return;
+    if (isMultiDay && (!endDate || !endTime)) {
+      toast({ title: "Set the end date & time", description: "Multi-day events need a finish date and time.", variant: "destructive" });
+      return;
+    }
     if (selectedUserIds.size === 0 && externalEmails.length === 0 && !anyTierVisible) {
       toast({ title: "Add invitees or open to a community tier", description: "Pick at least one practitioner, external guest, or community tier (Visible).", variant: "destructive" });
       return;
     }
     setSubmitting(true);
 
-    const scheduledAt = new Date(`${date}T${time}`).toISOString();
+    const startsAt = new Date(`${date}T${time}`);
+    const endsAt = isMultiDay
+      ? new Date(`${endDate}T${endTime}`)
+      : new Date(startsAt.getTime() + parseInt(duration) * 60000);
+    if (endsAt <= startsAt) {
+      toast({ title: "End must be after start", variant: "destructive" });
+      setSubmitting(false);
+      return;
+    }
+    const computedDuration = Math.max(1, Math.round((endsAt.getTime() - startsAt.getTime()) / 60000));
+    const scheduledAt = startsAt.toISOString();
 
-    const callsToCreate: Array<{ title: string; description: string | null; scheduled_at: string; duration_minutes: number; zoom_link: string | null; recurrence_rule: string; recurrence_end_date?: string | null; created_by: string }> = [];
-    
+    const baseRow = (start: Date, end: Date) => ({
+      title: title.trim(),
+      description: description.trim() || null,
+      event_type: eventType,
+      scheduled_at: start.toISOString(),
+      starts_at: start.toISOString(),
+      ends_at: end.toISOString(),
+      is_multi_day: isMultiDay,
+      duration_minutes: isMultiDay ? Math.round((end.getTime()-start.getTime())/60000) : parseInt(duration),
+      zoom_link: zoomLink.trim() || null,
+      recurrence_rule: recurrence,
+      created_by: user.id,
+    });
+
+    const callsToCreate: Array<ReturnType<typeof baseRow> & { recurrence_end_date?: string | null }> = [];
+
     if (recurrence === "none") {
-      callsToCreate.push({
-        title: title.trim(),
-        description: description.trim() || null,
-        scheduled_at: scheduledAt,
-        duration_minutes: parseInt(duration),
-        zoom_link: zoomLink.trim() || null,
-        recurrence_rule: "none",
-        created_by: user.id,
-      });
+      callsToCreate.push(baseRow(startsAt, endsAt));
     } else {
       const intervals: Record<string, number> = { weekly: 7, fortnightly: 14, monthly: 30 };
       const intervalDays = intervals[recurrence] || 7;
-      const endDate = recurrenceEnd ? new Date(recurrenceEnd) : new Date(Date.now() + 90 * 86400000);
-      const startDate = new Date(`${date}T${time}`);
-      
-      let currentDate = new Date(startDate);
-      while (currentDate <= endDate) {
-        callsToCreate.push({
-          title: title.trim(),
-          description: description.trim() || null,
-          scheduled_at: currentDate.toISOString(),
-          duration_minutes: parseInt(duration),
-          zoom_link: zoomLink.trim() || null,
-          recurrence_rule: recurrence,
-          recurrence_end_date: recurrenceEnd || null,
-          created_by: user.id,
-        });
+      const seriesEnd = recurrenceEnd ? new Date(recurrenceEnd) : new Date(Date.now() + 90 * 86400000);
+      const durMs = endsAt.getTime() - startsAt.getTime();
+      let cur = new Date(startsAt);
+      while (cur <= seriesEnd) {
+        const curEnd = new Date(cur.getTime() + durMs);
+        callsToCreate.push({ ...baseRow(cur, curEnd), recurrence_end_date: recurrenceEnd || null });
         if (recurrence === "monthly") {
-          currentDate = new Date(currentDate);
-          currentDate.setMonth(currentDate.getMonth() + 1);
+          const next = new Date(cur);
+          next.setMonth(next.getMonth() + 1);
+          cur = next;
         } else {
-          currentDate = new Date(currentDate.getTime() + intervalDays * 86400000);
+          cur = new Date(cur.getTime() + intervalDays * 86400000);
         }
       }
     }
@@ -320,19 +332,18 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     const { data: insertedCalls, error } = await supabase.from("training_calls").insert(callsToCreate).select("id");
 
     if (error) {
-      toast({ title: "Error creating call", description: error.message, variant: "destructive" });
+      toast({ title: "Error creating event", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: `Training call${callsToCreate.length > 1 ? "s" : ""} created`, description: `${callsToCreate.length} session${callsToCreate.length > 1 ? "s" : ""} scheduled.` });
+      toast({ title: `Event${callsToCreate.length > 1 ? "s" : ""} created`, description: `${callsToCreate.length} session${callsToCreate.length > 1 ? "s" : ""} scheduled.` });
 
       // Record created events
       if (insertedCalls) {
         await supabase.from("training_call_events").insert(
-          insertedCalls.map((c: any) => ({ call_id: c.id, event_type: "created", details: "Training call scheduled" }))
+          insertedCalls.map((c: any) => ({ call_id: c.id, event_type: "created", details: "Event scheduled" }))
         );
       }
 
       // Insert per-tier community access rows for each created call.
-      // Only rows where visible=true are written; absent rows = hidden for that tier.
       if (insertedCalls && anyTierVisible) {
         const tierRows: Array<{ training_call_id: string; tier: TierKey; visible: boolean; access: boolean }> = [];
         for (const inserted of insertedCalls) {
@@ -343,11 +354,19 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
         }
         if (tierRows.length > 0) {
           const { error: tierErr } = await supabase.from("training_call_tier_access").insert(tierRows);
-          if (tierErr) {
-            toast({ title: "Saved call, but tier access failed", description: tierErr.message, variant: "destructive" });
-          }
+          if (tierErr) toast({ title: "Saved event, but tier access failed", description: tierErr.message, variant: "destructive" });
         }
       }
+
+      // Record bulk tier-invite usage (audit only — does not change email send list)
+      if (insertedCalls && bulkInvitedTiers.size > 0) {
+        const invRows: Array<{ training_call_id: string; tier: TierKey; invited_by: string }> = [];
+        for (const inserted of insertedCalls) {
+          for (const t of bulkInvitedTiers) invRows.push({ training_call_id: inserted.id, tier: t, invited_by: user.id });
+        }
+        await supabase.from("training_call_tier_invites").insert(invRows);
+      }
+
 
 
       // Build recipient lists
