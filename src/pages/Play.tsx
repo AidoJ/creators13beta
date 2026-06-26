@@ -1036,7 +1036,7 @@ export default function Play() {
     const turnPresence = getPresenceStatusForPlayer(turnPlayer?.id);
     if (turnPresence === "reconnecting") {
       phaseHint = `${turnPlayer.name} is reconnecting…`;
-    } else if (turnPresence === "disconnected" || turnPresence === "missing") {
+    } else if (turnPresence === "disconnected") {
       phaseHint = `${turnPlayer.name} disconnected — waiting to reconnect…`;
     } else {
       phaseHint = `${turnPlayer.name} is ${isPvp ? "thinking" : "thinking…"}`;
@@ -1515,7 +1515,7 @@ export default function Play() {
               const opStatus = getPresenceStatusForPlayer(opponent.id);
               const opDeparted = isPlayerDeparted(opponent.id);
               const opStrikes = getStrikesForPlayer(opponent.id);
-              const opDisconnected = opStatus === "disconnected" || opStatus === "missing";
+              const opDisconnected = opStatus === "disconnected";
               const opReconnecting = opStatus === "reconnecting";
               return (
                 <Button
@@ -1698,7 +1698,7 @@ export default function Play() {
                 const hexSize = opponents.length >= 4 ? 36 : opponents.length === 3 ? 44 : isMulti ? 52 : 60;
                 const opPresence = getPresenceStatusForPlayer(op.id);
                 const isReconnecting = opPresence === "reconnecting";
-                const isDisconnected = opPresence === "disconnected" || opPresence === "missing";
+                const isDisconnected = opPresence === "disconnected";
                 const isDeparted = isPlayerDeparted(op.id);
                 const opStrikes = getStrikesForPlayer(op.id);
                 return (
