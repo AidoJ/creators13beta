@@ -1805,6 +1805,41 @@ export type Database = {
           },
         ]
       }
+      training_call_tier_access: {
+        Row: {
+          access: boolean
+          created_at: string
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          training_call_id: string
+          updated_at: string
+          visible: boolean
+        }
+        Insert: {
+          access?: boolean
+          created_at?: string
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          training_call_id: string
+          updated_at?: string
+          visible?: boolean
+        }
+        Update: {
+          access?: boolean
+          created_at?: string
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          training_call_id?: string
+          updated_at?: string
+          visible?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_call_tier_access_training_call_id_fkey"
+            columns: ["training_call_id"]
+            isOneToOne: false
+            referencedRelation: "training_calls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_calls: {
         Row: {
           cancelled: boolean | null
@@ -2157,6 +2192,19 @@ export type Database = {
       generate_practitioner_code:
         | { Args: never; Returns: string }
         | { Args: { _first_name?: string }; Returns: string }
+      get_community_events: {
+        Args: { _from?: string; _to?: string }
+        Returns: {
+          caller_tier: Database["public"]["Enums"]["subscription_tier"]
+          description: string
+          duration_minutes: number
+          has_access: boolean
+          id: string
+          scheduled_at: string
+          title: string
+          zoom_link: string
+        }[]
+      }
       get_creator_of_the_month: { Args: never; Returns: Json }
       get_enrollment_practitioner_options: {
         Args: { _practitioner_code?: string }
@@ -2315,6 +2363,10 @@ export type Database = {
       register_lobby_host_roster: {
         Args: { _match_id: string }
         Returns: undefined
+      }
+      resolve_effective_tier: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["subscription_tier"]
       }
       resolve_invitation_code: { Args: { _code: string }; Returns: string }
       resolve_match_invite_code: { Args: { _code: string }; Returns: string }
