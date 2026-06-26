@@ -1588,41 +1588,6 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onEdit, onResend, sen
         </div>
       )}
 
-      {/* Reschedule Dialog */}
-      <Dialog open={showReschedule} onOpenChange={setShowReschedule}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CalendarClock className="h-4 w-4 text-primary" />
-              Reschedule: {call.title}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <p className="text-xs text-muted-foreground">
-              All invitees will be notified of the new date &amp; time by email.
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs">New Date</Label>
-                <Input type="date" value={rescheduleDate} onChange={e => setRescheduleDate(e.target.value)} className="mt-1" />
-              </div>
-              <div>
-                <Label className="text-xs">New Time</Label>
-                <Input type="time" value={rescheduleTime} onChange={e => setRescheduleTime(e.target.value)} className="mt-1" />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setShowReschedule(false)}>Cancel</Button>
-            <Button size="sm" disabled={!rescheduleDate || !rescheduleTime} onClick={() => {
-              onReschedule?.(call.id, rescheduleDate, rescheduleTime);
-              setShowReschedule(false);
-            }}>
-              <CalendarClock className="h-3 w-3 mr-1" />Reschedule &amp; Notify
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
