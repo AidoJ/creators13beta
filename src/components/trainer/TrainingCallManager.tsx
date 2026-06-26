@@ -345,8 +345,13 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       startsAt = new Date(sessionsPayload[0].starts_at);
       endsAt = new Date(sessionsPayload[sessionsPayload.length - 1].ends_at);
     } else {
+      if (!endTime) {
+        toast({ title: "Set the finish time", variant: "destructive" });
+        setSubmitting(false);
+        return;
+      }
       startsAt = new Date(`${date}T${time}`);
-      endsAt = new Date(startsAt.getTime() + parseInt(duration) * 60000);
+      endsAt = new Date(`${date}T${endTime}`);
     }
     if (endsAt <= startsAt) {
       toast({ title: "End must be after start", variant: "destructive" });
