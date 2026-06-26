@@ -604,10 +604,10 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2">
           <Calendar className="h-5 w-5 text-primary" />
-          Training Calls
+          Events
         </h2>
         <Button size="sm" onClick={() => setShowForm(true)} className="rounded-full">
-          <Plus className="h-3.5 w-3.5 mr-1" /> Schedule Call
+          <Plus className="h-3.5 w-3.5 mr-1" /> Schedule Event
         </Button>
       </div>
 
