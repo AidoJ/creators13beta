@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { sanitizeEventHtml } from "@/components/ui/rich-text-editor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
