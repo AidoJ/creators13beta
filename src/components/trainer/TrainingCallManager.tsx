@@ -345,8 +345,13 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       startsAt = new Date(sessionsPayload[0].starts_at);
       endsAt = new Date(sessionsPayload[sessionsPayload.length - 1].ends_at);
     } else {
+      if (!endTime) {
+        toast({ title: "Set the finish time", variant: "destructive" });
+        setSubmitting(false);
+        return;
+      }
       startsAt = new Date(`${date}T${time}`);
-      endsAt = new Date(startsAt.getTime() + parseInt(duration) * 60000);
+      endsAt = new Date(`${date}T${endTime}`);
     }
     if (endsAt <= startsAt) {
       toast({ title: "End must be after start", variant: "destructive" });
@@ -363,7 +368,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       ends_at: end.toISOString(),
       is_multi_day: isMultiDay,
       sessions: sessionsPayload,
-      duration_minutes: isMultiDay ? Math.round((end.getTime()-start.getTime())/60000) : parseInt(duration),
+      duration_minutes: Math.round((end.getTime()-start.getTime())/60000),
       zoom_link: zoomLink.trim() || null,
       recurrence_rule: recurrence,
       created_by: user.id,
@@ -779,18 +784,8 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
               </>
             ) : (
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Duration</label>
-                <Select value={duration} onValueChange={setDuration}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="30">30 minutes</SelectItem>
-                    <SelectItem value="45">45 minutes</SelectItem>
-                    <SelectItem value="60">1 hour</SelectItem>
-                    <SelectItem value="90">1.5 hours</SelectItem>
-                    <SelectItem value="120">2 hours</SelectItem>
-                    <SelectItem value="180">3 hours</SelectItem>
-                  </SelectContent>
-                </Select>
+                <label className="text-xs text-muted-foreground mb-1 block">Finish Time *</label>
+                <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} />
               </div>
             )}
 
