@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import DOMPurify from "dompurify";
-import { Bold, Italic, Underline, Link2, Image as ImageIcon, List, ListOrdered, Heading2, Upload, Undo2, Redo2, Quote } from "lucide-react";
+import { Bold, Italic, Underline, Link2, Image as ImageIcon, List, ListOrdered, Heading2, Upload, Undo2, Redo2, Quote, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -43,6 +43,8 @@ export function RichTextEditor({
   const [imageAlt, setImageAlt] = useState("");
   const [uploading, setUploading] = useState(false);
   const savedRange = useRef<Range | null>(null);
+  const [selectedImg, setSelectedImg] = useState<HTMLImageElement | null>(null);
+  const [imgBox, setImgBox] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
 
   // Keep editor DOM in sync if the parent resets the value (e.g. after submit).
   useEffect(() => {
@@ -98,7 +100,6 @@ export function RichTextEditor({
     const hasSelection = sel && sel.toString().length > 0;
     if (hasSelection) {
       document.execCommand("createLink", false, url);
-      // Add target=_blank to the newly created anchor(s) in selection.
       editorRef.current?.querySelectorAll(`a[href="${CSS.escape(url)}"]`).forEach(a => {
         a.setAttribute("target", "_blank");
         a.setAttribute("rel", "noopener noreferrer");
@@ -122,7 +123,8 @@ export function RichTextEditor({
   function insertImageHtml(url: string, alt: string) {
     editorRef.current?.focus();
     restoreSelection();
-    const html = `<img src="${url}" alt="${escapeHtml(alt)}" style="max-width:100%;height:auto;border-radius:6px;" />`;
+    // width=100% as an HTML attribute survives sanitization; users can resize after insert.
+    const html = `<img src="${url}" alt="${escapeHtml(alt)}" width="100%" style="height:auto;border-radius:6px;" />`;
     document.execCommand("insertHTML", false, html);
     emitChange();
   }
@@ -161,6 +163,89 @@ export function RichTextEditor({
     }
   }
 
+  // --- Image selection + resize ---
+  function refreshImgBox(img: HTMLImageElement) {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const e = editor.getBoundingClientRect();
+    const r = img.getBoundingClientRect();
+    setImgBox({ top: r.top - e.top, left: r.left - e.left, width: r.width, height: r.height });
+  }
+
+  function handleEditorClick(ev: React.MouseEvent<HTMLDivElement>) {
+    const target = ev.target as HTMLElement;
+    if (target.tagName === "IMG") {
+      const img = target as HTMLImageElement;
+      setSelectedImg(img);
+      refreshImgBox(img);
+    } else {
+      setSelectedImg(null);
+      setImgBox(null);
+    }
+  }
+
+  function setImgWidth(img: HTMLImageElement, widthValue: string) {
+    img.setAttribute("width", widthValue);
+    img.removeAttribute("height");
+    // height:auto preserves aspect ratio.
+    img.style.height = "auto";
+    refreshImgBox(img);
+    emitChange();
+  }
+
+  function applyPreset(pct: number) {
+    if (!selectedImg) return;
+    setImgWidth(selectedImg, `${pct}%`);
+  }
+
+  function removeSelectedImg() {
+    if (!selectedImg) return;
+    selectedImg.remove();
+    setSelectedImg(null);
+    setImgBox(null);
+    emitChange();
+  }
+
+  function startResize(ev: React.MouseEvent) {
+    if (!selectedImg) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    const img = selectedImg;
+    const startX = ev.clientX;
+    const startWidth = img.getBoundingClientRect().width;
+    const editorWidth = editorRef.current?.getBoundingClientRect().width || startWidth;
+    function onMove(e: MouseEvent) {
+      const dx = e.clientX - startX;
+      let newW = Math.max(40, startWidth + dx);
+      newW = Math.min(newW, editorWidth);
+      // store as percent of editor width so it remains responsive.
+      const pct = Math.round((newW / editorWidth) * 100);
+      img.setAttribute("width", `${pct}%`);
+      img.removeAttribute("height");
+      img.style.height = "auto";
+      refreshImgBox(img);
+    }
+    function onUp() {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      emitChange();
+    }
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
+
+  // Keep overlay aligned when editor scrolls/resizes.
+  useEffect(() => {
+    if (!selectedImg) return;
+    const onUpdate = () => refreshImgBox(selectedImg);
+    window.addEventListener("resize", onUpdate);
+    window.addEventListener("scroll", onUpdate, true);
+    return () => {
+      window.removeEventListener("resize", onUpdate);
+      window.removeEventListener("scroll", onUpdate, true);
+    };
+  }, [selectedImg]);
+
   const isEmpty = !value || value.replace(/<[^>]*>/g, "").trim() === "";
 
   return (
@@ -191,23 +276,62 @@ export function RichTextEditor({
           aria-multiline="true"
           contentEditable
           suppressContentEditableWarning
-          onInput={emitChange}
+          onInput={() => { emitChange(); if (selectedImg) refreshImgBox(selectedImg); }}
           onBlur={() => { saveSelection(); emitChange(); }}
           onKeyUp={saveSelection}
           onMouseUp={saveSelection}
+          onClick={handleEditorClick}
           onPaste={(e) => {
-            // Strip rich formatting from pasted HTML to keep content tidy.
             const text = e.clipboardData.getData("text/html") || e.clipboardData.getData("text/plain");
             if (text) {
               e.preventDefault();
-              const clean = DOMPurify.sanitize(text, { ALLOWED_TAGS: ["b","strong","i","em","u","a","p","br","ul","ol","li","h2","h3","blockquote","img","span","div"], ALLOWED_ATTR: ["href","target","rel","src","alt","style"] });
+              const clean = DOMPurify.sanitize(text, { ALLOWED_TAGS: ["b","strong","i","em","u","a","p","br","ul","ol","li","h2","h3","blockquote","img","span","div"], ALLOWED_ATTR: ["href","target","rel","src","alt","style","width","height"] });
               document.execCommand("insertHTML", false, clean);
               emitChange();
             }
           }}
-          className="prose prose-sm dark:prose-invert max-w-none px-3 py-2 text-sm focus:outline-none [&_a]:text-primary [&_a]:underline [&_img]:my-2 [&_h2]:text-base [&_h2]:font-semibold [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+          className="prose prose-sm dark:prose-invert max-w-none px-3 py-2 text-sm focus:outline-none [&_a]:text-primary [&_a]:underline [&_img]:my-2 [&_img]:cursor-pointer [&_h2]:text-base [&_h2]:font-semibold [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
           style={{ minHeight }}
         />
+
+        {/* Image selection overlay */}
+        {selectedImg && imgBox && (
+          <>
+            <div
+              className="pointer-events-none absolute z-10 rounded-sm ring-2 ring-primary"
+              style={{ top: imgBox.top, left: imgBox.left, width: imgBox.width, height: imgBox.height }}
+            />
+            {/* Resize handle (bottom-right) */}
+            <div
+              onMouseDown={startResize}
+              title="Drag to resize"
+              className="absolute z-20 h-3 w-3 cursor-nwse-resize rounded-sm border border-background bg-primary"
+              style={{ top: imgBox.top + imgBox.height - 6, left: imgBox.left + imgBox.width - 6 }}
+            />
+            {/* Floating toolbar */}
+            <div
+              className="absolute z-20 flex items-center gap-1 rounded-md border border-border bg-popover px-1.5 py-1 text-xs shadow-md"
+              style={{ top: Math.max(0, imgBox.top - 32), left: imgBox.left }}
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              {[25, 50, 75, 100].map(p => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => applyPreset(p)}
+                  className="rounded px-1.5 py-0.5 hover:bg-accent"
+                >{p}%</button>
+              ))}
+              <span className="mx-0.5 h-4 w-px bg-border" />
+              <button
+                type="button"
+                onClick={removeSelectedImg}
+                title="Remove image"
+                className="inline-flex items-center rounded px-1.5 py-0.5 text-destructive hover:bg-destructive/10"
+              ><Trash2 className="h-3 w-3" /></button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Link dialog */}
@@ -297,9 +421,9 @@ export function sanitizeEventHtml(html: string | null | undefined): string {
   if (!html) return "";
   // Strip pasted inline backgrounds / colors / fonts so descriptions
   // inherit the card's theme instead of showing white bands from Word/email paste.
-  const cleaned = html.replace(/\s(style|bgcolor|color|face)\s*=\s*("[^"]*"|'[^']*')/gi, "");
+  const cleaned = html.replace(/\s(bgcolor|color|face)\s*=\s*("[^"]*"|'[^']*')/gi, "");
   return DOMPurify.sanitize(cleaned, {
     ALLOWED_TAGS: ["b","strong","i","em","u","a","p","br","ul","ol","li","h2","h3","blockquote","img","span","div"],
-    ALLOWED_ATTR: ["href","target","rel","src","alt"],
+    ALLOWED_ATTR: ["href","target","rel","src","alt","width","height","style"],
   });
 }
