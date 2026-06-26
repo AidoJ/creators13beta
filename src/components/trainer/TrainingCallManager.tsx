@@ -204,11 +204,39 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   function resetForm() {
     setTitle(""); setDescription(""); setEventType("training_call");
     setDate(""); setTime(""); setEndDate(""); setEndTime(""); setIsMultiDay(false);
+    setDaySessions([]);
     setDuration("60"); setZoomLink(""); setRecurrence("none"); setRecurrenceEnd("");
     setExternalEmails([]); setNewExternalEmail("");
     setTierGrid(emptyTierGrid());
     setBulkInvitedTiers(new Set());
     setShowForm(false);
+  }
+
+  // Auto-regenerate the per-day session list when start/end date or start time changes.
+  // Preserves any per-day times the user has already edited for matching dates.
+  useEffect(() => {
+    if (!isMultiDay) return;
+    if (!date || !endDate) return;
+    const start = new Date(`${date}T00:00:00`);
+    const end = new Date(`${endDate}T00:00:00`);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return;
+    const days: DaySession[] = [];
+    const defaultStart = time || "09:00";
+    const defaultEnd = endTime || "17:00";
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const iso = d.toISOString().slice(0, 10);
+      const existing = daySessions.find(s => s.date === iso);
+      days.push(existing || { date: iso, startTime: defaultStart, endTime: defaultEnd });
+    }
+    // Only update if structurally different to avoid re-render loops.
+    const sameLen = days.length === daySessions.length;
+    const sameDates = sameLen && days.every((d, i) => d.date === daySessions[i].date);
+    if (!sameDates) setDaySessions(days);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMultiDay, date, endDate]);
+
+  function updateDaySession(idx: number, field: "startTime" | "endTime", value: string) {
+    setDaySessions(prev => prev.map((s, i) => i === idx ? { ...s, [field]: value } : s));
   }
 
   function bulkInviteTier(tier: TierKey) {
