@@ -1090,6 +1090,8 @@ export default function Play() {
       role={canTapDiscard ? "button" : undefined}
       aria-label={canTapDiscard ? "Discard selected card" : undefined}
       data-legal-drop={canTakeTurn && state.phase === "place" ? "true" : "false"}
+      data-drop-zone="discard"
+
       onClick={() => {
         if (canTapDiscard && selectedUid) onDiscardUid(selectedUid);
       }}
@@ -1674,7 +1676,9 @@ export default function Play() {
             disabled={!canTakeTurn || state.phase !== "place"}
             size={62}
             stuckUids={gameSettings.highlight_playable_cards ? stuckUids : undefined}
+            onTouchDropDiscard={(uid) => onDiscardUid(uid)}
           />
+
         </>
 
       ) : (
@@ -1867,7 +1871,9 @@ export default function Play() {
                   disabled={!canTakeTurn || state.phase !== "place"}
                   size={76}
                   stuckUids={gameSettings.highlight_playable_cards ? stuckUids : undefined}
+                  onTouchDropDiscard={(uid) => onDiscardUid(uid)}
                 />
+
               </div>
 
               {/* Piles: Deck + Discard inline */}

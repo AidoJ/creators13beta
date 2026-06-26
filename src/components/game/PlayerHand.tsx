@@ -16,7 +16,11 @@ interface Props {
   /** Hand-card uids whose only legal action this turn is discard. Rendered
    *  muted with a tooltip explaining that discard is the only path. */
   stuckUids?: Set<string>;
+  /** Touch-drag dropped onto the discard pile. Bypasses synthetic click so
+   *  it doesn't depend on the discard pile's stale-closure selectedUid. */
+  onTouchDropDiscard?: (uid: string) => void;
 }
+
 
 
 // Distance (px) the finger must travel before a press becomes a drag.
@@ -31,7 +35,7 @@ interface PointerTrack {
   suppressClick: boolean;
 }
 
-export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd, disabled, size = 104, stuckUids }: Props) {
+export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd, disabled, size = 104, stuckUids, onTouchDropDiscard }: Props) {
   const coarse = useCoarsePointer();
   // Track which card uids have completed their draw-in animation.
   const revealedRef = useRef<Set<string>>(new Set());
@@ -185,9 +189,14 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                     .elementFromPoint(e.clientX, e.clientY)
                     ?.closest('[data-legal-drop="true"]') as HTMLElement | null;
                   endTouchDragGhost();
-                  dropTarget?.click();
+                  if (dropTarget?.dataset.dropZone === "discard") {
+                    onTouchDropDiscard?.(p.uid);
+                  } else {
+                    dropTarget?.click();
+                  }
                   onDragEnd?.();
                 }
+
               }}
               onPointerCancel={(e) => {
                 const p = pointersRef.current.get(e.pointerId);
