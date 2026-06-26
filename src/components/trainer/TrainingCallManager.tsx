@@ -198,11 +198,40 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   }, [showForm, practitioners.length, fetchPractitioners]);
 
   function resetForm() {
-    setTitle(""); setDescription(""); setDate(""); setTime("");
+    setTitle(""); setDescription(""); setEventType("training_call");
+    setDate(""); setTime(""); setEndDate(""); setEndTime(""); setIsMultiDay(false);
     setDuration("60"); setZoomLink(""); setRecurrence("none"); setRecurrenceEnd("");
     setExternalEmails([]); setNewExternalEmail("");
     setTierGrid(emptyTierGrid());
+    setBulkInvitedTiers(new Set());
     setShowForm(false);
+  }
+
+  function bulkInviteTier(tier: TierKey) {
+    const ids = practitioners.filter(p => p.tier === tier).map(p => p.user_id);
+    if (ids.length === 0) {
+      toast({ title: `No ${TIER_LABELS[tier]} members`, description: "No platform users currently on this tier to invite.", variant: "destructive" });
+      return;
+    }
+    setSelectedUserIds(prev => {
+      const next = new Set(prev);
+      ids.forEach(id => next.add(id));
+      return next;
+    });
+    setBulkInvitedTiers(prev => {
+      const next = new Set(prev);
+      next.add(tier);
+      return next;
+    });
+    const g = tierGrid[tier];
+    if (!g.access) {
+      toast({
+        title: `Heads up — ${TIER_LABELS[tier]} has no Access`,
+        description: `${ids.length} member${ids.length===1?"":"s"} will get the email but can't join (no Zoom link). Grant Access in the grid above to fix.`,
+      });
+    } else {
+      toast({ title: `Added ${ids.length} ${TIER_LABELS[tier]} member${ids.length===1?"":"s"}`, description: "They'll receive the invite email when you create the event." });
+    }
   }
 
   function toggleUser(userId: string) {
