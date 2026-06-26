@@ -390,7 +390,7 @@ export default function TrainingCalendar({ compact = false, refreshKey = 0 }: Tr
                         </div>
                         {call.description && (
                           <div
-                            className="text-xs text-muted-foreground mt-1 prose prose-sm max-w-none prose-img:rounded-md prose-img:my-2 prose-a:text-primary"
+                            className="text-xs text-muted-foreground mt-1 prose prose-sm max-w-none prose-img:rounded-md prose-img:my-2 prose-a:text-primary [&_*]:!bg-transparent [&_p]:!my-1.5 [&_p:empty]:hidden"
                             dangerouslySetInnerHTML={{ __html: sanitizeEventHtml(call.description) }}
                           />
                         )}
