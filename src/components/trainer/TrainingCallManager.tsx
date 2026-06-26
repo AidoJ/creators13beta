@@ -8,11 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Calendar, Plus, Video, Clock, Repeat, Send, Trash2, X, Users, UserPlus, Mail, CheckCircle, Bell, XCircle, Edit, CircleDot, ChevronDown, CalendarClock, Copy } from "lucide-react";
+import { Calendar, Plus, Video, Clock, Repeat, Send, Trash2, X, Users, UserPlus, Mail, CheckCircle, Bell, XCircle, Edit, CircleDot, ChevronDown, CalendarClock, Copy, MoreHorizontal } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { RichTextEditor, sanitizeEventHtml } from "@/components/ui/rich-text-editor";
 
 interface TrainingCall {
