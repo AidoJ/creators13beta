@@ -1840,6 +1840,38 @@ export type Database = {
           },
         ]
       }
+      training_call_tier_invites: {
+        Row: {
+          id: string
+          invited_at: string
+          invited_by: string | null
+          tier: string
+          training_call_id: string
+        }
+        Insert: {
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+          tier: string
+          training_call_id: string
+        }
+        Update: {
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+          tier?: string
+          training_call_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_call_tier_invites_training_call_id_fkey"
+            columns: ["training_call_id"]
+            isOneToOne: false
+            referencedRelation: "training_calls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_calls: {
         Row: {
           cancelled: boolean | null
@@ -1847,11 +1879,15 @@ export type Database = {
           created_by: string
           description: string | null
           duration_minutes: number
+          ends_at: string | null
+          event_type: string
           id: string
+          is_multi_day: boolean
           parent_call_id: string | null
           recurrence_end_date: string | null
           recurrence_rule: string | null
           scheduled_at: string
+          starts_at: string | null
           title: string
           updated_at: string
           zoom_link: string | null
@@ -1862,11 +1898,15 @@ export type Database = {
           created_by: string
           description?: string | null
           duration_minutes?: number
+          ends_at?: string | null
+          event_type?: string
           id?: string
+          is_multi_day?: boolean
           parent_call_id?: string | null
           recurrence_end_date?: string | null
           recurrence_rule?: string | null
           scheduled_at: string
+          starts_at?: string | null
           title: string
           updated_at?: string
           zoom_link?: string | null
@@ -1877,11 +1917,15 @@ export type Database = {
           created_by?: string
           description?: string | null
           duration_minutes?: number
+          ends_at?: string | null
+          event_type?: string
           id?: string
+          is_multi_day?: boolean
           parent_call_id?: string | null
           recurrence_end_date?: string | null
           recurrence_rule?: string | null
           scheduled_at?: string
+          starts_at?: string | null
           title?: string
           updated_at?: string
           zoom_link?: string | null
