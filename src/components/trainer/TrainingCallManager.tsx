@@ -295,7 +295,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
     const baseRow = (start: Date, end: Date) => ({
       title: title.trim(),
-      description: description.trim() || null,
+      description: description.replace(/<[^>]*>/g, "").trim() ? description : null,
       event_type: eventType,
       scheduled_at: start.toISOString(),
       starts_at: start.toISOString(),
