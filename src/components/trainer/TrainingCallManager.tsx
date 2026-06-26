@@ -216,8 +216,84 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     setExternalEmails([]); setNewExternalEmail("");
     setTierGrid(emptyTierGrid());
     setBulkInvitedTiers(new Set());
+    setEditingCallId(null);
+    setEditOriginal(null);
+    setNotifyOnEdit(true);
     setShowForm(false);
   }
+
+  async function openEditDialog(call: TrainingCall) {
+    // Ensure practitioner list is loaded so selections render correctly
+    if (practitioners.length === 0) await fetchPractitioners();
+    // Pull invitees + tier_access for this call
+    const [{ data: invs }, { data: tiers }] = await Promise.all([
+      supabase.from("training_call_invitees").select("email, user_id").eq("call_id", call.id),
+      supabase.from("training_call_tier_access").select("tier, visible, access").eq("training_call_id", call.id),
+    ]);
+
+    setTitle(call.title.replace(/^\[DUPLICATE\]\s*/, ''));
+    setDescription(call.description || "");
+    setEventType(call.event_type || "training_call");
+    setZoomLink(call.zoom_link || "");
+    setRecurrence(call.recurrence_rule || "none");
+    setRecurrenceEnd(call.recurrence_end_date || "");
+    setIsMultiDay(!!call.is_multi_day);
+
+    const start = new Date(call.starts_at || call.scheduled_at);
+    const end = new Date(call.ends_at || new Date(start.getTime() + (call.duration_minutes || 60) * 60000));
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    const dateStr = `${start.getFullYear()}-${pad(start.getMonth()+1)}-${pad(start.getDate())}`;
+    const timeStr = `${pad(start.getHours())}:${pad(start.getMinutes())}`;
+    setDate(dateStr);
+    setTime(timeStr);
+
+    if (call.is_multi_day) {
+      const endDateStr = `${end.getFullYear()}-${pad(end.getMonth()+1)}-${pad(end.getDate())}`;
+      setEndDate(endDateStr);
+      // Hydrate per-day sessions from jsonb column (cast via any — column not in generated types yet)
+      const sessions = ((call as any).sessions || []) as Array<{ date: string; starts_at: string; ends_at: string }>;
+      if (sessions.length > 0) {
+        setDaySessions(sessions.map(s => {
+          const ss = new Date(s.starts_at);
+          const ee = new Date(s.ends_at);
+          return {
+            date: s.date,
+            startTime: `${pad(ss.getHours())}:${pad(ss.getMinutes())}`,
+            endTime: `${pad(ee.getHours())}:${pad(ee.getMinutes())}`,
+          };
+        }));
+      }
+      setEndTime(`${pad(end.getHours())}:${pad(end.getMinutes())}`);
+    } else {
+      setEndTime(`${pad(end.getHours())}:${pad(end.getMinutes())}`);
+      setEndDate("");
+      setDaySessions([]);
+    }
+
+    // Invitees
+    const userIds = new Set<string>();
+    const emails: string[] = [];
+    (invs || []).forEach((i: any) => {
+      if (i.user_id) userIds.add(i.user_id);
+      else if (i.email) emails.push(i.email);
+    });
+    setSelectedUserIds(userIds);
+    setExternalEmails(emails);
+
+    // Tier grid
+    const grid = emptyTierGrid();
+    (tiers || []).forEach((t: any) => {
+      if (grid[t.tier as TierKey]) grid[t.tier as TierKey] = { visible: !!t.visible, access: !!t.access };
+    });
+    setTierGrid(grid);
+    setBulkInvitedTiers(new Set());
+
+    setEditOriginal({ scheduled_at: call.scheduled_at, zoom_link: call.zoom_link, ends_at: call.ends_at });
+    setEditingCallId(call.id);
+    setNotifyOnEdit(true);
+    setShowForm(true);
+  }
+
 
   // Auto-regenerate the per-day session list when start/end date or start time changes.
   // Preserves any per-day times the user has already edited for matching dates.
