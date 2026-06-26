@@ -304,8 +304,9 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       // Build recipient lists
       const selectedPractitionerUserIds = Array.from(selectedUserIds);
 
-      // Send invites for every created call (important for recurring series)
-      if (insertedCalls && insertedCalls.length > 0) {
+      // Send invites for every created call (important for recurring series).
+      // Skip when this is a community-tier-only event with no direct invitees.
+      if (insertedCalls && insertedCalls.length > 0 && (selectedPractitionerUserIds.length > 0 || externalEmails.length > 0)) {
         for (let idx = 0; idx < insertedCalls.length; idx++) {
           const inserted = insertedCalls[idx];
           const callForInvite = {
