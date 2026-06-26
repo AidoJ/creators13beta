@@ -664,7 +664,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
             </div>
             <div className="sm:col-span-2">
               <label className="text-xs text-muted-foreground mb-1 block">Description</label>
-              <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Optional agenda or notes…" rows={2} />
+              <RichTextEditor value={description} onChange={setDescription} placeholder="Agenda, notes, images, links…" minHeight={160} />
             </div>
 
             <div className="sm:col-span-2 flex items-center gap-2 pt-1">
