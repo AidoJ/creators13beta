@@ -481,7 +481,7 @@ export default function CommunityDashboard() {
                     onClick: () => navigate("/dashboard"),
                     badge: 0,
                   },
-                  { label: "Shop", img: shopIcon.url, soon: true, onClick: () => {}, badge: 0 },
+                  { label: "Shop", img: shopIcon.url, soon: false, onClick: () => window.open("https://creatortypes.gumroad.com/l/Creatorblueprint", "_blank", "noopener,noreferrer"), badge: 0 },
                 ].map(({ label, Icon, img, soon, onClick, badge }) => {
                   // Gold to match the enrollment "Case Study Volunteer / Paying Client" cards.
                   const color = "#c9a84c";
