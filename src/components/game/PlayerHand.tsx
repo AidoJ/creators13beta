@@ -189,9 +189,14 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                     .elementFromPoint(e.clientX, e.clientY)
                     ?.closest('[data-legal-drop="true"]') as HTMLElement | null;
                   endTouchDragGhost();
-                  dropTarget?.click();
+                  if (dropTarget?.dataset.dropZone === "discard") {
+                    onTouchDropDiscard?.(p.uid);
+                  } else {
+                    dropTarget?.click();
+                  }
                   onDragEnd?.();
                 }
+
               }}
               onPointerCancel={(e) => {
                 const p = pointersRef.current.get(e.pointerId);
