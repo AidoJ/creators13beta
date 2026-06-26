@@ -1255,9 +1255,10 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onEdit, onResend, sen
   const [addExternalEmails, setAddExternalEmails] = useState<string[]>([]);
   const [addNewEmail, setAddNewEmail] = useState("");
   const [inviteSending, setInviteSending] = useState(false);
-  const [showReschedule, setShowReschedule] = useState(false);
-  const [rescheduleDate, setRescheduleDate] = useState("");
-  const [rescheduleTime, setRescheduleTime] = useState("");
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteBlocked, setShowDeleteBlocked] = useState(false);
+  const hasInvitees = (invitees?.length || 0) > 0;
 
   const dt = new Date(call.scheduled_at);
   const dateStr = dt.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
