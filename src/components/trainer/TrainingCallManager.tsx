@@ -745,11 +745,32 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
               <>
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Finish Date *</label>
-                  <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                  <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} min={date || undefined} />
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Finish Time *</label>
-                  <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} />
+                <div className="sm:col-span-2 rounded-lg border border-border bg-muted/20 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-foreground">Per-day schedule</p>
+                    <p className="text-[10px] text-muted-foreground">Set a start &amp; finish time for each day</p>
+                  </div>
+                  {daySessions.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground">Pick a start and finish date above to generate days.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {daySessions.map((s, i) => {
+                        const label = new Date(`${s.date}T00:00:00`).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" });
+                        return (
+                          <div key={s.date} className="grid grid-cols-[1fr_auto_auto] items-center gap-2">
+                            <div className="text-xs text-foreground">
+                              <span className="font-medium">Day {i + 1}</span>
+                              <span className="text-muted-foreground ml-2">{label}</span>
+                            </div>
+                            <Input type="time" className="h-8 w-28" value={s.startTime} onChange={e => updateDaySession(i, "startTime", e.target.value)} />
+                            <Input type="time" className="h-8 w-28" value={s.endTime} onChange={e => updateDaySession(i, "endTime", e.target.value)} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </>
             ) : (
