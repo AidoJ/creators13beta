@@ -214,22 +214,6 @@ function EventCard({ ev, past }: { ev: CommunityEvent; past?: boolean }) {
               </>
             )}
           </div>
-          {isMulti && Array.isArray(ev.sessions) && ev.sessions.length > 0 && (
-            <ul className="mt-2 text-xs text-muted-foreground space-y-0.5">
-              {ev.sessions.map((s, i) => {
-                const [y, m, d] = s.date.split("-").map(Number);
-                const label = new Date(Date.UTC(y, (m || 1) - 1, d || 1)).toLocaleDateString(undefined, {
-                  weekday: "short", day: "numeric", month: "short", timeZone: "UTC",
-                });
-                return (
-                  <li key={i} className="flex items-center gap-1.5">
-                    <span className="font-medium text-foreground/80">{label}</span>
-                    <span>· {s.startTime} – {s.endTime}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
           {ev.description && (
             <div
               className="text-sm text-foreground/80 mt-3 prose prose-sm max-w-none prose-img:rounded-md prose-img:my-2 prose-img:max-h-80 prose-a:text-primary [&_*]:!bg-transparent [&_p]:!my-1.5 [&_p:empty]:hidden"
