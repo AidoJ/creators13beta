@@ -217,14 +217,17 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   useEffect(() => {
     if (!isMultiDay) return;
     if (!date || !endDate) return;
-    const start = new Date(`${date}T00:00:00`);
-    const end = new Date(`${endDate}T00:00:00`);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return;
+    const [sy, sm, sd] = date.split("-").map(Number);
+    const [ey, em, ed] = endDate.split("-").map(Number);
+    if (!sy || !sm || !sd || !ey || !em || !ed) return;
+    const start = Date.UTC(sy, sm - 1, sd);
+    const end = Date.UTC(ey, em - 1, ed);
+    if (end < start) return;
     const days: DaySession[] = [];
     const defaultStart = time || "09:00";
     const defaultEnd = endTime || "17:00";
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const iso = d.toISOString().slice(0, 10);
+    for (let t = start; t <= end; t += 86400000) {
+      const iso = new Date(t).toISOString().slice(0, 10);
       const existing = daySessions.find(s => s.date === iso);
       days.push(existing || { date: iso, startTime: defaultStart, endTime: defaultEnd });
     }
@@ -757,7 +760,8 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
                   ) : (
                     <div className="space-y-1.5">
                       {daySessions.map((s, i) => {
-                        const label = new Date(`${s.date}T00:00:00`).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" });
+                        const [py, pm, pd] = s.date.split("-").map(Number);
+                        const label = new Date(Date.UTC(py, pm - 1, pd)).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
                         return (
                           <div key={s.date} className="grid grid-cols-[1fr_auto_auto] items-center gap-2">
                             <div className="text-xs text-foreground">
