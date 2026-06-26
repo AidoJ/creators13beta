@@ -84,6 +84,9 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [isMultiDay, setIsMultiDay] = useState(false);
   const [endDate, setEndDate] = useState("");
   const [endTime, setEndTime] = useState("");
+  // Multi-day per-day sessions: each entry has its own start/end time.
+  type DaySession = { date: string; startTime: string; endTime: string };
+  const [daySessions, setDaySessions] = useState<DaySession[]>([]);
   const [zoomLink, setZoomLink] = useState("");
   const [recurrence, setRecurrence] = useState("none");
   const [recurrenceEnd, setRecurrenceEnd] = useState("");
