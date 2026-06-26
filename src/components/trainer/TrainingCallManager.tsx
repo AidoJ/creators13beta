@@ -8,11 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Calendar, Plus, Video, Clock, Repeat, Send, Trash2, X, Users, UserPlus, Mail, CheckCircle, Bell, XCircle, Edit, CircleDot, ChevronDown, CalendarClock, Copy } from "lucide-react";
+import { Calendar, Plus, Video, Clock, Repeat, Send, Trash2, X, Users, UserPlus, Mail, CheckCircle, Bell, XCircle, Edit, CircleDot, ChevronDown, CalendarClock, Copy, MoreHorizontal } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { RichTextEditor, sanitizeEventHtml } from "@/components/ui/rich-text-editor";
 
 interface TrainingCall {
@@ -112,6 +113,12 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [tierGrid, setTierGrid] = useState<TierGrid>(emptyTierGrid);
   const anyTierVisible = TIER_KEYS.some(t => tierGrid[t].visible);
 
+  // Edit mode: when set, the form acts as an Edit dialog for an existing call.
+  const [editingCallId, setEditingCallId] = useState<string | null>(null);
+  // Snapshot of original values for change detection when notifying invitees.
+  const [editOriginal, setEditOriginal] = useState<{ scheduled_at: string; zoom_link: string | null; ends_at: string | null } | null>(null);
+  const [notifyOnEdit, setNotifyOnEdit] = useState(true);
+
   function setTierFlag(tier: TierKey, field: "visible" | "access", value: boolean) {
     setTierGrid(prev => {
       const next = { ...prev, [tier]: { ...prev[tier] } };
@@ -209,8 +216,84 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     setExternalEmails([]); setNewExternalEmail("");
     setTierGrid(emptyTierGrid());
     setBulkInvitedTiers(new Set());
+    setEditingCallId(null);
+    setEditOriginal(null);
+    setNotifyOnEdit(true);
     setShowForm(false);
   }
+
+  async function openEditDialog(call: TrainingCall) {
+    // Ensure practitioner list is loaded so selections render correctly
+    if (practitioners.length === 0) await fetchPractitioners();
+    // Pull invitees + tier_access for this call
+    const [{ data: invs }, { data: tiers }] = await Promise.all([
+      supabase.from("training_call_invitees").select("email, user_id").eq("call_id", call.id),
+      supabase.from("training_call_tier_access").select("tier, visible, access").eq("training_call_id", call.id),
+    ]);
+
+    setTitle(call.title.replace(/^\[DUPLICATE\]\s*/, ''));
+    setDescription(call.description || "");
+    setEventType(call.event_type || "training_call");
+    setZoomLink(call.zoom_link || "");
+    setRecurrence(call.recurrence_rule || "none");
+    setRecurrenceEnd(call.recurrence_end_date || "");
+    setIsMultiDay(!!call.is_multi_day);
+
+    const start = new Date(call.starts_at || call.scheduled_at);
+    const end = new Date(call.ends_at || new Date(start.getTime() + (call.duration_minutes || 60) * 60000));
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    const dateStr = `${start.getFullYear()}-${pad(start.getMonth()+1)}-${pad(start.getDate())}`;
+    const timeStr = `${pad(start.getHours())}:${pad(start.getMinutes())}`;
+    setDate(dateStr);
+    setTime(timeStr);
+
+    if (call.is_multi_day) {
+      const endDateStr = `${end.getFullYear()}-${pad(end.getMonth()+1)}-${pad(end.getDate())}`;
+      setEndDate(endDateStr);
+      // Hydrate per-day sessions from jsonb column (cast via any — column not in generated types yet)
+      const sessions = ((call as any).sessions || []) as Array<{ date: string; starts_at: string; ends_at: string }>;
+      if (sessions.length > 0) {
+        setDaySessions(sessions.map(s => {
+          const ss = new Date(s.starts_at);
+          const ee = new Date(s.ends_at);
+          return {
+            date: s.date,
+            startTime: `${pad(ss.getHours())}:${pad(ss.getMinutes())}`,
+            endTime: `${pad(ee.getHours())}:${pad(ee.getMinutes())}`,
+          };
+        }));
+      }
+      setEndTime(`${pad(end.getHours())}:${pad(end.getMinutes())}`);
+    } else {
+      setEndTime(`${pad(end.getHours())}:${pad(end.getMinutes())}`);
+      setEndDate("");
+      setDaySessions([]);
+    }
+
+    // Invitees
+    const userIds = new Set<string>();
+    const emails: string[] = [];
+    (invs || []).forEach((i: any) => {
+      if (i.user_id) userIds.add(i.user_id);
+      else if (i.email) emails.push(i.email);
+    });
+    setSelectedUserIds(userIds);
+    setExternalEmails(emails);
+
+    // Tier grid
+    const grid = emptyTierGrid();
+    (tiers || []).forEach((t: any) => {
+      if (grid[t.tier as TierKey]) grid[t.tier as TierKey] = { visible: !!t.visible, access: !!t.access };
+    });
+    setTierGrid(grid);
+    setBulkInvitedTiers(new Set());
+
+    setEditOriginal({ scheduled_at: call.scheduled_at, zoom_link: call.zoom_link, ends_at: call.ends_at });
+    setEditingCallId(call.id);
+    setNotifyOnEdit(true);
+    setShowForm(true);
+  }
+
 
   // Auto-regenerate the per-day session list when start/end date or start time changes.
   // Preserves any per-day times the user has already edited for matching dates.
@@ -574,32 +657,122 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     }
   }
 
-  async function handleReschedule(id: string, newDate: string, newTime: string) {
-    const call = calls.find(c => c.id === id);
-    if (!call) return;
-    const previousScheduledAt = call.scheduled_at;
-    const newScheduledAt = new Date(`${newDate}T${newTime}`).toISOString();
+  async function handleSave() {
+    if (!editingCallId || !user) return;
+    if (!title.trim() || !date || !time) return;
 
-    const updatePayload: { scheduled_at: string; title?: string } = { scheduled_at: newScheduledAt };
-    if (call.title.startsWith("[DUPLICATE]")) {
-      updatePayload.title = call.title.replace(/^\[DUPLICATE\]\s*/, '');
+    // Validate multi-day rules (same as create)
+    if (isMultiDay) {
+      if (!endDate) {
+        toast({ title: "Set the finish date", variant: "destructive" });
+        return;
+      }
+      if (daySessions.length === 0) {
+        toast({ title: "No days configured", variant: "destructive" });
+        return;
+      }
+      for (const s of daySessions) {
+        if (!s.startTime || !s.endTime) {
+          toast({ title: "Set times for every day", description: `Day ${s.date} is missing a time.`, variant: "destructive" });
+          return;
+        }
+        if (s.endTime <= s.startTime) {
+          toast({ title: "Finish must be after start", description: `Check times on ${s.date}.`, variant: "destructive" });
+          return;
+        }
+      }
     }
-    const { error } = await supabase.from("training_calls").update(updatePayload).eq("id", id);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+
+    setSubmitting(true);
+
+    let startsAt: Date;
+    let endsAt: Date;
+    let sessionsPayload: Array<{ date: string; starts_at: string; ends_at: string }> | null = null;
+    if (isMultiDay) {
+      const ordered = [...daySessions].sort((a, b) => a.date.localeCompare(b.date));
+      sessionsPayload = ordered.map(s => ({
+        date: s.date,
+        starts_at: new Date(`${s.date}T${s.startTime}`).toISOString(),
+        ends_at: new Date(`${s.date}T${s.endTime}`).toISOString(),
+      }));
+      startsAt = new Date(sessionsPayload[0].starts_at);
+      endsAt = new Date(sessionsPayload[sessionsPayload.length - 1].ends_at);
+    } else {
+      if (!endTime) {
+        toast({ title: "Set the finish time", variant: "destructive" });
+        setSubmitting(false);
+        return;
+      }
+      startsAt = new Date(`${date}T${time}`);
+      endsAt = new Date(`${date}T${endTime}`);
+    }
+    if (endsAt <= startsAt) {
+      toast({ title: "End must be after start", variant: "destructive" });
+      setSubmitting(false);
       return;
     }
-    await supabase.from("training_call_events").insert({ call_id: id, event_type: "updated", details: `Rescheduled from ${new Date(previousScheduledAt).toLocaleString("en-AU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}` });
-    // Notify invitees
-    try {
-      await supabase.functions.invoke("send-training-update", {
-        body: { callId: id, updateType: "rescheduled", previousScheduledAt },
-      });
-    } catch (e) { console.error("Error sending reschedule notifications:", e); }
-    toast({ title: "Call rescheduled", description: "All invitees have been notified." });
+
+    const updatePayload: Record<string, any> = {
+      title: title.trim(),
+      description: description.replace(/<[^>]*>/g, "").trim() ? description : null,
+      event_type: eventType,
+      scheduled_at: startsAt.toISOString(),
+      starts_at: startsAt.toISOString(),
+      ends_at: endsAt.toISOString(),
+      is_multi_day: isMultiDay,
+      sessions: sessionsPayload,
+      duration_minutes: Math.round((endsAt.getTime() - startsAt.getTime()) / 60000),
+      zoom_link: zoomLink.trim() || null,
+      recurrence_rule: recurrence,
+      recurrence_end_date: recurrenceEnd || null,
+    };
+
+    const { error } = await supabase.from("training_calls").update(updatePayload).eq("id", editingCallId);
+    if (error) {
+      toast({ title: "Error saving event", description: error.message, variant: "destructive" });
+      setSubmitting(false);
+      return;
+    }
+
+    // Replace tier_access rows
+    await supabase.from("training_call_tier_access").delete().eq("training_call_id", editingCallId);
+    const tierRows: Array<{ training_call_id: string; tier: TierKey; visible: boolean; access: boolean }> = [];
+    for (const tier of TIER_KEYS) {
+      const g = tierGrid[tier];
+      if (g.visible) tierRows.push({ training_call_id: editingCallId, tier, visible: true, access: g.access });
+    }
+    if (tierRows.length > 0) {
+      const { error: tierErr } = await supabase.from("training_call_tier_access").insert(tierRows);
+      if (tierErr) toast({ title: "Saved event, but tier access failed", description: tierErr.message, variant: "destructive" });
+    }
+
+    await supabase.from("training_call_events").insert({ call_id: editingCallId, event_type: "updated", details: "Event edited" });
+
+    // Detect meaningful change for notification
+    const dateChanged = editOriginal && editOriginal.scheduled_at !== startsAt.toISOString();
+    const endChanged = editOriginal && (editOriginal.ends_at || null) !== endsAt.toISOString();
+    const zoomChanged = editOriginal && (editOriginal.zoom_link || null) !== (zoomLink.trim() || null);
+
+    if (notifyOnEdit && (dateChanged || endChanged || zoomChanged)) {
+      try {
+        await supabase.functions.invoke("send-training-update", {
+          body: { callId: editingCallId, updateType: "rescheduled", previousScheduledAt: editOriginal?.scheduled_at },
+        });
+        toast({ title: "Event updated", description: "Invitees have been notified by email." });
+      } catch (e) {
+        console.error("Error notifying invitees:", e);
+        toast({ title: "Event saved, notification failed", description: "Invitees were not notified.", variant: "destructive" });
+      }
+    } else {
+      toast({ title: "Event updated" });
+    }
+
+    resetForm();
     await fetchCalls();
     onCallsChanged?.();
+    setSubmitting(false);
   }
+
 
   // Duplicate dialog state
   const [duplicateSource, setDuplicateSource] = useState<TrainingCall | null>(null);
@@ -699,7 +872,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       {showForm && (
         <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">New Event</h3>
+            <h3 className="text-sm font-semibold text-foreground">{editingCallId ? "Edit Event" : "New Event"}</h3>
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={resetForm}>
               <X className="h-4 w-4" />
             </Button>
@@ -956,10 +1129,25 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
             </div>
           </div>
 
+          {editingCallId && (
+            <div className="flex items-center gap-2 pt-1 border-t border-border">
+              <Checkbox id="notify-invitees" checked={notifyOnEdit} onCheckedChange={(v) => setNotifyOnEdit(v === true)} />
+              <Label htmlFor="notify-invitees" className="text-xs cursor-pointer">
+                Notify invitees by email if the date/time or Zoom link changed
+              </Label>
+            </div>
+          )}
+
           <div className="flex gap-2 pt-2">
-            <Button onClick={handleCreate} disabled={!title.trim() || !date || !time || (selectedUserIds.size === 0 && externalEmails.length === 0 && !anyTierVisible) || submitting} className="rounded-full">
-              <Send className="h-3.5 w-3.5 mr-1" /> {submitting ? "Creating…" : `Create${(selectedUserIds.size + externalEmails.length) > 0 ? ` & Send (${selectedUserIds.size + externalEmails.length})` : ""}`}
-            </Button>
+            {editingCallId ? (
+              <Button onClick={handleSave} disabled={!title.trim() || !date || !time || submitting} className="rounded-full">
+                <Edit className="h-3.5 w-3.5 mr-1" /> {submitting ? "Saving…" : "Save Changes"}
+              </Button>
+            ) : (
+              <Button onClick={handleCreate} disabled={!title.trim() || !date || !time || (selectedUserIds.size === 0 && externalEmails.length === 0 && !anyTierVisible) || submitting} className="rounded-full">
+                <Send className="h-3.5 w-3.5 mr-1" /> {submitting ? "Creating…" : `Create${(selectedUserIds.size + externalEmails.length) > 0 ? ` & Send (${selectedUserIds.size + externalEmails.length})` : ""}`}
+              </Button>
+            )}
             <Button variant="ghost" onClick={resetForm}>Cancel</Button>
           </div>
         </div>
@@ -979,7 +1167,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
             <div className="space-y-2">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Upcoming</h3>
               {upcomingCalls.map(call => (
-                <CallCard key={call.id} call={call} onCancel={handleCancel} onDelete={handleDelete} onDuplicate={openDuplicateDialog} onReschedule={handleReschedule} onResend={handleResendAll} sending={sending === call.id} practitioners={practitioners} onSendInvites={sendInvites} onLoadPractitioners={fetchPractitioners} practLoading={practLoading} invitees={inviteesByCall[call.id] || []} events={eventsByCall[call.id] || []} onInvitesSent={() => fetchInvitees(calls.map(c => c.id))} />
+                <CallCard key={call.id} call={call} onCancel={handleCancel} onDelete={handleDelete} onDuplicate={openDuplicateDialog} onEdit={openEditDialog} onResend={handleResendAll} sending={sending === call.id} practitioners={practitioners} onSendInvites={sendInvites} onLoadPractitioners={fetchPractitioners} practLoading={practLoading} invitees={inviteesByCall[call.id] || []} events={eventsByCall[call.id] || []} onInvitesSent={() => fetchInvitees(calls.map(c => c.id))} />
               ))}
             </div>
           )}
@@ -1044,12 +1232,12 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   );
 }
 
-function CallCard({ call, onCancel, onDelete, onDuplicate, onReschedule, onResend, sending, past, cancelled, practitioners, onSendInvites, onLoadPractitioners, practLoading, invitees, events, onInvitesSent }: {
+function CallCard({ call, onCancel, onDelete, onDuplicate, onEdit, onResend, sending, past, cancelled, practitioners, onSendInvites, onLoadPractitioners, practLoading, invitees, events, onInvitesSent }: {
   call: TrainingCall;
   onCancel: (id: string) => void;
   onDelete: (id: string) => void;
   onDuplicate?: (id: string) => void;
-  onReschedule?: (id: string, newDate: string, newTime: string) => void;
+  onEdit?: (call: TrainingCall) => void;
   onResend: (call: TrainingCall) => void;
   sending: boolean;
   past?: boolean;
@@ -1067,9 +1255,10 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onReschedule, onResen
   const [addExternalEmails, setAddExternalEmails] = useState<string[]>([]);
   const [addNewEmail, setAddNewEmail] = useState("");
   const [inviteSending, setInviteSending] = useState(false);
-  const [showReschedule, setShowReschedule] = useState(false);
-  const [rescheduleDate, setRescheduleDate] = useState("");
-  const [rescheduleTime, setRescheduleTime] = useState("");
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteBlocked, setShowDeleteBlocked] = useState(false);
+  const hasInvitees = (invitees?.length || 0) > 0;
 
   const dt = new Date(call.scheduled_at);
   const dateStr = dt.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
@@ -1161,63 +1350,121 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onReschedule, onResen
           )}
           {!past && !cancelled && (
             <>
-              <Button size="sm" className="h-7 text-xs bg-orange-500 text-white hover:bg-orange-600" onClick={() => {
-                const dt = new Date(call.scheduled_at);
-                setRescheduleDate(dt.toISOString().slice(0, 10));
-                setRescheduleTime(dt.toTimeString().slice(0, 5));
-                setShowReschedule(true);
-              }}>
-                <CalendarClock className="h-3 w-3 mr-1" />Reschedule
-              </Button>
+              {onEdit && (
+                <Button size="sm" className="h-7 text-xs bg-orange-500 text-white hover:bg-orange-600" onClick={() => onEdit(call)}>
+                  <Edit className="h-3 w-3 mr-1" />Edit
+                </Button>
+              )}
               <Button size="sm" className="h-7 text-xs bg-green-600 text-white hover:bg-green-700" onClick={handleOpenInviteMore}>
                 <UserPlus className="h-3 w-3 mr-1" />Invite More
               </Button>
               <Button size="sm" className="h-7 text-xs bg-yellow-500 text-white hover:bg-yellow-600" onClick={() => onResend(call)} disabled={sending}>
                 <Send className="h-3 w-3 mr-1" />{sending ? "Sending…" : "Resend All"}
               </Button>
-              {onDuplicate && (
-                <Button size="sm" className="h-7 text-xs bg-blue-900 text-white hover:bg-blue-950" onClick={() => onDuplicate(call.id)}>
-                  <Copy className="h-3 w-3 mr-1" />Duplicate
-                </Button>
-              )}
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button size="sm" className="h-7 text-xs bg-red-600 text-white hover:bg-red-700">
-                    Cancel
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-7 w-7 p-0" aria-label="More actions">
+                    <MoreHorizontal className="h-3.5 w-3.5" />
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Cancel this training call?</AlertDialogTitle>
-                    <AlertDialogDescription>All invitees will be notified by email that this call has been cancelled.</AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Keep Call</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => onCancel(call.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Cancel Call</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  {onDuplicate && (
+                    <DropdownMenuItem onSelect={() => onDuplicate(call.id)}>
+                      <Copy className="h-3.5 w-3.5 mr-2" />Duplicate
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setShowCancelConfirm(true); }} className="text-orange-600 focus:text-orange-700">
+                    <XCircle className="h-3.5 w-3.5 mr-2" />Cancel event
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      if (hasInvitees) setShowDeleteBlocked(true);
+                      else setShowDeleteConfirm(true);
+                    }}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-2" />Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           )}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive">
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete this call?</AlertDialogTitle>
-                <AlertDialogDescription>This will permanently remove this training call.</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => onDelete(call.id)}>Delete</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          {(past || cancelled) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-7 w-7 p-0" aria-label="More actions">
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                {onDuplicate && (
+                  <DropdownMenuItem onSelect={() => onDuplicate(call.id)}>
+                    <Copy className="h-3.5 w-3.5 mr-2" />Duplicate
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    if (hasInvitees) setShowDeleteBlocked(true);
+                    else setShowDeleteConfirm(true);
+                  }}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-2" />Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
+
+      {/* Cancel confirmation */}
+      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel this event?</AlertDialogTitle>
+            <AlertDialogDescription>All invitees will be notified by email that this event has been cancelled. You can still see the event in the Cancelled section afterwards.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep event</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { onCancel(call.id); setShowCancelConfirm(false); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Cancel event</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete confirmation (only allowed when there are no invitees) */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this event?</AlertDialogTitle>
+            <AlertDialogDescription>This permanently removes the event. This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { onDelete(call.id); setShowDeleteConfirm(false); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete blocked (invitees exist) — steer to Cancel */}
+      <AlertDialog open={showDeleteBlocked} onOpenChange={setShowDeleteBlocked}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>This event has invitees</AlertDialogTitle>
+            <AlertDialogDescription>
+              {invitees?.length} {invitees?.length === 1 ? "person has" : "people have"} been invited to this event. To preserve their record and notify them, please use <span className="font-semibold text-foreground">Cancel event</span> instead. Hard delete is only available for events with no invitees.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Close</AlertDialogCancel>
+            {!past && !cancelled && (
+              <AlertDialogAction onClick={() => { setShowDeleteBlocked(false); setShowCancelConfirm(true); }}>Cancel event instead</AlertDialogAction>
+            )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Timeline */}
       {(() => {
@@ -1341,41 +1588,6 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onReschedule, onResen
         </div>
       )}
 
-      {/* Reschedule Dialog */}
-      <Dialog open={showReschedule} onOpenChange={setShowReschedule}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CalendarClock className="h-4 w-4 text-primary" />
-              Reschedule: {call.title}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <p className="text-xs text-muted-foreground">
-              All invitees will be notified of the new date &amp; time by email.
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs">New Date</Label>
-                <Input type="date" value={rescheduleDate} onChange={e => setRescheduleDate(e.target.value)} className="mt-1" />
-              </div>
-              <div>
-                <Label className="text-xs">New Time</Label>
-                <Input type="time" value={rescheduleTime} onChange={e => setRescheduleTime(e.target.value)} className="mt-1" />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setShowReschedule(false)}>Cancel</Button>
-            <Button size="sm" disabled={!rescheduleDate || !rescheduleTime} onClick={() => {
-              onReschedule?.(call.id, rescheduleDate, rescheduleTime);
-              setShowReschedule(false);
-            }}>
-              <CalendarClock className="h-3 w-3 mr-1" />Reschedule &amp; Notify
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
