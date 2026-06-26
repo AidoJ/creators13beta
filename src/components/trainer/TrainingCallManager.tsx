@@ -302,9 +302,25 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
   async function handleCreate() {
     if (!title.trim() || !date || !time || !user) return;
-    if (isMultiDay && (!endDate || !endTime)) {
-      toast({ title: "Set the end date & time", description: "Multi-day events need a finish date and time.", variant: "destructive" });
-      return;
+    if (isMultiDay) {
+      if (!endDate) {
+        toast({ title: "Set the finish date", description: "Multi-day events need a finish date.", variant: "destructive" });
+        return;
+      }
+      if (daySessions.length === 0) {
+        toast({ title: "No days configured", description: "Pick a start and finish date to generate days.", variant: "destructive" });
+        return;
+      }
+      for (const s of daySessions) {
+        if (!s.startTime || !s.endTime) {
+          toast({ title: "Set times for every day", description: `Day ${s.date} is missing a start or finish time.`, variant: "destructive" });
+          return;
+        }
+        if (s.endTime <= s.startTime) {
+          toast({ title: "Finish must be after start", description: `Check times on ${s.date}.`, variant: "destructive" });
+          return;
+        }
+      }
     }
     if (selectedUserIds.size === 0 && externalEmails.length === 0 && !anyTierVisible) {
       toast({ title: "Add invitees or open to a community tier", description: "Pick at least one practitioner, external guest, or community tier (Visible).", variant: "destructive" });
@@ -312,17 +328,28 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     }
     setSubmitting(true);
 
-    const startsAt = new Date(`${date}T${time}`);
-    const endsAt = isMultiDay
-      ? new Date(`${endDate}T${endTime}`)
-      : new Date(startsAt.getTime() + parseInt(duration) * 60000);
+    // For multi-day, span = earliest session start → latest session end.
+    let startsAt: Date;
+    let endsAt: Date;
+    let sessionsPayload: Array<{ date: string; starts_at: string; ends_at: string }> | null = null;
+    if (isMultiDay) {
+      const ordered = [...daySessions].sort((a, b) => a.date.localeCompare(b.date));
+      sessionsPayload = ordered.map(s => ({
+        date: s.date,
+        starts_at: new Date(`${s.date}T${s.startTime}`).toISOString(),
+        ends_at: new Date(`${s.date}T${s.endTime}`).toISOString(),
+      }));
+      startsAt = new Date(sessionsPayload[0].starts_at);
+      endsAt = new Date(sessionsPayload[sessionsPayload.length - 1].ends_at);
+    } else {
+      startsAt = new Date(`${date}T${time}`);
+      endsAt = new Date(startsAt.getTime() + parseInt(duration) * 60000);
+    }
     if (endsAt <= startsAt) {
       toast({ title: "End must be after start", variant: "destructive" });
       setSubmitting(false);
       return;
     }
-    const computedDuration = Math.max(1, Math.round((endsAt.getTime() - startsAt.getTime()) / 60000));
-    const scheduledAt = startsAt.toISOString();
 
     const baseRow = (start: Date, end: Date) => ({
       title: title.trim(),
@@ -332,6 +359,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       starts_at: start.toISOString(),
       ends_at: end.toISOString(),
       is_multi_day: isMultiDay,
+      sessions: sessionsPayload,
       duration_minutes: isMultiDay ? Math.round((end.getTime()-start.getTime())/60000) : parseInt(duration),
       zoom_link: zoomLink.trim() || null,
       recurrence_rule: recurrence,
