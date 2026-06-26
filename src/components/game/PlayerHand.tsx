@@ -16,7 +16,11 @@ interface Props {
   /** Hand-card uids whose only legal action this turn is discard. Rendered
    *  muted with a tooltip explaining that discard is the only path. */
   stuckUids?: Set<string>;
+  /** Touch-drag dropped onto the discard pile. Bypasses synthetic click so
+   *  it doesn't depend on the discard pile's stale-closure selectedUid. */
+  onTouchDropDiscard?: (uid: string) => void;
 }
+
 
 
 // Distance (px) the finger must travel before a press becomes a drag.
