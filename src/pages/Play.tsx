@@ -1090,6 +1090,8 @@ export default function Play() {
       role={canTapDiscard ? "button" : undefined}
       aria-label={canTapDiscard ? "Discard selected card" : undefined}
       data-legal-drop={canTakeTurn && state.phase === "place" ? "true" : "false"}
+      data-drop-zone="discard"
+
       onClick={() => {
         if (canTapDiscard && selectedUid) onDiscardUid(selectedUid);
       }}
