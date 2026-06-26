@@ -1515,7 +1515,7 @@ export default function Play() {
               const opStatus = getPresenceStatusForPlayer(opponent.id);
               const opDeparted = isPlayerDeparted(opponent.id);
               const opStrikes = getStrikesForPlayer(opponent.id);
-              const opDisconnected = opStatus === "disconnected" || opStatus === "missing";
+              const opDisconnected = opStatus === "disconnected";
               const opReconnecting = opStatus === "reconnecting";
               return (
                 <Button
