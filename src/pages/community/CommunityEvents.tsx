@@ -109,7 +109,7 @@ export default function CommunityEvents() {
         toast({ title: "Couldn't load events", description: error.message, variant: "destructive" });
         setEvents([]);
       } else {
-        const rows = (data || []) as CommunityEvent[];
+        const rows = ((data || []) as unknown) as CommunityEvent[];
         setEvents(rows);
         if (rows[0]?.caller_tier) setTier(rows[0].caller_tier);
       }
