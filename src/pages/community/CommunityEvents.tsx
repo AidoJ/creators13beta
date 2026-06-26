@@ -10,6 +10,12 @@ import { ArrowLeft, Calendar, Video, Clock, Lock, CalendarPlus, ExternalLink } f
 import { toast } from "@/hooks/use-toast";
 import { sanitizeEventHtml } from "@/components/ui/rich-text-editor";
 
+interface EventSession {
+  date: string;
+  startTime: string;
+  endTime: string;
+}
+
 interface CommunityEvent {
   id: string;
   title: string;
@@ -19,16 +25,35 @@ interface CommunityEvent {
   zoom_link: string | null;
   has_access: boolean;
   caller_tier: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  is_multi_day: boolean | null;
+  sessions: EventSession[] | null;
+  event_type: string | null;
+}
+
+function eventStart(ev: CommunityEvent): Date {
+  return new Date(ev.starts_at ?? ev.scheduled_at);
+}
+function eventEnd(ev: CommunityEvent): Date {
+  if (ev.ends_at) return new Date(ev.ends_at);
+  const s = eventStart(ev);
+  return new Date(s.getTime() + (ev.duration_minutes || 0) * 60000);
 }
 
 function formatICSDate(d: Date): string {
   return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 }
 
+function stripHtml(html: string | null | undefined): string {
+  if (!html) return "";
+  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
 function buildGoogleCalendarUrl(ev: CommunityEvent): string {
-  const start = new Date(ev.scheduled_at);
-  const end = new Date(start.getTime() + ev.duration_minutes * 60000);
-  const details = [ev.description, ev.zoom_link ? `Join: ${ev.zoom_link}` : ""].filter(Boolean).join("\n");
+  const start = eventStart(ev);
+  const end = eventEnd(ev);
+  const details = [stripHtml(ev.description), ev.zoom_link ? `Join: ${ev.zoom_link}` : ""].filter(Boolean).join("\n");
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: ev.title,
@@ -39,9 +64,9 @@ function buildGoogleCalendarUrl(ev: CommunityEvent): string {
 }
 
 function downloadICS(ev: CommunityEvent) {
-  const start = new Date(ev.scheduled_at);
-  const end = new Date(start.getTime() + ev.duration_minutes * 60000);
-  const desc = [ev.description, ev.zoom_link ? `Join: ${ev.zoom_link}` : ""].filter(Boolean).join("\\n");
+  const start = eventStart(ev);
+  const end = eventEnd(ev);
+  const desc = [stripHtml(ev.description), ev.zoom_link ? `Join: ${ev.zoom_link}` : ""].filter(Boolean).join("\\n");
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
