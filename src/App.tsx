@@ -95,6 +95,18 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/community/events"
+                  element={
+                    <ProtectedRoute>
+                      <RequiresCompletedProfile>
+                        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
+                          <CommunityEvents />
+                        </Suspense>
+                      </RequiresCompletedProfile>
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="/practitioner" element={<ProtectedRoute><RoleGuard allowedRoles={["practitioner", "trainee", "trainer"]}><PractitionerDashboard /></RoleGuard></ProtectedRoute>} />
                 <Route path="/trainer" element={<ProtectedRoute><RoleGuard allowedRoles={["trainer"]}><TrainerDashboard /></RoleGuard></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute><RoleGuard allowedRoles={["trainer", "admin"]}><AdminDashboard /></RoleGuard></ProtectedRoute>} />
