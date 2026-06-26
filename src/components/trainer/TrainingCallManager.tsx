@@ -113,6 +113,12 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [tierGrid, setTierGrid] = useState<TierGrid>(emptyTierGrid);
   const anyTierVisible = TIER_KEYS.some(t => tierGrid[t].visible);
 
+  // Edit mode: when set, the form acts as an Edit dialog for an existing call.
+  const [editingCallId, setEditingCallId] = useState<string | null>(null);
+  // Snapshot of original values for change detection when notifying invitees.
+  const [editOriginal, setEditOriginal] = useState<{ scheduled_at: string; zoom_link: string | null; ends_at: string | null } | null>(null);
+  const [notifyOnEdit, setNotifyOnEdit] = useState(true);
+
   function setTierFlag(tier: TierKey, field: "visible" | "access", value: boolean) {
     setTierGrid(prev => {
       const next = { ...prev, [tier]: { ...prev[tier] } };
