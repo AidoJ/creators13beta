@@ -1366,6 +1366,34 @@ export function forceFinaliseDisconnect2p(
     disconnectGraceMs: 0,
     players: state.players.map((p) => ({ ...p, hand: [...p.hand] })),
   };
+
+  // 2-player anti-exploit rule: in a 2P match, the player who STAYS at the
+  // table beats the player who LEFT, regardless of in-progress score.
+  // Ranking past-grace disconnects by score would let a player drop while
+  // ahead to lock in a win — explicitly disallowed. Survivor = rank 1,
+  // departed = rank 2. Departed is finalised through the normal middle-band
+  // path (status='finalised'), NOT 'forfeit' — losing a match by disconnect
+  // and being flagged as a malicious quitter are different things. They take
+  // the standard loss ELO for rank 2; no additional quitter penalty stacks.
+  //
+  // Fallback: if BOTH seats are past-grace (or neither cleanly is), defer to
+  // advanceTurn's existing finalise-by-score path. 3+ player matches are
+  // unaffected — they never call this function.
+  if (next.players.length === 2) {
+    const disconnectedSlots = next.players
+      .map((p, i) => ({ p, i }))
+      .filter(({ p }) => typeof p.disconnectedAt === "number" && (p.disconnectedAt ?? 0) > 0);
+    if (disconnectedSlots.length === 1) {
+      const departedSlot = disconnectedSlots[0].i;
+      const survivor = next.players[1 - departedSlot];
+      const departed = next.players[departedSlot];
+      finalise(next, survivor.id);
+      next.endedByDisconnect = true;
+      next.lastEvent = `${departed.name} left the match — ${survivor.name} wins.`;
+      return next;
+    }
+  }
+
   advanceTurn(next, now);
   return next;
 }
