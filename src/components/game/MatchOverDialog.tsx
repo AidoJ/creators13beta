@@ -78,6 +78,10 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
   const open = state.finished && revealReady && !dismissed;
   const isDraw = state.finished && state.winnerId == null;
   const winner = state.players.find((p) => p.id === state.winnerId) ?? state.players[0];
+  const endedByDisconnect = !!state.endedByDisconnect;
+  const departed = endedByDisconnect
+    ? state.players.find((p) => p.id !== state.winnerId)
+    : null;
 
   return (
     <>
@@ -87,13 +91,24 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
           <DialogHeader className="space-y-1">
             <DialogTitle className="flex items-center gap-2 font-display text-xl">
               <Trophy className="w-5 h-5 text-amber-500" />
-              {isDraw ? "It's a draw!" : `Congratulations ${winner.name} — You Win!`}
+              {isDraw
+                ? "It's a draw!"
+                : endedByDisconnect
+                ? `Opponent left — ${winner.name} wins!`
+                : `Congratulations ${winner.name} — You Win!`}
             </DialogTitle>
             <DialogDescription className="text-xs leading-snug">
               {isDraw ? (
                 <span>
                   <span className="font-semibold text-foreground">Both piles emptied before anyone completed a valid ecosystem.</span>{" "}
                   Each player earns half points toward their profile.
+                </span>
+              ) : endedByDisconnect ? (
+                <span>
+                  <span className="font-semibold text-foreground">
+                    {departed?.name ?? "Your opponent"} left the match before it finished.
+                  </span>{" "}
+                  In 2-player matches the player who stays wins, regardless of score — staying beats leaving.
                 </span>
               ) : (
                 <>
@@ -103,6 +118,7 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
               )}
             </DialogDescription>
           </DialogHeader>
+
 
           <div className="flex-1 overflow-y-auto -mx-1 px-1">
             <div className="grid sm:grid-cols-2 gap-2">

@@ -168,6 +168,11 @@ export interface MatchState {
    *  `placements` is the source of truth for N-player matches. */
   winnerId: string | null;
   lastEvent?: string;
+  /** A.4 — set by forceFinaliseDisconnect2p when a 2-player match ends because
+   *  one seat went past-grace disconnected. Survivor takes rank 1, departed
+   *  takes rank 2 (status='finalised', NOT 'forfeit'). UI uses this flag to
+   *  show an "opponent left" framing instead of a generic match-over message. */
+  endedByDisconnect?: boolean;
   pendingDisaster?: PendingDisaster | null;
   /** Game mode + config. Older saves omit these → treated as end_of_days. */
   gameMode?: GameMode;
