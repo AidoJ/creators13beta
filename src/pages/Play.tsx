@@ -1907,6 +1907,8 @@ export default function Play() {
                   <PopoverTrigger asChild>
                     <button
                       type="button"
+                      data-legal-drop={canTakeTurn && state.phase === "place" ? "true" : "false"}
+                      data-drop-zone="discard"
                       onContextMenu={(e) => { e.preventDefault(); if (canTapDiscard && selectedUid) onDiscardUid(selectedUid); }}
                       onDragOver={(e) => {
                         if (!canTakeTurn || state.phase !== "place") return;
