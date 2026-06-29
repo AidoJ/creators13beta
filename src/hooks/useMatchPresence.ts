@@ -258,8 +258,16 @@ export function useMatchPresence({
       if (!uid) return false;
       return state.rosterByUser[uid]?.disconnect_reason === "idle_departed";
     };
-    return { statusFor, userIdForSlot, isConnected, isReconnecting, isDisconnected, isMissing, strikesFor, isDeparted };
+    const disconnectedAtFor = (uid: string | null | undefined): number | null => {
+      if (!uid) return null;
+      const raw = state.rosterByUser[uid]?.disconnected_at;
+      if (!raw) return null;
+      const t = Date.parse(raw);
+      return Number.isFinite(t) ? t : null;
+    };
+    return { statusFor, userIdForSlot, isConnected, isReconnecting, isDisconnected, isMissing, strikesFor, isDeparted, disconnectedAtFor };
   }, [state.byUser, state.presenceSynced, state.rosterByUser]);
+
 
   return { ...state, ...helpers };
 }
