@@ -22,6 +22,10 @@ export interface GameSettings {
    *  departed (reuses the disconnect rank-by-score path). Resets to 0 on any
    *  real action by that player. */
   idle_turn_strikes_limit: number;
+  /** Grace seconds after a player's disconnect is stamped before the match
+   *  is auto-ended. In 2-player matches the survivor wins once this elapses. */
+  disconnect_grace_seconds: number;
+
   mode_end_of_days_enabled: boolean;
   mode_top_score_enabled: boolean;
   mode_beat_clock_enabled: boolean;
