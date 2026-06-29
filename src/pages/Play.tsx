@@ -1356,6 +1356,27 @@ export default function Play() {
         );
       })()}
 
+      {/* 2-player opponent-disconnect countdown — survivor view */}
+      {oppDisconnectInfo && (
+        <div
+          className={
+            "px-3 py-2 text-sm sm:text-base font-semibold text-center border-y-2 shadow-lg " +
+            (oppDisconnectInfo.secsLeft <= 30
+              ? "bg-amber-600 text-white border-amber-800 animate-pulse"
+              : "bg-amber-500 text-white border-amber-700")
+          }
+        >
+          <Clock className="inline w-4 h-4 mr-1.5 -mt-0.5" />
+          {oppDisconnectInfo.name} disconnected — match ends in{" "}
+          <span className="font-mono font-bold tabular-nums">
+            {Math.floor(oppDisconnectInfo.secsLeft / 60)}:
+            {String(oppDisconnectInfo.secsLeft % 60).padStart(2, "0")}
+          </span>{" "}
+          if they don't return. Staying beats leaving — you win if they don't.
+        </div>
+      )}
+
+
 
 
 
