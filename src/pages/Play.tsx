@@ -627,6 +627,24 @@ export default function Play() {
     [getUserIdForPlayer, presence],
   );
 
+  // 2-player opponent-disconnect countdown: server ends the match once an
+  // opponent's `disconnected_at` age exceeds disconnect_grace_seconds. Surface
+  // a live countdown to the survivor so the result isn't silent.
+  const oppDisconnectInfo = (() => {
+    if (!isPvp || state?.finished) return null;
+    if ((state?.players.length ?? 0) !== 2) return null;
+    const opp = opponents[0];
+    if (!opp) return null;
+    const uid = getUserIdForPlayer(opp.id);
+    if (!uid) return null;
+    const at = presence.disconnectedAtFor(uid);
+    if (!at) return null;
+    const endsAt = at + disconnectGraceSec * 1000;
+    const secsLeft = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+    return { name: opp.name, secsLeft };
+  })();
+
+
   // Toast on strike/departure transitions. Strikes are CONSECUTIVE and reset
   // to 0 on any real action — the badge & toasts must reflect the live roster
   // value (not a high-water mark).
