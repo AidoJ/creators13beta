@@ -1,5 +1,5 @@
 /**
-// engine-mirror-hash: 2d85ec6c0bb6158d
+// engine-mirror-hash: 1fec749b489b47be
  * forfeit-stale-disconnects — A.4 disconnect sweep.
  *
  * Cron-invoked every 30s (see migration). Three responsibilities, run in
@@ -455,20 +455,22 @@ Deno.serve(async (req) => {
     });
 
     // ---------------------------------------------------------------
-    // 2-PLAYER INSTANT-END: as soon as `disconnected_at` is stamped
-    // (post-debounce, ~15s after the drop), end the match regardless
-    // of whose turn it is — the survivor wins, no grace wait. Routed
-    // through the engine via forceFinaliseDisconnect2p so the same
-    // advanceTurn ≤1-active finalise path runs that the past-grace
-    // sweep uses for 3+ player matches. No new 2-player finalise
-    // codepath is introduced.
+    // 2-PLAYER GRACE-THEN-END: once a player's `disconnected_at` age
+    // exceeds `disconnect_grace_seconds` (300s default), end the match;
+    // the survivor wins. We deliberately wait the full grace (not just
+    // the 15s presence debounce) so short mobile blips — screen lock,
+    // wifi handoff, tab backgrounding — don't terminate the match.
+    // Routed through the engine via forceFinaliseDisconnect2p so the
+    // same advanceTurn ≤1-active finalise path runs that the 3+ player
+    // past-grace sweep uses. No new 2-player finalise codepath.
     // ---------------------------------------------------------------
-    if (playerCount <= 2 && anyDisconnected.length > 0) {
+    if (playerCount <= 2 && pastGrace.length > 0) {
+
       // Pick any roster row as the actor for commit_move (service-role
       // bypasses the auth.uid check; commit_move only requires the
       // actor be a player in the match). Use the disconnected seat to
       // mirror the past-grace pattern semantically.
-      const actorRow = anyDisconnected[0];
+      const actorRow = pastGrace[0];
       try {
         let state: MatchState;
         try {

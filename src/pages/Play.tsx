@@ -584,6 +584,9 @@ export default function Play() {
   const idleTurnExpired = showIdleWarning && idleSecondsLeft <= 0;
   const canTakeTurn = isYourTurn && !idleTurnExpired;
   const idleStrikesLimit = Math.max(1, Number(gameSettings.idle_turn_strikes_limit ?? 3));
+  const disconnectGraceSec = Math.max(15, Number(gameSettings.disconnect_grace_seconds ?? 300));
+
+
 
   const getUserIdForPlayer = useCallback(
     (playerId: string | null | undefined): string | null => {
@@ -623,6 +626,24 @@ export default function Play() {
     },
     [getUserIdForPlayer, presence],
   );
+
+  // 2-player opponent-disconnect countdown: server ends the match once an
+  // opponent's `disconnected_at` age exceeds disconnect_grace_seconds. Surface
+  // a live countdown to the survivor so the result isn't silent.
+  const oppDisconnectInfo = (() => {
+    if (!isPvp || state?.finished) return null;
+    if ((state?.players.length ?? 0) !== 2) return null;
+    const opp = opponents[0];
+    if (!opp) return null;
+    const uid = getUserIdForPlayer(opp.id);
+    if (!uid) return null;
+    const at = presence.disconnectedAtFor(uid);
+    if (!at) return null;
+    const endsAt = at + disconnectGraceSec * 1000;
+    const secsLeft = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+    return { name: opp.name, secsLeft };
+  })();
+
 
   // Toast on strike/departure transitions. Strikes are CONSECUTIVE and reset
   // to 0 on any real action — the badge & toasts must reflect the live roster
@@ -1334,6 +1355,27 @@ export default function Play() {
           </div>
         );
       })()}
+
+      {/* 2-player opponent-disconnect countdown — survivor view */}
+      {oppDisconnectInfo && (
+        <div
+          className={
+            "px-3 py-2 text-sm sm:text-base font-semibold text-center border-y-2 shadow-lg " +
+            (oppDisconnectInfo.secsLeft <= 30
+              ? "bg-amber-600 text-white border-amber-800 animate-pulse"
+              : "bg-amber-500 text-white border-amber-700")
+          }
+        >
+          <Clock className="inline w-4 h-4 mr-1.5 -mt-0.5" />
+          {oppDisconnectInfo.name} disconnected — match ends in{" "}
+          <span className="font-mono font-bold tabular-nums">
+            {Math.floor(oppDisconnectInfo.secsLeft / 60)}:
+            {String(oppDisconnectInfo.secsLeft % 60).padStart(2, "0")}
+          </span>{" "}
+          if they don't return. Staying beats leaving — you win if they don't.
+        </div>
+      )}
+
 
 
 
