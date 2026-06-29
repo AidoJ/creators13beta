@@ -585,6 +585,25 @@ export default function Play() {
   const canTakeTurn = isYourTurn && !idleTurnExpired;
   const idleStrikesLimit = Math.max(1, Number(gameSettings.idle_turn_strikes_limit ?? 3));
 
+  // 2-player opponent-disconnect countdown: server ends the match once an
+  // opponent's `disconnected_at` age exceeds disconnect_grace_seconds. Surface
+  // a live countdown to the survivor so the result isn't silent.
+  const disconnectGraceSec = Math.max(15, Number(gameSettings.disconnect_grace_seconds ?? 300));
+  const oppDisconnectInfo = (() => {
+    if (!isPvp || state?.finished) return null;
+    if ((state?.players.length ?? 0) !== 2) return null;
+    const opp = opponents[0];
+    if (!opp) return null;
+    const uid = getUserIdForPlayer(opp.id);
+    if (!uid) return null;
+    const at = presence.disconnectedAtFor(uid);
+    if (!at) return null;
+    const endsAt = at + disconnectGraceSec * 1000;
+    const secsLeft = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+    return { name: opp.name, secsLeft };
+  })();
+
+
   const getUserIdForPlayer = useCallback(
     (playerId: string | null | undefined): string | null => {
       if (matchRow?.mode !== "pvp" || !playerId) return null;
