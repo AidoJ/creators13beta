@@ -87,6 +87,8 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   beat_clock_draw_seconds: 10,
   idle_turn_seconds: 90,
   idle_turn_strikes_limit: 3,
+  disconnect_grace_seconds: 300,
+
   mode_end_of_days_enabled: true,
   mode_top_score_enabled: true,
   mode_beat_clock_enabled: true,
