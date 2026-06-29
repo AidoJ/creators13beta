@@ -470,7 +470,7 @@ Deno.serve(async (req) => {
       // bypasses the auth.uid check; commit_move only requires the
       // actor be a player in the match). Use the disconnected seat to
       // mirror the past-grace pattern semantically.
-      const actorRow = anyDisconnected[0];
+      const actorRow = pastGrace[0];
       try {
         let state: MatchState;
         try {
