@@ -36,6 +36,7 @@ import ContactSettings from "./pages/settings/ContactSettings";
 import RequiresCompletedProfile from "@/components/RequiresCompletedProfile";
 import GlobalFooter from "@/components/shared/GlobalFooter";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import RecoveryRedirect from "@/components/auth/RecoveryRedirect";
 const MemberProfile = lazy(() => import("./pages/member/MemberProfile"));
 const CommunityDashboard = lazy(() => import("./pages/community/CommunityDashboard"));
 const Connections = lazy(() => import("./pages/community/Connections"));
@@ -54,6 +55,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <RecoveryRedirect />
           <div className="flex flex-col min-h-screen">
             <div className="flex-1">
               <Routes>
