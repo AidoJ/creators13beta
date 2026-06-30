@@ -3,13 +3,12 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Loader2, MailCheck } from "lucide-react";
+import { ArrowRight, MailCheck } from "lucide-react";
 import { TIERS, TierKey } from "@/lib/tiers";
 import { getAppOrigin } from "@/lib/appOrigin";
 import EnrollmentHeader from "@/components/enrollment/EnrollmentHeader";
+import { SignupFields } from "@/components/auth/SignupFields";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -38,13 +37,9 @@ export default function Signup() {
       : `/enroll/payment?${authReturnParams.toString()}`;
 
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showVerification, setShowVerification] = useState(false);
   const [createdUserId, setCreatedUserId] = useState("");
-
+  const [createdEmail, setCreatedEmail] = useState("");
+  const [showVerification, setShowVerification] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
   // If a practitioner (or any logged-in user) clicks a case-study invite link,
@@ -60,86 +55,70 @@ export default function Signup() {
   // If user arrives already authenticated (e.g. after email verification redirect), show "I'm Verified"
   const arrivedVerified = !!user && !showVerification && !loading && !caseStudy;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-    if (!emailOk) {
-      toast({ title: "Please enter a valid email address", variant: "destructive" });
-      return;
-    }
-    if (isPlayer) {
-      const phoneDigits = phone.replace(/[^\d]/g, "");
-      if (phoneDigits.length < 7) {
-        toast({ title: "Please enter a valid phone number", variant: "destructive" });
-        return;
-      }
-    }
-    if (password !== confirmPassword) {
-      toast({ title: "Passwords don't match", variant: "destructive" });
-      return;
-    }
-    if (password.length < 6) {
-      toast({ title: "Password must be at least 6 characters", variant: "destructive" });
-      return;
-    }
-
+  async function handleSignup(values: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    password: string;
+  }) {
     setLoading(true);
-
     const appOrigin = getAppOrigin();
-
-    // 1. Create auth account
-    // Build redirect URL back to this signup page so verification lands on "I'm Verified"
     const verifyParams = new URLSearchParams({ tier, billing });
     if (caseStudy) {
       verifyParams.set("case_study", "true");
       verifyParams.set("practitioner_code", practitionerCode);
       if (inviteToken) verifyParams.set("invite", inviteToken);
     }
+    if (isPlayer) verifyParams.set("path", "player");
     const redirectUrl = `${appOrigin}/enroll/signup?${verifyParams.toString()}`;
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: redirectUrl },
+      email: values.email,
+      password: values.password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: { first_name: values.firstName, last_name: values.lastName },
+      },
     });
-
     if (authError) {
-      toast({ title: "Signup failed", description: authError.message, variant: "destructive" });
       setLoading(false);
+      toast({ title: "Signup failed", description: authError.message, variant: "destructive" });
       return;
     }
-
     const userId = authData.user?.id;
     if (!userId) {
-      toast({ title: "Signup failed", description: "No user ID returned", variant: "destructive" });
       setLoading(false);
+      toast({ title: "Signup failed", description: "No user ID returned", variant: "destructive" });
       return;
     }
     setCreatedUserId(userId);
+    setCreatedEmail(values.email);
 
-    // Save phone + referrer to profile.
+    // Upsert profile with all five fields. onConflict=user_id makes this
+    // insert-or-update regardless of whether the auto-create trigger fired.
     const refCode = (params.get("ref") || "").trim();
     let invitedBy: string | null = null;
     if (refCode) {
       const { data: refUser } = await supabase.rpc("resolve_invitation_code", { _code: refCode });
       if (refUser) invitedBy = refUser as unknown as string;
     }
-    const profilePatch: Record<string, unknown> = {};
-    if (isPlayer && phone.trim()) profilePatch.phone = phone.trim();
+    const profilePatch: Record<string, unknown> = {
+      user_id: userId,
+      first_name: values.firstName,
+      last_name: values.lastName,
+      phone: values.phone,
+      email: values.email,
+    };
     if (invitedBy) profilePatch.invited_by_user_id = invitedBy;
-    if (Object.keys(profilePatch).length > 0) {
-      await supabase.from("profiles").update(profilePatch as never).eq("user_id", userId);
-    }
+    await supabase.from("profiles").upsert(profilePatch as never, { onConflict: "user_id" });
 
-    // 2. Call the edge function to create all DB records (role, subscription, profile update)
-    //    This works for both free and paid tiers — it handles everything server-side.
+    // Create subscription/role records via edge function (handles all paths).
     const priceId = tierInfo.stripe?.price_id || null;
-
     const { error: fnError } = await supabase.functions.invoke("create-checkout", {
       body: {
         priceId,
-        email,
+        email: values.email,
         user_id: userId,
         tier,
         billing,
@@ -150,37 +129,27 @@ export default function Signup() {
         cancelUrl: `${appOrigin}/enroll/payment?tier=${tier}&billing=${billing}&canceled=true`,
       },
     });
+    if (fnError) console.error("Edge function error:", fnError);
 
-    if (fnError) {
-      console.error("Edge function error:", fnError);
-      // Non-blocking — user is created, DB records may still need fixing
-    }
-
-    // 3. If case study, send welcome email with login details and photo upload prompt
     if (caseStudy) {
-      const appOrigin = getAppOrigin();
       const returnToPath = `/enroll/practitioner?tier=${tier}&billing=${billing}&case_study=true&practitioner_code=${encodeURIComponent(practitionerCode)}${inviteToken ? `&invite=${encodeURIComponent(inviteToken)}` : ""}`;
       const loginUrl = `${appOrigin}/auth?returnTo=${encodeURIComponent(returnToPath)}`;
       const photosUrl = `${appOrigin}/enroll/photos?tier=${tier}&billing=${billing}&case_study=true&practitioner_code=${practitionerCode}`;
       supabase.functions.invoke("send-case-study-welcome", {
         body: {
-          to: email,
-          clientName: email.split("@")[0],
+          to: values.email,
+          clientName: values.firstName || values.email.split("@")[0],
           loginLink: loginUrl,
           photosLink: photosUrl,
           practitionerCode: practitionerCode || "",
         },
       }).then(({ error: emailErr }) => {
         if (emailErr) console.error("Welcome email error:", emailErr);
-        else console.log("✓ Case study welcome email queued");
       });
     }
 
     setLoading(false);
 
-    // Some environments auto-confirm email signups. In that case no verification
-    // email is sent, so continue immediately instead of showing a misleading
-    // "check your email" step.
     if (authData.session || authData.user?.email_confirmed_at) {
       if (isPlayer) {
         navigate("/dashboard");
@@ -188,7 +157,7 @@ export default function Signup() {
       }
       const nextParams = new URLSearchParams({ tier, billing });
       nextParams.set("uid", userId);
-      nextParams.set("email", email);
+      nextParams.set("email", values.email);
       if (caseStudy) {
         nextParams.set("case_study", "true");
         nextParams.set("practitioner_code", practitionerCode);
@@ -197,9 +166,8 @@ export default function Signup() {
       navigate(tier === "wren" ? `/enroll/practitioner?${nextParams.toString()}` : `/enroll/payment?${nextParams.toString()}`);
       return;
     }
-
     setShowVerification(true);
-  };
+  }
 
   const handleContinue = () => {
     if (isPlayer) {
@@ -209,21 +177,16 @@ export default function Signup() {
     const nextParams = new URLSearchParams({ tier, billing });
     if (createdUserId) nextParams.set("uid", createdUserId);
     else if (user) nextParams.set("uid", user.id);
-    if (email) nextParams.set("email", email);
+    if (createdEmail) nextParams.set("email", createdEmail);
     else if (user?.email) nextParams.set("email", user.email);
     if (caseStudy) {
       nextParams.set("case_study", "true");
       nextParams.set("practitioner_code", practitionerCode);
       if (inviteToken) nextParams.set("invite", inviteToken);
     }
-    if (tier === "wren") {
-      navigate(`/enroll/practitioner?${nextParams.toString()}`);
-    } else {
-      navigate(`/enroll/payment?${nextParams.toString()}`);
-    }
+    navigate(tier === "wren" ? `/enroll/practitioner?${nextParams.toString()}` : `/enroll/payment?${nextParams.toString()}`);
   };
 
-  // Show "I'm Verified" screen when user arrives from email verification redirect
   if (arrivedVerified) {
     return (
       <div className="min-h-screen bg-background">
@@ -237,13 +200,8 @@ export default function Signup() {
             <p className="text-muted-foreground">
               Your email has been confirmed. Click below to {isPlayer ? "start playing" : tier === "wren" ? "continue with your profile details" : "continue with payment"}.
             </p>
-            <Button
-              onClick={handleContinue}
-              size="lg"
-              className="rounded-full px-10 text-base font-semibold"
-            >
-              Continue
-              <ArrowRight className="ml-2 h-4 w-4" />
+            <Button onClick={handleContinue} size="lg" className="rounded-full px-10 text-base font-semibold">
+              Continue <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </main>
@@ -263,20 +221,14 @@ export default function Signup() {
             <h1 className="text-2xl font-display font-bold text-foreground">Check Your Email</h1>
             <p className="text-muted-foreground">
               We've sent a verification link to{" "}
-              <span className="font-semibold text-foreground">{email}</span>.
-              Please verify your email to complete enrollment.
+              <span className="font-semibold text-foreground">{createdEmail}</span>. Please verify your email to complete enrollment.
             </p>
             <div className="bg-muted/50 rounded-xl p-4 text-sm text-muted-foreground">
               <p className="font-medium text-foreground mb-1">What happens next?</p>
               <p>Once verified, click below to {isPlayer ? "jump into the game" : tier === "wren" ? "continue with your profile details" : "continue with payment"}.</p>
             </div>
-            <Button
-              onClick={handleContinue}
-              size="lg"
-              className="rounded-full px-10 text-base font-semibold"
-            >
-              I've Verified — Continue
-              <ArrowRight className="ml-2 h-4 w-4" />
+            <Button onClick={handleContinue} size="lg" className="rounded-full px-10 text-base font-semibold">
+              I've Verified — Continue <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             <p className="text-xs text-muted-foreground">
               Didn't receive it? Check your spam folder or try signing up again.
@@ -287,10 +239,15 @@ export default function Signup() {
     );
   }
 
+  const submitLabel = isPlayer
+    ? "Create Account & Play"
+    : tier === "wren"
+      ? "Create Account"
+      : "Continue to Payment";
+
   return (
     <div className="min-h-screen bg-background">
       <EnrollmentHeader currentStep={1} />
-
       <main className="container mx-auto px-4 py-10 max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-display font-bold text-foreground mb-2">Create Your Account</h1>
@@ -299,50 +256,16 @@ export default function Signup() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <section className="bg-card border border-border rounded-2xl p-6 space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email *</Label>
-              <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
-            </div>
-            {isPlayer && (
-              <div className="space-y-1.5">
-                <Label htmlFor="phone">Phone *</Label>
-                <Input id="phone" type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+61 400 000 000" />
-              </div>
-            )}
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password *</Label>
-              <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 6 characters" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="confirmPassword">Confirm Password *</Label>
-              <Input id="confirmPassword" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter password" />
-            </div>
-          </section>
+        <section className="bg-card border border-border rounded-2xl p-6">
+          <SignupFields loading={loading} submitLabel={submitLabel} onSubmit={handleSignup} />
+        </section>
 
-          <div className="text-center space-y-3">
-            <Button type="submit" size="lg" className="rounded-full px-10 text-base font-semibold" disabled={loading}>
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  {isPlayer ? "Create Account & Play" : tier === "wren" ? "Create Account" : "Continue to Payment"}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </>
-              )}
-            </Button>
-            <p className="text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link
-                 to={`/auth?returnTo=${encodeURIComponent(authReturnTo)}`}
-                className="text-primary font-semibold hover:underline"
-              >
-                Sign in
-              </Link>
-            </p>
-          </div>
-        </form>
+        <p className="text-center text-sm text-muted-foreground mt-6">
+          Already have an account?{" "}
+          <Link to={`/auth?returnTo=${encodeURIComponent(authReturnTo)}`} className="text-primary font-semibold hover:underline">
+            Sign in
+          </Link>
+        </p>
       </main>
     </div>
   );
