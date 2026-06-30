@@ -19,16 +19,24 @@ export function adminClient(): SupabaseClient {
   );
 }
 
-export async function requireUser(req: Request, admin?: SupabaseClient): Promise<{ id: string; email: string | null; admin: SupabaseClient }> {
+export async function requireUser(req: Request, admin?: SupabaseClient): Promise<{ id: string; email: string | null; admin: SupabaseClient; isService: boolean }> {
   const ah = req.headers.get("Authorization");
   if (!ah || !ah.startsWith("Bearer ")) throw new AuthError("Missing bearer token", 401);
   const token = ah.slice("Bearer ".length).trim();
   if (!token) throw new AuthError("Missing bearer token", 401);
   const a = admin ?? adminClient();
+  // Internal callers (cron, other edge functions, DB triggers via pg_net) may
+  // present the service-role JWT. Treat that as a fully-authenticated system
+  // caller so we don't break server-to-server flows.
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  if (serviceKey && token === serviceKey) {
+    return { id: "service", email: null, admin: a, isService: true };
+  }
   const { data, error } = await a.auth.getUser(token);
   if (error || !data.user) throw new AuthError("Invalid or expired token", 401);
-  return { id: data.user.id, email: data.user.email ?? null, admin: a };
+  return { id: data.user.id, email: data.user.email ?? null, admin: a, isService: false };
 }
+
 
 export async function requireRole(req: Request, roles: Array<"admin" | "trainer" | "practitioner" | "trainee" | "client">): Promise<{ id: string; email: string | null; admin: SupabaseClient; role: string }> {
   const u = await requireUser(req);
