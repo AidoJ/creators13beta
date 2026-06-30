@@ -14,6 +14,13 @@ serve(async (req) => {
   }
 
   try {
+    // Auth + rate limit (security remediation Tier 2 #5).
+    const __caller = await requireUser(req);
+    if (!rateLimit(`email:${__caller.id}`, 20, 5 * 60 * 1000)) {
+      return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -107,6 +114,7 @@ serve(async (req) => {
 
         await new Promise(r => setTimeout(r, 600));
       } catch (e) {
+    if (e instanceof AuthError) return new Response(JSON.stringify({ error: e.message }), { status: e.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         results.push({ user_id: trainer.user_id, status: "error", error: (e as Error).message });
       }
     }

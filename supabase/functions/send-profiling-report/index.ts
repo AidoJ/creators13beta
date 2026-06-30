@@ -14,6 +14,13 @@ serve(async (req) => {
   }
 
   try {
+    // Auth + rate limit (security remediation Tier 2 #5).
+    const __caller = await requireUser(req);
+    if (!rateLimit(`email:${__caller.id}`, 20, 5 * 60 * 1000)) {
+      return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY not configured");
 
