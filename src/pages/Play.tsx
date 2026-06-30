@@ -45,7 +45,7 @@ import {
 import { isPaidTier } from "@/lib/clientClassification";
 import { type ServerMove } from "@/lib/game/serverMoves";
 import { logClientStateChange } from "@/lib/game/debugLog";
-import { deserializeMatch, serializeMatch } from "@/lib/game/serialize";
+
 import { recordProgressDiff } from "@/lib/game/progress";
 import type { BotDifficulty } from "@/lib/game/bot";
 import { supabase } from "@/integrations/supabase/client";
@@ -178,11 +178,8 @@ export default function Play() {
   const isMobile = useIsMobile();
   const { settings: gameSettings } = useGameSettings();
   // (turnStartedAtRef declared below, alongside other refs.)
-  const undoStackRef = useRef<MatchState[]>([]);
-  const [undoCount, setUndoCount] = useState(0);
   const botDifficultyRef = useRef<BotDifficulty>("medium");
   const botStatsRecordedRef = useRef(false);
-  const [quickUndoUntil, setQuickUndoUntil] = useState<number>(0);
   const [, setNowTick] = useState(0);
   const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
   const turnStartedAtRef = useRef<number>(Date.now());
@@ -194,60 +191,6 @@ export default function Play() {
     const id = setInterval(() => setNowTick((n) => n + 1), 1000);
     return () => clearInterval(id);
   }, []);
-
-  // Tick every 250ms while quick-undo is active so the countdown re-renders.
-  useEffect(() => {
-    if (quickUndoUntil <= 0) return;
-    const id = setInterval(() => {
-      if (Date.now() >= quickUndoUntil) {
-        setQuickUndoUntil(0);
-      } else {
-        setNowTick((n) => n + 1);
-      }
-    }, 250);
-    return () => clearInterval(id);
-  }, [quickUndoUntil]);
-
-  function armQuickUndo() {
-    setQuickUndoUntil(Date.now() + 5000);
-  }
-
-  function pushUndo(snapshot: MatchState | null) {
-    if (!snapshot) return;
-    // Undo is solo/practice only — never record snapshots in PvP, where the
-    // server is authoritative and there's no rewind path. Keeps the stack
-    // clean even if a user-action handler fires while in a PvP match.
-    if (matchRow?.mode === "pvp") return;
-    // Deep clone via serialize round-trip. Shallow clones share nested refs
-    // (ecosystem Maps, PlacedCard objects, hand arrays) which later engine
-    // mutations would retroactively poison — the cause of "undo drags
-    // earlier state with it". The round-trip produces a provably
-    // independent snapshot in the exact shape the engine already trusts.
-    let frozen: MatchState;
-    try {
-      frozen = deserializeMatch(serializeMatch(snapshot) as any);
-    } catch {
-      return; // never block a move on snapshot failure
-    }
-    undoStackRef.current.push(frozen);
-    if (undoStackRef.current.length > 20) undoStackRef.current.shift();
-    setUndoCount(undoStackRef.current.length);
-  }
-  function onUndo() {
-    // Hard-disable in PvP — short-circuit BEFORE setState. The previous
-    // early-return only skipped persistence, so it still rewound the client
-    // view of a server-committed move and desynced from the server.
-    if (matchRow?.mode === "pvp") return;
-    const prev = undoStackRef.current.pop();
-    setUndoCount(undoStackRef.current.length);
-    setQuickUndoUntil(0);
-    if (!prev) return;
-    setState(prev);
-    setSelectedUid(null);
-    setMoveFromKey(null);
-    setMode("place");
-    persistLocalMatch(prev);
-  }
 
   // Derived: identity inside the match.
   const isPvp = matchRow?.mode === "pvp";
