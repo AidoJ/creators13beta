@@ -243,14 +243,21 @@ Deno.serve(async (req) => {
   //          instant-end OR past-grace skip in 3+ player matches). The
   //          rank-by-score finalisation is the same one used for genuine
   //          disconnects — an absent player is not a quitter.
+  //
+  //      ALSO: if the current-turn player is `disconnected_at` past the
+  //      presence debounce, force-advance the seat IMMEDIATELY (no idle
+  //      strike). The engine semantic is "disconnect-within-grace is skip,
+  //      not stuck" — and without this, the table sat blocked until the
+  //      full 300s past-grace forfeit kicked in, which read as a freeze
+  //      when the active turn-holder dropped offline.
   try {
-    const idleCutoffIso = new Date(Date.now() - idleSec * 1000).toISOString();
+    // Wider scan: any active match with a turn_started_at. Per-row gate
+    // below decides whether to act (disconnected → immediate, idle → 120s).
     const { data: idleMatches } = await svc
       .from("game_matches")
       .select("id, state, seq, player_count, is_ranked, started_at, turn_started_at")
       .eq("status", "active")
-      .not("turn_started_at", "is", null)
-      .lt("turn_started_at", idleCutoffIso);
+      .not("turn_started_at", "is", null);
 
     for (const m of (idleMatches ?? []) as MatchSweepRow[]) {
       if (startupGraceMatchIds.has(m.id)) continue;
@@ -270,12 +277,26 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (!rrow) continue;
       if ((rrow.status ?? "active") !== "active") continue;
-      // If already disconnected, the existing disconnect path handles them.
-      if (rrow.disconnected_at) continue;
 
-      const newStrikes = Number(rrow.idle_strikes ?? 0) + 1;
+      const turnAgeMs = m.turn_started_at
+        ? Date.now() - Date.parse(m.turn_started_at)
+        : 0;
+      const discAgeMs = rrow.disconnected_at
+        ? Date.now() - Date.parse(rrow.disconnected_at)
+        : 0;
+      const isAbsent = !!rrow.disconnected_at && discAgeMs > debounceSec * 1000;
+      const isIdle = !rrow.disconnected_at && turnAgeMs > idleSec * 1000;
+      if (!isAbsent && !isIdle) continue;
+      // Absent current-turn player → skip seat with no strike penalty.
+      // Idle current-turn player → strike logic below.
+      const skipStrike = isAbsent;
 
-      if (newStrikes >= idleStrikesLimit) {
+
+      const newStrikes = skipStrike
+        ? Number(rrow.idle_strikes ?? 0)
+        : Number(rrow.idle_strikes ?? 0) + 1;
+
+      if (!skipStrike && newStrikes >= idleStrikesLimit) {
         // ESCALATE → reuse disconnect rank-by-score path. Stamp with
         // disconnected_at in the past so past-grace fires THIS tick.
         const stampIso = new Date(Date.now() - graceSec * 1000 - 1000).toISOString();
@@ -300,6 +321,7 @@ Deno.serve(async (req) => {
         // loop below will pick this up in the same invocation.
         continue;
       }
+
 
       // AUTO-PASS: advance the turn without disconnecting. Inject a
       // transient past-grace disconnectedAt for ONLY the current slot
@@ -372,12 +394,15 @@ Deno.serve(async (req) => {
 
         // Bump idle_strikes + refresh turn_started_at AFTER commit so the
         // next sweep tick measures from now.
+        if (!skipStrike) {
+          await svc
+            .from("game_match_players")
+            .update({ idle_strikes: newStrikes })
+            .eq("match_id", m.id)
+            .eq("user_id", rrow.user_id);
+        }
         await svc
-          .from("game_match_players")
-          .update({ idle_strikes: newStrikes })
-          .eq("match_id", m.id)
-          .eq("user_id", rrow.user_id);
-        await svc
+
           .from("game_matches")
           .update({ turn_started_at: new Date().toISOString() })
           .eq("id", m.id);
