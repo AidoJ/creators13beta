@@ -97,6 +97,16 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
   const [botStats, setBotStats] = useState<BotStatRow[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const loadMatches = useCallback(async () => {
+    const { data } = await supabase
+      .from("game_matches")
+      .select("id, mode, status, host_user_id, guest_user_id, host_name, guest_name, winner_user_id, invite_token, updated_at, created_at")
+      .or(`host_user_id.eq.${userId},guest_user_id.eq.${userId}`)
+      .order("updated_at", { ascending: false })
+      .limit(30);
+    setMatches((data || []) as MatchRow[]);
+  }, [userId]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -132,10 +142,38 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
     return () => { cancelled = true; };
   }, [userId]);
 
+  // Keep the matches list fresh so a game that finishes while the dashboard
+  // is open (in another tab, via the forfeit sweep, etc.) doesn't keep
+  // showing a stale "Resume" entry that loads a finished board.
+  useEffect(() => {
+    const onFocus = () => { loadMatches(); };
+    window.addEventListener("focus", onFocus);
+    const channel = supabase
+      .channel(`dash-matches-${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "game_matches", filter: `host_user_id=eq.${userId}` },
+        () => loadMatches(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "game_matches", filter: `guest_user_id=eq.${userId}` },
+        () => loadMatches(),
+      )
+      .subscribe();
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      supabase.removeChannel(channel);
+    };
+  }, [userId, loadMatches]);
+
   const finished = useMemo(() => matches.filter(m => m.status === "finished" || m.winner_user_id), [matches]);
   const wins = finished.filter(m => m.winner_user_id === userId).length;
   const winRate = finished.length ? Math.round((wins / finished.length) * 100) : 0;
   const activeGames = useMemo(
+    // Defence in depth: a finished match must never appear as "Resume",
+    // even if status drifted to active. Exclude anything with a winner OR
+    // a non-active status.
     () => matches.filter(m => m.status === "active" && !m.winner_user_id),
     [matches],
   );
