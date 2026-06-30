@@ -180,7 +180,11 @@ Check if the photo meets these requirements and provide your assessment.`;
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    if (e instanceof AuthError) {
+      return new Response(JSON.stringify({ error: e.message }), { status: e.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     console.error("review-photo error:", e);
+
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
