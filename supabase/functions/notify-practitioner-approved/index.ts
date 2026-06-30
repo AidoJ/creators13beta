@@ -1,3 +1,4 @@
+import { requireUser, rateLimit, AuthError } from "../_shared/auth.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -13,6 +14,13 @@ serve(async (req) => {
   }
 
   try {
+    // Auth + rate limit (security remediation Tier 2 #5).
+    const __caller = await requireUser(req);
+    if (!rateLimit(`email:${__caller.id}`, 20, 5 * 60 * 1000)) {
+      return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -102,6 +110,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    if (e instanceof AuthError) return new Response(JSON.stringify({ error: e.message }), { status: e.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     console.error("notify-practitioner-approved error:", e);
     return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500,

@@ -108,6 +108,45 @@ Deno.serve(async (req) => {
       syncAll = url.searchParams.get("sync_all") === "true";
     }
 
+    // AuthZ — accept either:
+    //   (a) service-role bearer token (internal callers: stripe-webhook, cron)
+    //   (b) a logged-in user who is admin/trainer, OR the user themselves
+    //       for a per-user (non-bulk) sync.
+    const ah = req.headers.get("Authorization") || "";
+    const token = ah.startsWith("Bearer ") ? ah.slice(7).trim() : "";
+    const isService = token && token === SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!isService) {
+      if (!token) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: u, error: ue } = await admin.auth.getUser(token);
+      if (ue || !u.user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: role } = await admin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", u.user.id)
+        .in("role", ["admin", "trainer"])
+        .maybeSingle();
+      const isPrivileged = !!role;
+      if (syncAll && !isPrivileged) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!syncAll && !isPrivileged && userId !== u.user.id) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Single-user mode (called from Stripe webhook)
     if (userId && !syncAll) {
       const result = await syncOne(admin, userId);
@@ -117,6 +156,7 @@ Deno.serve(async (req) => {
         status: 200,
       });
     }
+
 
     // Bulk mode (called from nightly cron)
     if (syncAll) {

@@ -1,3 +1,4 @@
+import { requireUser, rateLimit, AuthError } from "../_shared/auth.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
@@ -21,6 +22,13 @@ serve(async (req) => {
   }
 
   try {
+    // Auth + rate limit (security remediation Tier 2 #5).
+    const __caller = await requireUser(req);
+    if (!rateLimit(`email:${__caller.id}`, 20, 5 * 60 * 1000)) {
+      return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const apiKey = Deno.env.get("RESEND_API_KEY");
     if (!apiKey) throw new Error("RESEND_API_KEY is not configured");
 

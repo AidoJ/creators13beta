@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireUser, AuthError } from "../_shared/auth.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,8 +30,20 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Auth required. Caller must be the subject OR a trainer/admin OR an
+    // assigned practitioner.
+    const caller = await requireUser(req, supabaseAdmin);
     const { user_id } = await req.json() as { user_id: string };
     if (!user_id) throw new Error("user_id is required");
+
+    if (caller.id !== user_id) {
+      const [{ data: role }, { data: link }] = await Promise.all([
+        supabaseAdmin.from("user_roles").select("role").eq("user_id", caller.id).in("role", ["admin", "trainer"]).maybeSingle(),
+        supabaseAdmin.from("client_practitioner").select("client_id").eq("client_id", user_id).eq("practitioner_id", caller.id).eq("active", true).maybeSingle(),
+      ]);
+      if (!role && !link) throw new AuthError("Forbidden", 403);
+    }
+
 
     // Fetch all photos for this user
     const { data: photos, error: fetchErr } = await supabaseAdmin
@@ -195,10 +209,14 @@ Respond with ONLY the JSON array, no other text.`;
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
+    if (e instanceof AuthError) {
+      return new Response(JSON.stringify({ error: e.message }), { status: e.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     console.error("classify-photos error:", e);
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
 });

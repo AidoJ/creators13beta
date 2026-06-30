@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { requireUser, rateLimit, AuthError } from "../_shared/auth.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,7 +33,15 @@ serve(async (req) => {
   }
 
   try {
+    const caller = await requireUser(req);
+    // 30 reviews per 5 min per user.
+    if (!rateLimit(`review-photo:${caller.id}`, 30, 5 * 60 * 1000)) {
+      return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const { photo_type, image_base64 } = await req.json();
+
 
     if (!photo_type || !image_base64) {
       return new Response(
@@ -170,7 +180,11 @@ Check if the photo meets these requirements and provide your assessment.`;
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    if (e instanceof AuthError) {
+      return new Response(JSON.stringify({ error: e.message }), { status: e.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     console.error("review-photo error:", e);
+
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
