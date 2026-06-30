@@ -1480,7 +1480,10 @@ export default function Play() {
               <TooltipContent>Replay the tutorial</TooltipContent>
             </Tooltip>
 
-            {(state.finished || !isPvp) && (
+            {/* Solo-only New game button. When state.finished is true the
+                "Play again" button inside the finished branch above already
+                covers this — avoid rendering two identical + buttons. */}
+            {!isPvp && !state.finished && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button size="icon" variant="outline" className="h-8 w-8" onClick={onNewGame} aria-label="New game">
