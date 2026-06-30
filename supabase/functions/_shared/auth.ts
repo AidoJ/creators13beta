@@ -38,8 +38,9 @@ export async function requireUser(req: Request, admin?: SupabaseClient): Promise
 }
 
 
-export async function requireRole(req: Request, roles: Array<"admin" | "trainer" | "practitioner" | "trainee" | "client">): Promise<{ id: string; email: string | null; admin: SupabaseClient; role: string }> {
+export async function requireRole(req: Request, roles: Array<"admin" | "trainer" | "practitioner" | "trainee" | "client">): Promise<{ id: string; email: string | null; admin: SupabaseClient; role: string; isService: boolean }> {
   const u = await requireUser(req);
+  if (u.isService) return { ...u, role: "service" };
   const { data, error } = await u.admin
     .from("user_roles")
     .select("role")
@@ -51,6 +52,7 @@ export async function requireRole(req: Request, roles: Array<"admin" | "trainer"
   if (!data) throw new AuthError(`Forbidden: requires ${roles.join("/")}`, 403);
   return { ...u, role: data.role as string };
 }
+
 
 export function authErrorResponse(err: unknown, corsHeaders: Record<string, string>): Response {
   if (err instanceof AuthError) {
