@@ -109,6 +109,10 @@ export default function Play() {
 
   const [opponentPanelOpen, setOpponentPanelOpen] = useState(false);
   const [expandedOpponentId, setExpandedOpponentId] = useState<string | null>(null);
+  // Mobile-only: which opponent is currently shown in the top peek row.
+  // Swipe left/right on the peek button cycles through all opponents.
+  const [mobileOppIdx, setMobileOppIdx] = useState(0);
+  const mobileSwipeRef = useRef<{ x: number; y: number; id: number } | null>(null);
 
   // A.4 — realtime presence for the current PvP match. No-op for solo bot
   // matches (enabled=false when not PvP). The same channel name and payload
@@ -1485,62 +1489,110 @@ export default function Play() {
           {/* Top utility row: opponent peek + draw/discard quick access */}
           <div className="flex items-center gap-1.5 px-2 pt-1.5 pb-1 border-b border-border/40">
             {(() => {
-              const opStatus = getPresenceStatusForPlayer(opponent.id);
-              const opDeparted = isPlayerDeparted(opponent.id);
-              const opStrikes = getStrikesForPlayer(opponent.id);
+              const oppCount = opponents.length;
+              const idx = oppCount > 0 ? ((mobileOppIdx % oppCount) + oppCount) % oppCount : 0;
+              const mobileOpp = opponents[idx] ?? opponent;
+              if (!mobileOpp) return null;
+              const opStatus = getPresenceStatusForPlayer(mobileOpp.id);
+              const opDeparted = isPlayerDeparted(mobileOpp.id);
+              const opStrikes = getStrikesForPlayer(mobileOpp.id);
               const opDisconnected = opStatus === "disconnected";
               const opReconnecting = opStatus === "reconnecting";
+              const SWIPE_THRESHOLD = 40;
               return (
-                <Button
-                  variant="outline"
-                  size="sm"
+                <div
                   className={
-                    "flex-1 min-h-7 h-auto text-[11px] px-2 justify-start " +
+                    "flex-1 min-w-0 rounded-md border text-[11px] flex items-stretch select-none " +
                     (opDeparted
                       ? "border-destructive/60 bg-destructive/10 text-destructive opacity-70"
                       : opDisconnected
                         ? "border-destructive/60 bg-destructive/10 text-destructive"
                         : opReconnecting
                           ? "border-amber-500/60 bg-amber-500/10 text-amber-300"
-                          : "")
+                          : "border-border bg-background")
                   }
-                  onClick={() => { setExpandedOpponentId(opponent.id); setOpponentPanelOpen(true); }}
+                  style={{ touchAction: "pan-y" }}
+                  onPointerDown={(e) => {
+                    if (e.pointerType === "mouse") return;
+                    mobileSwipeRef.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
+                  }}
+                  onPointerUp={(e) => {
+                    const s = mobileSwipeRef.current;
+                    mobileSwipeRef.current = null;
+                    if (!s || s.id !== e.pointerId || oppCount < 2) return;
+                    const dx = e.clientX - s.x;
+                    const dy = e.clientY - s.y;
+                    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy)) return;
+                    setMobileOppIdx((i) => {
+                      const next = dx < 0 ? i + 1 : i - 1;
+                      return ((next % oppCount) + oppCount) % oppCount;
+                    });
+                  }}
+                  onPointerCancel={() => { mobileSwipeRef.current = null; }}
                 >
-                  <span className="min-w-0 flex-1 text-left">
-                    <span className="flex items-center gap-1 min-w-0">
-                      <Maximize2 className="w-3 h-3 shrink-0" />
-                      <span className={"truncate " + (opDeparted ? "line-through" : "")}>{opponent.name}</span>
-                      {!opDisconnected && !opDeparted && opStrikes >= 1 && (
-                        <span
-                          className={
-                            "ml-1 inline-flex items-center gap-0.5 px-1 py-0 rounded text-[9px] font-bold tabular-nums " +
-                            (opStrikes >= idleStrikesLimit - 1
-                              ? "bg-red-600 text-white"
-                              : opStrikes === idleStrikesLimit - 2
-                                ? "bg-orange-500 text-white"
-                                : "bg-amber-500 text-white")
-                          }
-                          title="Consecutive idle timeouts (resets on next action)"
-                        >
-                          <Clock className="w-2.5 h-2.5" />{opStrikes}/{idleStrikesLimit}
+                  <button
+                    type="button"
+                    className="flex-1 min-w-0 min-h-7 px-2 py-1 text-left"
+                    onClick={() => { setExpandedOpponentId(mobileOpp.id); setOpponentPanelOpen(true); }}
+                    aria-label={`View ${mobileOpp.name}'s ecosystem`}
+                  >
+                    <span className="min-w-0 flex-1 text-left block">
+                      <span className="flex items-center gap-1 min-w-0">
+                        <Maximize2 className="w-3 h-3 shrink-0" />
+                        <span className={"truncate " + (opDeparted ? "line-through" : "")}>{mobileOpp.name}</span>
+                        <span className="text-[9px] text-muted-foreground shrink-0">· {mobileOpp.ecosystem.placed.size}/16 · {mobileOpp.hand.length}h</span>
+                        {!opDisconnected && !opDeparted && opStrikes >= 1 && (
+                          <span
+                            className={
+                              "ml-1 inline-flex items-center gap-0.5 px-1 py-0 rounded text-[9px] font-bold tabular-nums " +
+                              (opStrikes >= idleStrikesLimit - 1
+                                ? "bg-red-600 text-white"
+                                : opStrikes === idleStrikesLimit - 2
+                                  ? "bg-orange-500 text-white"
+                                  : "bg-amber-500 text-white")
+                            }
+                            title="Consecutive idle timeouts (resets on next action)"
+                          >
+                            <Clock className="w-2.5 h-2.5" />{opStrikes}/{idleStrikesLimit}
+                          </span>
+                        )}
+                      </span>
+                      {opDeparted ? (
+                        <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
+                          <WifiOff className="w-2.5 h-2.5" /> Removed (inactive)
                         </span>
-                      )}
+                      ) : opDisconnected ? (
+                        <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
+                          <WifiOff className="w-2.5 h-2.5" /> Disconnected
+                        </span>
+                      ) : opReconnecting ? (
+                        <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
+                          <Loader2 className="w-2.5 h-2.5 animate-spin" /> Reconnecting
+                        </span>
+                      ) : oppCount > 1 ? (
+                        <span className="mt-0.5 block text-[9px] text-muted-foreground/80 uppercase tracking-wide">
+                          Swipe ← → for other players
+                        </span>
+                      ) : null}
                     </span>
-                    {opDeparted ? (
-                      <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
-                        <WifiOff className="w-2.5 h-2.5" /> Removed (inactive)
-                      </span>
-                    ) : opDisconnected ? (
-                      <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
-                        <WifiOff className="w-2.5 h-2.5" /> Disconnected
-                      </span>
-                    ) : opReconnecting ? (
-                      <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
-                        <Loader2 className="w-2.5 h-2.5 animate-spin" /> Reconnecting
-                      </span>
-                    ) : null}
-                  </span>
-                </Button>
+                  </button>
+                  {oppCount > 1 && (
+                    <div className="flex items-center gap-1 px-2 border-l border-border/40">
+                      {opponents.map((_, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setMobileOppIdx(i); }}
+                          aria-label={`Show opponent ${i + 1}`}
+                          className={
+                            "w-1.5 h-1.5 rounded-full transition-colors " +
+                            (i === idx ? "bg-primary" : "bg-muted-foreground/40")
+                          }
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               );
             })()}
             <button
