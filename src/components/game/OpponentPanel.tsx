@@ -42,15 +42,19 @@ export function OpponentPanel({ open, onClose, player, opponentUserId, presenceS
   const [size, setSize] = useState<{ w: number; h: number }>({ w: 640, h: 560 });
   const dragRef = useRef<{ dx: number; dy: number } | null>(null);
   const resizeRef = useRef<{ sx: number; sy: number; sw: number; sh: number } | null>(null);
+  const swipeRef = useRef<{ x: number; y: number; t: number } | null>(null);
+  const lastTapRef = useRef<number>(0);
 
-  // Re-center on first open if off-screen.
+  // Fit-to-viewport on open: especially important on mobile where the
+  // default 640px width pushed the close (X) button off-screen.
   useEffect(() => {
     if (!open) return;
-    setPos((p) => {
-      const maxX = Math.max(0, window.innerWidth - size.w - 16);
-      const maxY = Math.max(0, window.innerHeight - 80);
-      return { x: Math.min(p.x, maxX), y: Math.min(p.y, maxY) };
-    });
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const w = Math.min(640, vw - 16);
+    const h = Math.min(560, vh - 32);
+    setSize({ w, h });
+    setPos({ x: Math.max(8, Math.floor((vw - w) / 2)), y: Math.max(8, Math.floor((vh - h) / 2)) });
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
