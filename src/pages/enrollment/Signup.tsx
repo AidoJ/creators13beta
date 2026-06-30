@@ -3,13 +3,12 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Loader2, MailCheck } from "lucide-react";
+import { ArrowRight, MailCheck } from "lucide-react";
 import { TIERS, TierKey } from "@/lib/tiers";
 import { getAppOrigin } from "@/lib/appOrigin";
 import EnrollmentHeader from "@/components/enrollment/EnrollmentHeader";
+import { SignupFields } from "@/components/auth/SignupFields";
 
 export default function Signup() {
   const navigate = useNavigate();
