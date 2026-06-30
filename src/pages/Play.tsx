@@ -1616,12 +1616,9 @@ export default function Play() {
             />
           </div>
 
-          {/* Compact action chips (Undo / Disaster / Steal) */}
+          {/* Compact action chips (Disaster / Steal) */}
           <div className="flex items-center gap-1 px-2 py-1 border-t border-border/40 bg-card/30 overflow-x-auto">
-            <Button size="sm" variant="outline" disabled={undoCount === 0} onClick={onUndo}
-              className="h-7 px-2 text-[11px] shrink-0">
-              ↶ Undo{undoCount > 0 ? ` (${undoCount})` : ""}
-            </Button>
+
             <Button size="sm" variant="secondary" disabled={!canDisaster} onClick={onDisaster}
               className="h-7 px-2 text-[11px] shrink-0">
               Disaster
