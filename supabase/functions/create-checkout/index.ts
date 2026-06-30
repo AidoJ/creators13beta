@@ -106,14 +106,9 @@ serve(async (req) => {
       if (practitionerError) throw new Error(`Could not verify practitioner code: ${practitionerError.message}`);
 
       if (pracProfile) {
-        const { error: linkError } = await supabaseClient.from("client_practitioner").upsert(
-          {
-            client_id: userId,
-            practitioner_id: pracProfile.user_id,
-            active: true,
-          },
-          { onConflict: "client_id,practitioner_id" }
-        );
+        const { error: linkError } = await supabaseClient.rpc("assign_self_practitioner", {
+          _practitioner_id: pracProfile.user_id,
+        });
         if (linkError) throw new Error(`Could not link client to practitioner: ${linkError.message}`);
         logStep("Linked client to practitioner", { practitionerId: pracProfile.user_id, code: practitionerCode });
       } else {

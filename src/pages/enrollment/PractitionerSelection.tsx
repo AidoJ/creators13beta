@@ -115,21 +115,10 @@ export default function PractitionerSelection() {
 
     setSaving(true);
 
-    // Update or create assignment
-    if (currentPractitionerId && currentPractitionerId !== selectedId) {
-      // Deactivate old assignment
-      await supabase
-        .from("client_practitioner")
-        .update({ active: false })
-        .eq("client_id", user.id)
-        .eq("practitioner_id", currentPractitionerId);
-    }
-
     if (currentPractitionerId !== selectedId) {
-      // Create new assignment
-      const { error } = await supabase
-        .from("client_practitioner")
-        .insert({ client_id: user.id, practitioner_id: selectedId });
+      // Assign via secure RPC (handles deactivation of prior assignment + eligibility check).
+      const { error } = await (supabase as any)
+        .rpc("assign_self_practitioner", { _practitioner_id: selectedId });
 
       if (error) {
         toast({ title: "Failed to assign practitioner", description: error.message, variant: "destructive" });

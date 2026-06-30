@@ -2126,6 +2126,10 @@ export type Database = {
         Args: { _request_id: string }
         Returns: undefined
       }
+      assign_self_practitioner: {
+        Args: { _practitioner_id: string }
+        Returns: undefined
+      }
       bump_bot_match_stats: {
         Args: { _difficulty: string; _perfect_eco?: boolean; _won: boolean }
         Returns: {
