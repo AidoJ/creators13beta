@@ -394,12 +394,15 @@ Deno.serve(async (req) => {
 
         // Bump idle_strikes + refresh turn_started_at AFTER commit so the
         // next sweep tick measures from now.
+        if (!skipStrike) {
+          await svc
+            .from("game_match_players")
+            .update({ idle_strikes: newStrikes })
+            .eq("match_id", m.id)
+            .eq("user_id", rrow.user_id);
+        }
         await svc
-          .from("game_match_players")
-          .update({ idle_strikes: newStrikes })
-          .eq("match_id", m.id)
-          .eq("user_id", rrow.user_id);
-        await svc
+
           .from("game_matches")
           .update({ turn_started_at: new Date().toISOString() })
           .eq("id", m.id);
