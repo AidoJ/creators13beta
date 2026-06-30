@@ -1091,7 +1091,10 @@ export default function Play() {
       data-drop-zone="discard"
 
       onClick={() => {
-        if (canTapDiscard && selectedUid) onDiscardUid(selectedUid);
+        if (canTapDiscard && selectedUid) {
+          onDiscardUid(selectedUid);
+          setShowPiles(false);
+        }
       }}
       onDragOver={(e) => {
         if (!canTakeTurn || state.phase !== "place") return;
@@ -1103,8 +1106,9 @@ export default function Play() {
       onDrop={(e) => {
         delete e.currentTarget.dataset.dropTarget;
         const uid = e.dataTransfer.getData("text/plain");
-        if (uid) onDiscardUid(uid);
+        if (uid) { onDiscardUid(uid); setShowPiles(false); }
       }}
+
     >
       <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
         Used/Discarded Pile
