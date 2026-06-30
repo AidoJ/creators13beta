@@ -45,7 +45,7 @@ import {
 import { isPaidTier } from "@/lib/clientClassification";
 import { type ServerMove } from "@/lib/game/serverMoves";
 import { logClientStateChange } from "@/lib/game/debugLog";
-import { deserializeMatch, serializeMatch } from "@/lib/game/serialize";
+
 import { recordProgressDiff } from "@/lib/game/progress";
 import type { BotDifficulty } from "@/lib/game/bot";
 import { supabase } from "@/integrations/supabase/client";
@@ -178,11 +178,8 @@ export default function Play() {
   const isMobile = useIsMobile();
   const { settings: gameSettings } = useGameSettings();
   // (turnStartedAtRef declared below, alongside other refs.)
-  const undoStackRef = useRef<MatchState[]>([]);
-  const [undoCount, setUndoCount] = useState(0);
   const botDifficultyRef = useRef<BotDifficulty>("medium");
   const botStatsRecordedRef = useRef(false);
-  const [quickUndoUntil, setQuickUndoUntil] = useState<number>(0);
   const [, setNowTick] = useState(0);
   const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
   const turnStartedAtRef = useRef<number>(Date.now());
@@ -194,60 +191,6 @@ export default function Play() {
     const id = setInterval(() => setNowTick((n) => n + 1), 1000);
     return () => clearInterval(id);
   }, []);
-
-  // Tick every 250ms while quick-undo is active so the countdown re-renders.
-  useEffect(() => {
-    if (quickUndoUntil <= 0) return;
-    const id = setInterval(() => {
-      if (Date.now() >= quickUndoUntil) {
-        setQuickUndoUntil(0);
-      } else {
-        setNowTick((n) => n + 1);
-      }
-    }, 250);
-    return () => clearInterval(id);
-  }, [quickUndoUntil]);
-
-  function armQuickUndo() {
-    setQuickUndoUntil(Date.now() + 5000);
-  }
-
-  function pushUndo(snapshot: MatchState | null) {
-    if (!snapshot) return;
-    // Undo is solo/practice only — never record snapshots in PvP, where the
-    // server is authoritative and there's no rewind path. Keeps the stack
-    // clean even if a user-action handler fires while in a PvP match.
-    if (matchRow?.mode === "pvp") return;
-    // Deep clone via serialize round-trip. Shallow clones share nested refs
-    // (ecosystem Maps, PlacedCard objects, hand arrays) which later engine
-    // mutations would retroactively poison — the cause of "undo drags
-    // earlier state with it". The round-trip produces a provably
-    // independent snapshot in the exact shape the engine already trusts.
-    let frozen: MatchState;
-    try {
-      frozen = deserializeMatch(serializeMatch(snapshot) as any);
-    } catch {
-      return; // never block a move on snapshot failure
-    }
-    undoStackRef.current.push(frozen);
-    if (undoStackRef.current.length > 20) undoStackRef.current.shift();
-    setUndoCount(undoStackRef.current.length);
-  }
-  function onUndo() {
-    // Hard-disable in PvP — short-circuit BEFORE setState. The previous
-    // early-return only skipped persistence, so it still rewound the client
-    // view of a server-committed move and desynced from the server.
-    if (matchRow?.mode === "pvp") return;
-    const prev = undoStackRef.current.pop();
-    setUndoCount(undoStackRef.current.length);
-    setQuickUndoUntil(0);
-    if (!prev) return;
-    setState(prev);
-    setSelectedUid(null);
-    setMoveFromKey(null);
-    setMode("place");
-    persistLocalMatch(prev);
-  }
 
   // Derived: identity inside the match.
   const isPvp = matchRow?.mode === "pvp";
@@ -764,9 +707,7 @@ export default function Play() {
       return;
     }
     try {
-      const snap = state;
       const next = fn();
-      pushUndo(snap);
       setLoggedState(next, "optimistic_engine");
       schedulePersist(next, move);
       setSelectedUid(null);
@@ -821,13 +762,10 @@ export default function Play() {
     if (fromKey) {
       // Server-authoritative in PvP, legacy save for solo.
       try {
-        const snap = state;
         const next = moveMyPlacedHex(state, selfSlot, fromKey, pos);
-        pushUndo(snap);
         setLoggedState(next, "optimistic_engine");
         schedulePersist(next, { type: "move_hex", from_key: fromKey, to_pos: pos });
         setMoveFromKey(null);
-        armQuickUndo();
       } catch (e: any) {
         toast.error(e?.message ?? "Cannot move here");
       }
@@ -835,13 +773,11 @@ export default function Play() {
     }
     const cardUid = draggedUid ?? selectedUid;
     if (!cardUid) return;
-    const before = undoStackRef.current.length;
     guarded(() => placeOnEcosystem(state, cardUid, pos), {
       type: "place",
       uid: cardUid,
       pos,
     });
-    if (undoStackRef.current.length > before) armQuickUndo();
   }
   function onDiscard() {
     if (state && selectedUid) {
@@ -872,7 +808,6 @@ export default function Play() {
     // Rotate: presentation-only. Server-authoritative in PvP, legacy save for solo.
     setState((s) => {
       if (!s) return s;
-      pushUndo(s);
       const next = rotateMyPlacedHex(s, selfSlot, posKey);
       if (isPvp) logClientStateChange("optimistic_engine", serverSeqRef.current, next);
       schedulePersist(next, { type: "rotate_hex", pos_key: posKey });
@@ -1187,28 +1122,6 @@ export default function Play() {
     <Card className="p-1.5">
       <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-1 px-0.5">Card actions</div>
       <div className="flex flex-col gap-1">
-        {(() => {
-          const quickActive = quickUndoUntil > 0 && Date.now() < quickUndoUntil;
-          const secsLeft = quickActive ? Math.max(1, Math.ceil((quickUndoUntil - Date.now()) / 1000)) : 0;
-          return (
-            <Button
-              size="sm"
-              variant={quickActive ? "default" : "outline"}
-              disabled={undoCount === 0}
-              onClick={onUndo}
-              className={
-                "h-7 py-0 px-2 text-[11px] leading-tight transition-all " +
-                (quickActive
-                  ? "bg-amber-400 text-black hover:bg-amber-300 ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.85)] animate-pulse"
-                  : "")
-              }
-            >
-              {quickActive
-                ? `⚡ Undo (${secsLeft}s)`
-                : `↶ Undo${undoCount > 0 ? ` (${undoCount})` : ""}`}
-            </Button>
-          );
-        })()}
         <Button size="sm" variant="secondary" disabled={!canDisaster} onClick={onDisaster}
           className="h-7 py-0 px-2 text-[11px] leading-tight">
           Play as Disaster
@@ -1703,12 +1616,9 @@ export default function Play() {
             />
           </div>
 
-          {/* Compact action chips (Undo / Disaster / Steal) */}
+          {/* Compact action chips (Disaster / Steal) */}
           <div className="flex items-center gap-1 px-2 py-1 border-t border-border/40 bg-card/30 overflow-x-auto">
-            <Button size="sm" variant="outline" disabled={undoCount === 0} onClick={onUndo}
-              className="h-7 px-2 text-[11px] shrink-0">
-              ↶ Undo{undoCount > 0 ? ` (${undoCount})` : ""}
-            </Button>
+
             <Button size="sm" variant="secondary" disabled={!canDisaster} onClick={onDisaster}
               className="h-7 px-2 text-[11px] shrink-0">
               Disaster
