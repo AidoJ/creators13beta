@@ -45,7 +45,7 @@ import {
 import { isPaidTier } from "@/lib/clientClassification";
 import { type ServerMove } from "@/lib/game/serverMoves";
 import { logClientStateChange } from "@/lib/game/debugLog";
-import { deserializeMatch } from "@/lib/game/serialize";
+import { deserializeMatch, serializeMatch } from "@/lib/game/serialize";
 import { recordProgressDiff } from "@/lib/game/progress";
 import type { BotDifficulty } from "@/lib/game/bot";
 import { supabase } from "@/integrations/supabase/client";
