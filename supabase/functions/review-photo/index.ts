@@ -33,7 +33,15 @@ serve(async (req) => {
   }
 
   try {
+    const caller = await requireUser(req);
+    // 30 reviews per 5 min per user.
+    if (!rateLimit(`review-photo:${caller.id}`, 30, 5 * 60 * 1000)) {
+      return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const { photo_type, image_base64 } = await req.json();
+
 
     if (!photo_type || !image_base64) {
       return new Response(
