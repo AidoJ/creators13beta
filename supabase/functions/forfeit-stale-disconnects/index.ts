@@ -292,9 +292,11 @@ Deno.serve(async (req) => {
       const skipStrike = isAbsent;
 
 
-      const newStrikes = Number(rrow.idle_strikes ?? 0) + 1;
+      const newStrikes = skipStrike
+        ? Number(rrow.idle_strikes ?? 0)
+        : Number(rrow.idle_strikes ?? 0) + 1;
 
-      if (newStrikes >= idleStrikesLimit) {
+      if (!skipStrike && newStrikes >= idleStrikesLimit) {
         // ESCALATE → reuse disconnect rank-by-score path. Stamp with
         // disconnected_at in the past so past-grace fires THIS tick.
         const stampIso = new Date(Date.now() - graceSec * 1000 - 1000).toISOString();
@@ -319,6 +321,7 @@ Deno.serve(async (req) => {
         // loop below will pick this up in the same invocation.
         continue;
       }
+
 
       // AUTO-PASS: advance the turn without disconnecting. Inject a
       // transient past-grace disconnectedAt for ONLY the current slot
