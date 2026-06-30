@@ -707,9 +707,7 @@ export default function Play() {
       return;
     }
     try {
-      const snap = state;
       const next = fn();
-      pushUndo(snap);
       setLoggedState(next, "optimistic_engine");
       schedulePersist(next, move);
       setSelectedUid(null);
@@ -764,13 +762,10 @@ export default function Play() {
     if (fromKey) {
       // Server-authoritative in PvP, legacy save for solo.
       try {
-        const snap = state;
         const next = moveMyPlacedHex(state, selfSlot, fromKey, pos);
-        pushUndo(snap);
         setLoggedState(next, "optimistic_engine");
         schedulePersist(next, { type: "move_hex", from_key: fromKey, to_pos: pos });
         setMoveFromKey(null);
-        armQuickUndo();
       } catch (e: any) {
         toast.error(e?.message ?? "Cannot move here");
       }
@@ -778,13 +773,11 @@ export default function Play() {
     }
     const cardUid = draggedUid ?? selectedUid;
     if (!cardUid) return;
-    const before = undoStackRef.current.length;
     guarded(() => placeOnEcosystem(state, cardUid, pos), {
       type: "place",
       uid: cardUid,
       pos,
     });
-    if (undoStackRef.current.length > before) armQuickUndo();
   }
   function onDiscard() {
     if (state && selectedUid) {
@@ -815,7 +808,6 @@ export default function Play() {
     // Rotate: presentation-only. Server-authoritative in PvP, legacy save for solo.
     setState((s) => {
       if (!s) return s;
-      pushUndo(s);
       const next = rotateMyPlacedHex(s, selfSlot, posKey);
       if (isPvp) logClientStateChange("optimistic_engine", serverSeqRef.current, next);
       schedulePersist(next, { type: "rotate_hex", pos_key: posKey });
