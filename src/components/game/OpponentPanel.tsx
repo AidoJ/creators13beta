@@ -97,12 +97,35 @@ export function OpponentPanel({ open, onClose, player, opponentUserId, presenceS
       aria-label={`${player.name}'s ecosystem`}
       className="fixed z-50 rounded-lg border border-border bg-background shadow-2xl flex flex-col overflow-hidden"
       style={{ left: pos.x, top: pos.y, width: size.w, height: size.h }}
+      onPointerDown={(e) => {
+        // Track for swipe-left-to-close (touch only, ignore header drag handle).
+        if (e.pointerType !== "touch") return;
+        swipeRef.current = { x: e.clientX, y: e.clientY, t: Date.now() };
+      }}
+      onPointerUp={(e) => {
+        const s = swipeRef.current;
+        swipeRef.current = null;
+        if (!s || e.pointerType !== "touch") return;
+        const dx = e.clientX - s.x;
+        const dy = e.clientY - s.y;
+        const dt = Date.now() - s.t;
+        // Swipe left: >80px horizontal, dominant axis, under 600ms.
+        if (dx < -80 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 600) onClose();
+      }}
     >
       <div
         onPointerDown={(e) => {
           (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
           dragRef.current = { dx: e.clientX - pos.x, dy: e.clientY - pos.y };
           document.body.style.userSelect = "none";
+          // Double-tap on header closes.
+          const now = Date.now();
+          if (now - lastTapRef.current < 350) {
+            onClose();
+            lastTapRef.current = 0;
+          } else {
+            lastTapRef.current = now;
+          }
         }}
         className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border bg-card/80 cursor-grab active:cursor-grabbing select-none"
       >
@@ -135,13 +158,15 @@ export function OpponentPanel({ open, onClose, player, opponentUserId, presenceS
         </div>
         <button
           type="button"
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={onClose}
           aria-label="Close"
-          className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+          className="p-2 -m-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground touch-manipulation"
         >
-          <X className="w-4 h-4" />
+          <X className="w-5 h-5" />
         </button>
       </div>
+
 
       <div className="flex-1 min-h-0 overflow-auto p-3 flex items-start justify-center">
         <Ecosystem
