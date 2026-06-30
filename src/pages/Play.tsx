@@ -184,7 +184,7 @@ export default function Play() {
   // (turnStartedAtRef declared below, alongside other refs.)
   const botDifficultyRef = useRef<BotDifficulty>("medium");
   const botStatsRecordedRef = useRef(false);
-  const [, setNowTick] = useState(0);
+  const [nowTick, setNowTick] = useState(0);
   const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
   const turnStartedAtRef = useRef<number>(Date.now());
 
@@ -547,6 +547,29 @@ export default function Play() {
   const canTakeTurn = isYourTurn && !idleTurnExpired;
   const idleStrikesLimit = Math.max(1, Number(gameSettings.idle_turn_strikes_limit ?? 3));
   const disconnectGraceSec = Math.max(15, Number(gameSettings.disconnect_grace_seconds ?? 300));
+
+  /* -------- Cron-lag mitigation: client-triggered sweep nudge -----------
+   * The forfeit-stale-disconnects function runs on a 30s pg_cron tick, so
+   * after a turn hits its idle limit there can be up to a 30s lag before
+   * the server auto-passes. Every connected client watching this match
+   * pings the sweep as soon as the current turn crosses the idle window,
+   * making the auto-pass land within ~1s instead of waiting for cron.
+   * The function is idempotent (commit_move's stale-seq check) so multiple
+   * clients nudging simultaneously is safe. Throttle per-client to one
+   * call per 8s to avoid spamming. */
+  const lastNudgeAtRef = useRef<number>(0);
+  useEffect(() => {
+    if (!isPvp || isBeatClock || !state || state.finished) return;
+    if (!Number.isFinite(turnStartedMs) || turnStartedMs <= 0) return;
+    const elapsedMs = Date.now() - turnStartedMs;
+    if (elapsedMs < idleWindowSec * 1000) return;
+    const now = Date.now();
+    if (now - lastNudgeAtRef.current < 8000) return;
+    lastNudgeAtRef.current = now;
+    void supabase.functions.invoke("forfeit-stale-disconnects", {
+      body: { nudge: true, match_id: matchRow?.id ?? null },
+    }).catch(() => { /* best-effort; cron is the safety net */ });
+  }, [isPvp, isBeatClock, state, turnStartedMs, idleWindowSec, matchRow?.id, nowTick]);
 
 
 
