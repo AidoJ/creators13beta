@@ -214,11 +214,30 @@ export default function Play() {
 
   function pushUndo(snapshot: MatchState | null) {
     if (!snapshot) return;
-    undoStackRef.current.push(snapshot);
+    // Undo is solo/practice only — never record snapshots in PvP, where the
+    // server is authoritative and there's no rewind path. Keeps the stack
+    // clean even if a user-action handler fires while in a PvP match.
+    if (matchRow?.mode === "pvp") return;
+    // Deep clone via serialize round-trip. Shallow clones share nested refs
+    // (ecosystem Maps, PlacedCard objects, hand arrays) which later engine
+    // mutations would retroactively poison — the cause of "undo drags
+    // earlier state with it". The round-trip produces a provably
+    // independent snapshot in the exact shape the engine already trusts.
+    let frozen: MatchState;
+    try {
+      frozen = deserializeMatch(serializeMatch(snapshot) as any);
+    } catch {
+      return; // never block a move on snapshot failure
+    }
+    undoStackRef.current.push(frozen);
     if (undoStackRef.current.length > 20) undoStackRef.current.shift();
     setUndoCount(undoStackRef.current.length);
   }
   function onUndo() {
+    // Hard-disable in PvP — short-circuit BEFORE setState. The previous
+    // early-return only skipped persistence, so it still rewound the client
+    // view of a server-committed move and desynced from the server.
+    if (matchRow?.mode === "pvp") return;
     const prev = undoStackRef.current.pop();
     setUndoCount(undoStackRef.current.length);
     setQuickUndoUntil(0);
@@ -227,10 +246,6 @@ export default function Play() {
     setSelectedUid(null);
     setMoveFromKey(null);
     setMode("place");
-    // Undo is solo-only by design. PvP matches are server-authoritative and
-    // there's no "rewind the server" move — undo button isn't surfaced for
-    // PvP, but defend against it firing anyway.
-    if (matchRow?.mode === "pvp") return;
     persistLocalMatch(prev);
   }
 
