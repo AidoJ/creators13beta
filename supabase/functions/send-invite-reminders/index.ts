@@ -35,8 +35,30 @@ serve(async (req) => {
   }
 
   try {
+    // Cron / admin only. Service-role token (cron) or admin JWT accepted.
+    const ah = req.headers.get("Authorization") || "";
+    const token = ah.startsWith("Bearer ") ? ah.slice(7).trim() : "";
+    const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    let authorized = !!svc && token === svc;
+    if (!authorized && token) {
+      const adminSb = createClient(Deno.env.get("SUPABASE_URL")!, svc);
+      const { data: u } = await adminSb.auth.getUser(token);
+      if (u.user) {
+        const { data: role } = await adminSb
+          .from("user_roles").select("role")
+          .eq("user_id", u.user.id).in("role", ["admin", "trainer"]).maybeSingle();
+        authorized = !!role;
+      }
+    }
+    if (!authorized) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const apiKey = Deno.env.get("RESEND_API_KEY");
     if (!apiKey) throw new Error("RESEND_API_KEY is not configured");
+
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
