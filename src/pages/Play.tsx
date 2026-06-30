@@ -184,7 +184,7 @@ export default function Play() {
   // (turnStartedAtRef declared below, alongside other refs.)
   const botDifficultyRef = useRef<BotDifficulty>("medium");
   const botStatsRecordedRef = useRef(false);
-  const [, setNowTick] = useState(0);
+  const [nowTick, setNowTick] = useState(0);
   const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
   const turnStartedAtRef = useRef<number>(Date.now());
 
