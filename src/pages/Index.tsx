@@ -9,6 +9,17 @@ const Index = () => {
 
   useEffect(() => {
     if (loading) return;
+    // If Supabase delivered a password recovery link to the root URL (because
+    // Site URL fallback kicked in), forward to /reset-password preserving the
+    // hash so the recovery session can be established there.
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash || "";
+      const search = window.location.search || "";
+      if (hash.includes("type=recovery") || search.includes("type=recovery")) {
+        setDestination(`/reset-password${search}${hash}`);
+        return;
+      }
+    }
     if (!user) {
       setDestination("/enroll");
       return;
