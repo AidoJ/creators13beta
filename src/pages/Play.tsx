@@ -569,7 +569,7 @@ export default function Play() {
     void supabase.functions.invoke("forfeit-stale-disconnects", {
       body: { nudge: true, match_id: matchRow?.id ?? null },
     }).catch(() => { /* best-effort; cron is the safety net */ });
-  }, [isPvp, isBeatClock, state, turnStartedMs, idleWindowSec, matchRow?.id]);
+  }, [isPvp, isBeatClock, state, turnStartedMs, idleWindowSec, matchRow?.id, nowTick]);
 
 
 
