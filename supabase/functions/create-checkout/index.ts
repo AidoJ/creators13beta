@@ -27,33 +27,28 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Try to get user from JWT first, fall back to body params
-    let userEmail: string | undefined;
-    let userId: string | undefined;
-
+    // Require a verified JWT. We no longer accept user_id / email from
+    // the request body — that path allowed unauthenticated role granting.
     const authHeader = req.headers.get("Authorization");
-    if (authHeader) {
-      const token = authHeader.replace("Bearer ", "");
-      const { data } = await supabaseClient.auth.getUser(token);
-      if (data.user?.email) {
-        userEmail = data.user.email;
-        userId = data.user.id;
-        logStep("User from JWT", { userId, email: userEmail });
-      }
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized: sign-in required" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
+    const token = authHeader.replace("Bearer ", "");
+    const { data: authData, error: authErr } = await supabaseClient.auth.getUser(token);
+    if (authErr || !authData.user?.id || !authData.user.email) {
+      return new Response(JSON.stringify({ error: "Unauthorized: invalid session" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userId: string = authData.user.id;
+    const userEmail: string = authData.user.email;
+    logStep("User from JWT", { userId, email: userEmail });
 
     const body = await req.json();
-    const { priceId, successUrl, cancelUrl, email, user_id, tier, billing, embedded } = body;
+    const { priceId, successUrl, cancelUrl, tier, billing, embedded } = body;
 
-    // Fall back to body params if JWT auth didn't work (unconfirmed user)
-    if (!userEmail && email) {
-      userEmail = email;
-      userId = user_id;
-      logStep("User from body params", { userId, email: userEmail });
-    }
-
-    if (!userEmail) throw new Error("No user email available");
-    if (!userId) throw new Error("No user ID available");
 
     const tierValue = tier || "wren";
     const role = tierValue === "owl" ? "trainee" : "client";
