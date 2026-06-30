@@ -1122,28 +1122,6 @@ export default function Play() {
     <Card className="p-1.5">
       <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-1 px-0.5">Card actions</div>
       <div className="flex flex-col gap-1">
-        {(() => {
-          const quickActive = quickUndoUntil > 0 && Date.now() < quickUndoUntil;
-          const secsLeft = quickActive ? Math.max(1, Math.ceil((quickUndoUntil - Date.now()) / 1000)) : 0;
-          return (
-            <Button
-              size="sm"
-              variant={quickActive ? "default" : "outline"}
-              disabled={undoCount === 0}
-              onClick={onUndo}
-              className={
-                "h-7 py-0 px-2 text-[11px] leading-tight transition-all " +
-                (quickActive
-                  ? "bg-amber-400 text-black hover:bg-amber-300 ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.85)] animate-pulse"
-                  : "")
-              }
-            >
-              {quickActive
-                ? `⚡ Undo (${secsLeft}s)`
-                : `↶ Undo${undoCount > 0 ? ` (${undoCount})` : ""}`}
-            </Button>
-          );
-        })()}
         <Button size="sm" variant="secondary" disabled={!canDisaster} onClick={onDisaster}
           className="h-7 py-0 px-2 text-[11px] leading-tight">
           Play as Disaster
