@@ -1091,7 +1091,10 @@ export default function Play() {
       data-drop-zone="discard"
 
       onClick={() => {
-        if (canTapDiscard && selectedUid) onDiscardUid(selectedUid);
+        if (canTapDiscard && selectedUid) {
+          onDiscardUid(selectedUid);
+          setShowPiles(false);
+        }
       }}
       onDragOver={(e) => {
         if (!canTakeTurn || state.phase !== "place") return;
@@ -1103,8 +1106,9 @@ export default function Play() {
       onDrop={(e) => {
         delete e.currentTarget.dataset.dropTarget;
         const uid = e.dataTransfer.getData("text/plain");
-        if (uid) onDiscardUid(uid);
+        if (uid) { onDiscardUid(uid); setShowPiles(false); }
       }}
+
     >
       <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
         Used/Discarded Pile
@@ -1648,10 +1652,19 @@ export default function Play() {
           </div>
 
           {showPiles && (
-            <div className="px-2 py-1 border-b border-border/40 bg-card/30">
+            <div className="px-2 py-1 border-b border-border/40 bg-card/30 relative">
+              <button
+                type="button"
+                onClick={() => setShowPiles(false)}
+                aria-label="Close piles panel"
+                className="absolute top-1 right-1 z-10 h-7 w-7 rounded-full bg-background/80 border border-border/60 text-foreground/80 text-base leading-none flex items-center justify-center active:scale-95"
+              >
+                ×
+              </button>
               {pilesBlock}
             </div>
           )}
+
 
           {/* Board takes all remaining space */}
           <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center px-1 py-1">
@@ -1721,7 +1734,8 @@ export default function Play() {
             disabled={!canTakeTurn || state.phase !== "place"}
             size={62}
             stuckUids={gameSettings.highlight_playable_cards ? stuckUids : undefined}
-            onTouchDropDiscard={(uid) => onDiscardUid(uid)}
+            onTouchDropDiscard={(uid) => { onDiscardUid(uid); setShowPiles(false); }}
+
           />
 
         </>
