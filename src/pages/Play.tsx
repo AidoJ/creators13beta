@@ -109,6 +109,10 @@ export default function Play() {
 
   const [opponentPanelOpen, setOpponentPanelOpen] = useState(false);
   const [expandedOpponentId, setExpandedOpponentId] = useState<string | null>(null);
+  // Mobile-only: which opponent is currently shown in the top peek row.
+  // Swipe left/right on the peek button cycles through all opponents.
+  const [mobileOppIdx, setMobileOppIdx] = useState(0);
+  const mobileSwipeRef = useRef<{ x: number; y: number; id: number } | null>(null);
 
   // A.4 — realtime presence for the current PvP match. No-op for solo bot
   // matches (enabled=false when not PvP). The same channel name and payload
