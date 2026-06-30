@@ -15,10 +15,9 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    // Admin / trainer only — writes into arbitrary users' photo storage.
+    const { admin: supabaseAdmin } = await requireRole(req, ["admin", "trainer"]);
+
 
     const { photos } = await req.json() as {
       photos: { user_id: string; photo_type: string; dropbox_url: string }[];
