@@ -289,12 +289,27 @@ Deno.serve(async (req) => {
       if (!isAbsent && !isIdle) continue;
       // Absent current-turn player → skip seat with no strike penalty.
       // Idle current-turn player → strike logic below.
-      const skipStrike = isAbsent;
+      let skipStrike = isAbsent;
 
+      // Fairness guard: never strike a player who had NO legal action.
+      // Concrete wedge: phase==="draw" but hand.length >= HAND_LIMIT — engine
+      // refused draws (hand limit) AND refused plays/discards (wrong phase).
+      // Detect BEFORE escalation so we don't false-depart a wedged seat.
+      if (!skipStrike) {
+        try {
+          const preState = deserialise(m.state);
+          const preP = preState.players[slot];
+          if (preState.phase === "draw" && (preP?.hand?.length ?? 0) >= 5) {
+            skipStrike = true;
+            console.log(`[sweep] wedged-seat guard: no strike match=${m.id} slot=${slot}`);
+          }
+        } catch { /* ignore — auto-pass block will re-report */ }
+      }
 
       const newStrikes = skipStrike
         ? Number(rrow.idle_strikes ?? 0)
         : Number(rrow.idle_strikes ?? 0) + 1;
+
 
       if (!skipStrike && newStrikes >= idleStrikesLimit) {
         // ESCALATE → reuse disconnect rank-by-score path. Stamp with
