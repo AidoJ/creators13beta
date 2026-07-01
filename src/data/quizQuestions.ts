@@ -617,7 +617,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0040",
-    "prompt": "Which Creator is the Catalysts Family's Stabilizer?",
+    "prompt": "Which Creator is the Stabilizer in the Catalysts Family?",
     "options": [
       "Sky",
       "Lightning",
@@ -632,7 +632,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0041",
-    "prompt": "Which Creator is the Humanists Family's Director?",
+    "prompt": "Which Creator is the Director in the Humanists Family?",
     "options": [
       "Mountain",
       "Sun",
@@ -647,7 +647,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0042",
-    "prompt": "Which Creator is the Catalysts Family's Director?",
+    "prompt": "Which Creator is the Director in the Catalysts Family?",
     "options": [
       "Snow",
       "Sun",
@@ -662,7 +662,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0043",
-    "prompt": "Which Creator is the Optimists Family's Stabilizer?",
+    "prompt": "Which Creator is the Stabilizer in the Optimists Family?",
     "options": [
       "Whirlwind",
       "Soil",
@@ -677,7 +677,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0044",
-    "prompt": "Which Creator is the Realists Family's Director?",
+    "prompt": "Which Creator is the Director in the Realists Family?",
     "options": [
       "Mountain",
       "Lava",
@@ -692,7 +692,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0045",
-    "prompt": "Which Creator is the Humanists Family's Stabilizer?",
+    "prompt": "Which Creator is the Stabilizer in the Humanists Family?",
     "options": [
       "Tree",
       "River",
@@ -707,7 +707,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0046",
-    "prompt": "Which Creator is the Realists Family's Integrator?",
+    "prompt": "Which Creator is the Integrator in the Realists Family?",
     "options": [
       "Whirlwind",
       "River",
@@ -722,7 +722,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0047",
-    "prompt": "Which Creator is the Sustainers Family's The Visionary?",
+    "prompt": "Which Creator is the The Visionary in the Sustainers Family?",
     "options": [
       "Ocean",
       "Lava",
@@ -737,7 +737,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0048",
-    "prompt": "Which Creator is the Optimists Family's Director?",
+    "prompt": "Which Creator is the Director in the Optimists Family?",
     "options": [
       "Sun",
       "Snow",
@@ -752,7 +752,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0049",
-    "prompt": "Which Creator is the Realists Family's Stabilizer?",
+    "prompt": "Which Creator is the Stabilizer in the Realists Family?",
     "options": [
       "Sun",
       "Fire",
@@ -767,7 +767,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0050",
-    "prompt": "Which Creator is the Optimists Family's Integrator?",
+    "prompt": "Which Creator is the Integrator in the Optimists Family?",
     "options": [
       "Lava",
       "Lake",
@@ -782,7 +782,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0051",
-    "prompt": "Which Creator is the Humanists Family's Integrator?",
+    "prompt": "Which Creator is the Integrator in the Humanists Family?",
     "options": [
       "Soil",
       "Sky",
@@ -797,7 +797,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0052",
-    "prompt": "Which Creator is the Catalysts Family's Integrator?",
+    "prompt": "Which Creator is the Integrator in the Catalysts Family?",
     "options": [
       "Mountain",
       "Whirlwind",
@@ -812,7 +812,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0053",
-    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator's gift is warmth that travels. Where Lava restructures by breaking, this Creator moves people by lighting them up — passion that catches and spreads from person to person until a whole room is leaning forward. It's the oldest technology in the world: heat and light, in human form.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"This Creator's gift is warmth that travels. Where Lava restructures by breaking, this Creator moves people by lighting them up — passion that catches and spreads from person to person until a whole room is leaning forward. It's the oldest technology in the world: heat and light, in human form.\"",
     "options": [
       "Snow",
       "Fire",
@@ -827,7 +827,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0054",
-    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator's power is the still surface that shows things back exactly as they are. Not analysis, not interpretation — reflection. Stand at the edge of a real this Creator and you see yourself with no editing; stand near a this Creator person and the same thing happens with whatever you were carrying in.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"This Creator's power is the still surface that shows things back exactly as they are. Not analysis, not interpretation — reflection. Stand at the edge of a real this Creator and you see yourself with no editing; stand near a this Creator person and the same thing happens with whatever you were carrying in.\"",
     "options": [
       "River",
       "Sun",
@@ -842,7 +842,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0055",
-    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator is the only Creator that makes new ground. When the system has hardened into something that no longer serves life, this Creator brings fired earth to the surface and lays down fresh land for everything else to grow on. Revolutionary isn't a personality quirk — it's the literal job.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"This Creator is the only Creator that makes new ground. When the system has hardened into something that no longer serves life, this Creator brings fired earth to the surface and lays down fresh land for everything else to grow on. Revolutionary isn't a personality quirk — it's the literal job.\"",
     "options": [
       "Lava",
       "Ocean",
@@ -857,7 +857,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0056",
-    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator is the flash of recognition — the moment a complicated thing suddenly becomes simple. Where others reason their way to the answer step by step, this Creator sees the whole path lit up at once between two points that didn't seem connected.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"This Creator is the flash of recognition — the moment a complicated thing suddenly becomes simple. Where others reason their way to the answer step by step, this Creator sees the whole path lit up at once between two points that didn't seem connected.\"",
     "options": [
       "Lava",
       "Mountain",
@@ -872,7 +872,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0057",
-    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator is what doesn't move. While weather, seasons, and trends roll across the landscape, this Creator stays — not out of stubbornness, but because its job is to be the reference point everyone else navigates by.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"This Creator is what doesn't move. While weather, seasons, and trends roll across the landscape, this Creator stays — not out of stubbornness, but because its job is to be the reference point everyone else navigates by.\"",
     "options": [
       "Mountain",
       "Soil",
@@ -887,7 +887,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0058",
-    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. this Creator knows more than it is currently saying. Always.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"This Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. This Creator knows more than it is currently saying. Always.\"",
     "options": [
       "Lava",
       "Ocean",
@@ -902,7 +902,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0059",
-    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. this Creator works the same way: not by force, but by simply not stopping when something is in the way.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"This Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. This Creator works the same way: not by force, but by simply not stopping when something is in the way.\"",
     "options": [
       "River",
       "Mountain",
@@ -917,7 +917,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0060",
-    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"This Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description.\"",
     "options": [
       "Snow",
       "Whirlwind",
@@ -932,7 +932,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0061",
-    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"This Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale.\"",
     "options": [
       "Sky",
       "Lake",
@@ -947,7 +947,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0062",
-    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator is what makes everything else possible. Nothing visible in an ecosystem grows without it — no Tree, no River, no garden of any kind — and yet this Creator itself stays underfoot, doing its quiet chemistry while the credit goes to whatever bloomed on top of it.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"This Creator is what makes everything else possible. Nothing visible in an ecosystem grows without it — no Tree, no River, no garden of any kind — and yet this Creator itself stays underfoot, doing its quiet chemistry while the credit goes to whatever bloomed on top of it.\"",
     "options": [
       "Tree",
       "Soil",
@@ -962,7 +962,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0063",
-    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"This Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people.\"",
     "options": [
       "Sun",
       "Sky",
@@ -977,7 +977,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0064",
-    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"This Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.\"",
     "options": [
       "Lake",
       "Tree",
@@ -992,7 +992,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0065",
-    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator doesn't move in straight lines — it spirals. What looks chaotic from the outside is actually rapid, layered transformation: ideas, people, and materials all caught up at once and rearranged by the time the wind settles. Three months of normal progress happens in three days.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"This Creator doesn't move in straight lines — it spirals. What looks chaotic from the outside is actually rapid, layered transformation: ideas, people, and materials all caught up at once and rearranged by the time the wind settles. Three months of normal progress happens in three days.\"",
     "options": [
       "Sun",
       "Lava",
@@ -1009,10 +1009,10 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0066",
     "prompt": "Which of the following best describes the Natural State (Signature) of the Fire Creator?",
     "options": [
-      "this Creator is the flash of recognition — the moment a complicated thing suddenly becomes simple. Where others reason their way to the answer step by step, this Creator sees the whole path lit up at once between two points that didn't seem connected.",
-      "this Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description.",
-      "this Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. this Creator knows more than it is currently saying. Always.",
-      "this Creator's gift is warmth that travels. Where Lava restructures by breaking, this Creator moves people by lighting them up — passion that catches and spreads from person to person until a whole room is leaning forward. It's the oldest technology in the world: heat and light, in human form."
+      "This Creator is the flash of recognition — the moment a complicated thing suddenly becomes simple. Where others reason their way to the answer step by step, this Creator sees the whole path lit up at once between two points that didn't seem connected.",
+      "This Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description.",
+      "This Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. This Creator knows more than it is currently saying. Always.",
+      "This Creator's gift is warmth that travels. Where Lava restructures by breaking, this Creator moves people by lighting them up — passion that catches and spreads from person to person until a whole room is leaning forward. It's the oldest technology in the world: heat and light, in human form."
     ],
     "correct_index": 3,
     "explanation": "That passage is the signature of Fire.",
@@ -1024,10 +1024,10 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0067",
     "prompt": "Which of the following best describes the Natural State (Signature) of the Lake Creator?",
     "options": [
-      "this Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. this Creator knows more than it is currently saying. Always.",
-      "this Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. this Creator works the same way: not by force, but by simply not stopping when something is in the way.",
-      "this Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
-      "this Creator's power is the still surface that shows things back exactly as they are. Not analysis, not interpretation — reflection. Stand at the edge of a real this Creator and you see yourself with no editing; stand near a this Creator person and the same thing happens with whatever you were carrying in."
+      "This Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. This Creator knows more than it is currently saying. Always.",
+      "This Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. This Creator works the same way: not by force, but by simply not stopping when something is in the way.",
+      "This Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
+      "This Creator's power is the still surface that shows things back exactly as they are. Not analysis, not interpretation — reflection. Stand at the edge of a real this Creator and you see yourself with no editing; stand near a this Creator person and the same thing happens with whatever you were carrying in."
     ],
     "correct_index": 3,
     "explanation": "That passage is the signature of Lake.",
@@ -1039,10 +1039,10 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0068",
     "prompt": "Which of the following best describes the Natural State (Signature) of the Lava Creator?",
     "options": [
-      "this Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
-      "this Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. this Creator works the same way: not by force, but by simply not stopping when something is in the way.",
-      "this Creator is what makes everything else possible. Nothing visible in an ecosystem grows without it — no Tree, no River, no garden of any kind — and yet this Creator itself stays underfoot, doing its quiet chemistry while the credit goes to whatever bloomed on top of it.",
-      "this Creator is the only Creator that makes new ground. When the system has hardened into something that no longer serves life, this Creator brings fired earth to the surface and lays down fresh land for everything else to grow on. Revolutionary isn't a personality quirk — it's the literal job."
+      "This Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
+      "This Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. This Creator works the same way: not by force, but by simply not stopping when something is in the way.",
+      "This Creator is what makes everything else possible. Nothing visible in an ecosystem grows without it — no Tree, no River, no garden of any kind — and yet this Creator itself stays underfoot, doing its quiet chemistry while the credit goes to whatever bloomed on top of it.",
+      "This Creator is the only Creator that makes new ground. When the system has hardened into something that no longer serves life, this Creator brings fired earth to the surface and lays down fresh land for everything else to grow on. Revolutionary isn't a personality quirk — it's the literal job."
     ],
     "correct_index": 3,
     "explanation": "That passage is the signature of Lava.",
@@ -1054,10 +1054,10 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0069",
     "prompt": "Which of the following best describes the Natural State (Signature) of the Lightning Creator?",
     "options": [
-      "this Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people.",
-      "this Creator doesn't move in straight lines — it spirals. What looks chaotic from the outside is actually rapid, layered transformation: ideas, people, and materials all caught up at once and rearranged by the time the wind settles. Three months of normal progress happens in three days.",
-      "this Creator is the flash of recognition — the moment a complicated thing suddenly becomes simple. Where others reason their way to the answer step by step, this Creator sees the whole path lit up at once between two points that didn't seem connected.",
-      "this Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. this Creator knows more than it is currently saying. Always."
+      "This Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people.",
+      "This Creator doesn't move in straight lines — it spirals. What looks chaotic from the outside is actually rapid, layered transformation: ideas, people, and materials all caught up at once and rearranged by the time the wind settles. Three months of normal progress happens in three days.",
+      "This Creator is the flash of recognition — the moment a complicated thing suddenly becomes simple. Where others reason their way to the answer step by step, this Creator sees the whole path lit up at once between two points that didn't seem connected.",
+      "This Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. This Creator knows more than it is currently saying. Always."
     ],
     "correct_index": 2,
     "explanation": "That passage is the signature of Lightning.",
@@ -1069,10 +1069,10 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0070",
     "prompt": "Which of the following best describes the Natural State (Signature) of the Mountain Creator?",
     "options": [
-      "this Creator is what doesn't move. While weather, seasons, and trends roll across the landscape, this Creator stays — not out of stubbornness, but because its job is to be the reference point everyone else navigates by.",
-      "this Creator's power is the still surface that shows things back exactly as they are. Not analysis, not interpretation — reflection. Stand at the edge of a real this Creator and you see yourself with no editing; stand near a this Creator person and the same thing happens with whatever you were carrying in.",
-      "this Creator is what makes everything else possible. Nothing visible in an ecosystem grows without it — no Tree, no River, no garden of any kind — and yet this Creator itself stays underfoot, doing its quiet chemistry while the credit goes to whatever bloomed on top of it.",
-      "this Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale."
+      "This Creator is what doesn't move. While weather, seasons, and trends roll across the landscape, this Creator stays — not out of stubbornness, but because its job is to be the reference point everyone else navigates by.",
+      "This Creator's power is the still surface that shows things back exactly as they are. Not analysis, not interpretation — reflection. Stand at the edge of a real this Creator and you see yourself with no editing; stand near a this Creator person and the same thing happens with whatever you were carrying in.",
+      "This Creator is what makes everything else possible. Nothing visible in an ecosystem grows without it — no Tree, no River, no garden of any kind — and yet this Creator itself stays underfoot, doing its quiet chemistry while the credit goes to whatever bloomed on top of it.",
+      "This Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale."
     ],
     "correct_index": 0,
     "explanation": "That passage is the signature of Mountain.",
@@ -1084,10 +1084,10 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0071",
     "prompt": "Which of the following best describes the Natural State (Signature) of the Ocean Creator?",
     "options": [
-      "this Creator is the only Creator that makes new ground. When the system has hardened into something that no longer serves life, this Creator brings fired earth to the surface and lays down fresh land for everything else to grow on. Revolutionary isn't a personality quirk — it's the literal job.",
-      "this Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people.",
-      "this Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. this Creator knows more than it is currently saying. Always.",
-      "this Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description."
+      "This Creator is the only Creator that makes new ground. When the system has hardened into something that no longer serves life, this Creator brings fired earth to the surface and lays down fresh land for everything else to grow on. Revolutionary isn't a personality quirk — it's the literal job.",
+      "This Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people.",
+      "This Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. This Creator knows more than it is currently saying. Always.",
+      "This Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description."
     ],
     "correct_index": 2,
     "explanation": "That passage is the signature of Ocean.",
@@ -1099,10 +1099,10 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0072",
     "prompt": "Which of the following best describes the Natural State (Signature) of the River Creator?",
     "options": [
-      "this Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale.",
-      "this Creator is the only Creator that makes new ground. When the system has hardened into something that no longer serves life, this Creator brings fired earth to the surface and lays down fresh land for everything else to grow on. Revolutionary isn't a personality quirk — it's the literal job.",
-      "this Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. this Creator works the same way: not by force, but by simply not stopping when something is in the way.",
-      "this Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description."
+      "This Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale.",
+      "This Creator is the only Creator that makes new ground. When the system has hardened into something that no longer serves life, this Creator brings fired earth to the surface and lays down fresh land for everything else to grow on. Revolutionary isn't a personality quirk — it's the literal job.",
+      "This Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. This Creator works the same way: not by force, but by simply not stopping when something is in the way.",
+      "This Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description."
     ],
     "correct_index": 2,
     "explanation": "That passage is the signature of River.",
@@ -1114,10 +1114,10 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0073",
     "prompt": "Which of the following best describes the Natural State (Signature) of the Sky Creator?",
     "options": [
-      "this Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people.",
-      "this Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. this Creator works the same way: not by force, but by simply not stopping when something is in the way.",
-      "this Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
-      "this Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description."
+      "This Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people.",
+      "This Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. This Creator works the same way: not by force, but by simply not stopping when something is in the way.",
+      "This Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
+      "This Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description."
     ],
     "correct_index": 3,
     "explanation": "That passage is the signature of Sky.",
@@ -1129,10 +1129,10 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0074",
     "prompt": "Which of the following best describes the Natural State (Signature) of the Snow Creator?",
     "options": [
-      "this Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. this Creator works the same way: not by force, but by simply not stopping when something is in the way.",
-      "this Creator's power is the still surface that shows things back exactly as they are. Not analysis, not interpretation — reflection. Stand at the edge of a real this Creator and you see yourself with no editing; stand near a this Creator person and the same thing happens with whatever you were carrying in.",
-      "this Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. this Creator knows more than it is currently saying. Always.",
-      "this Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale."
+      "This Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. This Creator works the same way: not by force, but by simply not stopping when something is in the way.",
+      "This Creator's power is the still surface that shows things back exactly as they are. Not analysis, not interpretation — reflection. Stand at the edge of a real this Creator and you see yourself with no editing; stand near a this Creator person and the same thing happens with whatever you were carrying in.",
+      "This Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. This Creator knows more than it is currently saying. Always.",
+      "This Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale."
     ],
     "correct_index": 3,
     "explanation": "That passage is the signature of Snow.",
@@ -1144,10 +1144,10 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0075",
     "prompt": "Which of the following best describes the Natural State (Signature) of the Soil Creator?",
     "options": [
-      "this Creator is what makes everything else possible. Nothing visible in an ecosystem grows without it — no Tree, no River, no garden of any kind — and yet this Creator itself stays underfoot, doing its quiet chemistry while the credit goes to whatever bloomed on top of it.",
-      "this Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description.",
-      "this Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
-      "this Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale."
+      "This Creator is what makes everything else possible. Nothing visible in an ecosystem grows without it — no Tree, no River, no garden of any kind — and yet this Creator itself stays underfoot, doing its quiet chemistry while the credit goes to whatever bloomed on top of it.",
+      "This Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description.",
+      "This Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
+      "This Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale."
     ],
     "correct_index": 0,
     "explanation": "That passage is the signature of Soil.",
@@ -1159,10 +1159,10 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0076",
     "prompt": "Which of the following best describes the Natural State (Signature) of the Sun Creator?",
     "options": [
-      "this Creator is what makes everything else possible. Nothing visible in an ecosystem grows without it — no Tree, no River, no garden of any kind — and yet this Creator itself stays underfoot, doing its quiet chemistry while the credit goes to whatever bloomed on top of it.",
-      "this Creator is what doesn't move. While weather, seasons, and trends roll across the landscape, this Creator stays — not out of stubbornness, but because its job is to be the reference point everyone else navigates by.",
-      "this Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people.",
-      "this Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale."
+      "This Creator is what makes everything else possible. Nothing visible in an ecosystem grows without it — no Tree, no River, no garden of any kind — and yet this Creator itself stays underfoot, doing its quiet chemistry while the credit goes to whatever bloomed on top of it.",
+      "This Creator is what doesn't move. While weather, seasons, and trends roll across the landscape, this Creator stays — not out of stubbornness, but because its job is to be the reference point everyone else navigates by.",
+      "This Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people.",
+      "This Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale."
     ],
     "correct_index": 2,
     "explanation": "That passage is the signature of Sun.",
@@ -1174,10 +1174,10 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0077",
     "prompt": "Which of the following best describes the Natural State (Signature) of the Tree Creator?",
     "options": [
-      "this Creator is the flash of recognition — the moment a complicated thing suddenly becomes simple. Where others reason their way to the answer step by step, this Creator sees the whole path lit up at once between two points that didn't seem connected.",
-      "this Creator doesn't move in straight lines — it spirals. What looks chaotic from the outside is actually rapid, layered transformation: ideas, people, and materials all caught up at once and rearranged by the time the wind settles. Three months of normal progress happens in three days.",
-      "this Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
-      "this Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people."
+      "This Creator is the flash of recognition — the moment a complicated thing suddenly becomes simple. Where others reason their way to the answer step by step, this Creator sees the whole path lit up at once between two points that didn't seem connected.",
+      "This Creator doesn't move in straight lines — it spirals. What looks chaotic from the outside is actually rapid, layered transformation: ideas, people, and materials all caught up at once and rearranged by the time the wind settles. Three months of normal progress happens in three days.",
+      "This Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
+      "This Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people."
     ],
     "correct_index": 2,
     "explanation": "That passage is the signature of Tree.",
@@ -1189,10 +1189,10 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0078",
     "prompt": "Which of the following best describes the Natural State (Signature) of the Whirlwind Creator?",
     "options": [
-      "this Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
-      "this Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description.",
-      "this Creator doesn't move in straight lines — it spirals. What looks chaotic from the outside is actually rapid, layered transformation: ideas, people, and materials all caught up at once and rearranged by the time the wind settles. Three months of normal progress happens in three days.",
-      "this Creator is the only Creator that makes new ground. When the system has hardened into something that no longer serves life, this Creator brings fired earth to the surface and lays down fresh land for everything else to grow on. Revolutionary isn't a personality quirk — it's the literal job."
+      "This Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
+      "This Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description.",
+      "This Creator doesn't move in straight lines — it spirals. What looks chaotic from the outside is actually rapid, layered transformation: ideas, people, and materials all caught up at once and rearranged by the time the wind settles. Three months of normal progress happens in three days.",
+      "This Creator is the only Creator that makes new ground. When the system has hardened into something that no longer serves life, this Creator brings fired earth to the surface and lays down fresh land for everything else to grow on. Revolutionary isn't a personality quirk — it's the literal job."
     ],
     "correct_index": 2,
     "explanation": "That passage is the signature of Whirlwind.",
@@ -1217,7 +1217,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0080",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"A Humanist Director who leads by holding space, not by pushing. The decisions made around a this Creator tend to be ones the group already knew were right but hadn't yet been able to see clearly. this Creator just stopped stirring the water.\"",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"A Humanist Director who leads by holding space, not by pushing. The decisions made around a this Creator tend to be ones the group already knew were right but hadn't yet been able to see clearly. This Creator just stopped stirring the water.\"",
     "options": [
       "Mountain",
       "Whirlwind",
@@ -1262,7 +1262,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0083",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"A Realist Director who builds structures that outlast the conversation that created them. this Creator's contributions are the ones the team is still using five years later, when nobody can remember who decided on them — they just feel like part of the terrain now.\"",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"A Realist Director who builds structures that outlast the conversation that created them. This Creator's contributions are the ones the team is still using five years later, when nobody can remember who decided on them — they just feel like part of the terrain now.\"",
     "options": [
       "Snow",
       "Mountain",
@@ -1277,7 +1277,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0084",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"A Humanist Stabilizer whose contribution is often a single, slow sentence that goes deeper than the last twenty minutes of conversation combined. this Creator doesn't talk often; when this Creator talks, everyone notices that the room has changed depth.\"",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"A Humanist Stabilizer whose contribution is often a single, slow sentence that goes deeper than the last twenty minutes of conversation combined. This Creator doesn't talk often; when this Creator talks, everyone notices that the room has changed depth.\"",
     "options": [
       "Fire",
       "Whirlwind",
@@ -1292,7 +1292,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0085",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"A Realist Integrator who keeps the work moving. this Creator doesn't deliberate; this Creator flows toward the lower ground and finds the route. Stuck projects unstick around Rivers because Rivers don't argue with the obstacle — they find the way around, and the rest of the team follows.\"",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"A Realist Integrator who keeps the work moving. This Creator doesn't deliberate; this Creator flows toward the lower ground and finds the route. Stuck projects unstick around Rivers because Rivers don't argue with the obstacle — they find the way around, and the rest of the team follows.\"",
     "options": [
       "River",
       "Whirlwind",
@@ -1337,7 +1337,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0088",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. this Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description.\"",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. This Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description.\"",
     "options": [
       "Soil",
       "Tree",
@@ -1400,9 +1400,9 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "prompt": "Which of the following best describes how the Fire Creator shows up at the table?",
     "options": [
       "A Catalyst, but a Stabilizer — which means this Creator is the rare combination that brings the energy and keeps it lit. Without this Creator, projects start hot and cool by week two. With this Creator in the room, the spark you felt on day one is still there in month six.",
-      "A Humanist Stabilizer whose contribution is often a single, slow sentence that goes deeper than the last twenty minutes of conversation combined. this Creator doesn't talk often; when this Creator talks, everyone notices that the room has changed depth.",
-      "A Realist Integrator who keeps the work moving. this Creator doesn't deliberate; this Creator flows toward the lower ground and finds the route. Stuck projects unstick around Rivers because Rivers don't argue with the obstacle — they find the way around, and the rest of the team follows.",
-      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. this Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description."
+      "A Humanist Stabilizer whose contribution is often a single, slow sentence that goes deeper than the last twenty minutes of conversation combined. This Creator doesn't talk often; when this Creator talks, everyone notices that the room has changed depth.",
+      "A Realist Integrator who keeps the work moving. This Creator doesn't deliberate; this Creator flows toward the lower ground and finds the route. Stuck projects unstick around Rivers because Rivers don't argue with the obstacle — they find the way around, and the rest of the team follows.",
+      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. This Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description."
     ],
     "correct_index": 0,
     "explanation": "That passage describes Fire at the table.",
@@ -1414,7 +1414,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0093",
     "prompt": "Which of the following best describes how the Lake Creator shows up at the table?",
     "options": [
-      "A Humanist Director who leads by holding space, not by pushing. The decisions made around a this Creator tend to be ones the group already knew were right but hadn't yet been able to see clearly. this Creator just stopped stirring the water.",
+      "A Humanist Director who leads by holding space, not by pushing. The decisions made around a this Creator tend to be ones the group already knew were right but hadn't yet been able to see clearly. This Creator just stopped stirring the water.",
       "As a Humanist Integrator, this Creator is the type that weaves people, projects, and seasons into something that compounds. Year-one this Creator contributions look small; year-five this Creator contributions look like the entire forest the team is now standing in.",
       "An Optimist Integrator means this Creator pulls together what's already there and sees what it could become. The vision this Creator describes isn't wishful thinking — it's just further along the timeline than everyone else is looking.",
       "As an Integrator, this Creator is the one who picks things up from every corner of the room and weaves them into something nobody else saw was there. Where others see scattered fragments, this Creator sees a pattern about to organise itself."
@@ -1430,7 +1430,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "prompt": "Which of the following best describes how the Lava Creator shows up at the table?",
     "options": [
       "As a Catalyst Director, this Creator is the one who says the unsayable in the meeting. The conversation stays where it is until this Creator arrives — then it moves. Don't expect diplomacy; expect the chair to get pulled out and a new one put in its place.",
-      "A Humanist Director who leads by holding space, not by pushing. The decisions made around a this Creator tend to be ones the group already knew were right but hadn't yet been able to see clearly. this Creator just stopped stirring the water.",
+      "A Humanist Director who leads by holding space, not by pushing. The decisions made around a this Creator tend to be ones the group already knew were right but hadn't yet been able to see clearly. This Creator just stopped stirring the water.",
       "An Optimist Stabilizer who works by strike — long stretches of listening, then one sentence that reframes the entire conversation. You can spot a this Creator by the quiet that comes right before the comment everyone quotes back later.",
       "An Optimist Director who leads by lowering the temperature. While other Directors push, this Creator makes a space so calm and well-laid that the right answer surfaces on its own. The decision was always there; this Creator just cleared the conditions for it to land."
     ],
@@ -1444,7 +1444,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0095",
     "prompt": "Which of the following best describes how the Lightning Creator shows up at the table?",
     "options": [
-      "A Realist Director who builds structures that outlast the conversation that created them. this Creator's contributions are the ones the team is still using five years later, when nobody can remember who decided on them — they just feel like part of the terrain now.",
+      "A Realist Director who builds structures that outlast the conversation that created them. This Creator's contributions are the ones the team is still using five years later, when nobody can remember who decided on them — they just feel like part of the terrain now.",
       "As a Humanist Integrator, this Creator is the type that weaves people, projects, and seasons into something that compounds. Year-one this Creator contributions look small; year-five this Creator contributions look like the entire forest the team is now standing in.",
       "An Optimist Director who leads by lowering the temperature. While other Directors push, this Creator makes a space so calm and well-laid that the right answer surfaces on its own. The decision was always there; this Creator just cleared the conditions for it to land.",
       "An Optimist Stabilizer who works by strike — long stretches of listening, then one sentence that reframes the entire conversation. You can spot a this Creator by the quiet that comes right before the comment everyone quotes back later."
@@ -1460,9 +1460,9 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "prompt": "Which of the following best describes how the Mountain Creator shows up at the table?",
     "options": [
       "As a Humanist Integrator, this Creator is the type that weaves people, projects, and seasons into something that compounds. Year-one this Creator contributions look small; year-five this Creator contributions look like the entire forest the team is now standing in.",
-      "A Realist Integrator who keeps the work moving. this Creator doesn't deliberate; this Creator flows toward the lower ground and finds the route. Stuck projects unstick around Rivers because Rivers don't argue with the obstacle — they find the way around, and the rest of the team follows.",
+      "A Realist Integrator who keeps the work moving. This Creator doesn't deliberate; this Creator flows toward the lower ground and finds the route. Stuck projects unstick around Rivers because Rivers don't argue with the obstacle — they find the way around, and the rest of the team follows.",
       "As a Catalyst Director, this Creator is the one who says the unsayable in the meeting. The conversation stays where it is until this Creator arrives — then it moves. Don't expect diplomacy; expect the chair to get pulled out and a new one put in its place.",
-      "A Realist Director who builds structures that outlast the conversation that created them. this Creator's contributions are the ones the team is still using five years later, when nobody can remember who decided on them — they just feel like part of the terrain now."
+      "A Realist Director who builds structures that outlast the conversation that created them. This Creator's contributions are the ones the team is still using five years later, when nobody can remember who decided on them — they just feel like part of the terrain now."
     ],
     "correct_index": 3,
     "explanation": "That passage describes Mountain at the table.",
@@ -1476,8 +1476,8 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "options": [
       "As a Humanist Integrator, this Creator is the type that weaves people, projects, and seasons into something that compounds. Year-one this Creator contributions look small; year-five this Creator contributions look like the entire forest the team is now standing in.",
       "As a Catalyst Director, this Creator is the one who says the unsayable in the meeting. The conversation stays where it is until this Creator arrives — then it moves. Don't expect diplomacy; expect the chair to get pulled out and a new one put in its place.",
-      "A Humanist Stabilizer whose contribution is often a single, slow sentence that goes deeper than the last twenty minutes of conversation combined. this Creator doesn't talk often; when this Creator talks, everyone notices that the room has changed depth.",
-      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. this Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description."
+      "A Humanist Stabilizer whose contribution is often a single, slow sentence that goes deeper than the last twenty minutes of conversation combined. This Creator doesn't talk often; when this Creator talks, everyone notices that the room has changed depth.",
+      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. This Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description."
     ],
     "correct_index": 2,
     "explanation": "That passage describes Ocean at the table.",
@@ -1490,8 +1490,8 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "prompt": "Which of the following best describes how the River Creator shows up at the table?",
     "options": [
       "As The Visionary, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.",
-      "A Realist Director who builds structures that outlast the conversation that created them. this Creator's contributions are the ones the team is still using five years later, when nobody can remember who decided on them — they just feel like part of the terrain now.",
-      "A Realist Integrator who keeps the work moving. this Creator doesn't deliberate; this Creator flows toward the lower ground and finds the route. Stuck projects unstick around Rivers because Rivers don't argue with the obstacle — they find the way around, and the rest of the team follows.",
+      "A Realist Director who builds structures that outlast the conversation that created them. This Creator's contributions are the ones the team is still using five years later, when nobody can remember who decided on them — they just feel like part of the terrain now.",
+      "A Realist Integrator who keeps the work moving. This Creator doesn't deliberate; this Creator flows toward the lower ground and finds the route. Stuck projects unstick around Rivers because Rivers don't argue with the obstacle — they find the way around, and the rest of the team follows.",
       "An Optimist Stabilizer who works by strike — long stretches of listening, then one sentence that reframes the entire conversation. You can spot a this Creator by the quiet that comes right before the comment everyone quotes back later."
     ],
     "correct_index": 2,
@@ -1519,8 +1519,8 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0100",
     "prompt": "Which of the following best describes how the Snow Creator shows up at the table?",
     "options": [
-      "A Humanist Stabilizer whose contribution is often a single, slow sentence that goes deeper than the last twenty minutes of conversation combined. this Creator doesn't talk often; when this Creator talks, everyone notices that the room has changed depth.",
-      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. this Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description.",
+      "A Humanist Stabilizer whose contribution is often a single, slow sentence that goes deeper than the last twenty minutes of conversation combined. This Creator doesn't talk often; when this Creator talks, everyone notices that the room has changed depth.",
+      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. This Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description.",
       "As The Visionary, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.",
       "An Optimist Director who leads by lowering the temperature. While other Directors push, this Creator makes a space so calm and well-laid that the right answer surfaces on its own. The decision was always there; this Creator just cleared the conditions for it to land."
     ],
@@ -1534,9 +1534,9 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0101",
     "prompt": "Which of the following best describes how the Soil Creator shows up at the table?",
     "options": [
-      "A Humanist Director who leads by holding space, not by pushing. The decisions made around a this Creator tend to be ones the group already knew were right but hadn't yet been able to see clearly. this Creator just stopped stirring the water.",
+      "A Humanist Director who leads by holding space, not by pushing. The decisions made around a this Creator tend to be ones the group already knew were right but hadn't yet been able to see clearly. This Creator just stopped stirring the water.",
       "As The Visionary, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.",
-      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. this Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description.",
+      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. This Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description.",
       "A Catalyst, but a Stabilizer — which means this Creator is the rare combination that brings the energy and keeps it lit. Without this Creator, projects start hot and cool by week two. With this Creator in the room, the spark you felt on day one is still there in month six."
     ],
     "correct_index": 2,
@@ -1551,7 +1551,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "options": [
       "An Optimist Integrator means this Creator pulls together what's already there and sees what it could become. The vision this Creator describes isn't wishful thinking — it's just further along the timeline than everyone else is looking.",
       "A Catalyst, but a Stabilizer — which means this Creator is the rare combination that brings the energy and keeps it lit. Without this Creator, projects start hot and cool by week two. With this Creator in the room, the spark you felt on day one is still there in month six.",
-      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. this Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description.",
+      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. This Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description.",
       "As an Integrator, this Creator is the one who picks things up from every corner of the room and weaves them into something nobody else saw was there. Where others see scattered fragments, this Creator sees a pattern about to organise itself."
     ],
     "correct_index": 0,
@@ -1579,10 +1579,10 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0104",
     "prompt": "Which of the following best describes how the Whirlwind Creator shows up at the table?",
     "options": [
-      "A Humanist Director who leads by holding space, not by pushing. The decisions made around a this Creator tend to be ones the group already knew were right but hadn't yet been able to see clearly. this Creator just stopped stirring the water.",
+      "A Humanist Director who leads by holding space, not by pushing. The decisions made around a this Creator tend to be ones the group already knew were right but hadn't yet been able to see clearly. This Creator just stopped stirring the water.",
       "As a Humanist Integrator, this Creator is the type that weaves people, projects, and seasons into something that compounds. Year-one this Creator contributions look small; year-five this Creator contributions look like the entire forest the team is now standing in.",
       "As an Integrator, this Creator is the one who picks things up from every corner of the room and weaves them into something nobody else saw was there. Where others see scattered fragments, this Creator sees a pattern about to organise itself.",
-      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. this Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description."
+      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. This Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description."
     ],
     "correct_index": 2,
     "explanation": "That passage describes Whirlwind at the table.",
@@ -1667,7 +1667,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0110",
-    "prompt": "Which Creator's Disaster State does this describe?\n\n\"This Creator disturbed at depth doesn't react with ripples — it reacts with a tsunami. The same profound, patient holding becomes a force that nobody on the shore can quite get away from in time. this Creator in shadow is everything that wasn't said, arriving all at once.\"",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"This Creator disturbed at depth doesn't react with ripples — it reacts with a tsunami. The same profound, patient holding becomes a force that nobody on the shore can quite get away from in time. This Creator in shadow is everything that wasn't said, arriving all at once.\"",
     "options": [
       "Lightning",
       "River",
@@ -1682,7 +1682,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0111",
-    "prompt": "Which Creator's Disaster State does this describe?\n\n\"This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. this Creator shadow looks like over-giving until everything downstream is underwater.\"",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. This Creator shadow looks like over-giving until everything downstream is underwater.\"",
     "options": [
       "Fire",
       "River",
@@ -1697,7 +1697,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0112",
-    "prompt": "Which Creator's Disaster State does this describe?\n\n\"this Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.\"",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"This Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.\"",
     "options": [
       "Whirlwind",
       "River",
@@ -1712,7 +1712,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0113",
-    "prompt": "Which Creator's Disaster State does this describe?\n\n\"this Creator that loses its lightness becomes an avalanche — all that quiet, patient covering, suddenly released as one downhill rush that buries everything in its path. What looked passive turns out to have been pressure all along.\"",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"This Creator that loses its lightness becomes an avalanche — all that quiet, patient covering, suddenly released as one downhill rush that buries everything in its path. What looked passive turns out to have been pressure all along.\"",
     "options": [
       "Soil",
       "River",
@@ -1727,7 +1727,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0114",
-    "prompt": "Which Creator's Disaster State does this describe?\n\n\"this Creator left unprotected, overworked, or undervalued erodes. What looked like an inexhaustible base of nourishment turns out to have been finite all along — and once it's gone, nothing on the surface will grow in the same way again.\"",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"This Creator left unprotected, overworked, or undervalued erodes. What looked like an inexhaustible base of nourishment turns out to have been finite all along — and once it's gone, nothing on the surface will grow in the same way again.\"",
     "options": [
       "Tree",
       "Soil",
@@ -1790,9 +1790,9 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Fire Creator?",
     "options": [
       "This Creator out of balance becomes a wildfire — consuming oxygen, consuming attention, consuming the very thing it was meant to nourish. The same passion that inspires can become the passion that exhausts everyone in its radius, including itself.",
-      "this Creator left unprotected, overworked, or undervalued erodes. What looked like an inexhaustible base of nourishment turns out to have been finite all along — and once it's gone, nothing on the surface will grow in the same way again.",
-      "this Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
-      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. this Creator shadow looks like over-giving until everything downstream is underwater."
+      "This Creator left unprotected, overworked, or undervalued erodes. What looked like an inexhaustible base of nourishment turns out to have been finite all along — and once it's gone, nothing on the surface will grow in the same way again.",
+      "This Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
+      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. This Creator shadow looks like over-giving until everything downstream is underwater."
     ],
     "correct_index": 0,
     "explanation": "That passage describes the shadow of Fire.",
@@ -1805,8 +1805,8 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Lake Creator?",
     "options": [
       "This Creator overheating becomes a solar flare — too much output, too little rhythm, scorching the very ecosystem it was sustaining. The people closest to a flared-out this Creator get burned worst.",
-      "this Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
-      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. this Creator shadow looks like over-giving until everything downstream is underwater.",
+      "This Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
+      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. This Creator shadow looks like over-giving until everything downstream is underwater.",
       "Stillness that loses its current becomes stagnation. The same calm depth that lets others see clearly can, in shadow, become a refusal to move at all — water that has stopped breathing, slowly going green at the edges."
     ],
     "correct_index": 3,
@@ -1820,9 +1820,9 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Lava Creator?",
     "options": [
       "When this Creator runs unchecked, the eruption stops being generative and starts being scorched earth. Everything around them gets too hot to touch, including the people who love them. The same fire that restructures can also burn down the village.",
-      "this Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
+      "This Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
       "This Creator overheating becomes a solar flare — too much output, too little rhythm, scorching the very ecosystem it was sustaining. The people closest to a flared-out this Creator get burned worst.",
-      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. this Creator shadow looks like over-giving until everything downstream is underwater."
+      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. This Creator shadow looks like over-giving until everything downstream is underwater."
     ],
     "correct_index": 0,
     "explanation": "That passage describes the shadow of Lava.",
@@ -1834,9 +1834,9 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0121",
     "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Lightning Creator?",
     "options": [
-      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. this Creator shadow looks like over-giving until everything downstream is underwater.",
+      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. This Creator shadow looks like over-giving until everything downstream is underwater.",
       "This Creator that holds for too long, or holds the wrong thing, quietly builds pressure underneath itself. When that finally releases — an earthquake — the very ground everyone trusted suddenly moves, and the structures built on it have to be rethought from the foundation up.",
-      "this Creator that loses its lightness becomes an avalanche — all that quiet, patient covering, suddenly released as one downhill rush that buries everything in its path. What looked passive turns out to have been pressure all along.",
+      "This Creator that loses its lightness becomes an avalanche — all that quiet, patient covering, suddenly released as one downhill rush that buries everything in its path. What looked passive turns out to have been pressure all along.",
       "When this Creator loses its ground, the strikes turn into a storm — too many flashes, too fast, none of them connecting to action. Insight without integration becomes a kind of mental weather that exhausts everyone trying to keep up."
     ],
     "correct_index": 3,
@@ -1850,7 +1850,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Mountain Creator?",
     "options": [
       "This Creator out of balance becomes a wildfire — consuming oxygen, consuming attention, consuming the very thing it was meant to nourish. The same passion that inspires can become the passion that exhausts everyone in its radius, including itself.",
-      "this Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
+      "This Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
       "This Creator that holds for too long, or holds the wrong thing, quietly builds pressure underneath itself. When that finally releases — an earthquake — the very ground everyone trusted suddenly moves, and the structures built on it have to be rethought from the foundation up.",
       "When this Creator runs unchecked, the eruption stops being generative and starts being scorched earth. Everything around them gets too hot to touch, including the people who love them. The same fire that restructures can also burn down the village."
     ],
@@ -1867,7 +1867,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "When this Creator runs unchecked, the eruption stops being generative and starts being scorched earth. Everything around them gets too hot to touch, including the people who love them. The same fire that restructures can also burn down the village.",
       "This Creator overheating becomes a solar flare — too much output, too little rhythm, scorching the very ecosystem it was sustaining. The people closest to a flared-out this Creator get burned worst.",
       "When this Creator loses its ground, the strikes turn into a storm — too many flashes, too fast, none of them connecting to action. Insight without integration becomes a kind of mental weather that exhausts everyone trying to keep up.",
-      "This Creator disturbed at depth doesn't react with ripples — it reacts with a tsunami. The same profound, patient holding becomes a force that nobody on the shore can quite get away from in time. this Creator in shadow is everything that wasn't said, arriving all at once."
+      "This Creator disturbed at depth doesn't react with ripples — it reacts with a tsunami. The same profound, patient holding becomes a force that nobody on the shore can quite get away from in time. This Creator in shadow is everything that wasn't said, arriving all at once."
     ],
     "correct_index": 3,
     "explanation": "That passage describes the shadow of Ocean.",
@@ -1881,7 +1881,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "options": [
       "When this Creator loses its still centre, the spiral becomes a tornado — change for change's sake, with no anchor and nowhere to land. Things that were working get yanked up by the roots along with the things that weren't.",
       "This Creator forced out of season — moved too often, asked to grow too fast, denied root time — becomes an uprooting waiting to happen. Outwardly fine, then suddenly toppled by a wind that wouldn't have moved a properly rooted version of the same this Creator.",
-      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. this Creator shadow looks like over-giving until everything downstream is underwater.",
+      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. This Creator shadow looks like over-giving until everything downstream is underwater.",
       "This Creator out of balance becomes a wildfire — consuming oxygen, consuming attention, consuming the very thing it was meant to nourish. The same passion that inspires can become the passion that exhausts everyone in its radius, including itself."
     ],
     "correct_index": 2,
@@ -1894,9 +1894,9 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0125",
     "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Sky Creator?",
     "options": [
-      "this Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
+      "This Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
       "This Creator out of balance becomes a wildfire — consuming oxygen, consuming attention, consuming the very thing it was meant to nourish. The same passion that inspires can become the passion that exhausts everyone in its radius, including itself.",
-      "This Creator disturbed at depth doesn't react with ripples — it reacts with a tsunami. The same profound, patient holding becomes a force that nobody on the shore can quite get away from in time. this Creator in shadow is everything that wasn't said, arriving all at once.",
+      "This Creator disturbed at depth doesn't react with ripples — it reacts with a tsunami. The same profound, patient holding becomes a force that nobody on the shore can quite get away from in time. This Creator in shadow is everything that wasn't said, arriving all at once.",
       "When this Creator loses its ground, the strikes turn into a storm — too many flashes, too fast, none of them connecting to action. Insight without integration becomes a kind of mental weather that exhausts everyone trying to keep up."
     ],
     "correct_index": 0,
@@ -1909,8 +1909,8 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0126",
     "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Snow Creator?",
     "options": [
-      "this Creator that loses its lightness becomes an avalanche — all that quiet, patient covering, suddenly released as one downhill rush that buries everything in its path. What looked passive turns out to have been pressure all along.",
-      "this Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
+      "This Creator that loses its lightness becomes an avalanche — all that quiet, patient covering, suddenly released as one downhill rush that buries everything in its path. What looked passive turns out to have been pressure all along.",
+      "This Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
       "Stillness that loses its current becomes stagnation. The same calm depth that lets others see clearly can, in shadow, become a refusal to move at all — water that has stopped breathing, slowly going green at the edges.",
       "This Creator forced out of season — moved too often, asked to grow too fast, denied root time — becomes an uprooting waiting to happen. Outwardly fine, then suddenly toppled by a wind that wouldn't have moved a properly rooted version of the same this Creator."
     ],
@@ -1926,7 +1926,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "options": [
       "This Creator that holds for too long, or holds the wrong thing, quietly builds pressure underneath itself. When that finally releases — an earthquake — the very ground everyone trusted suddenly moves, and the structures built on it have to be rethought from the foundation up.",
       "When this Creator runs unchecked, the eruption stops being generative and starts being scorched earth. Everything around them gets too hot to touch, including the people who love them. The same fire that restructures can also burn down the village.",
-      "this Creator left unprotected, overworked, or undervalued erodes. What looked like an inexhaustible base of nourishment turns out to have been finite all along — and once it's gone, nothing on the surface will grow in the same way again.",
+      "This Creator left unprotected, overworked, or undervalued erodes. What looked like an inexhaustible base of nourishment turns out to have been finite all along — and once it's gone, nothing on the surface will grow in the same way again.",
       "Stillness that loses its current becomes stagnation. The same calm depth that lets others see clearly can, in shadow, become a refusal to move at all — water that has stopped breathing, slowly going green at the edges."
     ],
     "correct_index": 2,
@@ -1940,7 +1940,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Sun Creator?",
     "options": [
       "When this Creator loses its ground, the strikes turn into a storm — too many flashes, too fast, none of them connecting to action. Insight without integration becomes a kind of mental weather that exhausts everyone trying to keep up.",
-      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. this Creator shadow looks like over-giving until everything downstream is underwater.",
+      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. This Creator shadow looks like over-giving until everything downstream is underwater.",
       "This Creator forced out of season — moved too often, asked to grow too fast, denied root time — becomes an uprooting waiting to happen. Outwardly fine, then suddenly toppled by a wind that wouldn't have moved a properly rooted version of the same this Creator.",
       "This Creator overheating becomes a solar flare — too much output, too little rhythm, scorching the very ecosystem it was sustaining. The people closest to a flared-out this Creator get burned worst."
     ],
@@ -1955,7 +1955,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Tree Creator?",
     "options": [
       "This Creator forced out of season — moved too often, asked to grow too fast, denied root time — becomes an uprooting waiting to happen. Outwardly fine, then suddenly toppled by a wind that wouldn't have moved a properly rooted version of the same this Creator.",
-      "this Creator that loses its lightness becomes an avalanche — all that quiet, patient covering, suddenly released as one downhill rush that buries everything in its path. What looked passive turns out to have been pressure all along.",
+      "This Creator that loses its lightness becomes an avalanche — all that quiet, patient covering, suddenly released as one downhill rush that buries everything in its path. What looked passive turns out to have been pressure all along.",
       "This Creator overheating becomes a solar flare — too much output, too little rhythm, scorching the very ecosystem it was sustaining. The people closest to a flared-out this Creator get burned worst.",
       "This Creator that holds for too long, or holds the wrong thing, quietly builds pressure underneath itself. When that finally releases — an earthquake — the very ground everyone trusted suddenly moves, and the structures built on it have to be rethought from the foundation up."
     ],
@@ -1969,8 +1969,8 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0130",
     "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Whirlwind Creator?",
     "options": [
-      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. this Creator shadow looks like over-giving until everything downstream is underwater.",
-      "this Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
+      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. This Creator shadow looks like over-giving until everything downstream is underwater.",
+      "This Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
       "When this Creator loses its still centre, the spiral becomes a tornado — change for change's sake, with no anchor and nowhere to land. Things that were working get yanked up by the roots along with the things that weren't.",
       "This Creator out of balance becomes a wildfire — consuming oxygen, consuming attention, consuming the very thing it was meant to nourish. The same passion that inspires can become the passion that exhausts everyone in its radius, including itself."
     ],
@@ -1997,7 +1997,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0132",
-    "prompt": "You might be which Creator if the following was said about you?\n\n\"Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's this Creator doing its work.\"",
+    "prompt": "You might be which Creator if the following was said about you?\n\n\"Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's the this Creator doing its work.\"",
     "options": [
       "River",
       "Fire",
@@ -2194,7 +2194,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0145",
     "prompt": "Which of the following statements would you expect to hear about a Lake Creator?",
     "options": [
-      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's this Creator doing its work.",
+      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's the this Creator doing its work.",
       "People describe you with words like \"solid,\" \"reliable,\" \"rock,\" and you suspect they mean it as both a compliment and a slight underestimate. If your stillness gets mistaken for slowness, that's a this Creator thing — and you've probably learned to let them think it.",
       "You arrive at conclusions before you can explain how, you find slow linear meetings genuinely painful, and you've noticed that your best ideas tend to land in the shower, on a walk, or right as you were about to fall asleep.",
       "You genuinely cannot sit still for very long, your relationship with creativity is \"the work just kind of pours out of me when I let it,\" and you've been told both \"you're so productive\" and \"you really need to slow down\" by people who couldn't see they were describing the same trait."
@@ -2211,7 +2211,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "options": [
       "You're the one people return to between adventures, \"I don't know how this would work without you\" has been said to you more than once, and you've noticed that your generosity is the one thing that occasionally needs you to be selfish about it.",
       "Your best work is invisible to people who only know you for a year, you've been told you're \"patient\" in a way that almost sounded like an accusation, and you have a quiet, slightly stubborn relationship with the places, projects, and people you've decided to grow next to.",
-      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's this Creator doing its work.",
+      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's the this Creator doing its work.",
       "You have a low tolerance for \"this is just how things are here,\" confrontation feels easier to you than going-along-to-get-along, and you've noticed that you tend to be the person who finally just names the thing in a room full of people pretending not to see it."
     ],
     "correct_index": 3,
@@ -2286,7 +2286,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "options": [
       "People describe you with words like \"solid,\" \"reliable,\" \"rock,\" and you suspect they mean it as both a compliment and a slight underestimate. If your stillness gets mistaken for slowness, that's a this Creator thing — and you've probably learned to let them think it.",
       "You struggle to stay interested in the next step but light up at the ten-year horizon, you instinctively connect things other people experience as unrelated, and you've noticed that you do your best thinking with your gaze pointed at something open — water, a window, a wide field.",
-      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's this Creator doing its work.",
+      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's the this Creator doing its work.",
       "Your best work is invisible to people who only know you for a year, you've been told you're \"patient\" in a way that almost sounded like an accusation, and you have a quiet, slightly stubborn relationship with the places, projects, and people you've decided to grow next to."
     ],
     "correct_index": 1,
@@ -2302,7 +2302,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "You are unreasonably particular about details other people can't even see, your presence tends to slow conversations down in a good way, and you've been told you're \"still waters\" by someone who clearly suspected there was a current underneath.",
       "You genuinely cannot sit still for very long, your relationship with creativity is \"the work just kind of pours out of me when I let it,\" and you've been told both \"you're so productive\" and \"you really need to slow down\" by people who couldn't see they were describing the same trait.",
       "You can't remember a six-month period of your life where everything stayed the same, you accidentally restructure groups just by being in them, and you find slow incremental change physically uncomfortable.",
-      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's this Creator doing its work."
+      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's the this Creator doing its work."
     ],
     "correct_index": 0,
     "explanation": "That statement is a Snow tell.",
@@ -2347,7 +2347,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "You genuinely cannot sit still for very long, your relationship with creativity is \"the work just kind of pours out of me when I let it,\" and you've been told both \"you're so productive\" and \"you really need to slow down\" by people who couldn't see they were describing the same trait.",
       "People come away from conversations with you feeling like they have more energy than they came in with, you naturally describe futures that haven't happened yet as if they already exist, and you suspect that steady might be one of your most underestimated superpowers.",
       "Your best work is invisible to people who only know you for a year, you've been told you're \"patient\" in a way that almost sounded like an accusation, and you have a quiet, slightly stubborn relationship with the places, projects, and people you've decided to grow next to.",
-      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's this Creator doing its work."
+      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's the this Creator doing its work."
     ],
     "correct_index": 2,
     "explanation": "That statement is a Tree tell.",
@@ -2359,7 +2359,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0156",
     "prompt": "Which of the following statements would you expect to hear about a Whirlwind Creator?",
     "options": [
-      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's this Creator doing its work.",
+      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's the this Creator doing its work.",
       "People come away from conversations with you feeling like they have more energy than they came in with, you naturally describe futures that haven't happened yet as if they already exist, and you suspect that steady might be one of your most underestimated superpowers.",
       "You can't remember a six-month period of your life where everything stayed the same, you accidentally restructure groups just by being in them, and you find slow incremental change physically uncomfortable.",
       "You struggle to stay interested in the next step but light up at the ten-year horizon, you instinctively connect things other people experience as unrelated, and you've noticed that you do your best thinking with your gaze pointed at something open — water, a window, a wide field."
