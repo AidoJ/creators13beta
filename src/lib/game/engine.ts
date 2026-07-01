@@ -277,7 +277,8 @@ export function pickFromUsed(state: MatchState): MatchState {
   const card = { ...popped, pickedUpThisTurn: true };
   next.players[next.turn].hand.push(card);
   next.drawnThisTurn += 1;
-  if (next.drawnThisTurn >= 2) next.phase = "place";
+  if (next.drawnThisTurn >= 2 || next.players[next.turn].hand.length >= HAND_LIMIT) next.phase = "place";
+
   next.lastEvent = `${next.players[next.turn].name} took ${card.name} from the used pile`;
   // Hive does NOT auto-arm — it stays passive in hand until used to block a disaster.
   return next;
