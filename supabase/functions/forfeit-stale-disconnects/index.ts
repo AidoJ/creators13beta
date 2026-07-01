@@ -357,21 +357,7 @@ Deno.serve(async (req) => {
             : { ...p, disconnectedAt: null },
         );
 
-        // Fairness guard: never strike a player who had NO legal action.
-        // Concrete case we shipped a bug for: phase==="draw" but hand is
-        // already full — engine refused draws (hand limit) AND refused
-        // plays/discards (wrong phase). Escalating that to idle_departed
-        // would corrupt match outcomes via false departures. Skip strike
-        // (auto-pass still fires so the table moves on).
-        const stuckPlayer = state.players[slot];
-        const noLegalAction =
-          !skipStrike &&
-          state.phase === "draw" &&
-          (stuckPlayer?.hand?.length ?? 0) >= 5;
-        const effectiveSkipStrike = skipStrike || noLegalAction;
-        const effectiveNewStrikes = effectiveSkipStrike
-          ? Number(rrow.idle_strikes ?? 0)
-          : newStrikes;
+
 
 
         const nextState = forceAdvanceTurn(state, Date.now());
