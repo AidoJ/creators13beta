@@ -67,7 +67,28 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
         cardUid,
       });
       try {
-        const result = await applyMoveServer(matchId, expected, move);
+        let result = await applyMoveServer(matchId, expected, move);
+        // Auth recovery: one silent refresh + retry before surfacing.
+        if (result.ok === false && result.reason === "auth") {
+          console.warn("[apply-move] auth rejected — refreshing session and retrying once");
+          try {
+            const { supabase } = await import("@/integrations/supabase/client");
+            const { data, error } = await supabase.auth.refreshSession();
+            if (!error && data.session) {
+              result = await applyMoveServer(matchId, expected, move);
+            }
+          } catch (e) {
+            console.error("[apply-move] refreshSession threw", e);
+          }
+          if (result.ok === false && result.reason === "auth") {
+            toast.error("Your session expired. Please sign in again.");
+            const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
+            setTimeout(() => {
+              window.location.href = `/auth?returnTo=${returnTo}`;
+            }, 1200);
+            return;
+          }
+        }
         if (result.ok === true) {
           serverSeqRef.current = result.seq;
           setMatchRow({
@@ -75,11 +96,6 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
             seq: result.seq,
             turn_started_at: result.turnStartedAt ?? matchRow.turn_started_at,
           });
-          // CRITICAL: replace the client's optimistic state with the server's
-          // authoritative redacted view. The client engine uses local
-          // randomness for draws, so without this re-hydration our hand
-          // diverges from the server's after the first draw and every
-          // subsequent move fails "Card not in hand".
           if (result.publicState) {
             try {
               const canonical = deserializeMatch(result.publicState as SerializedMatchState);
@@ -101,6 +117,7 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
         } else {
           toast.error(rejected.message ?? "Move rejected by server");
         }
+
         try {
           const { row, state: canonical } = await loadMatch(matchId);
           setMatchRow(row);
