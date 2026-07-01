@@ -127,7 +127,7 @@ for c in CT:
         continue
     others = [x['name'] for x in CT if x['name'] != c['name']]
     BANK.append(mc(
-        f"Which Creator is the {c['family']} Family's {c['team_role']}?",
+        f"Which Creator is the {c['team_role']} in the {c['family']} Family?",
         c['name'], pick_distractors(c['name'], others),
         f"{c['name']} is the {c['family']} {c['team_role']}.",
         'reverse_family_role', c['name'], 'reverse',
