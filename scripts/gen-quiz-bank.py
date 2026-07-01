@@ -60,12 +60,11 @@ def redact(text, name):
     so the question isn't self-answering."""
     if not text:
         return text
-    # Order matters: possessive first.
     text = re.sub(r"\b" + re.escape(name) + r"'s\b", "this Creator's", text, flags=re.IGNORECASE)
-    text = re.sub(r"\bA " + re.escape(name) + r"\b", "This Creator", text)
-    text = re.sub(r"\bAn " + re.escape(name) + r"\b", "This Creator", text)
-    text = re.sub(r"\bthe " + re.escape(name) + r"\b", "this Creator", text)
+    text = re.sub(r"\b(?:A|An|The) " + re.escape(name) + r"\b", "This Creator", text)
     text = re.sub(r"\b" + re.escape(name) + r"\b", "this Creator", text, flags=re.IGNORECASE)
+    # Recapitalise sentence starts that got lowercased by the redaction.
+    text = re.sub(r"(^|(?<=[.!?—]\s))this Creator", "This Creator", text)
     return text
 
 def pick_distractors(correct, pool, n=3):
