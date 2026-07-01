@@ -184,12 +184,18 @@ export function OpponentPanel({ open, onClose, player, opponentUserId, presenceS
 
 
 
+      {banner && (
+        <div className="px-3 py-1.5 border-b border-primary/40 bg-primary/10 text-primary text-xs font-semibold text-center">
+          {banner}
+        </div>
+      )}
       <div className="flex-1 min-h-0 overflow-auto p-3 flex items-start justify-center">
         <Ecosystem
           eco={player.ecosystem}
           size={tileSize}
           minHeight={Math.max(240, size.h - 120)}
           showEmpties={false}
+          onStealClick={onStealClick}
         />
       </div>
 
