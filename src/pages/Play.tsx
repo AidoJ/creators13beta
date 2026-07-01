@@ -2103,6 +2103,20 @@ export default function Play() {
           if (!expandedOpponent) return null;
           return getPresenceStatusForPlayer(expandedOpponent.id);
         })()}
+        onStealClick={
+          mode === "steal" && !stealVictimKey && expandedOpponent && expandedOpponent.id === opponent?.id
+            ? (posKey) => {
+                onStealHex(posKey);
+                // Close the peek so the player can see their own board to place the stolen card.
+                setOpponentPanelOpen(false);
+              }
+            : undefined
+        }
+        banner={
+          mode === "steal" && !stealVictimKey && expandedOpponent && expandedOpponent.id === opponent?.id
+            ? "Tap an animal to steal"
+            : null
+        }
       />
       {/* MultiplayerLobby dialog removed in Batch B — multiplayer now flows
           through /play/lobby/:matchId. */}
