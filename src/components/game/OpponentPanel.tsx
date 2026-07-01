@@ -13,6 +13,11 @@ interface OpponentPanelProps {
   opponentUserId?: string | null;
   /** A.4 — realtime presence indicator. Omit for solo bot matches. */
   presenceStatus?: PresenceStatus | "missing" | null;
+  /** When provided, opponent's placed animals become tappable (used during Sky-Creature
+   *  steal mode on mobile, where the opponent's board is only visible in this panel). */
+  onStealClick?: (posKey: string) => void;
+  /** Optional banner text shown at the top of the panel (e.g. "Tap an animal to steal"). */
+  banner?: string | null;
 }
 
 interface PublicStats {
@@ -24,7 +29,7 @@ interface PublicStats {
  * Floating, draggable + resizable panel for previewing another player's ecosystem.
  * Drag the header to move; drag the bottom-right grip to resize.
  */
-export function OpponentPanel({ open, onClose, player, opponentUserId, presenceStatus }: OpponentPanelProps) {
+export function OpponentPanel({ open, onClose, player, opponentUserId, presenceStatus, onStealClick, banner }: OpponentPanelProps) {
   const [stats, setStats] = useState<PublicStats | null>(null);
   useEffect(() => {
     setStats(null);
@@ -179,12 +184,18 @@ export function OpponentPanel({ open, onClose, player, opponentUserId, presenceS
 
 
 
+      {banner && (
+        <div className="px-3 py-1.5 border-b border-primary/40 bg-primary/10 text-primary text-xs font-semibold text-center">
+          {banner}
+        </div>
+      )}
       <div className="flex-1 min-h-0 overflow-auto p-3 flex items-start justify-center">
         <Ecosystem
           eco={player.ecosystem}
           size={tileSize}
           minHeight={Math.max(240, size.h - 120)}
           showEmpties={false}
+          onStealClick={onStealClick}
         />
       </div>
 

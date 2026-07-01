@@ -180,6 +180,10 @@ export default function Play() {
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
   const [stealVictimKey, setStealVictimKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
+
+  // Mobile: opponent boards are only visible via the peek panel. When the
+  // player enters Sky-Creature steal mode, auto-open the panel on the current
+  // opponent so they can actually see (and tap) an animal to steal.
   const { settings: gameSettings } = useGameSettings();
   // (turnStartedAtRef declared below, alongside other refs.)
   const botDifficultyRef = useRef<BotDifficulty>("medium");
@@ -524,6 +528,17 @@ export default function Play() {
   );
   const expandedOpponent =
     opponents.find((p) => p.id === expandedOpponentId) ?? opponent ?? null;
+
+  // Mobile: opponent boards are only reachable via the peek panel. When the
+  // local player enters Sky-Creature steal mode, auto-open the panel on the
+  // current opponent so they can actually see (and tap) an animal to steal.
+  useEffect(() => {
+    if (!isMobile) return;
+    if (mode !== "steal" || stealVictimKey) return;
+    if (opponents.length === 0) return;
+    if (!expandedOpponentId) setExpandedOpponentId(opponents[0].id);
+    setOpponentPanelOpen(true);
+  }, [isMobile, mode, stealVictimKey, expandedOpponentId, opponents]);
   const isYourTurn =
     !!state && !state.finished && state.players[state.turn].id === selfSlot && !waitingForGuest;
 
@@ -2103,6 +2118,20 @@ export default function Play() {
           if (!expandedOpponent) return null;
           return getPresenceStatusForPlayer(expandedOpponent.id);
         })()}
+        onStealClick={
+          mode === "steal" && !stealVictimKey && expandedOpponent && expandedOpponent.id === opponent?.id
+            ? (posKey) => {
+                onStealHex(posKey);
+                // Close the peek so the player can see their own board to place the stolen card.
+                setOpponentPanelOpen(false);
+              }
+            : undefined
+        }
+        banner={
+          mode === "steal" && !stealVictimKey && expandedOpponent && expandedOpponent.id === opponent?.id
+            ? "Tap an animal to steal"
+            : null
+        }
       />
       {/* MultiplayerLobby dialog removed in Batch B — multiplayer now flows
           through /play/lobby/:matchId. */}
