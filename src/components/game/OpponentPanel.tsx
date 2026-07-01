@@ -13,6 +13,11 @@ interface OpponentPanelProps {
   opponentUserId?: string | null;
   /** A.4 — realtime presence indicator. Omit for solo bot matches. */
   presenceStatus?: PresenceStatus | "missing" | null;
+  /** When provided, opponent's placed animals become tappable (used during Sky-Creature
+   *  steal mode on mobile, where the opponent's board is only visible in this panel). */
+  onStealClick?: (posKey: string) => void;
+  /** Optional banner text shown at the top of the panel (e.g. "Tap an animal to steal"). */
+  banner?: string | null;
 }
 
 interface PublicStats {
