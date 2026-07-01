@@ -180,6 +180,20 @@ export default function Play() {
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
   const [stealVictimKey, setStealVictimKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
+
+  // Mobile: opponent boards are only visible via the peek panel. When the
+  // player enters Sky-Creature steal mode, auto-open the panel on the current
+  // opponent so they can actually see (and tap) an animal to steal.
+  useEffect(() => {
+    if (!isMobile) return;
+    if (mode !== "steal" || stealVictimKey) return;
+    // `opponent` (single-opponent shortcut) is derived from expandedOpponentId,
+    // so make sure that's populated before opening.
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    const first = opponentsRef.current[0];
+    if (!expandedOpponentId && first) setExpandedOpponentId(first.id);
+    setOpponentPanelOpen(true);
+  }, [isMobile, mode, stealVictimKey, expandedOpponentId]);
   const { settings: gameSettings } = useGameSettings();
   // (turnStartedAtRef declared below, alongside other refs.)
   const botDifficultyRef = useRef<BotDifficulty>("medium");
