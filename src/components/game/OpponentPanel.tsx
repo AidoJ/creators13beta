@@ -29,7 +29,7 @@ interface PublicStats {
  * Floating, draggable + resizable panel for previewing another player's ecosystem.
  * Drag the header to move; drag the bottom-right grip to resize.
  */
-export function OpponentPanel({ open, onClose, player, opponentUserId, presenceStatus }: OpponentPanelProps) {
+export function OpponentPanel({ open, onClose, player, opponentUserId, presenceStatus, onStealClick, banner }: OpponentPanelProps) {
   const [stats, setStats] = useState<PublicStats | null>(null);
   useEffect(() => {
     setStats(null);
