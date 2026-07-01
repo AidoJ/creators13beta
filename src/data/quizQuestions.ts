@@ -5,7 +5,10 @@
 export type QuizStyle =
   | 'family_recall' | 'element_recall' | 'team_role_recall'
   | 'reverse_family_role'
-  | 'signature_whoami' | 'shadow_whoami' | 'at_table_whoami' | 'ymbi_whoami'
+  | 'signature_whoami' | 'signature_describes'
+  | 'shadow_whoami' | 'shadow_describes'
+  | 'at_table_whoami' | 'at_table_describes'
+  | 'ymbi_whoami' | 'ymbi_describes'
   | 'compare_family' | 'compare_element'
   | 'not_family' | 'not_element'
   | 'animal_type' | 'not_animal_type' | 'animal_has_type';
@@ -18,18 +21,18 @@ export type QuizCategory =
 export interface QuizQuestion {
   id: string;
   prompt: string;
-  options: string[];          // always 4
-  correct_index: number;      // 0..3
-  explanation: string;        // one-line teaching moment
+  options: string[];       // always 4
+  correct_index: number;   // 0..3
+  explanation: string;     // one-line teaching moment
   style: QuizStyle;
   category: QuizCategory;
-  creator: string | null;     // subject Creator when scoped to one
+  creator: string | null;  // subject Creator when scoped to one
 }
 
 export const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     "id": "q0001",
-    "prompt": "Fire Creator is part of which Family?",
+    "prompt": "The Fire Creator belongs to which Family?",
     "options": [
       "Optimists",
       "Catalysts",
@@ -37,14 +40,14 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Sustainers"
     ],
     "correct_index": 1,
-    "explanation": "Fire belongs to the Catalysts family.",
+    "explanation": "Fire is a Catalysts",
     "style": "family_recall",
     "category": "family",
     "creator": "Fire"
   },
   {
     "id": "q0002",
-    "prompt": "Lake Creator is part of which Family?",
+    "prompt": "The Lake Creator belongs to which Family?",
     "options": [
       "Realists",
       "Catalysts",
@@ -52,14 +55,14 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Sustainers"
     ],
     "correct_index": 2,
-    "explanation": "Lake belongs to the Humanists family.",
+    "explanation": "Lake is a Humanists",
     "style": "family_recall",
     "category": "family",
     "creator": "Lake"
   },
   {
     "id": "q0003",
-    "prompt": "Lava Creator is part of which Family?",
+    "prompt": "The Lava Creator belongs to which Family?",
     "options": [
       "Humanists",
       "Catalysts",
@@ -67,14 +70,14 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Sustainers"
     ],
     "correct_index": 1,
-    "explanation": "Lava belongs to the Catalysts family.",
+    "explanation": "Lava is a Catalysts",
     "style": "family_recall",
     "category": "family",
     "creator": "Lava"
   },
   {
     "id": "q0004",
-    "prompt": "Lightning Creator is part of which Family?",
+    "prompt": "The Lightning Creator belongs to which Family?",
     "options": [
       "Optimists",
       "Catalysts",
@@ -82,14 +85,14 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Sustainers"
     ],
     "correct_index": 0,
-    "explanation": "Lightning belongs to the Optimists family.",
+    "explanation": "Lightning is a Optimists",
     "style": "family_recall",
     "category": "family",
     "creator": "Lightning"
   },
   {
     "id": "q0005",
-    "prompt": "Mountain Creator is part of which Family?",
+    "prompt": "The Mountain Creator belongs to which Family?",
     "options": [
       "Realists",
       "Optimists",
@@ -97,14 +100,14 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Catalysts"
     ],
     "correct_index": 0,
-    "explanation": "Mountain belongs to the Realists family.",
+    "explanation": "Mountain is a Realists",
     "style": "family_recall",
     "category": "family",
     "creator": "Mountain"
   },
   {
     "id": "q0006",
-    "prompt": "Ocean Creator is part of which Family?",
+    "prompt": "The Ocean Creator belongs to which Family?",
     "options": [
       "Optimists",
       "Sustainers",
@@ -112,14 +115,14 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Humanists"
     ],
     "correct_index": 3,
-    "explanation": "Ocean belongs to the Humanists family.",
+    "explanation": "Ocean is a Humanists",
     "style": "family_recall",
     "category": "family",
     "creator": "Ocean"
   },
   {
     "id": "q0007",
-    "prompt": "River Creator is part of which Family?",
+    "prompt": "The River Creator belongs to which Family?",
     "options": [
       "Realists",
       "Humanists",
@@ -127,14 +130,14 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Optimists"
     ],
     "correct_index": 0,
-    "explanation": "River belongs to the Realists family.",
+    "explanation": "River is a Realists",
     "style": "family_recall",
     "category": "family",
     "creator": "River"
   },
   {
     "id": "q0008",
-    "prompt": "Sky Creator is part of which Family?",
+    "prompt": "The Sky Creator belongs to which Family?",
     "options": [
       "Sustainers",
       "Realists",
@@ -142,14 +145,14 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Optimists"
     ],
     "correct_index": 0,
-    "explanation": "Sky belongs to the Sustainers family.",
+    "explanation": "Sky is a Sustainers",
     "style": "family_recall",
     "category": "family",
     "creator": "Sky"
   },
   {
     "id": "q0009",
-    "prompt": "Snow Creator is part of which Family?",
+    "prompt": "The Snow Creator belongs to which Family?",
     "options": [
       "Optimists",
       "Catalysts",
@@ -157,14 +160,14 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Sustainers"
     ],
     "correct_index": 0,
-    "explanation": "Snow belongs to the Optimists family.",
+    "explanation": "Snow is a Optimists",
     "style": "family_recall",
     "category": "family",
     "creator": "Snow"
   },
   {
     "id": "q0010",
-    "prompt": "Soil Creator is part of which Family?",
+    "prompt": "The Soil Creator belongs to which Family?",
     "options": [
       "Catalysts",
       "Realists",
@@ -172,14 +175,14 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Optimists"
     ],
     "correct_index": 1,
-    "explanation": "Soil belongs to the Realists family.",
+    "explanation": "Soil is a Realists",
     "style": "family_recall",
     "category": "family",
     "creator": "Soil"
   },
   {
     "id": "q0011",
-    "prompt": "Sun Creator is part of which Family?",
+    "prompt": "The Sun Creator belongs to which Family?",
     "options": [
       "Sustainers",
       "Realists",
@@ -187,14 +190,14 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Catalysts"
     ],
     "correct_index": 2,
-    "explanation": "Sun belongs to the Optimists family.",
+    "explanation": "Sun is a Optimists",
     "style": "family_recall",
     "category": "family",
     "creator": "Sun"
   },
   {
     "id": "q0012",
-    "prompt": "Tree Creator is part of which Family?",
+    "prompt": "The Tree Creator belongs to which Family?",
     "options": [
       "Realists",
       "Catalysts",
@@ -202,14 +205,14 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Optimists"
     ],
     "correct_index": 2,
-    "explanation": "Tree belongs to the Humanists family.",
+    "explanation": "Tree is a Humanists",
     "style": "family_recall",
     "category": "family",
     "creator": "Tree"
   },
   {
     "id": "q0013",
-    "prompt": "Whirlwind Creator is part of which Family?",
+    "prompt": "The Whirlwind Creator belongs to which Family?",
     "options": [
       "Sustainers",
       "Humanists",
@@ -217,7 +220,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Realists"
     ],
     "correct_index": 2,
-    "explanation": "Whirlwind belongs to the Catalysts family.",
+    "explanation": "Whirlwind is a Catalysts",
     "style": "family_recall",
     "category": "family",
     "creator": "Whirlwind"
@@ -232,7 +235,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Earth"
     ],
     "correct_index": 2,
-    "explanation": "Fire is an Fire type.",
+    "explanation": "Fire is an Fire Creator.",
     "style": "element_recall",
     "category": "element",
     "creator": "Fire"
@@ -247,7 +250,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Earth"
     ],
     "correct_index": 0,
-    "explanation": "Lake is an Water type.",
+    "explanation": "Lake is an Water Creator.",
     "style": "element_recall",
     "category": "element",
     "creator": "Lake"
@@ -262,7 +265,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Fire"
     ],
     "correct_index": 3,
-    "explanation": "Lava is an Fire type.",
+    "explanation": "Lava is an Fire Creator.",
     "style": "element_recall",
     "category": "element",
     "creator": "Lava"
@@ -277,7 +280,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Water"
     ],
     "correct_index": 2,
-    "explanation": "Lightning is an Air type.",
+    "explanation": "Lightning is an Air Creator.",
     "style": "element_recall",
     "category": "element",
     "creator": "Lightning"
@@ -292,7 +295,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Earth"
     ],
     "correct_index": 3,
-    "explanation": "Mountain is an Earth type.",
+    "explanation": "Mountain is an Earth Creator.",
     "style": "element_recall",
     "category": "element",
     "creator": "Mountain"
@@ -307,7 +310,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Water"
     ],
     "correct_index": 3,
-    "explanation": "Ocean is an Water type.",
+    "explanation": "Ocean is an Water Creator.",
     "style": "element_recall",
     "category": "element",
     "creator": "Ocean"
@@ -322,7 +325,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Water"
     ],
     "correct_index": 3,
-    "explanation": "River is an Water type.",
+    "explanation": "River is an Water Creator.",
     "style": "element_recall",
     "category": "element",
     "creator": "River"
@@ -337,7 +340,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Fire"
     ],
     "correct_index": 0,
-    "explanation": "Sky is an Air type.",
+    "explanation": "Sky is an Air Creator.",
     "style": "element_recall",
     "category": "element",
     "creator": "Sky"
@@ -352,7 +355,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Water"
     ],
     "correct_index": 1,
-    "explanation": "Snow is an Air type.",
+    "explanation": "Snow is an Air Creator.",
     "style": "element_recall",
     "category": "element",
     "creator": "Snow"
@@ -367,7 +370,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Air"
     ],
     "correct_index": 1,
-    "explanation": "Soil is an Earth type.",
+    "explanation": "Soil is an Earth Creator.",
     "style": "element_recall",
     "category": "element",
     "creator": "Soil"
@@ -382,7 +385,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Earth"
     ],
     "correct_index": 1,
-    "explanation": "Sun is an Fire type.",
+    "explanation": "Sun is an Fire Creator.",
     "style": "element_recall",
     "category": "element",
     "creator": "Sun"
@@ -397,7 +400,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Air"
     ],
     "correct_index": 1,
-    "explanation": "Tree is an Earth type.",
+    "explanation": "Tree is an Earth Creator.",
     "style": "element_recall",
     "category": "element",
     "creator": "Tree"
@@ -412,14 +415,14 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Earth"
     ],
     "correct_index": 1,
-    "explanation": "Whirlwind is an Air type.",
+    "explanation": "Whirlwind is an Air Creator.",
     "style": "element_recall",
     "category": "element",
     "creator": "Whirlwind"
   },
   {
     "id": "q0027",
-    "prompt": "What team role does the Fire Creator play?",
+    "prompt": "What role does the Fire Creator play on a team?",
     "options": [
       "Integrator",
       "Director",
@@ -434,7 +437,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0028",
-    "prompt": "What team role does the Lake Creator play?",
+    "prompt": "What role does the Lake Creator play on a team?",
     "options": [
       "Director",
       "Stabilizer",
@@ -449,7 +452,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0029",
-    "prompt": "What team role does the Lava Creator play?",
+    "prompt": "What role does the Lava Creator play on a team?",
     "options": [
       "Stabilizer",
       "Integrator",
@@ -464,7 +467,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0030",
-    "prompt": "What team role does the Lightning Creator play?",
+    "prompt": "What role does the Lightning Creator play on a team?",
     "options": [
       "Stabilizer",
       "Integrator",
@@ -479,7 +482,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0031",
-    "prompt": "What team role does the Mountain Creator play?",
+    "prompt": "What role does the Mountain Creator play on a team?",
     "options": [
       "The Visionary",
       "Integrator",
@@ -494,7 +497,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0032",
-    "prompt": "What team role does the Ocean Creator play?",
+    "prompt": "What role does the Ocean Creator play on a team?",
     "options": [
       "The Visionary",
       "Integrator",
@@ -509,7 +512,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0033",
-    "prompt": "What team role does the River Creator play?",
+    "prompt": "What role does the River Creator play on a team?",
     "options": [
       "Stabilizer",
       "Director",
@@ -524,7 +527,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0034",
-    "prompt": "What team role does the Sky Creator play?",
+    "prompt": "What role does the Sky Creator play on a team?",
     "options": [
       "Integrator",
       "Director",
@@ -539,7 +542,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0035",
-    "prompt": "What team role does the Snow Creator play?",
+    "prompt": "What role does the Snow Creator play on a team?",
     "options": [
       "Director",
       "Integrator",
@@ -554,7 +557,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0036",
-    "prompt": "What team role does the Soil Creator play?",
+    "prompt": "What role does the Soil Creator play on a team?",
     "options": [
       "The Visionary",
       "Integrator",
@@ -569,7 +572,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0037",
-    "prompt": "What team role does the Sun Creator play?",
+    "prompt": "What role does the Sun Creator play on a team?",
     "options": [
       "Stabilizer",
       "Director",
@@ -584,7 +587,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0038",
-    "prompt": "What team role does the Tree Creator play?",
+    "prompt": "What role does the Tree Creator play on a team?",
     "options": [
       "The Visionary",
       "Director",
@@ -599,7 +602,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0039",
-    "prompt": "What team role does the Whirlwind Creator play?",
+    "prompt": "What role does the Whirlwind Creator play on a team?",
     "options": [
       "Stabilizer",
       "Integrator",
@@ -614,7 +617,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0040",
-    "prompt": "Which Creator is the Catalysts Stabilizer?",
+    "prompt": "Which Creator is the Catalysts Family's Stabilizer?",
     "options": [
       "Sky",
       "Lightning",
@@ -629,7 +632,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0041",
-    "prompt": "Which Creator is the Humanists Director?",
+    "prompt": "Which Creator is the Humanists Family's Director?",
     "options": [
       "Mountain",
       "Sun",
@@ -644,7 +647,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0042",
-    "prompt": "Which Creator is the Catalysts Director?",
+    "prompt": "Which Creator is the Catalysts Family's Director?",
     "options": [
       "Snow",
       "Sun",
@@ -659,7 +662,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0043",
-    "prompt": "Which Creator is the Optimists Stabilizer?",
+    "prompt": "Which Creator is the Optimists Family's Stabilizer?",
     "options": [
       "Whirlwind",
       "Soil",
@@ -674,7 +677,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0044",
-    "prompt": "Which Creator is the Realists Director?",
+    "prompt": "Which Creator is the Realists Family's Director?",
     "options": [
       "Mountain",
       "Lava",
@@ -689,7 +692,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0045",
-    "prompt": "Which Creator is the Humanists Stabilizer?",
+    "prompt": "Which Creator is the Humanists Family's Stabilizer?",
     "options": [
       "Tree",
       "River",
@@ -704,7 +707,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0046",
-    "prompt": "Which Creator is the Realists Integrator?",
+    "prompt": "Which Creator is the Realists Family's Integrator?",
     "options": [
       "Whirlwind",
       "River",
@@ -719,7 +722,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0047",
-    "prompt": "Which Creator is the Sustainers The Visionary?",
+    "prompt": "Which Creator is the Sustainers Family's The Visionary?",
     "options": [
       "Ocean",
       "Lava",
@@ -734,7 +737,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0048",
-    "prompt": "Which Creator is the Optimists Director?",
+    "prompt": "Which Creator is the Optimists Family's Director?",
     "options": [
       "Sun",
       "Snow",
@@ -749,7 +752,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0049",
-    "prompt": "Which Creator is the Realists Stabilizer?",
+    "prompt": "Which Creator is the Realists Family's Stabilizer?",
     "options": [
       "Sun",
       "Fire",
@@ -764,7 +767,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0050",
-    "prompt": "Which Creator is the Optimists Integrator?",
+    "prompt": "Which Creator is the Optimists Family's Integrator?",
     "options": [
       "Lava",
       "Lake",
@@ -779,7 +782,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0051",
-    "prompt": "Which Creator is the Humanists Integrator?",
+    "prompt": "Which Creator is the Humanists Family's Integrator?",
     "options": [
       "Soil",
       "Sky",
@@ -794,7 +797,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0052",
-    "prompt": "Which Creator is the Catalysts Integrator?",
+    "prompt": "Which Creator is the Catalysts Family's Integrator?",
     "options": [
       "Mountain",
       "Whirlwind",
@@ -809,7 +812,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0053",
-    "prompt": "Which Creator has this Natural State?\n\n\"___'s gift is warmth that travels.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator's gift is warmth that travels. Where Lava restructures by breaking, this Creator moves people by lighting them up — passion that catches and spreads from person to person until a whole room is leaning forward. It's the oldest technology in the world: heat and light, in human form.\"",
     "options": [
       "Snow",
       "Fire",
@@ -824,7 +827,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0054",
-    "prompt": "Which Creator has this Natural State?\n\n\"___'s power is the still surface that shows things back exactly as they are.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator's power is the still surface that shows things back exactly as they are. Not analysis, not interpretation — reflection. Stand at the edge of a real this Creator and you see yourself with no editing; stand near a this Creator person and the same thing happens with whatever you were carrying in.\"",
     "options": [
       "River",
       "Sun",
@@ -839,7 +842,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0055",
-    "prompt": "Which Creator has this Natural State?\n\n\"___ is the only Creator that makes new ground.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator is the only Creator that makes new ground. When the system has hardened into something that no longer serves life, this Creator brings fired earth to the surface and lays down fresh land for everything else to grow on. Revolutionary isn't a personality quirk — it's the literal job.\"",
     "options": [
       "Lava",
       "Ocean",
@@ -854,7 +857,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0056",
-    "prompt": "Which Creator has this Natural State?\n\n\"___ is the flash of recognition — the moment a complicated thing suddenly becomes simple.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator is the flash of recognition — the moment a complicated thing suddenly becomes simple. Where others reason their way to the answer step by step, this Creator sees the whole path lit up at once between two points that didn't seem connected.\"",
     "options": [
       "Lava",
       "Mountain",
@@ -869,7 +872,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0057",
-    "prompt": "Which Creator has this Natural State?\n\n\"___ is what doesn't move.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator is what doesn't move. While weather, seasons, and trends roll across the landscape, this Creator stays — not out of stubbornness, but because its job is to be the reference point everyone else navigates by.\"",
     "options": [
       "Mountain",
       "Soil",
@@ -884,7 +887,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0058",
-    "prompt": "Which Creator has this Natural State?\n\n\"___ is the deepest version of every Water type.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. this Creator knows more than it is currently saying. Always.\"",
     "options": [
       "Lava",
       "Ocean",
@@ -899,7 +902,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0059",
-    "prompt": "Which Creator has this Natural State?\n\n\"___'s power isn't strength — it's persistence.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. this Creator works the same way: not by force, but by simply not stopping when something is in the way.\"",
     "options": [
       "River",
       "Mountain",
@@ -914,7 +917,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0060",
-    "prompt": "Which Creator has this Natural State?\n\n\"___'s natural power is the room itself.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description.\"",
     "options": [
       "Snow",
       "Whirlwind",
@@ -929,7 +932,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0061",
-    "prompt": "Which Creator has this Natural State?\n\n\"___ is the quietest force in the system.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale.\"",
     "options": [
       "Sky",
       "Lake",
@@ -944,7 +947,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0062",
-    "prompt": "Which Creator has this Natural State?\n\n\"___ is what makes everything else possible.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator is what makes everything else possible. Nothing visible in an ecosystem grows without it — no Tree, no River, no garden of any kind — and yet this Creator itself stays underfoot, doing its quiet chemistry while the credit goes to whatever bloomed on top of it.\"",
     "options": [
       "Tree",
       "Soil",
@@ -959,7 +962,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0063",
-    "prompt": "Which Creator has this Natural State?\n\n\"___ is the source.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people.\"",
     "options": [
       "Sun",
       "Sky",
@@ -974,7 +977,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0064",
-    "prompt": "Which Creator has this Natural State?\n\n\"___'s gift is time made visible.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.\"",
     "options": [
       "Lake",
       "Tree",
@@ -989,7 +992,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0065",
-    "prompt": "Which Creator has this Natural State?\n\n\"___ doesn't move in straight lines — it spirals.\"",
+    "prompt": "Which Creator does the following Natural State describe?\n\n\"this Creator doesn't move in straight lines — it spirals. What looks chaotic from the outside is actually rapid, layered transformation: ideas, people, and materials all caught up at once and rearranged by the time the wind settles. Three months of normal progress happens in three days.\"",
     "options": [
       "Sun",
       "Lava",
@@ -1004,26 +1007,611 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0066",
-    "prompt": "Which Creator's Disaster State is this?\n\n\"A ___ out of balance becomes a wildfire — consuming oxygen, consuming attention, consuming the very thing it was meant to nourish.\"",
+    "prompt": "Which of the following best describes the Natural State (Signature) of the Fire Creator?",
     "options": [
-      "Lightning",
-      "Sky",
-      "Ocean",
-      "Fire"
+      "this Creator is the flash of recognition — the moment a complicated thing suddenly becomes simple. Where others reason their way to the answer step by step, this Creator sees the whole path lit up at once between two points that didn't seem connected.",
+      "this Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description.",
+      "this Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. this Creator knows more than it is currently saying. Always.",
+      "this Creator's gift is warmth that travels. Where Lava restructures by breaking, this Creator moves people by lighting them up — passion that catches and spreads from person to person until a whole room is leaning forward. It's the oldest technology in the world: heat and light, in human form."
     ],
     "correct_index": 3,
+    "explanation": "That passage is the signature of Fire.",
+    "style": "signature_describes",
+    "category": "signature",
+    "creator": "Fire"
+  },
+  {
+    "id": "q0067",
+    "prompt": "Which of the following best describes the Natural State (Signature) of the Lake Creator?",
+    "options": [
+      "this Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. this Creator knows more than it is currently saying. Always.",
+      "this Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. this Creator works the same way: not by force, but by simply not stopping when something is in the way.",
+      "this Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
+      "this Creator's power is the still surface that shows things back exactly as they are. Not analysis, not interpretation — reflection. Stand at the edge of a real this Creator and you see yourself with no editing; stand near a this Creator person and the same thing happens with whatever you were carrying in."
+    ],
+    "correct_index": 3,
+    "explanation": "That passage is the signature of Lake.",
+    "style": "signature_describes",
+    "category": "signature",
+    "creator": "Lake"
+  },
+  {
+    "id": "q0068",
+    "prompt": "Which of the following best describes the Natural State (Signature) of the Lava Creator?",
+    "options": [
+      "this Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
+      "this Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. this Creator works the same way: not by force, but by simply not stopping when something is in the way.",
+      "this Creator is what makes everything else possible. Nothing visible in an ecosystem grows without it — no Tree, no River, no garden of any kind — and yet this Creator itself stays underfoot, doing its quiet chemistry while the credit goes to whatever bloomed on top of it.",
+      "this Creator is the only Creator that makes new ground. When the system has hardened into something that no longer serves life, this Creator brings fired earth to the surface and lays down fresh land for everything else to grow on. Revolutionary isn't a personality quirk — it's the literal job."
+    ],
+    "correct_index": 3,
+    "explanation": "That passage is the signature of Lava.",
+    "style": "signature_describes",
+    "category": "signature",
+    "creator": "Lava"
+  },
+  {
+    "id": "q0069",
+    "prompt": "Which of the following best describes the Natural State (Signature) of the Lightning Creator?",
+    "options": [
+      "this Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people.",
+      "this Creator doesn't move in straight lines — it spirals. What looks chaotic from the outside is actually rapid, layered transformation: ideas, people, and materials all caught up at once and rearranged by the time the wind settles. Three months of normal progress happens in three days.",
+      "this Creator is the flash of recognition — the moment a complicated thing suddenly becomes simple. Where others reason their way to the answer step by step, this Creator sees the whole path lit up at once between two points that didn't seem connected.",
+      "this Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. this Creator knows more than it is currently saying. Always."
+    ],
+    "correct_index": 2,
+    "explanation": "That passage is the signature of Lightning.",
+    "style": "signature_describes",
+    "category": "signature",
+    "creator": "Lightning"
+  },
+  {
+    "id": "q0070",
+    "prompt": "Which of the following best describes the Natural State (Signature) of the Mountain Creator?",
+    "options": [
+      "this Creator is what doesn't move. While weather, seasons, and trends roll across the landscape, this Creator stays — not out of stubbornness, but because its job is to be the reference point everyone else navigates by.",
+      "this Creator's power is the still surface that shows things back exactly as they are. Not analysis, not interpretation — reflection. Stand at the edge of a real this Creator and you see yourself with no editing; stand near a this Creator person and the same thing happens with whatever you were carrying in.",
+      "this Creator is what makes everything else possible. Nothing visible in an ecosystem grows without it — no Tree, no River, no garden of any kind — and yet this Creator itself stays underfoot, doing its quiet chemistry while the credit goes to whatever bloomed on top of it.",
+      "this Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale."
+    ],
+    "correct_index": 0,
+    "explanation": "That passage is the signature of Mountain.",
+    "style": "signature_describes",
+    "category": "signature",
+    "creator": "Mountain"
+  },
+  {
+    "id": "q0071",
+    "prompt": "Which of the following best describes the Natural State (Signature) of the Ocean Creator?",
+    "options": [
+      "this Creator is the only Creator that makes new ground. When the system has hardened into something that no longer serves life, this Creator brings fired earth to the surface and lays down fresh land for everything else to grow on. Revolutionary isn't a personality quirk — it's the literal job.",
+      "this Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people.",
+      "this Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. this Creator knows more than it is currently saying. Always.",
+      "this Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description."
+    ],
+    "correct_index": 2,
+    "explanation": "That passage is the signature of Ocean.",
+    "style": "signature_describes",
+    "category": "signature",
+    "creator": "Ocean"
+  },
+  {
+    "id": "q0072",
+    "prompt": "Which of the following best describes the Natural State (Signature) of the River Creator?",
+    "options": [
+      "this Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale.",
+      "this Creator is the only Creator that makes new ground. When the system has hardened into something that no longer serves life, this Creator brings fired earth to the surface and lays down fresh land for everything else to grow on. Revolutionary isn't a personality quirk — it's the literal job.",
+      "this Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. this Creator works the same way: not by force, but by simply not stopping when something is in the way.",
+      "this Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description."
+    ],
+    "correct_index": 2,
+    "explanation": "That passage is the signature of River.",
+    "style": "signature_describes",
+    "category": "signature",
+    "creator": "River"
+  },
+  {
+    "id": "q0073",
+    "prompt": "Which of the following best describes the Natural State (Signature) of the Sky Creator?",
+    "options": [
+      "this Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people.",
+      "this Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. this Creator works the same way: not by force, but by simply not stopping when something is in the way.",
+      "this Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
+      "this Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description."
+    ],
+    "correct_index": 3,
+    "explanation": "That passage is the signature of Sky.",
+    "style": "signature_describes",
+    "category": "signature",
+    "creator": "Sky"
+  },
+  {
+    "id": "q0074",
+    "prompt": "Which of the following best describes the Natural State (Signature) of the Snow Creator?",
+    "options": [
+      "this Creator's power isn't strength — it's persistence. The same water, passing the same stone, every hour of every day, eventually carves a canyon. this Creator works the same way: not by force, but by simply not stopping when something is in the way.",
+      "this Creator's power is the still surface that shows things back exactly as they are. Not analysis, not interpretation — reflection. Stand at the edge of a real this Creator and you see yourself with no editing; stand near a this Creator person and the same thing happens with whatever you were carrying in.",
+      "this Creator is the deepest version of every Water type. Surface activity is real but minor; the actual power moves in tides, in currents, in pressure systems the surface barely hints at. this Creator knows more than it is currently saying. Always.",
+      "this Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale."
+    ],
+    "correct_index": 3,
+    "explanation": "That passage is the signature of Snow.",
+    "style": "signature_describes",
+    "category": "signature",
+    "creator": "Snow"
+  },
+  {
+    "id": "q0075",
+    "prompt": "Which of the following best describes the Natural State (Signature) of the Soil Creator?",
+    "options": [
+      "this Creator is what makes everything else possible. Nothing visible in an ecosystem grows without it — no Tree, no River, no garden of any kind — and yet this Creator itself stays underfoot, doing its quiet chemistry while the credit goes to whatever bloomed on top of it.",
+      "this Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description.",
+      "this Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
+      "this Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale."
+    ],
+    "correct_index": 0,
+    "explanation": "That passage is the signature of Soil.",
+    "style": "signature_describes",
+    "category": "signature",
+    "creator": "Soil"
+  },
+  {
+    "id": "q0076",
+    "prompt": "Which of the following best describes the Natural State (Signature) of the Sun Creator?",
+    "options": [
+      "this Creator is what makes everything else possible. Nothing visible in an ecosystem grows without it — no Tree, no River, no garden of any kind — and yet this Creator itself stays underfoot, doing its quiet chemistry while the credit goes to whatever bloomed on top of it.",
+      "this Creator is what doesn't move. While weather, seasons, and trends roll across the landscape, this Creator stays — not out of stubbornness, but because its job is to be the reference point everyone else navigates by.",
+      "this Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people.",
+      "this Creator is the quietest force in the system. Each flake is precise and individually structured, and yet what they do collectively is soften everything — the sharp edges of a landscape, the hard noise of a room. Crystalline at the detail, blanketing at the scale."
+    ],
+    "correct_index": 2,
+    "explanation": "That passage is the signature of Sun.",
+    "style": "signature_describes",
+    "category": "signature",
+    "creator": "Sun"
+  },
+  {
+    "id": "q0077",
+    "prompt": "Which of the following best describes the Natural State (Signature) of the Tree Creator?",
+    "options": [
+      "this Creator is the flash of recognition — the moment a complicated thing suddenly becomes simple. Where others reason their way to the answer step by step, this Creator sees the whole path lit up at once between two points that didn't seem connected.",
+      "this Creator doesn't move in straight lines — it spirals. What looks chaotic from the outside is actually rapid, layered transformation: ideas, people, and materials all caught up at once and rearranged by the time the wind settles. Three months of normal progress happens in three days.",
+      "this Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
+      "this Creator is the source. Not a borrowed light, not a reflected one — the type whose natural power is generating the energy that everything else organises around. Plants turn toward this Creator. So do projects. So do people."
+    ],
+    "correct_index": 2,
+    "explanation": "That passage is the signature of Tree.",
+    "style": "signature_describes",
+    "category": "signature",
+    "creator": "Tree"
+  },
+  {
+    "id": "q0078",
+    "prompt": "Which of the following best describes the Natural State (Signature) of the Whirlwind Creator?",
+    "options": [
+      "this Creator's gift is time made visible. The same growth other types try to force, this Creator just keeps doing — quietly, in rings, in branches, in roots no one sees. The most impressive Trees were planted long before anyone noticed they were trees.",
+      "this Creator's natural power is the room itself. Not a force inside the room — the room. Where other types act on things, this Creator widens the frame until what looked like a problem turns into a smaller piece of a much larger picture. Boundless thinking is the literal job description.",
+      "this Creator doesn't move in straight lines — it spirals. What looks chaotic from the outside is actually rapid, layered transformation: ideas, people, and materials all caught up at once and rearranged by the time the wind settles. Three months of normal progress happens in three days.",
+      "this Creator is the only Creator that makes new ground. When the system has hardened into something that no longer serves life, this Creator brings fired earth to the surface and lays down fresh land for everything else to grow on. Revolutionary isn't a personality quirk — it's the literal job."
+    ],
+    "correct_index": 2,
+    "explanation": "That passage is the signature of Whirlwind.",
+    "style": "signature_describes",
+    "category": "signature",
+    "creator": "Whirlwind"
+  },
+  {
+    "id": "q0079",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"A Catalyst, but a Stabilizer — which means this Creator is the rare combination that brings the energy and keeps it lit. Without this Creator, projects start hot and cool by week two. With this Creator in the room, the spark you felt on day one is still there in month six.\"",
+    "options": [
+      "Sun",
+      "Soil",
+      "Fire",
+      "Whirlwind"
+    ],
+    "correct_index": 2,
+    "explanation": "That's how Fire contributes at the table.",
+    "style": "at_table_whoami",
+    "category": "at_table",
+    "creator": "Fire"
+  },
+  {
+    "id": "q0080",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"A Humanist Director who leads by holding space, not by pushing. The decisions made around a this Creator tend to be ones the group already knew were right but hadn't yet been able to see clearly. this Creator just stopped stirring the water.\"",
+    "options": [
+      "Mountain",
+      "Whirlwind",
+      "Lake",
+      "Snow"
+    ],
+    "correct_index": 2,
+    "explanation": "That's how Lake contributes at the table.",
+    "style": "at_table_whoami",
+    "category": "at_table",
+    "creator": "Lake"
+  },
+  {
+    "id": "q0081",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"As a Catalyst Director, this Creator is the one who says the unsayable in the meeting. The conversation stays where it is until this Creator arrives — then it moves. Don't expect diplomacy; expect the chair to get pulled out and a new one put in its place.\"",
+    "options": [
+      "Whirlwind",
+      "Lake",
+      "Lava",
+      "Tree"
+    ],
+    "correct_index": 2,
+    "explanation": "That's how Lava contributes at the table.",
+    "style": "at_table_whoami",
+    "category": "at_table",
+    "creator": "Lava"
+  },
+  {
+    "id": "q0082",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"An Optimist Stabilizer who works by strike — long stretches of listening, then one sentence that reframes the entire conversation. You can spot a this Creator by the quiet that comes right before the comment everyone quotes back later.\"",
+    "options": [
+      "Soil",
+      "Ocean",
+      "Lightning",
+      "Sky"
+    ],
+    "correct_index": 2,
+    "explanation": "That's how Lightning contributes at the table.",
+    "style": "at_table_whoami",
+    "category": "at_table",
+    "creator": "Lightning"
+  },
+  {
+    "id": "q0083",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"A Realist Director who builds structures that outlast the conversation that created them. this Creator's contributions are the ones the team is still using five years later, when nobody can remember who decided on them — they just feel like part of the terrain now.\"",
+    "options": [
+      "Snow",
+      "Mountain",
+      "Fire",
+      "Sky"
+    ],
+    "correct_index": 1,
+    "explanation": "That's how Mountain contributes at the table.",
+    "style": "at_table_whoami",
+    "category": "at_table",
+    "creator": "Mountain"
+  },
+  {
+    "id": "q0084",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"A Humanist Stabilizer whose contribution is often a single, slow sentence that goes deeper than the last twenty minutes of conversation combined. this Creator doesn't talk often; when this Creator talks, everyone notices that the room has changed depth.\"",
+    "options": [
+      "Fire",
+      "Whirlwind",
+      "Ocean",
+      "Lake"
+    ],
+    "correct_index": 2,
+    "explanation": "That's how Ocean contributes at the table.",
+    "style": "at_table_whoami",
+    "category": "at_table",
+    "creator": "Ocean"
+  },
+  {
+    "id": "q0085",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"A Realist Integrator who keeps the work moving. this Creator doesn't deliberate; this Creator flows toward the lower ground and finds the route. Stuck projects unstick around Rivers because Rivers don't argue with the obstacle — they find the way around, and the rest of the team follows.\"",
+    "options": [
+      "River",
+      "Whirlwind",
+      "Lava",
+      "Lake"
+    ],
+    "correct_index": 0,
+    "explanation": "That's how River contributes at the table.",
+    "style": "at_table_whoami",
+    "category": "at_table",
+    "creator": "River"
+  },
+  {
+    "id": "q0086",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"As The Visionary, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.\"",
+    "options": [
+      "Lava",
+      "Sky",
+      "Fire",
+      "Snow"
+    ],
+    "correct_index": 1,
+    "explanation": "That's how Sky contributes at the table.",
+    "style": "at_table_whoami",
+    "category": "at_table",
+    "creator": "Sky"
+  },
+  {
+    "id": "q0087",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"An Optimist Director who leads by lowering the temperature. While other Directors push, this Creator makes a space so calm and well-laid that the right answer surfaces on its own. The decision was always there; this Creator just cleared the conditions for it to land.\"",
+    "options": [
+      "Snow",
+      "Whirlwind",
+      "Sun",
+      "Soil"
+    ],
+    "correct_index": 0,
+    "explanation": "That's how Snow contributes at the table.",
+    "style": "at_table_whoami",
+    "category": "at_table",
+    "creator": "Snow"
+  },
+  {
+    "id": "q0088",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. this Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description.\"",
+    "options": [
+      "Soil",
+      "Tree",
+      "River",
+      "Lightning"
+    ],
+    "correct_index": 0,
+    "explanation": "That's how Soil contributes at the table.",
+    "style": "at_table_whoami",
+    "category": "at_table",
+    "creator": "Soil"
+  },
+  {
+    "id": "q0089",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"An Optimist Integrator means this Creator pulls together what's already there and sees what it could become. The vision this Creator describes isn't wishful thinking — it's just further along the timeline than everyone else is looking.\"",
+    "options": [
+      "Soil",
+      "Whirlwind",
+      "Sun",
+      "Mountain"
+    ],
+    "correct_index": 2,
+    "explanation": "That's how Sun contributes at the table.",
+    "style": "at_table_whoami",
+    "category": "at_table",
+    "creator": "Sun"
+  },
+  {
+    "id": "q0090",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"As a Humanist Integrator, this Creator is the type that weaves people, projects, and seasons into something that compounds. Year-one this Creator contributions look small; year-five this Creator contributions look like the entire forest the team is now standing in.\"",
+    "options": [
+      "Lava",
+      "Mountain",
+      "Tree",
+      "Soil"
+    ],
+    "correct_index": 2,
+    "explanation": "That's how Tree contributes at the table.",
+    "style": "at_table_whoami",
+    "category": "at_table",
+    "creator": "Tree"
+  },
+  {
+    "id": "q0091",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"As an Integrator, this Creator is the one who picks things up from every corner of the room and weaves them into something nobody else saw was there. Where others see scattered fragments, this Creator sees a pattern about to organise itself.\"",
+    "options": [
+      "Mountain",
+      "Ocean",
+      "Whirlwind",
+      "Soil"
+    ],
+    "correct_index": 2,
+    "explanation": "That's how Whirlwind contributes at the table.",
+    "style": "at_table_whoami",
+    "category": "at_table",
+    "creator": "Whirlwind"
+  },
+  {
+    "id": "q0092",
+    "prompt": "Which of the following best describes how the Fire Creator shows up at the table?",
+    "options": [
+      "A Catalyst, but a Stabilizer — which means this Creator is the rare combination that brings the energy and keeps it lit. Without this Creator, projects start hot and cool by week two. With this Creator in the room, the spark you felt on day one is still there in month six.",
+      "A Humanist Stabilizer whose contribution is often a single, slow sentence that goes deeper than the last twenty minutes of conversation combined. this Creator doesn't talk often; when this Creator talks, everyone notices that the room has changed depth.",
+      "A Realist Integrator who keeps the work moving. this Creator doesn't deliberate; this Creator flows toward the lower ground and finds the route. Stuck projects unstick around Rivers because Rivers don't argue with the obstacle — they find the way around, and the rest of the team follows.",
+      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. this Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description."
+    ],
+    "correct_index": 0,
+    "explanation": "That passage describes Fire at the table.",
+    "style": "at_table_describes",
+    "category": "at_table",
+    "creator": "Fire"
+  },
+  {
+    "id": "q0093",
+    "prompt": "Which of the following best describes how the Lake Creator shows up at the table?",
+    "options": [
+      "A Humanist Director who leads by holding space, not by pushing. The decisions made around a this Creator tend to be ones the group already knew were right but hadn't yet been able to see clearly. this Creator just stopped stirring the water.",
+      "As a Humanist Integrator, this Creator is the type that weaves people, projects, and seasons into something that compounds. Year-one this Creator contributions look small; year-five this Creator contributions look like the entire forest the team is now standing in.",
+      "An Optimist Integrator means this Creator pulls together what's already there and sees what it could become. The vision this Creator describes isn't wishful thinking — it's just further along the timeline than everyone else is looking.",
+      "As an Integrator, this Creator is the one who picks things up from every corner of the room and weaves them into something nobody else saw was there. Where others see scattered fragments, this Creator sees a pattern about to organise itself."
+    ],
+    "correct_index": 0,
+    "explanation": "That passage describes Lake at the table.",
+    "style": "at_table_describes",
+    "category": "at_table",
+    "creator": "Lake"
+  },
+  {
+    "id": "q0094",
+    "prompt": "Which of the following best describes how the Lava Creator shows up at the table?",
+    "options": [
+      "As a Catalyst Director, this Creator is the one who says the unsayable in the meeting. The conversation stays where it is until this Creator arrives — then it moves. Don't expect diplomacy; expect the chair to get pulled out and a new one put in its place.",
+      "A Humanist Director who leads by holding space, not by pushing. The decisions made around a this Creator tend to be ones the group already knew were right but hadn't yet been able to see clearly. this Creator just stopped stirring the water.",
+      "An Optimist Stabilizer who works by strike — long stretches of listening, then one sentence that reframes the entire conversation. You can spot a this Creator by the quiet that comes right before the comment everyone quotes back later.",
+      "An Optimist Director who leads by lowering the temperature. While other Directors push, this Creator makes a space so calm and well-laid that the right answer surfaces on its own. The decision was always there; this Creator just cleared the conditions for it to land."
+    ],
+    "correct_index": 0,
+    "explanation": "That passage describes Lava at the table.",
+    "style": "at_table_describes",
+    "category": "at_table",
+    "creator": "Lava"
+  },
+  {
+    "id": "q0095",
+    "prompt": "Which of the following best describes how the Lightning Creator shows up at the table?",
+    "options": [
+      "A Realist Director who builds structures that outlast the conversation that created them. this Creator's contributions are the ones the team is still using five years later, when nobody can remember who decided on them — they just feel like part of the terrain now.",
+      "As a Humanist Integrator, this Creator is the type that weaves people, projects, and seasons into something that compounds. Year-one this Creator contributions look small; year-five this Creator contributions look like the entire forest the team is now standing in.",
+      "An Optimist Director who leads by lowering the temperature. While other Directors push, this Creator makes a space so calm and well-laid that the right answer surfaces on its own. The decision was always there; this Creator just cleared the conditions for it to land.",
+      "An Optimist Stabilizer who works by strike — long stretches of listening, then one sentence that reframes the entire conversation. You can spot a this Creator by the quiet that comes right before the comment everyone quotes back later."
+    ],
+    "correct_index": 3,
+    "explanation": "That passage describes Lightning at the table.",
+    "style": "at_table_describes",
+    "category": "at_table",
+    "creator": "Lightning"
+  },
+  {
+    "id": "q0096",
+    "prompt": "Which of the following best describes how the Mountain Creator shows up at the table?",
+    "options": [
+      "As a Humanist Integrator, this Creator is the type that weaves people, projects, and seasons into something that compounds. Year-one this Creator contributions look small; year-five this Creator contributions look like the entire forest the team is now standing in.",
+      "A Realist Integrator who keeps the work moving. this Creator doesn't deliberate; this Creator flows toward the lower ground and finds the route. Stuck projects unstick around Rivers because Rivers don't argue with the obstacle — they find the way around, and the rest of the team follows.",
+      "As a Catalyst Director, this Creator is the one who says the unsayable in the meeting. The conversation stays where it is until this Creator arrives — then it moves. Don't expect diplomacy; expect the chair to get pulled out and a new one put in its place.",
+      "A Realist Director who builds structures that outlast the conversation that created them. this Creator's contributions are the ones the team is still using five years later, when nobody can remember who decided on them — they just feel like part of the terrain now."
+    ],
+    "correct_index": 3,
+    "explanation": "That passage describes Mountain at the table.",
+    "style": "at_table_describes",
+    "category": "at_table",
+    "creator": "Mountain"
+  },
+  {
+    "id": "q0097",
+    "prompt": "Which of the following best describes how the Ocean Creator shows up at the table?",
+    "options": [
+      "As a Humanist Integrator, this Creator is the type that weaves people, projects, and seasons into something that compounds. Year-one this Creator contributions look small; year-five this Creator contributions look like the entire forest the team is now standing in.",
+      "As a Catalyst Director, this Creator is the one who says the unsayable in the meeting. The conversation stays where it is until this Creator arrives — then it moves. Don't expect diplomacy; expect the chair to get pulled out and a new one put in its place.",
+      "A Humanist Stabilizer whose contribution is often a single, slow sentence that goes deeper than the last twenty minutes of conversation combined. this Creator doesn't talk often; when this Creator talks, everyone notices that the room has changed depth.",
+      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. this Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description."
+    ],
+    "correct_index": 2,
+    "explanation": "That passage describes Ocean at the table.",
+    "style": "at_table_describes",
+    "category": "at_table",
+    "creator": "Ocean"
+  },
+  {
+    "id": "q0098",
+    "prompt": "Which of the following best describes how the River Creator shows up at the table?",
+    "options": [
+      "As The Visionary, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.",
+      "A Realist Director who builds structures that outlast the conversation that created them. this Creator's contributions are the ones the team is still using five years later, when nobody can remember who decided on them — they just feel like part of the terrain now.",
+      "A Realist Integrator who keeps the work moving. this Creator doesn't deliberate; this Creator flows toward the lower ground and finds the route. Stuck projects unstick around Rivers because Rivers don't argue with the obstacle — they find the way around, and the rest of the team follows.",
+      "An Optimist Stabilizer who works by strike — long stretches of listening, then one sentence that reframes the entire conversation. You can spot a this Creator by the quiet that comes right before the comment everyone quotes back later."
+    ],
+    "correct_index": 2,
+    "explanation": "That passage describes River at the table.",
+    "style": "at_table_describes",
+    "category": "at_table",
+    "creator": "River"
+  },
+  {
+    "id": "q0099",
+    "prompt": "Which of the following best describes how the Sky Creator shows up at the table?",
+    "options": [
+      "As The Visionary, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.",
+      "As a Catalyst Director, this Creator is the one who says the unsayable in the meeting. The conversation stays where it is until this Creator arrives — then it moves. Don't expect diplomacy; expect the chair to get pulled out and a new one put in its place.",
+      "As an Integrator, this Creator is the one who picks things up from every corner of the room and weaves them into something nobody else saw was there. Where others see scattered fragments, this Creator sees a pattern about to organise itself.",
+      "An Optimist Director who leads by lowering the temperature. While other Directors push, this Creator makes a space so calm and well-laid that the right answer surfaces on its own. The decision was always there; this Creator just cleared the conditions for it to land."
+    ],
+    "correct_index": 0,
+    "explanation": "That passage describes Sky at the table.",
+    "style": "at_table_describes",
+    "category": "at_table",
+    "creator": "Sky"
+  },
+  {
+    "id": "q0100",
+    "prompt": "Which of the following best describes how the Snow Creator shows up at the table?",
+    "options": [
+      "A Humanist Stabilizer whose contribution is often a single, slow sentence that goes deeper than the last twenty minutes of conversation combined. this Creator doesn't talk often; when this Creator talks, everyone notices that the room has changed depth.",
+      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. this Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description.",
+      "As The Visionary, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.",
+      "An Optimist Director who leads by lowering the temperature. While other Directors push, this Creator makes a space so calm and well-laid that the right answer surfaces on its own. The decision was always there; this Creator just cleared the conditions for it to land."
+    ],
+    "correct_index": 3,
+    "explanation": "That passage describes Snow at the table.",
+    "style": "at_table_describes",
+    "category": "at_table",
+    "creator": "Snow"
+  },
+  {
+    "id": "q0101",
+    "prompt": "Which of the following best describes how the Soil Creator shows up at the table?",
+    "options": [
+      "A Humanist Director who leads by holding space, not by pushing. The decisions made around a this Creator tend to be ones the group already knew were right but hadn't yet been able to see clearly. this Creator just stopped stirring the water.",
+      "As The Visionary, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.",
+      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. this Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description.",
+      "A Catalyst, but a Stabilizer — which means this Creator is the rare combination that brings the energy and keeps it lit. Without this Creator, projects start hot and cool by week two. With this Creator in the room, the spark you felt on day one is still there in month six."
+    ],
+    "correct_index": 2,
+    "explanation": "That passage describes Soil at the table.",
+    "style": "at_table_describes",
+    "category": "at_table",
+    "creator": "Soil"
+  },
+  {
+    "id": "q0102",
+    "prompt": "Which of the following best describes how the Sun Creator shows up at the table?",
+    "options": [
+      "An Optimist Integrator means this Creator pulls together what's already there and sees what it could become. The vision this Creator describes isn't wishful thinking — it's just further along the timeline than everyone else is looking.",
+      "A Catalyst, but a Stabilizer — which means this Creator is the rare combination that brings the energy and keeps it lit. Without this Creator, projects start hot and cool by week two. With this Creator in the room, the spark you felt on day one is still there in month six.",
+      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. this Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description.",
+      "As an Integrator, this Creator is the one who picks things up from every corner of the room and weaves them into something nobody else saw was there. Where others see scattered fragments, this Creator sees a pattern about to organise itself."
+    ],
+    "correct_index": 0,
+    "explanation": "That passage describes Sun at the table.",
+    "style": "at_table_describes",
+    "category": "at_table",
+    "creator": "Sun"
+  },
+  {
+    "id": "q0103",
+    "prompt": "Which of the following best describes how the Tree Creator shows up at the table?",
+    "options": [
+      "A Catalyst, but a Stabilizer — which means this Creator is the rare combination that brings the energy and keeps it lit. Without this Creator, projects start hot and cool by week two. With this Creator in the room, the spark you felt on day one is still there in month six.",
+      "As an Integrator, this Creator is the one who picks things up from every corner of the room and weaves them into something nobody else saw was there. Where others see scattered fragments, this Creator sees a pattern about to organise itself.",
+      "An Optimist Stabilizer who works by strike — long stretches of listening, then one sentence that reframes the entire conversation. You can spot a this Creator by the quiet that comes right before the comment everyone quotes back later.",
+      "As a Humanist Integrator, this Creator is the type that weaves people, projects, and seasons into something that compounds. Year-one this Creator contributions look small; year-five this Creator contributions look like the entire forest the team is now standing in."
+    ],
+    "correct_index": 3,
+    "explanation": "That passage describes Tree at the table.",
+    "style": "at_table_describes",
+    "category": "at_table",
+    "creator": "Tree"
+  },
+  {
+    "id": "q0104",
+    "prompt": "Which of the following best describes how the Whirlwind Creator shows up at the table?",
+    "options": [
+      "A Humanist Director who leads by holding space, not by pushing. The decisions made around a this Creator tend to be ones the group already knew were right but hadn't yet been able to see clearly. this Creator just stopped stirring the water.",
+      "As a Humanist Integrator, this Creator is the type that weaves people, projects, and seasons into something that compounds. Year-one this Creator contributions look small; year-five this Creator contributions look like the entire forest the team is now standing in.",
+      "As an Integrator, this Creator is the one who picks things up from every corner of the room and weaves them into something nobody else saw was there. Where others see scattered fragments, this Creator sees a pattern about to organise itself.",
+      "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. this Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description."
+    ],
+    "correct_index": 2,
+    "explanation": "That passage describes Whirlwind at the table.",
+    "style": "at_table_describes",
+    "category": "at_table",
+    "creator": "Whirlwind"
+  },
+  {
+    "id": "q0105",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"This Creator out of balance becomes a wildfire — consuming oxygen, consuming attention, consuming the very thing it was meant to nourish. The same passion that inspires can become the passion that exhausts everyone in its radius, including itself.\"",
+    "options": [
+      "Ocean",
+      "Fire",
+      "Soil",
+      "Whirlwind"
+    ],
+    "correct_index": 1,
     "explanation": "That's how Fire looks in shadow.",
     "style": "shadow_whoami",
     "category": "shadow",
     "creator": "Fire"
   },
   {
-    "id": "q0067",
-    "prompt": "Which Creator's Disaster State is this?\n\n\"Stillness that loses its current becomes stagnation.\"",
+    "id": "q0106",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"Stillness that loses its current becomes stagnation. The same calm depth that lets others see clearly can, in shadow, become a refusal to move at all — water that has stopped breathing, slowly going green at the edges.\"",
     "options": [
-      "Ocean",
+      "Whirlwind",
+      "Lava",
       "River",
-      "Tree",
       "Lake"
     ],
     "correct_index": 3,
@@ -1033,102 +1621,102 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "creator": "Lake"
   },
   {
-    "id": "q0068",
-    "prompt": "Which Creator's Disaster State is this?\n\n\"When ___ runs unchecked, the eruption stops being generative and starts being scorched earth.\"",
+    "id": "q0107",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"When this Creator runs unchecked, the eruption stops being generative and starts being scorched earth. Everything around them gets too hot to touch, including the people who love them. The same fire that restructures can also burn down the village.\"",
     "options": [
-      "Tree",
-      "River",
-      "Soil",
-      "Lava"
+      "Sky",
+      "Ocean",
+      "Lava",
+      "Fire"
     ],
-    "correct_index": 3,
+    "correct_index": 2,
     "explanation": "That's how Lava looks in shadow.",
     "style": "shadow_whoami",
     "category": "shadow",
     "creator": "Lava"
   },
   {
-    "id": "q0069",
-    "prompt": "Which Creator's Disaster State is this?\n\n\"When ___ loses its ground, the strikes turn into a storm — too many flashes, too fast, none of them connecting to action.\"",
+    "id": "q0108",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"When this Creator loses its ground, the strikes turn into a storm — too many flashes, too fast, none of them connecting to action. Insight without integration becomes a kind of mental weather that exhausts everyone trying to keep up.\"",
     "options": [
-      "Sun",
-      "Whirlwind",
+      "Ocean",
       "Lightning",
-      "Ocean"
+      "Tree",
+      "Lake"
     ],
-    "correct_index": 2,
+    "correct_index": 1,
     "explanation": "That's how Lightning looks in shadow.",
     "style": "shadow_whoami",
     "category": "shadow",
     "creator": "Lightning"
   },
   {
-    "id": "q0070",
-    "prompt": "Which Creator's Disaster State is this?\n\n\"A ___ that holds for too long, or holds the wrong thing, quietly builds pressure underneath itself.\"",
+    "id": "q0109",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"This Creator that holds for too long, or holds the wrong thing, quietly builds pressure underneath itself. When that finally releases — an earthquake — the very ground everyone trusted suddenly moves, and the structures built on it have to be rethought from the foundation up.\"",
     "options": [
-      "Mountain",
-      "Lake",
-      "Soil",
-      "Snow"
+      "River",
+      "Tree",
+      "Lava",
+      "Mountain"
     ],
-    "correct_index": 0,
+    "correct_index": 3,
     "explanation": "That's how Mountain looks in shadow.",
     "style": "shadow_whoami",
     "category": "shadow",
     "creator": "Mountain"
   },
   {
-    "id": "q0071",
-    "prompt": "Which Creator's Disaster State is this?\n\n\"An ___ disturbed at depth doesn't react with ripples — it reacts with a tsunami.\"",
+    "id": "q0110",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"This Creator disturbed at depth doesn't react with ripples — it reacts with a tsunami. The same profound, patient holding becomes a force that nobody on the shore can quite get away from in time. this Creator in shadow is everything that wasn't said, arriving all at once.\"",
     "options": [
+      "Lightning",
+      "River",
       "Lava",
-      "Sun",
-      "Ocean",
-      "Sky"
+      "Ocean"
     ],
-    "correct_index": 2,
+    "correct_index": 3,
     "explanation": "That's how Ocean looks in shadow.",
     "style": "shadow_whoami",
     "category": "shadow",
     "creator": "Ocean"
   },
   {
-    "id": "q0072",
-    "prompt": "Which Creator's Disaster State is this?\n\n\"A ___ without banks becomes a flood.\"",
+    "id": "q0111",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. this Creator shadow looks like over-giving until everything downstream is underwater.\"",
     "options": [
-      "Snow",
-      "Lava",
+      "Fire",
       "River",
-      "Sky"
+      "Snow",
+      "Tree"
     ],
-    "correct_index": 2,
+    "correct_index": 1,
     "explanation": "That's how River looks in shadow.",
     "style": "shadow_whoami",
     "category": "shadow",
     "creator": "River"
   },
   {
-    "id": "q0073",
-    "prompt": "Which Creator's Disaster State is this?\n\n\"___ in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.\"",
+    "id": "q0112",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"this Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.\"",
     "options": [
-      "Sun",
+      "Whirlwind",
       "River",
-      "Tree",
-      "Sky"
+      "Sky",
+      "Fire"
     ],
-    "correct_index": 3,
+    "correct_index": 2,
     "explanation": "That's how Sky looks in shadow.",
     "style": "shadow_whoami",
     "category": "shadow",
     "creator": "Sky"
   },
   {
-    "id": "q0074",
-    "prompt": "Which Creator's Disaster State is this?\n\n\"___ that loses its lightness becomes an avalanche — all that quiet, patient covering, suddenly released as one downhill rush that buries everything in its path.\"",
+    "id": "q0113",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"this Creator that loses its lightness becomes an avalanche — all that quiet, patient covering, suddenly released as one downhill rush that buries everything in its path. What looked passive turns out to have been pressure all along.\"",
     "options": [
+      "Soil",
       "River",
       "Lake",
-      "Ocean",
       "Snow"
     ],
     "correct_index": 3,
@@ -1138,418 +1726,418 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "creator": "Snow"
   },
   {
-    "id": "q0075",
-    "prompt": "Which Creator's Disaster State is this?\n\n\"___ left unprotected, overworked, or undervalued erodes.\"",
+    "id": "q0114",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"this Creator left unprotected, overworked, or undervalued erodes. What looked like an inexhaustible base of nourishment turns out to have been finite all along — and once it's gone, nothing on the surface will grow in the same way again.\"",
     "options": [
-      "Soil",
-      "Sky",
       "Tree",
-      "Snow"
+      "Soil",
+      "Ocean",
+      "River"
     ],
-    "correct_index": 0,
+    "correct_index": 1,
     "explanation": "That's how Soil looks in shadow.",
     "style": "shadow_whoami",
     "category": "shadow",
     "creator": "Soil"
   },
   {
-    "id": "q0076",
-    "prompt": "Which Creator's Disaster State is this?\n\n\"A ___ overheating becomes a solar flare — too much output, too little rhythm, scorching the very ecosystem it was sustaining.\"",
+    "id": "q0115",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"This Creator overheating becomes a solar flare — too much output, too little rhythm, scorching the very ecosystem it was sustaining. The people closest to a flared-out this Creator get burned worst.\"",
     "options": [
-      "Soil",
-      "Mountain",
+      "Tree",
       "Sun",
-      "Snow"
+      "Sky",
+      "Mountain"
     ],
-    "correct_index": 2,
+    "correct_index": 1,
     "explanation": "That's how Sun looks in shadow.",
     "style": "shadow_whoami",
     "category": "shadow",
     "creator": "Sun"
   },
   {
-    "id": "q0077",
-    "prompt": "Which Creator's Disaster State is this?\n\n\"A ___ forced out of season — moved too often, asked to grow too fast, denied root time — becomes an uprooting waiting to happen.\"",
+    "id": "q0116",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"This Creator forced out of season — moved too often, asked to grow too fast, denied root time — becomes an uprooting waiting to happen. Outwardly fine, then suddenly toppled by a wind that wouldn't have moved a properly rooted version of the same this Creator.\"",
     "options": [
-      "Lightning",
-      "Whirlwind",
+      "River",
       "Tree",
-      "Sun"
+      "Soil",
+      "Fire"
     ],
-    "correct_index": 2,
+    "correct_index": 1,
     "explanation": "That's how Tree looks in shadow.",
     "style": "shadow_whoami",
     "category": "shadow",
     "creator": "Tree"
   },
   {
-    "id": "q0078",
-    "prompt": "Which Creator's Disaster State is this?\n\n\"When ___ loses its still centre, the spiral becomes a tornado — change for change's sake, with no anchor and nowhere to land.\"",
+    "id": "q0117",
+    "prompt": "Which Creator's Disaster State does this describe?\n\n\"When this Creator loses its still centre, the spiral becomes a tornado — change for change's sake, with no anchor and nowhere to land. Things that were working get yanked up by the roots along with the things that weren't.\"",
     "options": [
-      "Tree",
       "Sky",
       "Whirlwind",
-      "Lava"
+      "Lava",
+      "Mountain"
     ],
-    "correct_index": 2,
+    "correct_index": 1,
     "explanation": "That's how Whirlwind looks in shadow.",
     "style": "shadow_whoami",
     "category": "shadow",
     "creator": "Whirlwind"
   },
   {
-    "id": "q0079",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"A Catalyst, but a Stabilizer — which means ___ is the rare combination that brings the energy and keeps it lit.\"",
+    "id": "q0118",
+    "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Fire Creator?",
     "options": [
-      "Sun",
-      "Soil",
-      "Fire",
-      "Whirlwind"
+      "This Creator out of balance becomes a wildfire — consuming oxygen, consuming attention, consuming the very thing it was meant to nourish. The same passion that inspires can become the passion that exhausts everyone in its radius, including itself.",
+      "this Creator left unprotected, overworked, or undervalued erodes. What looked like an inexhaustible base of nourishment turns out to have been finite all along — and once it's gone, nothing on the surface will grow in the same way again.",
+      "this Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
+      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. this Creator shadow looks like over-giving until everything downstream is underwater."
     ],
-    "correct_index": 2,
-    "explanation": "That's the Fire contribution at the table.",
-    "style": "at_table_whoami",
-    "category": "at_table",
+    "correct_index": 0,
+    "explanation": "That passage describes the shadow of Fire.",
+    "style": "shadow_describes",
+    "category": "shadow",
     "creator": "Fire"
   },
   {
-    "id": "q0080",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"A Humanist Director who leads by holding space, not by pushing.\"",
+    "id": "q0119",
+    "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Lake Creator?",
     "options": [
-      "Mountain",
-      "Whirlwind",
-      "Lake",
-      "Snow"
+      "This Creator overheating becomes a solar flare — too much output, too little rhythm, scorching the very ecosystem it was sustaining. The people closest to a flared-out this Creator get burned worst.",
+      "this Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
+      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. this Creator shadow looks like over-giving until everything downstream is underwater.",
+      "Stillness that loses its current becomes stagnation. The same calm depth that lets others see clearly can, in shadow, become a refusal to move at all — water that has stopped breathing, slowly going green at the edges."
     ],
-    "correct_index": 2,
-    "explanation": "That's the Lake contribution at the table.",
-    "style": "at_table_whoami",
-    "category": "at_table",
+    "correct_index": 3,
+    "explanation": "That passage describes the shadow of Lake.",
+    "style": "shadow_describes",
+    "category": "shadow",
     "creator": "Lake"
   },
   {
-    "id": "q0081",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"As a Catalyst Director, ___ is the one who says the unsayable in the meeting.\"",
+    "id": "q0120",
+    "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Lava Creator?",
     "options": [
-      "Whirlwind",
-      "Lake",
-      "Lava",
-      "Tree"
+      "When this Creator runs unchecked, the eruption stops being generative and starts being scorched earth. Everything around them gets too hot to touch, including the people who love them. The same fire that restructures can also burn down the village.",
+      "this Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
+      "This Creator overheating becomes a solar flare — too much output, too little rhythm, scorching the very ecosystem it was sustaining. The people closest to a flared-out this Creator get burned worst.",
+      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. this Creator shadow looks like over-giving until everything downstream is underwater."
     ],
-    "correct_index": 2,
-    "explanation": "That's the Lava contribution at the table.",
-    "style": "at_table_whoami",
-    "category": "at_table",
+    "correct_index": 0,
+    "explanation": "That passage describes the shadow of Lava.",
+    "style": "shadow_describes",
+    "category": "shadow",
     "creator": "Lava"
   },
   {
-    "id": "q0082",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"An Optimist Stabilizer who works by strike — long stretches of listening, then one sentence that reframes the entire conversation.\"",
+    "id": "q0121",
+    "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Lightning Creator?",
     "options": [
-      "Soil",
-      "Ocean",
-      "Lightning",
-      "Sky"
+      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. this Creator shadow looks like over-giving until everything downstream is underwater.",
+      "This Creator that holds for too long, or holds the wrong thing, quietly builds pressure underneath itself. When that finally releases — an earthquake — the very ground everyone trusted suddenly moves, and the structures built on it have to be rethought from the foundation up.",
+      "this Creator that loses its lightness becomes an avalanche — all that quiet, patient covering, suddenly released as one downhill rush that buries everything in its path. What looked passive turns out to have been pressure all along.",
+      "When this Creator loses its ground, the strikes turn into a storm — too many flashes, too fast, none of them connecting to action. Insight without integration becomes a kind of mental weather that exhausts everyone trying to keep up."
     ],
-    "correct_index": 2,
-    "explanation": "That's the Lightning contribution at the table.",
-    "style": "at_table_whoami",
-    "category": "at_table",
+    "correct_index": 3,
+    "explanation": "That passage describes the shadow of Lightning.",
+    "style": "shadow_describes",
+    "category": "shadow",
     "creator": "Lightning"
   },
   {
-    "id": "q0083",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"A Realist Director who builds structures that outlast the conversation that created them.\"",
+    "id": "q0122",
+    "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Mountain Creator?",
     "options": [
-      "Snow",
-      "Mountain",
-      "Fire",
-      "Sky"
+      "This Creator out of balance becomes a wildfire — consuming oxygen, consuming attention, consuming the very thing it was meant to nourish. The same passion that inspires can become the passion that exhausts everyone in its radius, including itself.",
+      "this Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
+      "This Creator that holds for too long, or holds the wrong thing, quietly builds pressure underneath itself. When that finally releases — an earthquake — the very ground everyone trusted suddenly moves, and the structures built on it have to be rethought from the foundation up.",
+      "When this Creator runs unchecked, the eruption stops being generative and starts being scorched earth. Everything around them gets too hot to touch, including the people who love them. The same fire that restructures can also burn down the village."
     ],
-    "correct_index": 1,
-    "explanation": "That's the Mountain contribution at the table.",
-    "style": "at_table_whoami",
-    "category": "at_table",
+    "correct_index": 2,
+    "explanation": "That passage describes the shadow of Mountain.",
+    "style": "shadow_describes",
+    "category": "shadow",
     "creator": "Mountain"
   },
   {
-    "id": "q0084",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"A Humanist Stabilizer whose contribution is often a single, slow sentence that goes deeper than the last twenty minutes of conversation combined.\"",
+    "id": "q0123",
+    "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Ocean Creator?",
     "options": [
-      "Fire",
-      "Whirlwind",
-      "Ocean",
-      "Lake"
+      "When this Creator runs unchecked, the eruption stops being generative and starts being scorched earth. Everything around them gets too hot to touch, including the people who love them. The same fire that restructures can also burn down the village.",
+      "This Creator overheating becomes a solar flare — too much output, too little rhythm, scorching the very ecosystem it was sustaining. The people closest to a flared-out this Creator get burned worst.",
+      "When this Creator loses its ground, the strikes turn into a storm — too many flashes, too fast, none of them connecting to action. Insight without integration becomes a kind of mental weather that exhausts everyone trying to keep up.",
+      "This Creator disturbed at depth doesn't react with ripples — it reacts with a tsunami. The same profound, patient holding becomes a force that nobody on the shore can quite get away from in time. this Creator in shadow is everything that wasn't said, arriving all at once."
     ],
-    "correct_index": 2,
-    "explanation": "That's the Ocean contribution at the table.",
-    "style": "at_table_whoami",
-    "category": "at_table",
+    "correct_index": 3,
+    "explanation": "That passage describes the shadow of Ocean.",
+    "style": "shadow_describes",
+    "category": "shadow",
     "creator": "Ocean"
   },
   {
-    "id": "q0085",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"A Realist Integrator who keeps the work moving.\"",
+    "id": "q0124",
+    "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the River Creator?",
     "options": [
-      "River",
-      "Whirlwind",
-      "Lava",
-      "Lake"
+      "When this Creator loses its still centre, the spiral becomes a tornado — change for change's sake, with no anchor and nowhere to land. Things that were working get yanked up by the roots along with the things that weren't.",
+      "This Creator forced out of season — moved too often, asked to grow too fast, denied root time — becomes an uprooting waiting to happen. Outwardly fine, then suddenly toppled by a wind that wouldn't have moved a properly rooted version of the same this Creator.",
+      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. this Creator shadow looks like over-giving until everything downstream is underwater.",
+      "This Creator out of balance becomes a wildfire — consuming oxygen, consuming attention, consuming the very thing it was meant to nourish. The same passion that inspires can become the passion that exhausts everyone in its radius, including itself."
     ],
-    "correct_index": 0,
-    "explanation": "That's the River contribution at the table.",
-    "style": "at_table_whoami",
-    "category": "at_table",
+    "correct_index": 2,
+    "explanation": "That passage describes the shadow of River.",
+    "style": "shadow_describes",
+    "category": "shadow",
     "creator": "River"
   },
   {
-    "id": "q0086",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"As The Visionary, ___'s role isn't to do the work — it's to keep the horizon visible while the work is being done.\"",
+    "id": "q0125",
+    "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Sky Creator?",
     "options": [
-      "Lava",
-      "Sky",
-      "Fire",
-      "Snow"
+      "this Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
+      "This Creator out of balance becomes a wildfire — consuming oxygen, consuming attention, consuming the very thing it was meant to nourish. The same passion that inspires can become the passion that exhausts everyone in its radius, including itself.",
+      "This Creator disturbed at depth doesn't react with ripples — it reacts with a tsunami. The same profound, patient holding becomes a force that nobody on the shore can quite get away from in time. this Creator in shadow is everything that wasn't said, arriving all at once.",
+      "When this Creator loses its ground, the strikes turn into a storm — too many flashes, too fast, none of them connecting to action. Insight without integration becomes a kind of mental weather that exhausts everyone trying to keep up."
     ],
-    "correct_index": 1,
-    "explanation": "That's the Sky contribution at the table.",
-    "style": "at_table_whoami",
-    "category": "at_table",
+    "correct_index": 0,
+    "explanation": "That passage describes the shadow of Sky.",
+    "style": "shadow_describes",
+    "category": "shadow",
     "creator": "Sky"
   },
   {
-    "id": "q0087",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"An Optimist Director who leads by lowering the temperature.\"",
+    "id": "q0126",
+    "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Snow Creator?",
     "options": [
-      "Snow",
-      "Whirlwind",
-      "Sun",
-      "Soil"
+      "this Creator that loses its lightness becomes an avalanche — all that quiet, patient covering, suddenly released as one downhill rush that buries everything in its path. What looked passive turns out to have been pressure all along.",
+      "this Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
+      "Stillness that loses its current becomes stagnation. The same calm depth that lets others see clearly can, in shadow, become a refusal to move at all — water that has stopped breathing, slowly going green at the edges.",
+      "This Creator forced out of season — moved too often, asked to grow too fast, denied root time — becomes an uprooting waiting to happen. Outwardly fine, then suddenly toppled by a wind that wouldn't have moved a properly rooted version of the same this Creator."
     ],
     "correct_index": 0,
-    "explanation": "That's the Snow contribution at the table.",
-    "style": "at_table_whoami",
-    "category": "at_table",
+    "explanation": "That passage describes the shadow of Snow.",
+    "style": "shadow_describes",
+    "category": "shadow",
     "creator": "Snow"
   },
   {
-    "id": "q0088",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"A Realist Stabilizer who feeds the team without ever needing to be at the front of the room.\"",
+    "id": "q0127",
+    "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Soil Creator?",
     "options": [
-      "Soil",
-      "Tree",
-      "River",
-      "Lightning"
+      "This Creator that holds for too long, or holds the wrong thing, quietly builds pressure underneath itself. When that finally releases — an earthquake — the very ground everyone trusted suddenly moves, and the structures built on it have to be rethought from the foundation up.",
+      "When this Creator runs unchecked, the eruption stops being generative and starts being scorched earth. Everything around them gets too hot to touch, including the people who love them. The same fire that restructures can also burn down the village.",
+      "this Creator left unprotected, overworked, or undervalued erodes. What looked like an inexhaustible base of nourishment turns out to have been finite all along — and once it's gone, nothing on the surface will grow in the same way again.",
+      "Stillness that loses its current becomes stagnation. The same calm depth that lets others see clearly can, in shadow, become a refusal to move at all — water that has stopped breathing, slowly going green at the edges."
     ],
-    "correct_index": 0,
-    "explanation": "That's the Soil contribution at the table.",
-    "style": "at_table_whoami",
-    "category": "at_table",
+    "correct_index": 2,
+    "explanation": "That passage describes the shadow of Soil.",
+    "style": "shadow_describes",
+    "category": "shadow",
     "creator": "Soil"
   },
   {
-    "id": "q0089",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"An Optimist Integrator means ___ pulls together what's already there and sees what it could become.\"",
+    "id": "q0128",
+    "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Sun Creator?",
     "options": [
-      "Soil",
-      "Whirlwind",
-      "Sun",
-      "Mountain"
+      "When this Creator loses its ground, the strikes turn into a storm — too many flashes, too fast, none of them connecting to action. Insight without integration becomes a kind of mental weather that exhausts everyone trying to keep up.",
+      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. this Creator shadow looks like over-giving until everything downstream is underwater.",
+      "This Creator forced out of season — moved too often, asked to grow too fast, denied root time — becomes an uprooting waiting to happen. Outwardly fine, then suddenly toppled by a wind that wouldn't have moved a properly rooted version of the same this Creator.",
+      "This Creator overheating becomes a solar flare — too much output, too little rhythm, scorching the very ecosystem it was sustaining. The people closest to a flared-out this Creator get burned worst."
     ],
-    "correct_index": 2,
-    "explanation": "That's the Sun contribution at the table.",
-    "style": "at_table_whoami",
-    "category": "at_table",
+    "correct_index": 3,
+    "explanation": "That passage describes the shadow of Sun.",
+    "style": "shadow_describes",
+    "category": "shadow",
     "creator": "Sun"
   },
   {
-    "id": "q0090",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"As a Humanist Integrator, ___ is the type that weaves people, projects, and seasons into something that compounds.\"",
+    "id": "q0129",
+    "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Tree Creator?",
     "options": [
-      "Lava",
-      "Mountain",
-      "Tree",
-      "Soil"
+      "This Creator forced out of season — moved too often, asked to grow too fast, denied root time — becomes an uprooting waiting to happen. Outwardly fine, then suddenly toppled by a wind that wouldn't have moved a properly rooted version of the same this Creator.",
+      "this Creator that loses its lightness becomes an avalanche — all that quiet, patient covering, suddenly released as one downhill rush that buries everything in its path. What looked passive turns out to have been pressure all along.",
+      "This Creator overheating becomes a solar flare — too much output, too little rhythm, scorching the very ecosystem it was sustaining. The people closest to a flared-out this Creator get burned worst.",
+      "This Creator that holds for too long, or holds the wrong thing, quietly builds pressure underneath itself. When that finally releases — an earthquake — the very ground everyone trusted suddenly moves, and the structures built on it have to be rethought from the foundation up."
     ],
-    "correct_index": 2,
-    "explanation": "That's the Tree contribution at the table.",
-    "style": "at_table_whoami",
-    "category": "at_table",
+    "correct_index": 0,
+    "explanation": "That passage describes the shadow of Tree.",
+    "style": "shadow_describes",
+    "category": "shadow",
     "creator": "Tree"
   },
   {
-    "id": "q0091",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"As an Integrator, ___ is the one who picks things up from every corner of the room and weaves them into something nobody else saw was there.\"",
+    "id": "q0130",
+    "prompt": "Which of the following best describes the Disaster State (Shadow Side) of the Whirlwind Creator?",
     "options": [
-      "Mountain",
-      "Ocean",
-      "Whirlwind",
-      "Soil"
+      "This Creator without banks becomes a flood. The same persistent current that carved the canyon, ungoverned, washes out the very things it was meant to nourish. this Creator shadow looks like over-giving until everything downstream is underwater.",
+      "this Creator in disorder becomes turbulence — endless reframing, endless zoom-outs, endless \"but what if we considered this from another angle.\" The same expansive gift, ungrounded, becomes the reason nothing ever lands.",
+      "When this Creator loses its still centre, the spiral becomes a tornado — change for change's sake, with no anchor and nowhere to land. Things that were working get yanked up by the roots along with the things that weren't.",
+      "This Creator out of balance becomes a wildfire — consuming oxygen, consuming attention, consuming the very thing it was meant to nourish. The same passion that inspires can become the passion that exhausts everyone in its radius, including itself."
     ],
     "correct_index": 2,
-    "explanation": "That's the Whirlwind contribution at the table.",
-    "style": "at_table_whoami",
-    "category": "at_table",
+    "explanation": "That passage describes the shadow of Whirlwind.",
+    "style": "shadow_describes",
+    "category": "shadow",
     "creator": "Whirlwind"
   },
   {
-    "id": "q0092",
-    "prompt": "You might be which Creator if...\n\n\"People describe being around you as \"energising,\" you've ever realised you've been quietly carrying a group's enthusiasm on your back, and you suspect that what most projects are missing isn't a better plan — it's heat.\"",
+    "id": "q0131",
+    "prompt": "You might be which Creator if the following was said about you?\n\n\"People describe being around you as \"energising,\" you've ever realised you've been quietly carrying a group's enthusiasm on your back, and you suspect that what most projects are missing isn't a better plan — it's heat.\"",
     "options": [
+      "Snow",
+      "Mountain",
       "Fire",
-      "Ocean",
-      "River",
-      "Soil"
+      "Lightning"
     ],
-    "correct_index": 0,
+    "correct_index": 2,
     "explanation": "That's a classic Fire tell.",
     "style": "ymbi_whoami",
     "category": "ymbi",
     "creator": "Fire"
   },
   {
-    "id": "q0093",
-    "prompt": "You might be which Creator if...\n\n\"Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think.\"",
+    "id": "q0132",
+    "prompt": "You might be which Creator if the following was said about you?\n\n\"Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's this Creator doing its work.\"",
     "options": [
+      "River",
+      "Fire",
       "Lake",
-      "Tree",
-      "Sun",
-      "Whirlwind"
+      "Lava"
     ],
-    "correct_index": 0,
+    "correct_index": 2,
     "explanation": "That's a classic Lake tell.",
     "style": "ymbi_whoami",
     "category": "ymbi",
     "creator": "Lake"
   },
   {
-    "id": "q0094",
-    "prompt": "You might be which Creator if...\n\n\"You have a low tolerance for \"this is just how things are here,\" confrontation feels easier to you than going-along-to-get-along, and you've noticed that you tend to be the person who finally just names the thing in a room full of people pretending not to see it.\"",
+    "id": "q0133",
+    "prompt": "You might be which Creator if the following was said about you?\n\n\"You have a low tolerance for \"this is just how things are here,\" confrontation feels easier to you than going-along-to-get-along, and you've noticed that you tend to be the person who finally just names the thing in a room full of people pretending not to see it.\"",
     "options": [
-      "Lava",
-      "Lake",
-      "Lightning",
-      "Snow"
+      "Whirlwind",
+      "Mountain",
+      "Soil",
+      "Lava"
     ],
-    "correct_index": 0,
+    "correct_index": 3,
     "explanation": "That's a classic Lava tell.",
     "style": "ymbi_whoami",
     "category": "ymbi",
     "creator": "Lava"
   },
   {
-    "id": "q0095",
-    "prompt": "You might be which Creator if...\n\n\"You arrive at conclusions before you can explain how, you find slow linear meetings genuinely painful, and you've noticed that your best ideas tend to land in the shower, on a walk, or right as you were about to fall asleep.\"",
+    "id": "q0134",
+    "prompt": "You might be which Creator if the following was said about you?\n\n\"You arrive at conclusions before you can explain how, you find slow linear meetings genuinely painful, and you've noticed that your best ideas tend to land in the shower, on a walk, or right as you were about to fall asleep.\"",
     "options": [
-      "Mountain",
-      "Tree",
-      "Snow",
-      "Lightning"
+      "Lake",
+      "Lightning",
+      "Whirlwind",
+      "Mountain"
     ],
-    "correct_index": 3,
+    "correct_index": 1,
     "explanation": "That's a classic Lightning tell.",
     "style": "ymbi_whoami",
     "category": "ymbi",
     "creator": "Lightning"
   },
   {
-    "id": "q0096",
-    "prompt": "You might be which Creator if...\n\n\"People describe you with words like \"solid,\" \"reliable,\" \"rock,\" and you suspect they mean it as both a compliment and a slight underestimate.\"",
+    "id": "q0135",
+    "prompt": "You might be which Creator if the following was said about you?\n\n\"People describe you with words like \"solid,\" \"reliable,\" \"rock,\" and you suspect they mean it as both a compliment and a slight underestimate. If your stillness gets mistaken for slowness, that's a this Creator thing — and you've probably learned to let them think it.\"",
     "options": [
-      "Tree",
-      "River",
-      "Lava",
-      "Mountain"
+      "Mountain",
+      "Soil",
+      "Sun",
+      "Ocean"
     ],
-    "correct_index": 3,
+    "correct_index": 0,
     "explanation": "That's a classic Mountain tell.",
     "style": "ymbi_whoami",
     "category": "ymbi",
     "creator": "Mountain"
   },
   {
-    "id": "q0097",
-    "prompt": "You might be which Creator if...\n\n\"People tell you things they haven't told anyone else, you've been carrying more than you've ever discussed, and you've noticed that \"still waters run deep\" was meant to be a poetic phrase — but in your case is also just accurate.\"",
+    "id": "q0136",
+    "prompt": "You might be which Creator if the following was said about you?\n\n\"People tell you things they haven't told anyone else, you've been carrying more than you've ever discussed, and you've noticed that \"still waters run deep\" was meant to be a poetic phrase — but in your case is also just accurate.\"",
     "options": [
-      "Tree",
-      "Lava",
+      "Lake",
       "Ocean",
-      "Soil"
+      "Mountain",
+      "Whirlwind"
     ],
-    "correct_index": 2,
+    "correct_index": 1,
     "explanation": "That's a classic Ocean tell.",
     "style": "ymbi_whoami",
     "category": "ymbi",
     "creator": "Ocean"
   },
   {
-    "id": "q0098",
-    "prompt": "You might be which Creator if...\n\n\"You genuinely cannot sit still for very long, your relationship with creativity is \"the work just kind of pours out of me when I let it,\" and you've been told both \"you're so productive\" and \"you really need to slow down\" by people who couldn't see they were describing the same trait.\"",
+    "id": "q0137",
+    "prompt": "You might be which Creator if the following was said about you?\n\n\"You genuinely cannot sit still for very long, your relationship with creativity is \"the work just kind of pours out of me when I let it,\" and you've been told both \"you're so productive\" and \"you really need to slow down\" by people who couldn't see they were describing the same trait.\"",
     "options": [
-      "Sky",
-      "Mountain",
       "River",
-      "Lightning"
+      "Lightning",
+      "Lake",
+      "Whirlwind"
     ],
-    "correct_index": 2,
+    "correct_index": 0,
     "explanation": "That's a classic River tell.",
     "style": "ymbi_whoami",
     "category": "ymbi",
     "creator": "River"
   },
   {
-    "id": "q0099",
-    "prompt": "You might be which Creator if...\n\n\"You struggle to stay interested in the next step but light up at the ten-year horizon, you instinctively connect things other people experience as unrelated, and you've noticed that you do your best thinking with your gaze pointed at something open — water, a window, a wide field.\"",
+    "id": "q0138",
+    "prompt": "You might be which Creator if the following was said about you?\n\n\"You struggle to stay interested in the next step but light up at the ten-year horizon, you instinctively connect things other people experience as unrelated, and you've noticed that you do your best thinking with your gaze pointed at something open — water, a window, a wide field.\"",
     "options": [
-      "Sky",
       "Lava",
-      "Whirlwind",
-      "Snow"
+      "Sky",
+      "Sun",
+      "Lightning"
     ],
-    "correct_index": 0,
+    "correct_index": 1,
     "explanation": "That's a classic Sky tell.",
     "style": "ymbi_whoami",
     "category": "ymbi",
     "creator": "Sky"
   },
   {
-    "id": "q0100",
-    "prompt": "You might be which Creator if...\n\n\"You are unreasonably particular about details other people can't even see, your presence tends to slow conversations down in a good way, and you've been told you're \"still waters\" by someone who clearly suspected there was a current underneath.\"",
+    "id": "q0139",
+    "prompt": "You might be which Creator if the following was said about you?\n\n\"You are unreasonably particular about details other people can't even see, your presence tends to slow conversations down in a good way, and you've been told you're \"still waters\" by someone who clearly suspected there was a current underneath.\"",
     "options": [
-      "Ocean",
-      "Soil",
-      "Sky",
-      "Snow"
+      "River",
+      "Snow",
+      "Tree",
+      "Sky"
     ],
-    "correct_index": 3,
+    "correct_index": 1,
     "explanation": "That's a classic Snow tell.",
     "style": "ymbi_whoami",
     "category": "ymbi",
     "creator": "Snow"
   },
   {
-    "id": "q0101",
-    "prompt": "You might be which Creator if...\n\n\"You're the one people return to between adventures, \"I don't know how this would work without you\" has been said to you more than once, and you've noticed that your generosity is the one thing that occasionally needs you to be selfish about it.\"",
+    "id": "q0140",
+    "prompt": "You might be which Creator if the following was said about you?\n\n\"You're the one people return to between adventures, \"I don't know how this would work without you\" has been said to you more than once, and you've noticed that your generosity is the one thing that occasionally needs you to be selfish about it.\"",
     "options": [
-      "Lake",
-      "Sky",
-      "Soil",
-      "Fire"
+      "Lava",
+      "River",
+      "Tree",
+      "Soil"
     ],
-    "correct_index": 2,
+    "correct_index": 3,
     "explanation": "That's a classic Soil tell.",
     "style": "ymbi_whoami",
     "category": "ymbi",
     "creator": "Soil"
   },
   {
-    "id": "q0102",
-    "prompt": "You might be which Creator if...\n\n\"People come away from conversations with you feeling like they have more energy than they came in with, you naturally describe futures that haven't happened yet as if they already exist, and you suspect that steady might be one of your most underestimated superpowers.\"",
+    "id": "q0141",
+    "prompt": "You might be which Creator if the following was said about you?\n\n\"People come away from conversations with you feeling like they have more energy than they came in with, you naturally describe futures that haven't happened yet as if they already exist, and you suspect that steady might be one of your most underestimated superpowers.\"",
     "options": [
       "Sun",
+      "River",
       "Fire",
-      "Soil",
-      "Whirlwind"
+      "Lightning"
     ],
     "correct_index": 0,
     "explanation": "That's a classic Sun tell.",
@@ -1558,133 +2146,328 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "creator": "Sun"
   },
   {
-    "id": "q0103",
-    "prompt": "You might be which Creator if...\n\n\"Your best work is invisible to people who only know you for a year, you've been told you're \"patient\" in a way that almost sounded like an accusation, and you have a quiet, slightly stubborn relationship with the places, projects, and people you've decided to grow next to.\"",
+    "id": "q0142",
+    "prompt": "You might be which Creator if the following was said about you?\n\n\"Your best work is invisible to people who only know you for a year, you've been told you're \"patient\" in a way that almost sounded like an accusation, and you have a quiet, slightly stubborn relationship with the places, projects, and people you've decided to grow next to.\"",
     "options": [
-      "Fire",
-      "Whirlwind",
-      "Lightning",
-      "Tree"
+      "Mountain",
+      "Lake",
+      "Tree",
+      "Whirlwind"
     ],
-    "correct_index": 3,
+    "correct_index": 2,
     "explanation": "That's a classic Tree tell.",
     "style": "ymbi_whoami",
     "category": "ymbi",
     "creator": "Tree"
   },
   {
-    "id": "q0104",
-    "prompt": "You might be which Creator if...\n\n\"You can't remember a six-month period of your life where everything stayed the same, you accidentally restructure groups just by being in them, and you find slow incremental change physically uncomfortable.\"",
+    "id": "q0143",
+    "prompt": "You might be which Creator if the following was said about you?\n\n\"You can't remember a six-month period of your life where everything stayed the same, you accidentally restructure groups just by being in them, and you find slow incremental change physically uncomfortable.\"",
     "options": [
-      "Lake",
       "Tree",
       "Whirlwind",
-      "Soil"
+      "Fire",
+      "Mountain"
     ],
-    "correct_index": 2,
+    "correct_index": 1,
     "explanation": "That's a classic Whirlwind tell.",
     "style": "ymbi_whoami",
     "category": "ymbi",
     "creator": "Whirlwind"
   },
   {
-    "id": "q0105",
-    "prompt": "Which of these Creators shares the same Family as Fire?",
+    "id": "q0144",
+    "prompt": "Which of the following statements would you expect to hear about a Fire Creator?",
     "options": [
-      "River",
-      "Lava",
-      "Sun",
-      "Lake"
+      "You are unreasonably particular about details other people can't even see, your presence tends to slow conversations down in a good way, and you've been told you're \"still waters\" by someone who clearly suspected there was a current underneath.",
+      "People describe being around you as \"energising,\" you've ever realised you've been quietly carrying a group's enthusiasm on your back, and you suspect that what most projects are missing isn't a better plan — it's heat.",
+      "You're the one people return to between adventures, \"I don't know how this would work without you\" has been said to you more than once, and you've noticed that your generosity is the one thing that occasionally needs you to be selfish about it.",
+      "You arrive at conclusions before you can explain how, you find slow linear meetings genuinely painful, and you've noticed that your best ideas tend to land in the shower, on a walk, or right as you were about to fall asleep."
     ],
     "correct_index": 1,
-    "explanation": "Both Fire and Lava are Catalysts.",
+    "explanation": "That statement is a Fire tell.",
+    "style": "ymbi_describes",
+    "category": "ymbi",
+    "creator": "Fire"
+  },
+  {
+    "id": "q0145",
+    "prompt": "Which of the following statements would you expect to hear about a Lake Creator?",
+    "options": [
+      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's this Creator doing its work.",
+      "People describe you with words like \"solid,\" \"reliable,\" \"rock,\" and you suspect they mean it as both a compliment and a slight underestimate. If your stillness gets mistaken for slowness, that's a this Creator thing — and you've probably learned to let them think it.",
+      "You arrive at conclusions before you can explain how, you find slow linear meetings genuinely painful, and you've noticed that your best ideas tend to land in the shower, on a walk, or right as you were about to fall asleep.",
+      "You genuinely cannot sit still for very long, your relationship with creativity is \"the work just kind of pours out of me when I let it,\" and you've been told both \"you're so productive\" and \"you really need to slow down\" by people who couldn't see they were describing the same trait."
+    ],
+    "correct_index": 0,
+    "explanation": "That statement is a Lake tell.",
+    "style": "ymbi_describes",
+    "category": "ymbi",
+    "creator": "Lake"
+  },
+  {
+    "id": "q0146",
+    "prompt": "Which of the following statements would you expect to hear about a Lava Creator?",
+    "options": [
+      "You're the one people return to between adventures, \"I don't know how this would work without you\" has been said to you more than once, and you've noticed that your generosity is the one thing that occasionally needs you to be selfish about it.",
+      "Your best work is invisible to people who only know you for a year, you've been told you're \"patient\" in a way that almost sounded like an accusation, and you have a quiet, slightly stubborn relationship with the places, projects, and people you've decided to grow next to.",
+      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's this Creator doing its work.",
+      "You have a low tolerance for \"this is just how things are here,\" confrontation feels easier to you than going-along-to-get-along, and you've noticed that you tend to be the person who finally just names the thing in a room full of people pretending not to see it."
+    ],
+    "correct_index": 3,
+    "explanation": "That statement is a Lava tell.",
+    "style": "ymbi_describes",
+    "category": "ymbi",
+    "creator": "Lava"
+  },
+  {
+    "id": "q0147",
+    "prompt": "Which of the following statements would you expect to hear about a Lightning Creator?",
+    "options": [
+      "You are unreasonably particular about details other people can't even see, your presence tends to slow conversations down in a good way, and you've been told you're \"still waters\" by someone who clearly suspected there was a current underneath.",
+      "You're the one people return to between adventures, \"I don't know how this would work without you\" has been said to you more than once, and you've noticed that your generosity is the one thing that occasionally needs you to be selfish about it.",
+      "You have a low tolerance for \"this is just how things are here,\" confrontation feels easier to you than going-along-to-get-along, and you've noticed that you tend to be the person who finally just names the thing in a room full of people pretending not to see it.",
+      "You arrive at conclusions before you can explain how, you find slow linear meetings genuinely painful, and you've noticed that your best ideas tend to land in the shower, on a walk, or right as you were about to fall asleep."
+    ],
+    "correct_index": 3,
+    "explanation": "That statement is a Lightning tell.",
+    "style": "ymbi_describes",
+    "category": "ymbi",
+    "creator": "Lightning"
+  },
+  {
+    "id": "q0148",
+    "prompt": "Which of the following statements would you expect to hear about a Mountain Creator?",
+    "options": [
+      "You struggle to stay interested in the next step but light up at the ten-year horizon, you instinctively connect things other people experience as unrelated, and you've noticed that you do your best thinking with your gaze pointed at something open — water, a window, a wide field.",
+      "People come away from conversations with you feeling like they have more energy than they came in with, you naturally describe futures that haven't happened yet as if they already exist, and you suspect that steady might be one of your most underestimated superpowers.",
+      "People describe you with words like \"solid,\" \"reliable,\" \"rock,\" and you suspect they mean it as both a compliment and a slight underestimate. If your stillness gets mistaken for slowness, that's a this Creator thing — and you've probably learned to let them think it.",
+      "You can't remember a six-month period of your life where everything stayed the same, you accidentally restructure groups just by being in them, and you find slow incremental change physically uncomfortable."
+    ],
+    "correct_index": 2,
+    "explanation": "That statement is a Mountain tell.",
+    "style": "ymbi_describes",
+    "category": "ymbi",
+    "creator": "Mountain"
+  },
+  {
+    "id": "q0149",
+    "prompt": "Which of the following statements would you expect to hear about a Ocean Creator?",
+    "options": [
+      "You genuinely cannot sit still for very long, your relationship with creativity is \"the work just kind of pours out of me when I let it,\" and you've been told both \"you're so productive\" and \"you really need to slow down\" by people who couldn't see they were describing the same trait.",
+      "People describe you with words like \"solid,\" \"reliable,\" \"rock,\" and you suspect they mean it as both a compliment and a slight underestimate. If your stillness gets mistaken for slowness, that's a this Creator thing — and you've probably learned to let them think it.",
+      "You have a low tolerance for \"this is just how things are here,\" confrontation feels easier to you than going-along-to-get-along, and you've noticed that you tend to be the person who finally just names the thing in a room full of people pretending not to see it.",
+      "People tell you things they haven't told anyone else, you've been carrying more than you've ever discussed, and you've noticed that \"still waters run deep\" was meant to be a poetic phrase — but in your case is also just accurate."
+    ],
+    "correct_index": 3,
+    "explanation": "That statement is a Ocean tell.",
+    "style": "ymbi_describes",
+    "category": "ymbi",
+    "creator": "Ocean"
+  },
+  {
+    "id": "q0150",
+    "prompt": "Which of the following statements would you expect to hear about a River Creator?",
+    "options": [
+      "You genuinely cannot sit still for very long, your relationship with creativity is \"the work just kind of pours out of me when I let it,\" and you've been told both \"you're so productive\" and \"you really need to slow down\" by people who couldn't see they were describing the same trait.",
+      "Your best work is invisible to people who only know you for a year, you've been told you're \"patient\" in a way that almost sounded like an accusation, and you have a quiet, slightly stubborn relationship with the places, projects, and people you've decided to grow next to.",
+      "People describe being around you as \"energising,\" you've ever realised you've been quietly carrying a group's enthusiasm on your back, and you suspect that what most projects are missing isn't a better plan — it's heat.",
+      "People describe you with words like \"solid,\" \"reliable,\" \"rock,\" and you suspect they mean it as both a compliment and a slight underestimate. If your stillness gets mistaken for slowness, that's a this Creator thing — and you've probably learned to let them think it."
+    ],
+    "correct_index": 0,
+    "explanation": "That statement is a River tell.",
+    "style": "ymbi_describes",
+    "category": "ymbi",
+    "creator": "River"
+  },
+  {
+    "id": "q0151",
+    "prompt": "Which of the following statements would you expect to hear about a Sky Creator?",
+    "options": [
+      "People describe you with words like \"solid,\" \"reliable,\" \"rock,\" and you suspect they mean it as both a compliment and a slight underestimate. If your stillness gets mistaken for slowness, that's a this Creator thing — and you've probably learned to let them think it.",
+      "You struggle to stay interested in the next step but light up at the ten-year horizon, you instinctively connect things other people experience as unrelated, and you've noticed that you do your best thinking with your gaze pointed at something open — water, a window, a wide field.",
+      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's this Creator doing its work.",
+      "Your best work is invisible to people who only know you for a year, you've been told you're \"patient\" in a way that almost sounded like an accusation, and you have a quiet, slightly stubborn relationship with the places, projects, and people you've decided to grow next to."
+    ],
+    "correct_index": 1,
+    "explanation": "That statement is a Sky tell.",
+    "style": "ymbi_describes",
+    "category": "ymbi",
+    "creator": "Sky"
+  },
+  {
+    "id": "q0152",
+    "prompt": "Which of the following statements would you expect to hear about a Snow Creator?",
+    "options": [
+      "You are unreasonably particular about details other people can't even see, your presence tends to slow conversations down in a good way, and you've been told you're \"still waters\" by someone who clearly suspected there was a current underneath.",
+      "You genuinely cannot sit still for very long, your relationship with creativity is \"the work just kind of pours out of me when I let it,\" and you've been told both \"you're so productive\" and \"you really need to slow down\" by people who couldn't see they were describing the same trait.",
+      "You can't remember a six-month period of your life where everything stayed the same, you accidentally restructure groups just by being in them, and you find slow incremental change physically uncomfortable.",
+      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's this Creator doing its work."
+    ],
+    "correct_index": 0,
+    "explanation": "That statement is a Snow tell.",
+    "style": "ymbi_describes",
+    "category": "ymbi",
+    "creator": "Snow"
+  },
+  {
+    "id": "q0153",
+    "prompt": "Which of the following statements would you expect to hear about a Soil Creator?",
+    "options": [
+      "People describe being around you as \"energising,\" you've ever realised you've been quietly carrying a group's enthusiasm on your back, and you suspect that what most projects are missing isn't a better plan — it's heat.",
+      "Your best work is invisible to people who only know you for a year, you've been told you're \"patient\" in a way that almost sounded like an accusation, and you have a quiet, slightly stubborn relationship with the places, projects, and people you've decided to grow next to.",
+      "People tell you things they haven't told anyone else, you've been carrying more than you've ever discussed, and you've noticed that \"still waters run deep\" was meant to be a poetic phrase — but in your case is also just accurate.",
+      "You're the one people return to between adventures, \"I don't know how this would work without you\" has been said to you more than once, and you've noticed that your generosity is the one thing that occasionally needs you to be selfish about it."
+    ],
+    "correct_index": 3,
+    "explanation": "That statement is a Soil tell.",
+    "style": "ymbi_describes",
+    "category": "ymbi",
+    "creator": "Soil"
+  },
+  {
+    "id": "q0154",
+    "prompt": "Which of the following statements would you expect to hear about a Sun Creator?",
+    "options": [
+      "People come away from conversations with you feeling like they have more energy than they came in with, you naturally describe futures that haven't happened yet as if they already exist, and you suspect that steady might be one of your most underestimated superpowers.",
+      "You are unreasonably particular about details other people can't even see, your presence tends to slow conversations down in a good way, and you've been told you're \"still waters\" by someone who clearly suspected there was a current underneath.",
+      "People describe you with words like \"solid,\" \"reliable,\" \"rock,\" and you suspect they mean it as both a compliment and a slight underestimate. If your stillness gets mistaken for slowness, that's a this Creator thing — and you've probably learned to let them think it.",
+      "You genuinely cannot sit still for very long, your relationship with creativity is \"the work just kind of pours out of me when I let it,\" and you've been told both \"you're so productive\" and \"you really need to slow down\" by people who couldn't see they were describing the same trait."
+    ],
+    "correct_index": 0,
+    "explanation": "That statement is a Sun tell.",
+    "style": "ymbi_describes",
+    "category": "ymbi",
+    "creator": "Sun"
+  },
+  {
+    "id": "q0155",
+    "prompt": "Which of the following statements would you expect to hear about a Tree Creator?",
+    "options": [
+      "You genuinely cannot sit still for very long, your relationship with creativity is \"the work just kind of pours out of me when I let it,\" and you've been told both \"you're so productive\" and \"you really need to slow down\" by people who couldn't see they were describing the same trait.",
+      "People come away from conversations with you feeling like they have more energy than they came in with, you naturally describe futures that haven't happened yet as if they already exist, and you suspect that steady might be one of your most underestimated superpowers.",
+      "Your best work is invisible to people who only know you for a year, you've been told you're \"patient\" in a way that almost sounded like an accusation, and you have a quiet, slightly stubborn relationship with the places, projects, and people you've decided to grow next to.",
+      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's this Creator doing its work."
+    ],
+    "correct_index": 2,
+    "explanation": "That statement is a Tree tell.",
+    "style": "ymbi_describes",
+    "category": "ymbi",
+    "creator": "Tree"
+  },
+  {
+    "id": "q0156",
+    "prompt": "Which of the following statements would you expect to hear about a Whirlwind Creator?",
+    "options": [
+      "Friends seek you out specifically because you don't react — you just receive, and somehow in the receiving, they figure out what they actually think. If people often tell you \"I didn't know that's what I felt until I said it out loud to you,\" that's this Creator doing its work.",
+      "People come away from conversations with you feeling like they have more energy than they came in with, you naturally describe futures that haven't happened yet as if they already exist, and you suspect that steady might be one of your most underestimated superpowers.",
+      "You can't remember a six-month period of your life where everything stayed the same, you accidentally restructure groups just by being in them, and you find slow incremental change physically uncomfortable.",
+      "You struggle to stay interested in the next step but light up at the ten-year horizon, you instinctively connect things other people experience as unrelated, and you've noticed that you do your best thinking with your gaze pointed at something open — water, a window, a wide field."
+    ],
+    "correct_index": 2,
+    "explanation": "That statement is a Whirlwind tell.",
+    "style": "ymbi_describes",
+    "category": "ymbi",
+    "creator": "Whirlwind"
+  },
+  {
+    "id": "q0157",
+    "prompt": "Which Creator shares the same Family as Fire?",
+    "options": [
+      "Soil",
+      "Ocean",
+      "Whirlwind",
+      "River"
+    ],
+    "correct_index": 2,
+    "explanation": "Both Fire and Whirlwind are Catalysts.",
     "style": "compare_family",
     "category": "compare",
     "creator": "Fire"
   },
   {
-    "id": "q0106",
-    "prompt": "Which of these Creators shares the same Family as Lake?",
+    "id": "q0158",
+    "prompt": "Which Creator shares the same Family as Lake?",
     "options": [
+      "Whirlwind",
       "Ocean",
       "River",
-      "Lightning",
-      "Fire"
+      "Sky"
     ],
-    "correct_index": 0,
+    "correct_index": 1,
     "explanation": "Both Lake and Ocean are Humanists.",
     "style": "compare_family",
     "category": "compare",
     "creator": "Lake"
   },
   {
-    "id": "q0107",
-    "prompt": "Which of these Creators shares the same Family as Lava?",
+    "id": "q0159",
+    "prompt": "Which Creator shares the same Family as Lava?",
     "options": [
-      "Soil",
-      "Sun",
+      "River",
       "Fire",
-      "Lake"
+      "Tree",
+      "Sky"
     ],
-    "correct_index": 2,
+    "correct_index": 1,
     "explanation": "Both Lava and Fire are Catalysts.",
     "style": "compare_family",
     "category": "compare",
     "creator": "Lava"
   },
   {
-    "id": "q0108",
-    "prompt": "Which of these Creators shares the same Family as Lightning?",
+    "id": "q0160",
+    "prompt": "Which Creator shares the same Family as Lightning?",
     "options": [
+      "Mountain",
+      "Whirlwind",
       "Snow",
-      "Fire",
-      "Sky",
-      "Soil"
+      "Sky"
     ],
-    "correct_index": 0,
+    "correct_index": 2,
     "explanation": "Both Lightning and Snow are Optimists.",
     "style": "compare_family",
     "category": "compare",
     "creator": "Lightning"
   },
   {
-    "id": "q0109",
-    "prompt": "Which of these Creators shares the same Family as Mountain?",
+    "id": "q0161",
+    "prompt": "Which Creator shares the same Family as Mountain?",
     "options": [
-      "Lava",
-      "Tree",
-      "Ocean",
-      "Soil"
+      "Sky",
+      "Snow",
+      "Soil",
+      "Tree"
     ],
-    "correct_index": 3,
+    "correct_index": 2,
     "explanation": "Both Mountain and Soil are Realists.",
     "style": "compare_family",
     "category": "compare",
     "creator": "Mountain"
   },
   {
-    "id": "q0110",
-    "prompt": "Which of these Creators shares the same Family as Ocean?",
+    "id": "q0162",
+    "prompt": "Which Creator shares the same Family as Ocean?",
     "options": [
-      "Mountain",
-      "Sky",
-      "Lightning",
-      "Lake"
+      "Lake",
+      "Snow",
+      "Lava",
+      "River"
     ],
-    "correct_index": 3,
+    "correct_index": 0,
     "explanation": "Both Ocean and Lake are Humanists.",
     "style": "compare_family",
     "category": "compare",
     "creator": "Ocean"
   },
   {
-    "id": "q0111",
-    "prompt": "Which of these Creators shares the same Family as River?",
+    "id": "q0163",
+    "prompt": "Which Creator shares the same Family as River?",
     "options": [
-      "Fire",
+      "Lake",
       "Soil",
       "Sun",
-      "Sky"
+      "Fire"
     ],
     "correct_index": 1,
     "explanation": "Both River and Soil are Realists.",
@@ -1693,475 +2476,460 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "creator": "River"
   },
   {
-    "id": "q0112",
-    "prompt": "Which of these Creators shares the same Family as Snow?",
+    "id": "q0164",
+    "prompt": "Which Creator shares the same Family as Snow?",
     "options": [
-      "Ocean",
-      "Sky",
-      "Sun",
-      "Fire"
+      "Fire",
+      "River",
+      "Lightning",
+      "Tree"
     ],
     "correct_index": 2,
-    "explanation": "Both Snow and Sun are Optimists.",
+    "explanation": "Both Snow and Lightning are Optimists.",
     "style": "compare_family",
     "category": "compare",
     "creator": "Snow"
   },
   {
-    "id": "q0113",
-    "prompt": "Which of these Creators shares the same Family as Soil?",
+    "id": "q0165",
+    "prompt": "Which Creator shares the same Family as Soil?",
     "options": [
-      "Lava",
+      "River",
       "Lake",
-      "Sun",
-      "Mountain"
+      "Tree",
+      "Sky"
     ],
-    "correct_index": 3,
-    "explanation": "Both Soil and Mountain are Realists.",
+    "correct_index": 0,
+    "explanation": "Both Soil and River are Realists.",
     "style": "compare_family",
     "category": "compare",
     "creator": "Soil"
   },
   {
-    "id": "q0114",
-    "prompt": "Which of these Creators shares the same Family as Sun?",
+    "id": "q0166",
+    "prompt": "Which Creator shares the same Family as Sun?",
     "options": [
+      "Snow",
       "Ocean",
-      "Lava",
-      "River",
-      "Snow"
+      "Fire",
+      "Mountain"
     ],
-    "correct_index": 3,
+    "correct_index": 0,
     "explanation": "Both Sun and Snow are Optimists.",
     "style": "compare_family",
     "category": "compare",
     "creator": "Sun"
   },
   {
-    "id": "q0115",
-    "prompt": "Which of these Creators shares the same Family as Tree?",
+    "id": "q0167",
+    "prompt": "Which Creator shares the same Family as Tree?",
     "options": [
-      "Lightning",
-      "Ocean",
-      "Soil",
-      "Snow"
+      "River",
+      "Lake",
+      "Snow",
+      "Fire"
     ],
     "correct_index": 1,
-    "explanation": "Both Tree and Ocean are Humanists.",
+    "explanation": "Both Tree and Lake are Humanists.",
     "style": "compare_family",
     "category": "compare",
     "creator": "Tree"
   },
   {
-    "id": "q0116",
-    "prompt": "Which of these Creators shares the same Family as Whirlwind?",
+    "id": "q0168",
+    "prompt": "Which Creator shares the same Family as Whirlwind?",
     "options": [
+      "Sky",
       "Fire",
-      "Sun",
-      "Ocean",
-      "River"
+      "Lightning",
+      "Tree"
     ],
-    "correct_index": 0,
+    "correct_index": 1,
     "explanation": "Both Whirlwind and Fire are Catalysts.",
     "style": "compare_family",
     "category": "compare",
     "creator": "Whirlwind"
   },
   {
-    "id": "q0117",
-    "prompt": "Which Creator shares Fire's element (Fire)?",
+    "id": "q0169",
+    "prompt": "Which Creator shares the same element (Fire) as Fire?",
     "options": [
-      "River",
-      "Lava",
+      "Soil",
       "Ocean",
-      "Lightning"
+      "Sun",
+      "River"
     ],
-    "correct_index": 1,
-    "explanation": "Fire and Lava are both Fire types.",
+    "correct_index": 2,
+    "explanation": "Fire and Sun are both Fire Creators.",
     "style": "compare_element",
     "category": "compare",
     "creator": "Fire"
   },
   {
-    "id": "q0118",
-    "prompt": "Which Creator shares Lake's element (Water)?",
+    "id": "q0170",
+    "prompt": "Which Creator shares the same element (Water) as Lake?",
     "options": [
-      "Snow",
-      "Lava",
+      "Whirlwind",
       "Soil",
-      "River"
+      "River",
+      "Snow"
     ],
-    "correct_index": 3,
-    "explanation": "Lake and River are both Water types.",
+    "correct_index": 2,
+    "explanation": "Lake and River are both Water Creators.",
     "style": "compare_element",
     "category": "compare",
     "creator": "Lake"
   },
   {
-    "id": "q0119",
-    "prompt": "Which Creator shares Lava's element (Fire)?",
+    "id": "q0171",
+    "prompt": "Which Creator shares the same element (Fire) as Lava?",
     "options": [
+      "Sky",
       "Sun",
-      "Tree",
-      "Lightning",
-      "Snow"
+      "Snow",
+      "Ocean"
     ],
-    "correct_index": 0,
-    "explanation": "Lava and Sun are both Fire types.",
+    "correct_index": 1,
+    "explanation": "Lava and Sun are both Fire Creators.",
     "style": "compare_element",
     "category": "compare",
     "creator": "Lava"
   },
   {
-    "id": "q0120",
-    "prompt": "Which Creator shares Lightning's element (Air)?",
+    "id": "q0172",
+    "prompt": "Which Creator shares the same element (Air) as Lightning?",
     "options": [
-      "Sun",
+      "Sky",
+      "Lake",
       "Tree",
-      "Soil",
-      "Whirlwind"
+      "Soil"
     ],
-    "correct_index": 3,
-    "explanation": "Lightning and Whirlwind are both Air types.",
+    "correct_index": 0,
+    "explanation": "Lightning and Sky are both Air Creators.",
     "style": "compare_element",
     "category": "compare",
     "creator": "Lightning"
   },
   {
-    "id": "q0121",
-    "prompt": "Which Creator shares Mountain's element (Earth)?",
+    "id": "q0173",
+    "prompt": "Which Creator shares the same element (Earth) as Mountain?",
     "options": [
-      "Soil",
-      "Lightning",
-      "Whirlwind",
-      "Fire"
+      "Fire",
+      "Tree",
+      "Lake",
+      "Whirlwind"
     ],
-    "correct_index": 0,
-    "explanation": "Mountain and Soil are both Earth types.",
+    "correct_index": 1,
+    "explanation": "Mountain and Tree are both Earth Creators.",
     "style": "compare_element",
     "category": "compare",
     "creator": "Mountain"
   },
   {
-    "id": "q0122",
-    "prompt": "Which Creator shares Ocean's element (Water)?",
+    "id": "q0174",
+    "prompt": "Which Creator shares the same element (Water) as Ocean?",
     "options": [
-      "Mountain",
-      "Sun",
-      "Sky",
-      "River"
+      "Fire",
+      "Lake",
+      "Lightning",
+      "Soil"
     ],
-    "correct_index": 3,
-    "explanation": "Ocean and River are both Water types.",
+    "correct_index": 1,
+    "explanation": "Ocean and Lake are both Water Creators.",
     "style": "compare_element",
     "category": "compare",
     "creator": "Ocean"
   },
   {
-    "id": "q0123",
-    "prompt": "Which Creator shares River's element (Water)?",
+    "id": "q0175",
+    "prompt": "Which Creator shares the same element (Water) as River?",
     "options": [
+      "Snow",
       "Lake",
-      "Mountain",
-      "Tree",
-      "Sky"
+      "Soil",
+      "Lightning"
     ],
-    "correct_index": 0,
-    "explanation": "River and Lake are both Water types.",
+    "correct_index": 1,
+    "explanation": "River and Lake are both Water Creators.",
     "style": "compare_element",
     "category": "compare",
     "creator": "River"
   },
   {
-    "id": "q0124",
-    "prompt": "Which Creator shares Sky's element (Air)?",
+    "id": "q0176",
+    "prompt": "Which Creator shares the same element (Air) as Sky?",
     "options": [
+      "Fire",
+      "Lake",
       "Snow",
-      "River",
-      "Soil",
       "Sun"
     ],
-    "correct_index": 0,
-    "explanation": "Sky and Snow are both Air types.",
+    "correct_index": 2,
+    "explanation": "Sky and Snow are both Air Creators.",
     "style": "compare_element",
     "category": "compare",
     "creator": "Sky"
   },
   {
-    "id": "q0125",
-    "prompt": "Which Creator shares Snow's element (Air)?",
+    "id": "q0177",
+    "prompt": "Which Creator shares the same element (Air) as Snow?",
     "options": [
+      "Whirlwind",
       "River",
-      "Sky",
-      "Fire",
+      "Lake",
       "Soil"
     ],
-    "correct_index": 1,
-    "explanation": "Snow and Sky are both Air types.",
+    "correct_index": 0,
+    "explanation": "Snow and Whirlwind are both Air Creators.",
     "style": "compare_element",
     "category": "compare",
     "creator": "Snow"
   },
   {
-    "id": "q0126",
-    "prompt": "Which Creator shares Soil's element (Earth)?",
+    "id": "q0178",
+    "prompt": "Which Creator shares the same element (Earth) as Soil?",
     "options": [
-      "Mountain",
+      "Tree",
       "Fire",
-      "Lake",
-      "Lightning"
+      "Sun",
+      "Sky"
     ],
     "correct_index": 0,
-    "explanation": "Soil and Mountain are both Earth types.",
+    "explanation": "Soil and Tree are both Earth Creators.",
     "style": "compare_element",
     "category": "compare",
     "creator": "Soil"
   },
   {
-    "id": "q0127",
-    "prompt": "Which Creator shares Sun's element (Fire)?",
+    "id": "q0179",
+    "prompt": "Which Creator shares the same element (Fire) as Sun?",
     "options": [
+      "Sky",
+      "Soil",
       "Fire",
-      "Whirlwind",
-      "Tree",
-      "Soil"
+      "Lightning"
     ],
-    "correct_index": 0,
-    "explanation": "Sun and Fire are both Fire types.",
+    "correct_index": 2,
+    "explanation": "Sun and Fire are both Fire Creators.",
     "style": "compare_element",
     "category": "compare",
     "creator": "Sun"
   },
   {
-    "id": "q0128",
-    "prompt": "Which Creator shares Tree's element (Earth)?",
+    "id": "q0180",
+    "prompt": "Which Creator shares the same element (Earth) as Tree?",
     "options": [
-      "Lava",
       "Whirlwind",
-      "Soil",
-      "Fire"
+      "Snow",
+      "Sky",
+      "Mountain"
     ],
-    "correct_index": 2,
-    "explanation": "Tree and Soil are both Earth types.",
+    "correct_index": 3,
+    "explanation": "Tree and Mountain are both Earth Creators.",
     "style": "compare_element",
     "category": "compare",
     "creator": "Tree"
   },
   {
-    "id": "q0129",
-    "prompt": "Which Creator shares Whirlwind's element (Air)?",
+    "id": "q0181",
+    "prompt": "Which Creator shares the same element (Air) as Whirlwind?",
     "options": [
-      "Mountain",
+      "Sun",
+      "Lightning",
       "Lava",
-      "Fire",
-      "Lightning"
+      "Fire"
     ],
-    "correct_index": 3,
-    "explanation": "Whirlwind and Lightning are both Air types.",
+    "correct_index": 1,
+    "explanation": "Whirlwind and Lightning are both Air Creators.",
     "style": "compare_element",
     "category": "compare",
     "creator": "Whirlwind"
   },
   {
-    "id": "q0130",
-    "prompt": "Which of these Creators is NOT a Catalysts Family member?",
+    "id": "q0182",
+    "prompt": "Which of these Creators is NOT part of the Catalysts Family?",
     "options": [
-      "Snow",
       "Whirlwind",
+      "Lightning",
       "Fire",
       "Lava"
     ],
-    "correct_index": 0,
-    "explanation": "Snow is a Optimists, not a Catalysts.",
-    "style": "not_family",
-    "category": "exclusion",
-    "creator": null
-  },
-  {
-    "id": "q0131",
-    "prompt": "Which of these Creators is NOT a Catalysts Family member?",
-    "options": [
-      "Whirlwind",
-      "Lake",
-      "Lava",
-      "Fire"
-    ],
     "correct_index": 1,
-    "explanation": "Lake is a Humanists, not a Catalysts.",
+    "explanation": "Lightning is a Optimists, not a Catalysts.",
     "style": "not_family",
     "category": "exclusion",
     "creator": null
   },
   {
-    "id": "q0132",
-    "prompt": "Which of these Creators is NOT a Catalysts Family member?",
+    "id": "q0183",
+    "prompt": "Which of these Creators is NOT part of the Catalysts Family?",
     "options": [
+      "Mountain",
       "Whirlwind",
       "Lava",
-      "Snow",
       "Fire"
     ],
-    "correct_index": 2,
-    "explanation": "Snow is a Optimists, not a Catalysts.",
+    "correct_index": 0,
+    "explanation": "Mountain is a Realists, not a Catalysts.",
     "style": "not_family",
     "category": "exclusion",
     "creator": null
   },
   {
-    "id": "q0133",
-    "prompt": "Which of these Creators is NOT a Humanists Family member?",
+    "id": "q0184",
+    "prompt": "Which of these Creators is NOT part of the Catalysts Family?",
     "options": [
-      "Ocean",
-      "Tree",
-      "Soil",
-      "Lake"
+      "Sun",
+      "Lava",
+      "Whirlwind",
+      "Fire"
     ],
-    "correct_index": 2,
-    "explanation": "Soil is a Realists, not a Humanists.",
+    "correct_index": 0,
+    "explanation": "Sun is a Optimists, not a Catalysts.",
     "style": "not_family",
     "category": "exclusion",
     "creator": null
   },
   {
-    "id": "q0134",
-    "prompt": "Which of these Creators is NOT a Humanists Family member?",
+    "id": "q0185",
+    "prompt": "Which of these Creators is NOT part of the Humanists Family?",
     "options": [
       "Lake",
       "Tree",
-      "Ocean",
-      "Snow"
+      "Mountain",
+      "Ocean"
     ],
-    "correct_index": 3,
-    "explanation": "Snow is a Optimists, not a Humanists.",
-    "style": "not_family",
-    "category": "exclusion",
-    "creator": null
-  },
-  {
-    "id": "q0135",
-    "prompt": "Which of these Creators is NOT a Humanists Family member?",
-    "options": [
-      "Ocean",
-      "Lake",
-      "Tree",
-      "Mountain"
-    ],
-    "correct_index": 3,
+    "correct_index": 2,
     "explanation": "Mountain is a Realists, not a Humanists.",
     "style": "not_family",
     "category": "exclusion",
     "creator": null
   },
   {
-    "id": "q0136",
-    "prompt": "Which of these Creators is NOT a Optimists Family member?",
+    "id": "q0186",
+    "prompt": "Which of these Creators is NOT part of the Humanists Family?",
     "options": [
-      "Snow",
-      "Fire",
-      "Lightning",
-      "Sun"
+      "Ocean",
+      "River",
+      "Lake",
+      "Tree"
     ],
     "correct_index": 1,
-    "explanation": "Fire is a Catalysts, not a Optimists.",
+    "explanation": "River is a Realists, not a Humanists.",
     "style": "not_family",
     "category": "exclusion",
     "creator": null
   },
   {
-    "id": "q0137",
-    "prompt": "Which of these Creators is NOT a Optimists Family member?",
+    "id": "q0187",
+    "prompt": "Which of these Creators is NOT part of the Humanists Family?",
     "options": [
+      "Ocean",
       "Tree",
+      "Mountain",
+      "Lake"
+    ],
+    "correct_index": 2,
+    "explanation": "Mountain is a Realists, not a Humanists.",
+    "style": "not_family",
+    "category": "exclusion",
+    "creator": null
+  },
+  {
+    "id": "q0188",
+    "prompt": "Which of these Creators is NOT part of the Optimists Family?",
+    "options": [
+      "Sun",
       "Lightning",
       "Snow",
-      "Sun"
+      "Lake"
     ],
-    "correct_index": 0,
-    "explanation": "Tree is a Humanists, not a Optimists.",
+    "correct_index": 3,
+    "explanation": "Lake is a Humanists, not a Optimists.",
     "style": "not_family",
     "category": "exclusion",
     "creator": null
   },
   {
-    "id": "q0138",
-    "prompt": "Which of these Creators is NOT a Optimists Family member?",
+    "id": "q0189",
+    "prompt": "Which of these Creators is NOT part of the Optimists Family?",
     "options": [
       "Sun",
       "Snow",
-      "Lightning",
-      "Soil"
+      "River",
+      "Lightning"
     ],
-    "correct_index": 3,
+    "correct_index": 2,
+    "explanation": "River is a Realists, not a Optimists.",
+    "style": "not_family",
+    "category": "exclusion",
+    "creator": null
+  },
+  {
+    "id": "q0190",
+    "prompt": "Which of these Creators is NOT part of the Optimists Family?",
+    "options": [
+      "Snow",
+      "Sun",
+      "Soil",
+      "Lightning"
+    ],
+    "correct_index": 2,
     "explanation": "Soil is a Realists, not a Optimists.",
     "style": "not_family",
     "category": "exclusion",
     "creator": null
   },
   {
-    "id": "q0139",
-    "prompt": "Which of these Creators is NOT a Realists Family member?",
+    "id": "q0191",
+    "prompt": "Which of these Creators is NOT part of the Realists Family?",
     "options": [
-      "Lake",
-      "River",
+      "Whirlwind",
       "Soil",
+      "River",
       "Mountain"
     ],
     "correct_index": 0,
-    "explanation": "Lake is a Humanists, not a Realists.",
+    "explanation": "Whirlwind is a Catalysts, not a Realists.",
     "style": "not_family",
     "category": "exclusion",
     "creator": null
   },
   {
-    "id": "q0140",
-    "prompt": "Which of these Creators is NOT a Realists Family member?",
+    "id": "q0192",
+    "prompt": "Which of these Creators is NOT part of the Realists Family?",
     "options": [
-      "Mountain",
-      "Lake",
       "Soil",
+      "Mountain",
+      "River",
+      "Sun"
+    ],
+    "correct_index": 3,
+    "explanation": "Sun is a Optimists, not a Realists.",
+    "style": "not_family",
+    "category": "exclusion",
+    "creator": null
+  },
+  {
+    "id": "q0193",
+    "prompt": "Which of these Creators is NOT part of the Realists Family?",
+    "options": [
+      "Soil",
+      "Ocean",
+      "Mountain",
       "River"
     ],
     "correct_index": 1,
-    "explanation": "Lake is a Humanists, not a Realists.",
-    "style": "not_family",
-    "category": "exclusion",
-    "creator": null
-  },
-  {
-    "id": "q0141",
-    "prompt": "Which of these Creators is NOT a Realists Family member?",
-    "options": [
-      "Ocean",
-      "River",
-      "Soil",
-      "Mountain"
-    ],
-    "correct_index": 0,
     "explanation": "Ocean is a Humanists, not a Realists.",
     "style": "not_family",
     "category": "exclusion",
     "creator": null
   },
   {
-    "id": "q0142",
+    "id": "q0194",
     "prompt": "Which of these Creators is NOT a Air type?",
     "options": [
-      "Sky",
-      "Tree",
-      "Snow",
-      "Whirlwind"
-    ],
-    "correct_index": 1,
-    "explanation": "Tree is Earth, not Air.",
-    "style": "not_element",
-    "category": "exclusion",
-    "creator": null
-  },
-  {
-    "id": "q0143",
-    "prompt": "Which of these Creators is NOT a Air type?",
-    "options": [
-      "Snow",
+      "Lightning",
       "Whirlwind",
       "Sun",
       "Sky"
@@ -2173,28 +2941,58 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "creator": null
   },
   {
-    "id": "q0144",
+    "id": "q0195",
     "prompt": "Which of these Creators is NOT a Air type?",
     "options": [
-      "River",
       "Whirlwind",
-      "Sky",
-      "Snow"
+      "Soil",
+      "Lightning",
+      "Sky"
     ],
-    "correct_index": 0,
-    "explanation": "River is Water, not Air.",
+    "correct_index": 1,
+    "explanation": "Soil is Earth, not Air.",
     "style": "not_element",
     "category": "exclusion",
     "creator": null
   },
   {
-    "id": "q0145",
+    "id": "q0196",
+    "prompt": "Which of these Creators is NOT a Air type?",
+    "options": [
+      "Sky",
+      "Tree",
+      "Lightning",
+      "Snow"
+    ],
+    "correct_index": 1,
+    "explanation": "Tree is Earth, not Air.",
+    "style": "not_element",
+    "category": "exclusion",
+    "creator": null
+  },
+  {
+    "id": "q0197",
+    "prompt": "Which of these Creators is NOT a Earth type?",
+    "options": [
+      "Sun",
+      "Mountain",
+      "Soil",
+      "Tree"
+    ],
+    "correct_index": 0,
+    "explanation": "Sun is Fire, not Earth.",
+    "style": "not_element",
+    "category": "exclusion",
+    "creator": null
+  },
+  {
+    "id": "q0198",
     "prompt": "Which of these Creators is NOT a Earth type?",
     "options": [
       "Mountain",
       "Sky",
-      "Tree",
-      "Soil"
+      "Soil",
+      "Tree"
     ],
     "correct_index": 1,
     "explanation": "Sky is Air, not Earth.",
@@ -2203,41 +3001,41 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "creator": null
   },
   {
-    "id": "q0146",
+    "id": "q0199",
     "prompt": "Which of these Creators is NOT a Earth type?",
     "options": [
       "Tree",
-      "Whirlwind",
+      "Lava",
       "Soil",
       "Mountain"
     ],
     "correct_index": 1,
-    "explanation": "Whirlwind is Air, not Earth.",
+    "explanation": "Lava is Fire, not Earth.",
     "style": "not_element",
     "category": "exclusion",
     "creator": null
   },
   {
-    "id": "q0147",
-    "prompt": "Which of these Creators is NOT a Earth type?",
-    "options": [
-      "Ocean",
-      "Soil",
-      "Tree",
-      "Mountain"
-    ],
-    "correct_index": 0,
-    "explanation": "Ocean is Water, not Earth.",
-    "style": "not_element",
-    "category": "exclusion",
-    "creator": null
-  },
-  {
-    "id": "q0148",
+    "id": "q0200",
     "prompt": "Which of these Creators is NOT a Fire type?",
     "options": [
-      "Fire",
+      "Sun",
+      "Snow",
       "Lava",
+      "Fire"
+    ],
+    "correct_index": 1,
+    "explanation": "Snow is Air, not Fire.",
+    "style": "not_element",
+    "category": "exclusion",
+    "creator": null
+  },
+  {
+    "id": "q0201",
+    "prompt": "Which of these Creators is NOT a Fire type?",
+    "options": [
+      "Lava",
+      "Fire",
       "Sun",
       "Lightning"
     ],
@@ -2248,1846 +3046,1831 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "creator": null
   },
   {
-    "id": "q0149",
-    "prompt": "Which of these Creators is NOT a Fire type?",
-    "options": [
-      "Sun",
-      "Soil",
-      "Fire",
-      "Lava"
-    ],
-    "correct_index": 1,
-    "explanation": "Soil is Earth, not Fire.",
-    "style": "not_element",
-    "category": "exclusion",
-    "creator": null
-  },
-  {
-    "id": "q0150",
-    "prompt": "Which of these Creators is NOT a Fire type?",
-    "options": [
-      "Lava",
-      "Ocean",
-      "Fire",
-      "Sun"
-    ],
-    "correct_index": 1,
-    "explanation": "Ocean is Water, not Fire.",
-    "style": "not_element",
-    "category": "exclusion",
-    "creator": null
-  },
-  {
-    "id": "q0151",
-    "prompt": "Which of these Creators is NOT a Water type?",
-    "options": [
-      "Lake",
-      "Snow",
-      "Ocean",
-      "River"
-    ],
-    "correct_index": 1,
-    "explanation": "Snow is Air, not Water.",
-    "style": "not_element",
-    "category": "exclusion",
-    "creator": null
-  },
-  {
-    "id": "q0152",
-    "prompt": "Which of these Creators is NOT a Water type?",
-    "options": [
-      "Ocean",
-      "Snow",
-      "Lake",
-      "River"
-    ],
-    "correct_index": 1,
-    "explanation": "Snow is Air, not Water.",
-    "style": "not_element",
-    "category": "exclusion",
-    "creator": null
-  },
-  {
-    "id": "q0153",
-    "prompt": "Which of these Creators is NOT a Water type?",
-    "options": [
-      "Lake",
-      "Ocean",
-      "River",
-      "Mountain"
-    ],
-    "correct_index": 3,
-    "explanation": "Mountain is Earth, not Water.",
-    "style": "not_element",
-    "category": "exclusion",
-    "creator": null
-  },
-  {
-    "id": "q0154",
-    "prompt": "The Alpaca card is which Creator type? (pick one)",
-    "options": [
-      "Lava",
-      "Lightning",
-      "Snow",
-      "Whirlwind"
-    ],
-    "correct_index": 2,
-    "explanation": "Alpaca = Snow + Soil.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0155",
-    "prompt": "The Anteater card is which Creator type? (pick one)",
-    "options": [
-      "Lightning",
-      "Mountain",
-      "Soil",
-      "Snow"
-    ],
-    "correct_index": 2,
-    "explanation": "Anteater = Soil + River.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0156",
-    "prompt": "The Bear card is which Creator type? (pick one)",
-    "options": [
-      "Lake",
-      "Lightning",
-      "Ocean",
-      "Lava"
-    ],
-    "correct_index": 3,
-    "explanation": "Bear = Lava + Soil.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0157",
-    "prompt": "The Beaver card is which Creator type? (pick one)",
-    "options": [
-      "Snow",
-      "Lake",
-      "Sky",
-      "Mountain"
-    ],
-    "correct_index": 1,
-    "explanation": "Beaver = Lake + River.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0158",
-    "prompt": "The Bee card is which Creator type? (pick one)",
-    "options": [
-      "Fire",
-      "Tree",
-      "Mountain",
-      "Lava"
-    ],
-    "correct_index": 3,
-    "explanation": "Bee = Lava + Snow.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0159",
-    "prompt": "The Bigfoot card is which Creator type? (pick one)",
-    "options": [
-      "Fire",
-      "Tree",
-      "Mountain",
-      "Whirlwind"
-    ],
-    "correct_index": 2,
-    "explanation": "Bigfoot = Mountain + Sky.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0160",
-    "prompt": "The Bison card is which Creator type? (pick one)",
-    "options": [
-      "Whirlwind",
-      "Lake",
-      "River",
-      "Mountain"
-    ],
-    "correct_index": 3,
-    "explanation": "Bison = Mountain + Soil.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0161",
-    "prompt": "The Bunyip card is which Creator type? (pick one)",
-    "options": [
-      "Snow",
-      "Lightning",
-      "Lake",
-      "River"
-    ],
-    "correct_index": 2,
-    "explanation": "Bunyip = Lake + Sky.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0162",
-    "prompt": "The Camel card is which Creator type? (pick one)",
-    "options": [
-      "Whirlwind",
-      "Mountain",
-      "Fire",
-      "Lightning"
-    ],
-    "correct_index": 2,
-    "explanation": "Camel = Fire + Soil.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0163",
-    "prompt": "The Cassowary card is which Creator type? (pick one)",
-    "options": [
-      "Whirlwind",
-      "Lava",
-      "River",
-      "Soil"
-    ],
-    "correct_index": 1,
-    "explanation": "Cassowary = Lava + Tree.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0164",
-    "prompt": "The Catfish card is which Creator type? (pick one)",
-    "options": [
-      "Lake",
-      "Soil",
-      "Lightning",
-      "Snow"
-    ],
-    "correct_index": 2,
-    "explanation": "Catfish = Lightning + River.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0165",
-    "prompt": "The Cheetah card is which Creator type? (pick one)",
-    "options": [
-      "Fire",
-      "Mountain",
-      "Ocean",
-      "River"
-    ],
-    "correct_index": 0,
-    "explanation": "Cheetah = Fire + Lightning.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0166",
-    "prompt": "The Crab card is which Creator type? (pick one)",
-    "options": [
-      "Fire",
-      "Snow",
-      "Lava",
-      "Lake"
-    ],
-    "correct_index": 3,
-    "explanation": "Crab = Lake + Mountain.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0167",
-    "prompt": "The Crane card is which Creator type? (pick one)",
-    "options": [
-      "Soil",
-      "Lightning",
-      "River",
-      "Snow"
-    ],
-    "correct_index": 1,
-    "explanation": "Crane = Lightning + Lake.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0168",
-    "prompt": "The Crocodile card is which Creator type? (pick one)",
-    "options": [
-      "Fire",
-      "Whirlwind",
-      "River",
-      "Ocean"
-    ],
-    "correct_index": 3,
-    "explanation": "Crocodile = Ocean + Mountain.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0169",
-    "prompt": "The Deer card is which Creator type? (pick one)",
-    "options": [
-      "Sky",
-      "Soil",
-      "Fire",
-      "Snow"
-    ],
-    "correct_index": 3,
-    "explanation": "Deer = Snow + Lightning.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0170",
-    "prompt": "The Dolphin card is which Creator type? (pick one)",
-    "options": [
-      "Fire",
-      "Tree",
-      "Sky",
-      "Whirlwind"
-    ],
-    "correct_index": 3,
-    "explanation": "Dolphin = Whirlwind + Ocean.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0171",
-    "prompt": "The Dragon card is which Creator type? (pick one)",
-    "options": [
-      "Soil",
-      "Lake",
-      "Fire",
-      "Lava"
-    ],
-    "correct_index": 2,
-    "explanation": "Dragon = Fire + Sky.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0172",
-    "prompt": "The Dragonfly card is which Creator type? (pick one)",
-    "options": [
-      "Sun",
-      "Lightning",
-      "Whirlwind",
-      "Mountain"
-    ],
-    "correct_index": 2,
-    "explanation": "Dragonfly = Whirlwind + Lake.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0173",
-    "prompt": "The Duck card is which Creator type? (pick one)",
-    "options": [
-      "Snow",
-      "Whirlwind",
-      "Mountain",
-      "Lake"
-    ],
-    "correct_index": 0,
-    "explanation": "Duck = Snow + River.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0174",
-    "prompt": "The Echidna card is which Creator type? (pick one)",
-    "options": [
-      "Lava",
-      "Sky",
-      "Fire",
-      "Lightning"
-    ],
-    "correct_index": 0,
-    "explanation": "Echidna = Lava + Lake.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0175",
-    "prompt": "The Eel card is which Creator type? (pick one)",
-    "options": [
-      "Sky",
-      "Fire",
-      "Tree",
-      "Lava"
-    ],
-    "correct_index": 3,
-    "explanation": "Eel = Lava + River.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0176",
-    "prompt": "The Elephant card is which Creator type? (pick one)",
-    "options": [
-      "Whirlwind",
-      "Snow",
-      "Lava",
-      "Sun"
-    ],
-    "correct_index": 3,
-    "explanation": "Elephant = Sun + Soil.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0177",
-    "prompt": "The Elf card is which Creator type? (pick one)",
-    "options": [
-      "Sky",
-      "Lake",
-      "Whirlwind",
-      "River"
-    ],
-    "correct_index": 0,
-    "explanation": "Elf = Sky + Tree.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0178",
-    "prompt": "The Fairy card is which Creator type? (pick one)",
-    "options": [
-      "Snow",
-      "Lake",
-      "Whirlwind",
-      "Lava"
-    ],
-    "correct_index": 2,
-    "explanation": "Fairy = Whirlwind + Sky.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0179",
-    "prompt": "The Falcon card is which Creator type? (pick one)",
-    "options": [
-      "Lava",
-      "Sun",
-      "Lightning",
-      "Snow"
-    ],
-    "correct_index": 2,
-    "explanation": "Falcon = Lightning + Mountain.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0180",
-    "prompt": "The Firefly card is which Creator type? (pick one)",
-    "options": [
-      "River",
-      "Whirlwind",
-      "Fire",
-      "Lake"
-    ],
-    "correct_index": 1,
-    "explanation": "Firefly = Whirlwind + Lightning.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0181",
-    "prompt": "The Flying Fox card is which Creator type? (pick one)",
-    "options": [
-      "Tree",
-      "Lightning",
-      "Lava",
-      "Fire"
-    ],
-    "correct_index": 1,
-    "explanation": "Flying Fox = Lightning + Sun.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0182",
-    "prompt": "The Fox card is which Creator type? (pick one)",
-    "options": [
-      "Tree",
-      "Lava",
-      "Snow",
-      "Whirlwind"
-    ],
-    "correct_index": 1,
-    "explanation": "Fox = Lava + Fire.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0183",
-    "prompt": "The Frog card is which Creator type? (pick one)",
-    "options": [
-      "Mountain",
-      "Sun",
-      "Lake",
-      "Lava"
-    ],
-    "correct_index": 2,
-    "explanation": "Frog = Lake + Tree.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0184",
-    "prompt": "The Giraffe card is which Creator type? (pick one)",
-    "options": [
-      "Sun",
-      "Sky",
-      "Lightning",
-      "Snow"
-    ],
-    "correct_index": 2,
-    "explanation": "Giraffe = Lightning + Tree.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0185",
-    "prompt": "The Goat card is which Creator type? (pick one)",
-    "options": [
-      "Tree",
-      "Fire",
-      "Snow",
-      "Sun"
-    ],
-    "correct_index": 0,
-    "explanation": "Goat = Tree + Mountain.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0186",
-    "prompt": "The Gorilla card is which Creator type? (pick one)",
-    "options": [
-      "Sun",
-      "River",
-      "Fire",
-      "Sky"
-    ],
-    "correct_index": 2,
-    "explanation": "Gorilla = Fire + Mountain.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0187",
-    "prompt": "The Griffin card is which Creator type? (pick one)",
-    "options": [
-      "Fire",
-      "Lava",
-      "Soil",
-      "Lake"
-    ],
-    "correct_index": 1,
-    "explanation": "Griffin = Lava + Sky.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0188",
-    "prompt": "The Hobbit card is which Creator type? (pick one)",
-    "options": [
-      "Snow",
-      "Soil",
-      "River",
-      "Lava"
-    ],
-    "correct_index": 1,
-    "explanation": "Hobbit = Soil + Sky.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0189",
-    "prompt": "The Horse card is which Creator type? (pick one)",
-    "options": [
-      "Snow",
-      "Whirlwind",
-      "River",
-      "Fire"
-    ],
-    "correct_index": 1,
-    "explanation": "Horse = Whirlwind + Mountain.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0190",
-    "prompt": "The Iguana card is which Creator type? (pick one)",
-    "options": [
-      "Sky",
-      "Lava",
-      "Fire",
-      "River"
-    ],
-    "correct_index": 1,
-    "explanation": "Iguana = Lava + Sun.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0191",
-    "prompt": "The Jellyfish card is which Creator type? (pick one)",
-    "options": [
-      "Mountain",
-      "Soil",
-      "Whirlwind",
-      "Lake"
-    ],
-    "correct_index": 3,
-    "explanation": "Jellyfish = Lake + Ocean.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0192",
-    "prompt": "The Kangaroo card is which Creator type? (pick one)",
-    "options": [
-      "Soil",
-      "Whirlwind",
-      "Lightning",
-      "River"
-    ],
-    "correct_index": 1,
-    "explanation": "Kangaroo = Whirlwind + Sun.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0193",
-    "prompt": "The Kingfisher card is which Creator type? (pick one)",
-    "options": [
-      "Soil",
-      "Mountain",
-      "Sun",
-      "Sky"
-    ],
-    "correct_index": 2,
-    "explanation": "Kingfisher = Sun + River.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0194",
-    "prompt": "The Koala card is which Creator type? (pick one)",
-    "options": [
-      "Lava",
-      "Sun",
-      "Snow",
-      "Soil"
-    ],
-    "correct_index": 1,
-    "explanation": "Koala = Sun + Tree.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0195",
-    "prompt": "The Lemur card is which Creator type? (pick one)",
-    "options": [
-      "Lake",
-      "Sky",
-      "Whirlwind",
-      "Fire"
-    ],
-    "correct_index": 3,
-    "explanation": "Lemur = Fire + Tree.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0196",
-    "prompt": "The Leopard card is which Creator type? (pick one)",
-    "options": [
-      "Fire",
-      "Snow",
-      "Lava",
-      "River"
-    ],
-    "correct_index": 1,
-    "explanation": "Leopard = Snow + Mountain.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0197",
-    "prompt": "The Lion card is which Creator type? (pick one)",
-    "options": [
-      "Sun",
-      "Snow",
-      "Soil",
-      "Lightning"
-    ],
-    "correct_index": 0,
-    "explanation": "Lion = Sun + Mountain.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0198",
-    "prompt": "The Lynx card is which Creator type? (pick one)",
-    "options": [
-      "Soil",
-      "Mountain",
-      "Whirlwind",
-      "Sky"
-    ],
-    "correct_index": 1,
-    "explanation": "Lynx = Mountain + Snow.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0199",
-    "prompt": "The Merper card is which Creator type? (pick one)",
-    "options": [
-      "River",
-      "Sun",
-      "Mountain",
-      "Ocean"
-    ],
-    "correct_index": 3,
-    "explanation": "Merper = Ocean + Sky.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0200",
-    "prompt": "The Mouse card is which Creator type? (pick one)",
-    "options": [
-      "Mountain",
-      "Sun",
-      "Fire",
-      "Lava"
-    ],
-    "correct_index": 2,
-    "explanation": "Mouse = Fire + Snow.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
-    "id": "q0201",
-    "prompt": "The Octopus card is which Creator type? (pick one)",
-    "options": [
-      "Lava",
-      "Fire",
-      "Lightning",
-      "Sun"
-    ],
-    "correct_index": 0,
-    "explanation": "Octopus = Lava + Ocean.",
-    "style": "animal_type",
-    "category": "animals",
-    "creator": null
-  },
-  {
     "id": "q0202",
-    "prompt": "The Ostrich card is which Creator type? (pick one)",
+    "prompt": "Which of these Creators is NOT a Fire type?",
     "options": [
+      "Fire",
+      "Lava",
       "Sun",
-      "Snow",
-      "Mountain",
-      "Whirlwind"
+      "Mountain"
     ],
     "correct_index": 3,
-    "explanation": "Ostrich = Whirlwind + Soil.",
-    "style": "animal_type",
-    "category": "animals",
+    "explanation": "Mountain is Earth, not Fire.",
+    "style": "not_element",
+    "category": "exclusion",
     "creator": null
   },
   {
     "id": "q0203",
-    "prompt": "The Otter card is which Creator type? (pick one)",
+    "prompt": "Which of these Creators is NOT a Water type?",
     "options": [
       "Lightning",
-      "Sun",
-      "Lava",
-      "Fire"
+      "Lake",
+      "River",
+      "Ocean"
     ],
-    "correct_index": 3,
-    "explanation": "Otter = Fire + River.",
-    "style": "animal_type",
-    "category": "animals",
+    "correct_index": 0,
+    "explanation": "Lightning is Air, not Water.",
+    "style": "not_element",
+    "category": "exclusion",
     "creator": null
   },
   {
     "id": "q0204",
-    "prompt": "The Panda card is which Creator type? (pick one)",
+    "prompt": "Which of these Creators is NOT a Water type?",
     "options": [
-      "Tree",
+      "Snow",
+      "Ocean",
       "River",
-      "Fire",
-      "Whirlwind"
+      "Lake"
     ],
-    "correct_index": 2,
-    "explanation": "Panda = Fire + Lake.",
-    "style": "animal_type",
-    "category": "animals",
+    "correct_index": 0,
+    "explanation": "Snow is Air, not Water.",
+    "style": "not_element",
+    "category": "exclusion",
     "creator": null
   },
   {
     "id": "q0205",
-    "prompt": "The Peacock card is which Creator type? (pick one)",
+    "prompt": "Which of these Creators is NOT a Water type?",
     "options": [
-      "Ocean",
-      "Snow",
-      "Fire",
-      "Soil"
+      "Lake",
+      "River",
+      "Whirlwind",
+      "Ocean"
     ],
-    "correct_index": 1,
-    "explanation": "Peacock = Snow + Sun.",
-    "style": "animal_type",
-    "category": "animals",
+    "correct_index": 2,
+    "explanation": "Whirlwind is Air, not Water.",
+    "style": "not_element",
+    "category": "exclusion",
     "creator": null
   },
   {
     "id": "q0206",
-    "prompt": "The Penguin card is which Creator type? (pick one)",
+    "prompt": "The Alpaca card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Lava",
-      "Sky",
-      "Tree",
-      "Snow"
+      "Snow",
+      "Sun",
+      "River",
+      "Lava"
     ],
-    "correct_index": 3,
-    "explanation": "Penguin = Snow + Ocean.",
+    "correct_index": 0,
+    "explanation": "Alpaca is Snow + Soil.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0207",
-    "prompt": "The Platypus card is which Creator type? (pick one)",
+    "prompt": "The Anteater card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Lightning",
-      "Mountain",
+      "Tree",
+      "Soil",
       "Fire",
-      "Ocean"
+      "Whirlwind"
     ],
-    "correct_index": 0,
-    "explanation": "Platypus = Lightning + Soil.",
+    "correct_index": 1,
+    "explanation": "Anteater is Soil + River.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0208",
-    "prompt": "The Rabbit card is which Creator type? (pick one)",
+    "prompt": "The Bear card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Soil",
-      "Mountain",
-      "Whirlwind",
-      "Sky"
+      "River",
+      "Lava",
+      "Sun",
+      "Whirlwind"
     ],
-    "correct_index": 2,
-    "explanation": "Rabbit = Whirlwind + Snow.",
+    "correct_index": 1,
+    "explanation": "Bear is Lava + Soil.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0209",
-    "prompt": "The Rainbow Serpent card is which Creator type? (pick one)",
+    "prompt": "The Beaver card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Soil",
+      "Lake",
       "Sun",
-      "Ocean",
+      "Soil",
       "Lightning"
     ],
-    "correct_index": 1,
-    "explanation": "Rainbow Serpent = Sun + Sky.",
+    "correct_index": 0,
+    "explanation": "Beaver is Lake + River.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0210",
-    "prompt": "The Salamander card is which Creator type? (pick one)",
+    "prompt": "The Bee card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Soil",
-      "Mountain",
+      "River",
+      "Lava",
       "Lake",
-      "Sky"
+      "Mountain"
     ],
     "correct_index": 1,
-    "explanation": "Salamander = Mountain + River.",
+    "explanation": "Bee is Lava + Snow.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0211",
-    "prompt": "The Seahorse card is which Creator type? (pick one)",
+    "prompt": "The Bigfoot card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Whirlwind",
-      "Ocean",
+      "Mountain",
       "Sun",
-      "Sky"
+      "Lake",
+      "Snow"
     ],
-    "correct_index": 1,
-    "explanation": "Seahorse = Ocean + Tree.",
+    "correct_index": 0,
+    "explanation": "Bigfoot is Mountain + Sky.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0212",
-    "prompt": "The Seal card is which Creator type? (pick one)",
+    "prompt": "The Bison card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Sun",
-      "Snow",
-      "Whirlwind",
-      "Fire"
+      "Lake",
+      "Fire",
+      "Mountain",
+      "Lightning"
     ],
-    "correct_index": 3,
-    "explanation": "Seal = Fire + Ocean.",
+    "correct_index": 2,
+    "explanation": "Bison is Mountain + Soil.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0213",
-    "prompt": "The Seamonster card is which Creator type? (pick one)",
+    "prompt": "The Bunyip card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "River",
-      "Tree",
+      "Snow",
       "Lava",
-      "Fire"
+      "Lake",
+      "Lightning"
     ],
-    "correct_index": 0,
-    "explanation": "Seamonster = River + Sky.",
+    "correct_index": 2,
+    "explanation": "Bunyip is Lake + Sky.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0214",
-    "prompt": "The Shark card is which Creator type? (pick one)",
+    "prompt": "The Camel card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Soil",
-      "Sky",
-      "Ocean",
-      "Whirlwind"
+      "Lightning",
+      "Tree",
+      "Fire",
+      "Sun"
     ],
-    "correct_index": 3,
-    "explanation": "Shark = Whirlwind + River.",
+    "correct_index": 2,
+    "explanation": "Camel is Fire + Soil.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0215",
-    "prompt": "The Sloth card is which Creator type? (pick one)",
+    "prompt": "The Cassowary card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Sky",
-      "Tree",
+      "Lava",
+      "Fire",
       "Ocean",
-      "Whirlwind"
+      "Lightning"
     ],
-    "correct_index": 1,
-    "explanation": "Sloth = Tree + Soil.",
+    "correct_index": 0,
+    "explanation": "Cassowary is Lava + Tree.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0216",
-    "prompt": "The Snake card is which Creator type? (pick one)",
+    "prompt": "The Catfish card carries which Creator type? (either half counts — pick one shown)",
     "options": [
       "Mountain",
-      "Lightning",
-      "Tree",
-      "Sky"
+      "Sun",
+      "Sky",
+      "Lightning"
     ],
-    "correct_index": 2,
-    "explanation": "Snake = Tree + River.",
+    "correct_index": 3,
+    "explanation": "Catfish is Lightning + River.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0217",
-    "prompt": "The Spider card is which Creator type? (pick one)",
+    "prompt": "The Cheetah card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Whirlwind",
-      "Ocean",
       "Mountain",
-      "Snow"
+      "Lake",
+      "Fire",
+      "Whirlwind"
     ],
-    "correct_index": 3,
-    "explanation": "Spider = Snow + Tree.",
+    "correct_index": 2,
+    "explanation": "Cheetah is Fire + Lightning.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0218",
-    "prompt": "The Squirrel card is which Creator type? (pick one)",
+    "prompt": "The Crab card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Mountain",
-      "Snow",
-      "Lava",
-      "Fire"
+      "Lightning",
+      "Whirlwind",
+      "Sun",
+      "Lake"
     ],
     "correct_index": 3,
-    "explanation": "Squirrel = Fire + Whirlwind.",
+    "explanation": "Crab is Lake + Mountain.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0219",
-    "prompt": "The Starfish card is which Creator type? (pick one)",
+    "prompt": "The Crane card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Lake",
-      "Tree",
-      "Fire",
-      "Sun"
+      "Ocean",
+      "Snow",
+      "Sun",
+      "Lightning"
     ],
     "correct_index": 3,
-    "explanation": "Starfish = Sun + Ocean.",
+    "explanation": "Crane is Lightning + Lake.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0220",
-    "prompt": "The Stingray card is which Creator type? (pick one)",
+    "prompt": "The Crocodile card carries which Creator type? (either half counts — pick one shown)",
     "options": [
+      "River",
       "Ocean",
-      "Lake",
-      "Lava",
-      "Sky"
+      "Sun",
+      "Lava"
     ],
-    "correct_index": 0,
-    "explanation": "Stingray = Ocean + River.",
+    "correct_index": 1,
+    "explanation": "Crocodile is Ocean + Mountain.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0221",
-    "prompt": "The Swan card is which Creator type? (pick one)",
+    "prompt": "The Deer card carries which Creator type? (either half counts — pick one shown)",
     "options": [
+      "Whirlwind",
       "Snow",
-      "Lightning",
-      "Mountain",
-      "Ocean"
+      "Lava",
+      "Sky"
     ],
-    "correct_index": 0,
-    "explanation": "Swan = Snow + Lake.",
+    "correct_index": 1,
+    "explanation": "Deer is Snow + Lightning.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0222",
-    "prompt": "The Swordfish card is which Creator type? (pick one)",
+    "prompt": "The Dolphin card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Mountain",
       "Sun",
-      "Lightning",
-      "Tree"
+      "Whirlwind",
+      "Fire",
+      "Lightning"
     ],
-    "correct_index": 2,
-    "explanation": "Swordfish = Lightning + Ocean.",
+    "correct_index": 1,
+    "explanation": "Dolphin is Whirlwind + Ocean.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0223",
-    "prompt": "The Thunderbird card is which Creator type? (pick one)",
+    "prompt": "The Dragon card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Whirlwind",
-      "Lava",
-      "Lightning",
-      "Snow"
+      "Fire",
+      "Soil",
+      "Mountain",
+      "Ocean"
     ],
-    "correct_index": 2,
-    "explanation": "Thunderbird = Lightning + Sky.",
+    "correct_index": 0,
+    "explanation": "Dragon is Fire + Sky.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0224",
-    "prompt": "The Tiger card is which Creator type? (pick one)",
+    "prompt": "The Dragonfly card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Fire",
-      "Lava",
       "River",
-      "Soil"
+      "Whirlwind",
+      "Lightning",
+      "Fire"
     ],
     "correct_index": 1,
-    "explanation": "Tiger = Lava + Mountain.",
+    "explanation": "Dragonfly is Whirlwind + Lake.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0225",
-    "prompt": "The Turtle card is which Creator type? (pick one)",
+    "prompt": "The Duck card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Tree",
-      "Whirlwind",
+      "Fire",
       "Sun",
-      "Mountain"
+      "Lake",
+      "Snow"
     ],
-    "correct_index": 2,
-    "explanation": "Turtle = Sun + Lake.",
+    "correct_index": 3,
+    "explanation": "Duck is Snow + River.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0226",
-    "prompt": "The Unicorn card is which Creator type? (pick one)",
+    "prompt": "The Echidna card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "River",
       "Lava",
-      "Soil",
-      "Snow"
+      "Tree",
+      "Mountain",
+      "River"
     ],
-    "correct_index": 3,
-    "explanation": "Unicorn = Snow + Sky.",
+    "correct_index": 0,
+    "explanation": "Echidna is Lava + Lake.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0227",
-    "prompt": "The Wasp card is which Creator type? (pick one)",
+    "prompt": "The Eel card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Soil",
-      "Ocean",
       "Lava",
-      "Fire"
+      "Mountain",
+      "Sun",
+      "Snow"
     ],
-    "correct_index": 2,
-    "explanation": "Wasp = Lava + Lightning.",
+    "correct_index": 0,
+    "explanation": "Eel is Lava + River.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0228",
-    "prompt": "The Whale card is which Creator type? (pick one)",
+    "prompt": "The Elephant card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Snow",
-      "Ocean",
-      "Lake",
-      "Lightning"
+      "Tree",
+      "Sky",
+      "Fire",
+      "Sun"
     ],
-    "correct_index": 1,
-    "explanation": "Whale = Ocean + Soil.",
+    "correct_index": 3,
+    "explanation": "Elephant is Sun + Soil.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0229",
-    "prompt": "The Wolf card is which Creator type? (pick one)",
+    "prompt": "The Elf card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Lava",
-      "Whirlwind",
+      "Fire",
+      "Mountain",
       "Sky",
-      "Lightning"
+      "Soil"
     ],
-    "correct_index": 0,
-    "explanation": "Wolf = Lava + Snow.",
+    "correct_index": 2,
+    "explanation": "Elf is Sky + Tree.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0230",
-    "prompt": "The Wombat card is which Creator type? (pick one)",
+    "prompt": "The Fairy card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Tree",
-      "Lake",
-      "Sky",
-      "Snow"
+      "Whirlwind",
+      "Soil",
+      "Sun",
+      "Mountain"
     ],
-    "correct_index": 1,
-    "explanation": "Wombat = Lake + Soil.",
+    "correct_index": 0,
+    "explanation": "Fairy is Whirlwind + Sky.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0231",
-    "prompt": "The Woodpecker card is which Creator type? (pick one)",
+    "prompt": "The Falcon card carries which Creator type? (either half counts — pick one shown)",
     "options": [
       "Sun",
-      "Ocean",
-      "Whirlwind",
+      "Lightning",
+      "Sky",
       "Snow"
     ],
-    "correct_index": 2,
-    "explanation": "Woodpecker = Whirlwind + Tree.",
+    "correct_index": 1,
+    "explanation": "Falcon is Lightning + Mountain.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0232",
-    "prompt": "The Zebra card is which Creator type? (pick one)",
+    "prompt": "The Firefly card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Mountain",
+      "Ocean",
+      "Whirlwind",
       "Fire",
-      "Sky",
-      "Tree"
+      "Lake"
     ],
     "correct_index": 1,
-    "explanation": "Zebra = Fire + Sun.",
+    "explanation": "Firefly is Whirlwind + Lightning.",
     "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0233",
-    "prompt": "Which of these animals is NOT a Snow type?",
+    "prompt": "The Flying Fox card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Lynx",
-      "Duck",
-      "Alpaca",
-      "Falcon"
+      "Lake",
+      "Sky",
+      "Mountain",
+      "Lightning"
     ],
     "correct_index": 3,
-    "explanation": "Falcon is Lightning + Mountain — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "explanation": "Flying Fox is Lightning + Sun.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0234",
-    "prompt": "Which of these animals is NOT a Snow type?",
+    "prompt": "The Fox card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Spider",
-      "Swan",
-      "Eel",
-      "Rabbit"
+      "Tree",
+      "Lava",
+      "Mountain",
+      "Lake"
     ],
-    "correct_index": 2,
-    "explanation": "Eel is Lava + River — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 1,
+    "explanation": "Fox is Lava + Fire.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0235",
-    "prompt": "Which of these animals is NOT a Soil type?",
+    "prompt": "The Frog card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Platypus",
-      "Seamonster",
-      "Ostrich",
-      "Camel"
+      "Lake",
+      "Lava",
+      "Sky",
+      "Lightning"
     ],
-    "correct_index": 1,
-    "explanation": "Seamonster is River + Sky — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 0,
+    "explanation": "Frog is Lake + Tree.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0236",
-    "prompt": "Which of these animals is NOT a Soil type?",
+    "prompt": "The Giraffe card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Hobbit",
-      "Platypus",
-      "Wombat",
-      "Echidna"
+      "Lava",
+      "Lightning",
+      "River",
+      "Whirlwind"
     ],
-    "correct_index": 3,
-    "explanation": "Echidna is Lava + Lake — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 1,
+    "explanation": "Giraffe is Lightning + Tree.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0237",
-    "prompt": "Which of these animals is NOT a River type?",
+    "prompt": "The Goat card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Anteater",
-      "Ostrich",
-      "Stingray",
-      "Catfish"
+      "Sky",
+      "Tree",
+      "River",
+      "Ocean"
     ],
     "correct_index": 1,
-    "explanation": "Ostrich is Whirlwind + Soil — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "explanation": "Goat is Tree + Mountain.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0238",
-    "prompt": "Which of these animals is NOT a River type?",
+    "prompt": "The Gorilla card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Otter",
-      "Anteater",
-      "Shark",
-      "Peacock"
+      "Lightning",
+      "Snow",
+      "Whirlwind",
+      "Fire"
     ],
     "correct_index": 3,
-    "explanation": "Peacock is Snow + Sun — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "explanation": "Gorilla is Fire + Mountain.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0239",
-    "prompt": "Which of these animals is NOT a Lava type?",
+    "prompt": "The Griffin card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Sloth",
-      "Bear",
-      "Tiger",
-      "Griffin"
+      "Mountain",
+      "Tree",
+      "Lava",
+      "Sun"
     ],
-    "correct_index": 0,
-    "explanation": "Sloth is Tree + Soil — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 2,
+    "explanation": "Griffin is Lava + Sky.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0240",
-    "prompt": "Which of these animals is NOT a Lava type?",
+    "prompt": "The Hobbit card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Echidna",
-      "Wasp",
-      "Bee",
-      "Bigfoot"
+      "Lake",
+      "Snow",
+      "Soil",
+      "Sun"
     ],
-    "correct_index": 3,
-    "explanation": "Bigfoot is Mountain + Sky — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 2,
+    "explanation": "Hobbit is Soil + Sky.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0241",
-    "prompt": "Which of these animals is NOT a Lake type?",
+    "prompt": "The Horse card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Swan",
-      "Beaver",
-      "Bee",
-      "Turtle"
+      "Sun",
+      "Whirlwind",
+      "River",
+      "Tree"
     ],
-    "correct_index": 2,
-    "explanation": "Bee is Lava + Snow — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 1,
+    "explanation": "Horse is Whirlwind + Mountain.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0242",
-    "prompt": "Which of these animals is NOT a Lake type?",
+    "prompt": "The Iguana card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Squirrel",
-      "Beaver",
-      "Echidna",
-      "Crane"
+      "Soil",
+      "Lava",
+      "River",
+      "Mountain"
     ],
-    "correct_index": 0,
-    "explanation": "Squirrel is Fire + Whirlwind — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 1,
+    "explanation": "Iguana is Lava + Sun.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0243",
-    "prompt": "Which of these animals is NOT a Mountain type?",
+    "prompt": "The Jellyfish card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Lynx",
-      "Lion",
-      "Tiger",
-      "Camel"
+      "Mountain",
+      "Lake",
+      "Lightning",
+      "Whirlwind"
     ],
-    "correct_index": 3,
-    "explanation": "Camel is Fire + Soil — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 1,
+    "explanation": "Jellyfish is Lake + Ocean.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0244",
-    "prompt": "Which of these animals is NOT a Mountain type?",
+    "prompt": "The Kangaroo card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Tiger",
-      "Gorilla",
-      "Bigfoot",
-      "Bear"
+      "Whirlwind",
+      "River",
+      "Sky",
+      "Lightning"
     ],
-    "correct_index": 3,
-    "explanation": "Bear is Lava + Soil — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 0,
+    "explanation": "Kangaroo is Whirlwind + Sun.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0245",
-    "prompt": "Which of these animals is NOT a Sky type?",
+    "prompt": "The Kingfisher card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Fairy",
-      "Hobbit",
-      "Squirrel",
-      "Bunyip"
+      "Soil",
+      "Sun",
+      "Lightning",
+      "Whirlwind"
     ],
-    "correct_index": 2,
-    "explanation": "Squirrel is Fire + Whirlwind — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 1,
+    "explanation": "Kingfisher is Sun + River.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0246",
-    "prompt": "Which of these animals is NOT a Sky type?",
+    "prompt": "The Koala card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Unicorn",
-      "Gorilla",
-      "Merper",
-      "Seamonster"
+      "Snow",
+      "Fire",
+      "Sun",
+      "Ocean"
     ],
-    "correct_index": 1,
-    "explanation": "Gorilla is Fire + Mountain — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 2,
+    "explanation": "Koala is Sun + Tree.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0247",
-    "prompt": "Which of these animals is NOT a Fire type?",
+    "prompt": "The Lemur card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Panda",
-      "Echidna",
-      "Gorilla",
-      "Seal"
+      "Ocean",
+      "Lake",
+      "Soil",
+      "Fire"
     ],
-    "correct_index": 1,
-    "explanation": "Echidna is Lava + Lake — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 3,
+    "explanation": "Lemur is Fire + Tree.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0248",
-    "prompt": "Which of these animals is NOT a Fire type?",
+    "prompt": "The Leopard card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Otter",
-      "Squirrel",
-      "Seal",
-      "Bear"
+      "Lightning",
+      "Tree",
+      "Ocean",
+      "Snow"
     ],
     "correct_index": 3,
-    "explanation": "Bear is Lava + Soil — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "explanation": "Leopard is Snow + Mountain.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0249",
-    "prompt": "Which of these animals is NOT a Tree type?",
+    "prompt": "The Lion card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Giraffe",
-      "Snake",
-      "Cassowary",
-      "Thunderbird"
+      "Fire",
+      "Sun",
+      "Lava",
+      "Lightning"
     ],
-    "correct_index": 3,
-    "explanation": "Thunderbird is Lightning + Sky — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 1,
+    "explanation": "Lion is Sun + Mountain.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0250",
-    "prompt": "Which of these animals is NOT a Tree type?",
+    "prompt": "The Lynx card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Seahorse",
-      "Ostrich",
-      "Cassowary",
-      "Elf"
+      "Whirlwind",
+      "Mountain",
+      "Tree",
+      "Lightning"
     ],
     "correct_index": 1,
-    "explanation": "Ostrich is Whirlwind + Soil — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "explanation": "Lynx is Mountain + Snow.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0251",
-    "prompt": "Which of these animals is NOT a Lightning type?",
+    "prompt": "The Merper card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Swordfish",
-      "Platypus",
-      "Deer",
-      "Kingfisher"
+      "Soil",
+      "Ocean",
+      "Tree",
+      "Lava"
     ],
-    "correct_index": 3,
-    "explanation": "Kingfisher is Sun + River — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 1,
+    "explanation": "Merper is Ocean + Sky.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0252",
-    "prompt": "Which of these animals is NOT a Lightning type?",
+    "prompt": "The Mouse card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Thunderbird",
-      "Wasp",
-      "Bison",
-      "Catfish"
+      "Sun",
+      "Sky",
+      "Lake",
+      "Fire"
     ],
-    "correct_index": 2,
-    "explanation": "Bison is Mountain + Soil — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 3,
+    "explanation": "Mouse is Fire + Snow.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0253",
-    "prompt": "Which of these animals is NOT a Ocean type?",
+    "prompt": "The Octopus card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Dolphin",
-      "Octopus",
-      "Beaver",
-      "Crocodile"
+      "Whirlwind",
+      "Mountain",
+      "Lava",
+      "Lightning"
     ],
     "correct_index": 2,
-    "explanation": "Beaver is Lake + River — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "explanation": "Octopus is Lava + Ocean.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0254",
-    "prompt": "Which of these animals is NOT a Ocean type?",
+    "prompt": "The Ostrich card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Merper",
-      "Octopus",
-      "Crocodile",
-      "Eel"
+      "River",
+      "Mountain",
+      "Whirlwind",
+      "Snow"
     ],
-    "correct_index": 3,
-    "explanation": "Eel is Lava + River — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 2,
+    "explanation": "Ostrich is Whirlwind + Soil.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0255",
-    "prompt": "Which of these animals is NOT a Whirlwind type?",
+    "prompt": "The Otter card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Panda",
-      "Woodpecker",
-      "Rabbit",
-      "Kangaroo"
+      "Sun",
+      "Fire",
+      "Snow",
+      "Whirlwind"
     ],
-    "correct_index": 0,
-    "explanation": "Panda is Fire + Lake — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 1,
+    "explanation": "Otter is Fire + River.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0256",
-    "prompt": "Which of these animals is NOT a Whirlwind type?",
+    "prompt": "The Panda card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Rabbit",
-      "Bigfoot",
-      "Woodpecker",
-      "Horse"
+      "Lightning",
+      "Lava",
+      "Fire",
+      "Mountain"
     ],
-    "correct_index": 1,
-    "explanation": "Bigfoot is Mountain + Sky — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "correct_index": 2,
+    "explanation": "Panda is Fire + Lake.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0257",
-    "prompt": "Which of these animals is NOT a Sun type?",
+    "prompt": "The Peacock card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Seamonster",
-      "Rainbow Serpent",
-      "Lion",
-      "Kangaroo"
+      "Snow",
+      "Ocean",
+      "Lightning",
+      "River"
     ],
     "correct_index": 0,
-    "explanation": "Seamonster is River + Sky — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "explanation": "Peacock is Snow + Sun.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0258",
-    "prompt": "Which of these animals is NOT a Sun type?",
+    "prompt": "The Penguin card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Turtle",
-      "Iguana",
-      "Rainbow Serpent",
-      "Falcon"
+      "Tree",
+      "River",
+      "Sky",
+      "Snow"
     ],
     "correct_index": 3,
-    "explanation": "Falcon is Lightning + Mountain — no overlap with the type asked.",
-    "style": "not_animal_type",
+    "explanation": "Penguin is Snow + Ocean.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0259",
-    "prompt": "Which of these animals carries Snow as one of its Creator types?",
+    "prompt": "The Platypus card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Turtle",
-      "Swordfish",
-      "Swan",
-      "Flying Fox"
+      "Ocean",
+      "Lightning",
+      "Tree",
+      "River"
     ],
-    "correct_index": 2,
-    "explanation": "Swan is part-Snow.",
-    "style": "animal_has_type",
+    "correct_index": 1,
+    "explanation": "Platypus is Lightning + Soil.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0260",
-    "prompt": "Which of these animals carries Soil as one of its Creator types?",
+    "prompt": "The Rabbit card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Gorilla",
-      "Horse",
-      "Hobbit",
-      "Stingray"
+      "Lava",
+      "River",
+      "Mountain",
+      "Whirlwind"
     ],
-    "correct_index": 2,
-    "explanation": "Hobbit is part-Soil.",
-    "style": "animal_has_type",
+    "correct_index": 3,
+    "explanation": "Rabbit is Whirlwind + Snow.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0261",
-    "prompt": "Which of these animals carries River as one of its Creator types?",
+    "prompt": "The Rainbow Serpent card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Turtle",
-      "Whale",
-      "Anteater",
-      "Sloth"
+      "Lightning",
+      "Sun",
+      "Fire",
+      "Mountain"
     ],
-    "correct_index": 2,
-    "explanation": "Anteater is part-River.",
-    "style": "animal_has_type",
+    "correct_index": 1,
+    "explanation": "Rainbow Serpent is Sun + Sky.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0262",
-    "prompt": "Which of these animals carries Lava as one of its Creator types?",
+    "prompt": "The Salamander card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Duck",
-      "Rainbow Serpent",
-      "Cassowary",
-      "Camel"
+      "Lightning",
+      "Mountain",
+      "Lava",
+      "Ocean"
     ],
-    "correct_index": 2,
-    "explanation": "Cassowary is part-Lava.",
-    "style": "animal_has_type",
+    "correct_index": 1,
+    "explanation": "Salamander is Mountain + River.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0263",
-    "prompt": "Which of these animals carries Lake as one of its Creator types?",
+    "prompt": "The Seahorse card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Whale",
-      "Beaver",
-      "Squirrel",
-      "Woodpecker"
+      "Ocean",
+      "Sky",
+      "Lava",
+      "Mountain"
     ],
-    "correct_index": 1,
-    "explanation": "Beaver is part-Lake.",
-    "style": "animal_has_type",
+    "correct_index": 0,
+    "explanation": "Seahorse is Ocean + Tree.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0264",
-    "prompt": "Which of these animals carries Mountain as one of its Creator types?",
+    "prompt": "The Seal card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Hobbit",
-      "Alpaca",
-      "Crocodile",
-      "Squirrel"
+      "Sun",
+      "Fire",
+      "Lightning",
+      "Mountain"
     ],
-    "correct_index": 2,
-    "explanation": "Crocodile is part-Mountain.",
-    "style": "animal_has_type",
+    "correct_index": 1,
+    "explanation": "Seal is Fire + Ocean.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0265",
-    "prompt": "Which of these animals carries Sky as one of its Creator types?",
+    "prompt": "The Seamonster card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Koala",
-      "Salamander",
-      "Swan",
-      "Unicorn"
+      "Lava",
+      "Soil",
+      "River",
+      "Lightning"
     ],
-    "correct_index": 3,
-    "explanation": "Unicorn is part-Sky.",
-    "style": "animal_has_type",
+    "correct_index": 2,
+    "explanation": "Seamonster is River + Sky.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0266",
-    "prompt": "Which of these animals carries Fire as one of its Creator types?",
+    "prompt": "The Shark card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Otter",
-      "Seamonster",
-      "Wasp",
-      "Ostrich"
+      "Snow",
+      "Lava",
+      "Sun",
+      "Whirlwind"
     ],
-    "correct_index": 0,
-    "explanation": "Otter is part-Fire.",
-    "style": "animal_has_type",
+    "correct_index": 3,
+    "explanation": "Shark is Whirlwind + River.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0267",
-    "prompt": "Which of these animals carries Tree as one of its Creator types?",
+    "prompt": "The Sloth card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Swordfish",
-      "Hobbit",
-      "Spider",
-      "Falcon"
+      "Mountain",
+      "Lightning",
+      "Tree",
+      "Lake"
     ],
     "correct_index": 2,
-    "explanation": "Spider is part-Tree.",
-    "style": "animal_has_type",
+    "explanation": "Sloth is Tree + Soil.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0268",
-    "prompt": "Which of these animals carries Lightning as one of its Creator types?",
+    "prompt": "The Snake card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Wasp",
-      "Whale",
-      "Fox",
-      "Camel"
+      "Tree",
+      "Mountain",
+      "Soil",
+      "Whirlwind"
     ],
     "correct_index": 0,
-    "explanation": "Wasp is part-Lightning.",
-    "style": "animal_has_type",
+    "explanation": "Snake is Tree + River.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0269",
-    "prompt": "Which of these animals carries Ocean as one of its Creator types?",
+    "prompt": "The Spider card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Bigfoot",
-      "Seamonster",
-      "Alpaca",
-      "Seal"
+      "Mountain",
+      "Snow",
+      "Lava",
+      "Fire"
     ],
-    "correct_index": 3,
-    "explanation": "Seal is part-Ocean.",
-    "style": "animal_has_type",
+    "correct_index": 1,
+    "explanation": "Spider is Snow + Tree.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0270",
-    "prompt": "Which of these animals carries Whirlwind as one of its Creator types?",
+    "prompt": "The Squirrel card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Rainbow Serpent",
-      "Cheetah",
-      "Bison",
-      "Woodpecker"
+      "River",
+      "Mountain",
+      "Fire",
+      "Sun"
     ],
-    "correct_index": 3,
-    "explanation": "Woodpecker is part-Whirlwind.",
-    "style": "animal_has_type",
+    "correct_index": 2,
+    "explanation": "Squirrel is Fire + Whirlwind.",
+    "style": "animal_type",
     "category": "animals",
     "creator": null
   },
   {
     "id": "q0271",
-    "prompt": "Which of these animals carries Sun as one of its Creator types?",
+    "prompt": "The Starfish card carries which Creator type? (either half counts — pick one shown)",
     "options": [
-      "Bigfoot",
-      "Swordfish",
-      "Echidna",
-      "Lion"
+      "Sun",
+      "Soil",
+      "Tree",
+      "Whirlwind"
+    ],
+    "correct_index": 0,
+    "explanation": "Starfish is Sun + Ocean.",
+    "style": "animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0272",
+    "prompt": "The Stingray card carries which Creator type? (either half counts — pick one shown)",
+    "options": [
+      "Sky",
+      "Ocean",
+      "Lake",
+      "Whirlwind"
+    ],
+    "correct_index": 1,
+    "explanation": "Stingray is Ocean + River.",
+    "style": "animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0273",
+    "prompt": "The Swan card carries which Creator type? (either half counts — pick one shown)",
+    "options": [
+      "Snow",
+      "Mountain",
+      "Lightning",
+      "River"
+    ],
+    "correct_index": 0,
+    "explanation": "Swan is Snow + Lake.",
+    "style": "animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0274",
+    "prompt": "The Swordfish card carries which Creator type? (either half counts — pick one shown)",
+    "options": [
+      "Snow",
+      "Mountain",
+      "Whirlwind",
+      "Lightning"
     ],
     "correct_index": 3,
-    "explanation": "Lion is part-Sun.",
+    "explanation": "Swordfish is Lightning + Ocean.",
+    "style": "animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0275",
+    "prompt": "The Thunderbird card carries which Creator type? (either half counts — pick one shown)",
+    "options": [
+      "Lava",
+      "Ocean",
+      "Lightning",
+      "Sun"
+    ],
+    "correct_index": 2,
+    "explanation": "Thunderbird is Lightning + Sky.",
+    "style": "animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0276",
+    "prompt": "The Tiger card carries which Creator type? (either half counts — pick one shown)",
+    "options": [
+      "Whirlwind",
+      "Lake",
+      "River",
+      "Lava"
+    ],
+    "correct_index": 3,
+    "explanation": "Tiger is Lava + Mountain.",
+    "style": "animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0277",
+    "prompt": "The Turtle card carries which Creator type? (either half counts — pick one shown)",
+    "options": [
+      "Ocean",
+      "Snow",
+      "Sun",
+      "Mountain"
+    ],
+    "correct_index": 2,
+    "explanation": "Turtle is Sun + Lake.",
+    "style": "animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0278",
+    "prompt": "The Unicorn card carries which Creator type? (either half counts — pick one shown)",
+    "options": [
+      "Snow",
+      "Fire",
+      "Tree",
+      "Lake"
+    ],
+    "correct_index": 0,
+    "explanation": "Unicorn is Snow + Sky.",
+    "style": "animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0279",
+    "prompt": "The Wasp card carries which Creator type? (either half counts — pick one shown)",
+    "options": [
+      "Whirlwind",
+      "Lava",
+      "River",
+      "Ocean"
+    ],
+    "correct_index": 1,
+    "explanation": "Wasp is Lava + Lightning.",
+    "style": "animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0280",
+    "prompt": "The Whale card carries which Creator type? (either half counts — pick one shown)",
+    "options": [
+      "Lava",
+      "Sun",
+      "Tree",
+      "Ocean"
+    ],
+    "correct_index": 3,
+    "explanation": "Whale is Ocean + Soil.",
+    "style": "animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0281",
+    "prompt": "The Wolf card carries which Creator type? (either half counts — pick one shown)",
+    "options": [
+      "Sun",
+      "Lava",
+      "Tree",
+      "Fire"
+    ],
+    "correct_index": 1,
+    "explanation": "Wolf is Lava + Snow.",
+    "style": "animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0282",
+    "prompt": "The Wombat card carries which Creator type? (either half counts — pick one shown)",
+    "options": [
+      "Sun",
+      "Sky",
+      "Lake",
+      "Snow"
+    ],
+    "correct_index": 2,
+    "explanation": "Wombat is Lake + Soil.",
+    "style": "animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0283",
+    "prompt": "The Woodpecker card carries which Creator type? (either half counts — pick one shown)",
+    "options": [
+      "Sun",
+      "Soil",
+      "Lightning",
+      "Whirlwind"
+    ],
+    "correct_index": 3,
+    "explanation": "Woodpecker is Whirlwind + Tree.",
+    "style": "animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0284",
+    "prompt": "The Zebra card carries which Creator type? (either half counts — pick one shown)",
+    "options": [
+      "Fire",
+      "Mountain",
+      "River",
+      "Snow"
+    ],
+    "correct_index": 0,
+    "explanation": "Zebra is Fire + Sun.",
+    "style": "animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0285",
+    "prompt": "Which of these animals does NOT carry Snow as one of its Creator types?",
+    "options": [
+      "Deer",
+      "Bigfoot",
+      "Alpaca",
+      "Swan"
+    ],
+    "correct_index": 1,
+    "explanation": "Bigfoot is Mountain + Sky — no Snow.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0286",
+    "prompt": "Which of these animals does NOT carry Snow as one of its Creator types?",
+    "options": [
+      "Fox",
+      "Peacock",
+      "Spider",
+      "Wolf"
+    ],
+    "correct_index": 0,
+    "explanation": "Fox is Lava + Fire — no Snow.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0287",
+    "prompt": "Which of these animals does NOT carry Soil as one of its Creator types?",
+    "options": [
+      "Whale",
+      "Anteater",
+      "Rainbow Serpent",
+      "Bison"
+    ],
+    "correct_index": 2,
+    "explanation": "Rainbow Serpent is Sun + Sky — no Soil.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0288",
+    "prompt": "Which of these animals does NOT carry Soil as one of its Creator types?",
+    "options": [
+      "Anteater",
+      "Bison",
+      "Swan",
+      "Bear"
+    ],
+    "correct_index": 2,
+    "explanation": "Swan is Snow + Lake — no Soil.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0289",
+    "prompt": "Which of these animals does NOT carry River as one of its Creator types?",
+    "options": [
+      "Seamonster",
+      "Otter",
+      "Snake",
+      "Camel"
+    ],
+    "correct_index": 3,
+    "explanation": "Camel is Fire + Soil — no River.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0290",
+    "prompt": "Which of these animals does NOT carry River as one of its Creator types?",
+    "options": [
+      "Otter",
+      "Rabbit",
+      "Shark",
+      "Catfish"
+    ],
+    "correct_index": 1,
+    "explanation": "Rabbit is Whirlwind + Snow — no River.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0291",
+    "prompt": "Which of these animals does NOT carry Lava as one of its Creator types?",
+    "options": [
+      "Fox",
+      "Beaver",
+      "Tiger",
+      "Iguana"
+    ],
+    "correct_index": 1,
+    "explanation": "Beaver is Lake + River — no Lava.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0292",
+    "prompt": "Which of these animals does NOT carry Lava as one of its Creator types?",
+    "options": [
+      "Wolf",
+      "Cassowary",
+      "Eel",
+      "Ostrich"
+    ],
+    "correct_index": 3,
+    "explanation": "Ostrich is Whirlwind + Soil — no Lava.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0293",
+    "prompt": "Which of these animals does NOT carry Lake as one of its Creator types?",
+    "options": [
+      "Turtle",
+      "Giraffe",
+      "Crane",
+      "Dragonfly"
+    ],
+    "correct_index": 1,
+    "explanation": "Giraffe is Lightning + Tree — no Lake.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0294",
+    "prompt": "Which of these animals does NOT carry Lake as one of its Creator types?",
+    "options": [
+      "Crab",
+      "Swan",
+      "Crane",
+      "Griffin"
+    ],
+    "correct_index": 3,
+    "explanation": "Griffin is Lava + Sky — no Lake.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0295",
+    "prompt": "Which of these animals does NOT carry Mountain as one of its Creator types?",
+    "options": [
+      "Griffin",
+      "Bigfoot",
+      "Lynx",
+      "Tiger"
+    ],
+    "correct_index": 0,
+    "explanation": "Griffin is Lava + Sky — no Mountain.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0296",
+    "prompt": "Which of these animals does NOT carry Mountain as one of its Creator types?",
+    "options": [
+      "Seamonster",
+      "Crab",
+      "Lynx",
+      "Bigfoot"
+    ],
+    "correct_index": 0,
+    "explanation": "Seamonster is River + Sky — no Mountain.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0297",
+    "prompt": "Which of these animals does NOT carry Sky as one of its Creator types?",
+    "options": [
+      "Dragon",
+      "Elf",
+      "Bunyip",
+      "Kingfisher"
+    ],
+    "correct_index": 3,
+    "explanation": "Kingfisher is Sun + River — no Sky.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0298",
+    "prompt": "Which of these animals does NOT carry Sky as one of its Creator types?",
+    "options": [
+      "Bee",
+      "Bigfoot",
+      "Bunyip",
+      "Fairy"
+    ],
+    "correct_index": 0,
+    "explanation": "Bee is Lava + Snow — no Sky.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0299",
+    "prompt": "Which of these animals does NOT carry Fire as one of its Creator types?",
+    "options": [
+      "Crab",
+      "Squirrel",
+      "Cheetah",
+      "Gorilla"
+    ],
+    "correct_index": 0,
+    "explanation": "Crab is Lake + Mountain — no Fire.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0300",
+    "prompt": "Which of these animals does NOT carry Fire as one of its Creator types?",
+    "options": [
+      "Flying Fox",
+      "Fox",
+      "Zebra",
+      "Gorilla"
+    ],
+    "correct_index": 0,
+    "explanation": "Flying Fox is Lightning + Sun — no Fire.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0301",
+    "prompt": "Which of these animals does NOT carry Tree as one of its Creator types?",
+    "options": [
+      "Cassowary",
+      "Spider",
+      "Goat",
+      "Horse"
+    ],
+    "correct_index": 3,
+    "explanation": "Horse is Whirlwind + Mountain — no Tree.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0302",
+    "prompt": "Which of these animals does NOT carry Tree as one of its Creator types?",
+    "options": [
+      "Bunyip",
+      "Sloth",
+      "Lemur",
+      "Woodpecker"
+    ],
+    "correct_index": 0,
+    "explanation": "Bunyip is Lake + Sky — no Tree.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0303",
+    "prompt": "Which of these animals does NOT carry Lightning as one of its Creator types?",
+    "options": [
+      "Wasp",
+      "Thunderbird",
+      "Crane",
+      "Seahorse"
+    ],
+    "correct_index": 3,
+    "explanation": "Seahorse is Ocean + Tree — no Lightning.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0304",
+    "prompt": "Which of these animals does NOT carry Lightning as one of its Creator types?",
+    "options": [
+      "Jellyfish",
+      "Platypus",
+      "Crane",
+      "Giraffe"
+    ],
+    "correct_index": 0,
+    "explanation": "Jellyfish is Lake + Ocean — no Lightning.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0305",
+    "prompt": "Which of these animals does NOT carry Ocean as one of its Creator types?",
+    "options": [
+      "Whale",
+      "Crocodile",
+      "Sloth",
+      "Penguin"
+    ],
+    "correct_index": 2,
+    "explanation": "Sloth is Tree + Soil — no Ocean.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0306",
+    "prompt": "Which of these animals does NOT carry Ocean as one of its Creator types?",
+    "options": [
+      "Dolphin",
+      "Sloth",
+      "Octopus",
+      "Merper"
+    ],
+    "correct_index": 1,
+    "explanation": "Sloth is Tree + Soil — no Ocean.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0307",
+    "prompt": "Which of these animals does NOT carry Whirlwind as one of its Creator types?",
+    "options": [
+      "Shark",
+      "Dolphin",
+      "Squirrel",
+      "Elf"
+    ],
+    "correct_index": 3,
+    "explanation": "Elf is Sky + Tree — no Whirlwind.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0308",
+    "prompt": "Which of these animals does NOT carry Whirlwind as one of its Creator types?",
+    "options": [
+      "Squirrel",
+      "Lemur",
+      "Firefly",
+      "Shark"
+    ],
+    "correct_index": 1,
+    "explanation": "Lemur is Fire + Tree — no Whirlwind.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0309",
+    "prompt": "Which of these animals does NOT carry Sun as one of its Creator types?",
+    "options": [
+      "Catfish",
+      "Iguana",
+      "Peacock",
+      "Kingfisher"
+    ],
+    "correct_index": 0,
+    "explanation": "Catfish is Lightning + River — no Sun.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0310",
+    "prompt": "Which of these animals does NOT carry Sun as one of its Creator types?",
+    "options": [
+      "Otter",
+      "Kingfisher",
+      "Koala",
+      "Lion"
+    ],
+    "correct_index": 0,
+    "explanation": "Otter is Fire + River — no Sun.",
+    "style": "not_animal_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0311",
+    "prompt": "Which of these animals carries Snow as one of its Creator types?",
+    "options": [
+      "Elf",
+      "Hobbit",
+      "Wolf",
+      "Iguana"
+    ],
+    "correct_index": 2,
+    "explanation": "Wolf is part-Snow.",
+    "style": "animal_has_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0312",
+    "prompt": "Which of these animals carries Soil as one of its Creator types?",
+    "options": [
+      "Salamander",
+      "Platypus",
+      "Unicorn",
+      "Seamonster"
+    ],
+    "correct_index": 1,
+    "explanation": "Platypus is part-Soil.",
+    "style": "animal_has_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0313",
+    "prompt": "Which of these animals carries River as one of its Creator types?",
+    "options": [
+      "Elf",
+      "Dragon",
+      "Lynx",
+      "Seamonster"
+    ],
+    "correct_index": 3,
+    "explanation": "Seamonster is part-River.",
+    "style": "animal_has_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0314",
+    "prompt": "Which of these animals carries Lava as one of its Creator types?",
+    "options": [
+      "Giraffe",
+      "Beaver",
+      "Bear",
+      "Panda"
+    ],
+    "correct_index": 2,
+    "explanation": "Bear is part-Lava.",
+    "style": "animal_has_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0315",
+    "prompt": "Which of these animals carries Lake as one of its Creator types?",
+    "options": [
+      "Sloth",
+      "Crab",
+      "Crocodile",
+      "Lion"
+    ],
+    "correct_index": 1,
+    "explanation": "Crab is part-Lake.",
+    "style": "animal_has_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0316",
+    "prompt": "Which of these animals carries Mountain as one of its Creator types?",
+    "options": [
+      "Salamander",
+      "Seahorse",
+      "Unicorn",
+      "Fairy"
+    ],
+    "correct_index": 0,
+    "explanation": "Salamander is part-Mountain.",
+    "style": "animal_has_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0317",
+    "prompt": "Which of these animals carries Sky as one of its Creator types?",
+    "options": [
+      "Lynx",
+      "Elf",
+      "Iguana",
+      "Salamander"
+    ],
+    "correct_index": 1,
+    "explanation": "Elf is part-Sky.",
+    "style": "animal_has_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0318",
+    "prompt": "Which of these animals carries Fire as one of its Creator types?",
+    "options": [
+      "Seahorse",
+      "Squirrel",
+      "Cassowary",
+      "Platypus"
+    ],
+    "correct_index": 1,
+    "explanation": "Squirrel is part-Fire.",
+    "style": "animal_has_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0319",
+    "prompt": "Which of these animals carries Tree as one of its Creator types?",
+    "options": [
+      "Bison",
+      "Cassowary",
+      "Starfish",
+      "Eel"
+    ],
+    "correct_index": 1,
+    "explanation": "Cassowary is part-Tree.",
+    "style": "animal_has_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0320",
+    "prompt": "Which of these animals carries Lightning as one of its Creator types?",
+    "options": [
+      "Shark",
+      "Unicorn",
+      "Starfish",
+      "Cheetah"
+    ],
+    "correct_index": 3,
+    "explanation": "Cheetah is part-Lightning.",
+    "style": "animal_has_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0321",
+    "prompt": "Which of these animals carries Ocean as one of its Creator types?",
+    "options": [
+      "Bear",
+      "Cassowary",
+      "Starfish",
+      "Deer"
+    ],
+    "correct_index": 2,
+    "explanation": "Starfish is part-Ocean.",
+    "style": "animal_has_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0322",
+    "prompt": "Which of these animals carries Whirlwind as one of its Creator types?",
+    "options": [
+      "Elephant",
+      "Giraffe",
+      "Panda",
+      "Kangaroo"
+    ],
+    "correct_index": 3,
+    "explanation": "Kangaroo is part-Whirlwind.",
+    "style": "animal_has_type",
+    "category": "animals",
+    "creator": null
+  },
+  {
+    "id": "q0323",
+    "prompt": "Which of these animals carries Sun as one of its Creator types?",
+    "options": [
+      "Ostrich",
+      "Flying Fox",
+      "Horse",
+      "Swordfish"
+    ],
+    "correct_index": 1,
+    "explanation": "Flying Fox is part-Sun.",
     "style": "animal_has_type",
     "category": "animals",
     "creator": null
