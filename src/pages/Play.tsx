@@ -184,12 +184,6 @@ export default function Play() {
   // Mobile: opponent boards are only visible via the peek panel. When the
   // player enters Sky-Creature steal mode, auto-open the panel on the current
   // opponent so they can actually see (and tap) an animal to steal.
-  useEffect(() => {
-    if (!isMobile) return;
-    if (mode !== "steal" || stealVictimKey) return;
-    if (!expandedOpponentId) return; // `opponents` is derived later; wait until user has an expanded opponent context.
-    setOpponentPanelOpen(true);
-  }, [isMobile, mode, stealVictimKey, expandedOpponentId]);
   const { settings: gameSettings } = useGameSettings();
   // (turnStartedAtRef declared below, alongside other refs.)
   const botDifficultyRef = useRef<BotDifficulty>("medium");
