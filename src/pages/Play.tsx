@@ -187,11 +187,7 @@ export default function Play() {
   useEffect(() => {
     if (!isMobile) return;
     if (mode !== "steal" || stealVictimKey) return;
-    // `opponent` (single-opponent shortcut) is derived from expandedOpponentId,
-    // so make sure that's populated before opening.
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    const first = opponentsRef.current[0];
-    if (!expandedOpponentId && first) setExpandedOpponentId(first.id);
+    if (!expandedOpponentId) return; // `opponents` is derived later; wait until user has an expanded opponent context.
     setOpponentPanelOpen(true);
   }, [isMobile, mode, stealVictimKey, expandedOpponentId]);
   const { settings: gameSettings } = useGameSettings();
