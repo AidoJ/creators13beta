@@ -237,7 +237,10 @@ export function pickFromDraw(state: MatchState): MatchState {
   const card = next.draw.shift()!;
   next.players[next.turn].hand.push(card);
   next.drawnThisTurn += 1;
-  if (next.drawnThisTurn >= 2) next.phase = "place";
+  // Advance to place when the player CAN'T draw anymore: hit the 2-draw cap
+  // OR the hand is full. Prevents the wedge where hand==5 but drawnThisTurn<2.
+  if (next.drawnThisTurn >= 2 || next.players[next.turn].hand.length >= HAND_LIMIT) next.phase = "place";
+
   next.lastEvent = `${next.players[next.turn].name} drew a card${reshuffleNote}`;
   // Hive does NOT auto-arm — it stays passive in hand until used to block a disaster.
   return next;
