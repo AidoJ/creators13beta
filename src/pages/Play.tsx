@@ -1057,7 +1057,11 @@ export default function Play() {
   } else if (idleTurnExpired) {
     phaseHint = "Time ran out — waiting for auto-pass…";
   } else if (state.phase === "draw") {
-    phaseHint = `Pick up ${2 - state.drawnThisTurn} more card${2 - state.drawnThisTurn === 1 ? "" : "s"} (draw 1 at a time from either pile).`;
+    const myHand = state.players[state.turn]?.hand.length ?? 0;
+    phaseHint = myHand >= 5
+      ? "Hand is full — play or discard a card to continue."
+      : `Pick up ${2 - state.drawnThisTurn} more card${2 - state.drawnThisTurn === 1 ? "" : "s"} (draw 1 at a time from either pile).`;
+
   } else if (mode === "steal") {
     phaseHint = stealVictimKey
       ? "Now click a glowing hex on YOUR board to place the stolen animal."
