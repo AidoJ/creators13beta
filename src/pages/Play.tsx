@@ -350,6 +350,26 @@ export default function Play() {
     handleRemote,
   );
 
+  // ── Creator Quiz — badge + question flow (PvP + Solo). Refreshes whenever
+  // the authoritative seq bumps, so a newly-opened question surfaces at the
+  // start of the player's next turn without extra polling.
+  const [quizRefresh, setQuizRefresh] = useState(0);
+  const lastSeenSeq = useRef<number | null>(null);
+  useEffect(() => {
+    const s = Number(matchRow?.seq ?? 0);
+    if (lastSeenSeq.current !== s) {
+      lastSeenSeq.current = s;
+      setQuizRefresh(n => n + 1);
+    }
+  }, [matchRow?.seq]);
+  const quiz = useQuizProgress(
+    isPvp ? matchRow?.id ?? null : null,
+    user?.id ?? null,
+    quizRefresh,
+  );
+
+
+
 
   /* ----------- Bot driver — only for solo (matchRow null OR mode='solo') ----------- */
 
