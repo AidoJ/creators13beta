@@ -14,12 +14,13 @@ export interface QuizProgress {
   correct_count: number;
   wrong_count: number;
   bonus_awarded: boolean;
+  bonus_points_awarded: number;
   open_question_id: string | null;
 }
 export interface QuizSettings {
   enabled: boolean;
-  threshold: number;
   bonus_points: number;
+  questions_per_match: number;
 }
 
 /**
@@ -29,7 +30,7 @@ export interface QuizSettings {
 export function useQuizProgress(matchId: string | null, userId: string | null, refreshKey: number) {
   const [progress, setProgress] = useState<QuizProgress | null>(null);
   const [question, setQuestion] = useState<QuizQuestion | null>(null);
-  const [settings, setSettings] = useState<QuizSettings>({ enabled: true, threshold: 4, bonus_points: 1 });
+  const [settings, setSettings] = useState<QuizSettings>({ enabled: true, bonus_points: 1, questions_per_match: 4 });
   const settingsLoaded = useRef(false);
 
   useEffect(() => {
