@@ -120,7 +120,7 @@ export default function QuizBankPanel() {
         </Select>
         <Select value={fCreator} onValueChange={setFCreator}>
           <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper" className="max-h-[320px]">
             <SelectItem value="all">All Creators</SelectItem>
             <SelectItem value="ALL">Non-specific</SelectItem>
             {CREATOR_TYPE_ORDER.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
@@ -230,7 +230,7 @@ function EditDialog({ q, onClose, onSaved }: { q?: Q; onClose: () => void; onSav
             <label className="space-y-1"><div className="text-xs text-muted-foreground">Creator</div>
               <Select value={form.creator_type} onValueChange={v => set("creator_type", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" className="max-h-[320px]">
                   <SelectItem value="ALL">ALL (non-specific)</SelectItem>
                   {CREATOR_TYPE_ORDER.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
