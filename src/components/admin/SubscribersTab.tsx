@@ -1,8 +1,11 @@
 import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Search, BarChart3 } from "lucide-react";
 import { isPaidTier, buildCaseStudySubjectSet } from "@/lib/clientClassification";
+import QuizStatsCard from "@/components/dashboard/QuizStatsCard";
 
 interface UserRow {
   user_id: string;
@@ -34,6 +37,7 @@ const tierColors: Record<string, string> = {
 
 export default function SubscribersTab({ users, caseStudies, assignedPracMap }: SubscribersTabProps) {
   const [search, setSearch] = useState("");
+  const [statsUser, setStatsUser] = useState<UserRow | null>(null);
 
   const caseStudySubjects = useMemo(
     () => buildCaseStudySubjectSet(caseStudies),
@@ -83,12 +87,13 @@ export default function SubscribersTab({ users, caseStudies, assignedPracMap }: 
                 <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Enrollment</th>
                 <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Practitioner</th>
                 <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Origin</th>
+                <th className="text-right px-4 py-2.5 font-medium text-muted-foreground text-xs">Stats</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
                     No paying subscribers found.
                   </td>
                 </tr>
