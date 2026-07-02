@@ -611,6 +611,40 @@ Deno.serve(async (req) => {
   }
 
   const serialisedNext = serialise(nextState);
+
+  // ────────────────────────────────────────────────────────────────
+  // Creator Quiz bonus — apply BEFORE placements/finalise so a bonus
+  // point can legitimately tip a tie. Byte-for-byte identical when
+  // no player has bonus_awarded=true (regression gate for quiz-off).
+  // ────────────────────────────────────────────────────────────────
+  if (finished) {
+    try {
+      const uidBySlot: Array<string | null> = nextState.players.map((_p, i) => userIdForSlot(i));
+      const activeUids = uidBySlot.filter((u): u is string => !!u);
+      if (activeUids.length > 0) {
+        const [{ data: gs }, { data: bonuses }] = await Promise.all([
+          svc.from("game_settings").select("quiz_enabled, quiz_bonus_points").limit(1).maybeSingle(),
+          svc.from("quiz_match_progress").select("user_id, bonus_awarded").eq("match_id", body.match_id).eq("bonus_awarded", true).in("user_id", activeUids),
+        ]);
+        const quizOn = gs?.quiz_enabled ?? true;
+        const bonusPts = gs?.quiz_bonus_points ?? 1;
+        if (quizOn && bonuses && bonuses.length > 0) {
+          const winners = new Set(bonuses.map((b: any) => b.user_id));
+          for (let slot = 0; slot < nextState.players.length; slot++) {
+            const uid = uidBySlot[slot];
+            if (!uid || !winners.has(uid)) continue;
+            const p: any = serialisedNext.players[slot];
+            if (!p) continue;
+            p.score = (p.score ?? 0) + bonusPts;
+            p.quizBonusAwarded = true;
+          }
+        }
+      }
+    } catch (bErr) {
+      console.warn("[apply-move] quiz bonus application failed (non-fatal)", bErr);
+    }
+  }
+
   const publicStateForCaller = redactFor(serialisedNext, callerPlayerId);
 
   // Per-player redacted states. Each player sees their own hand fully and
@@ -715,6 +749,43 @@ Deno.serve(async (req) => {
       .eq("id", body.match_id)
       .eq("status", "waiting");
     if (statusErr) console.error("[apply-move] lobby status flip failed", statusErr);
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Creator Quiz Layer — best-effort side effects.
+  //   • Any draw-type move by the caller silently closes any question
+  //     that was still open (soft-dismiss on next-turn draw).
+  //   • If the draw added a Creator (or Sky Creator) card to the caller's
+  //     hand, open a new quiz question tied to that Creator's type.
+  //     Rule C: open_quiz_if_needed is a no-op if one is already open.
+  //   • draw_initial_5 is skipped — the game is still bootstrapping and
+  //     firing five questions at once would swamp the player.
+  // ────────────────────────────────────────────────────────────────
+  try {
+    const drawTypes = new Set(["pickup_from_draw", "pickup_from_used", "skip_draws"]);
+    if (userId && drawTypes.has(body.move.type)) {
+      await svc.rpc("close_open_quiz", { _match_id: body.match_id, _user_id: userId });
+
+      const preSet = new Set(preCallerHandUids);
+      const newCards = (nextState.players[callerSlot]?.hand ?? []).filter(
+        (c: any) => c?.uid && !preSet.has(c.uid),
+      );
+      const creatorTypes: string[] = [];
+      for (const c of newCards) {
+        if (c.kind === "creator" && c.displayType) creatorTypes.push(c.displayType);
+        // Sky Creator is a wildcard — no single Creator type — skip.
+      }
+      if (creatorTypes.length > 0) {
+        await svc.rpc("open_quiz_if_needed", {
+          _match_id: body.match_id,
+          _user_id: userId,
+          _creator_types: creatorTypes,
+        });
+      }
+    }
+  } catch (quizErr) {
+    // Never let quiz plumbing block a game move.
+    console.warn("[apply-move] quiz hook failed (non-fatal)", quizErr);
   }
 
   return jsonResponse({

@@ -70,6 +70,8 @@ import PlayerProfileDiscountCTA from "@/components/dashboard/PlayerProfileDiscou
 import { OpponentPanel } from "@/components/game/OpponentPanel";
 import { useMatchPresence } from "@/hooks/useMatchPresence";
 import { GameModeSelector } from "@/components/game/GameModeSelector";
+import { QuizBadge } from "@/components/game/QuizBadge";
+import { useQuizProgress } from "@/hooks/useQuizProgress";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { fetchPlayerShortName } from "@/lib/playerName";
@@ -347,6 +349,26 @@ export default function Play() {
     user?.id ?? null,
     handleRemote,
   );
+
+  // ── Creator Quiz — badge + question flow (PvP + Solo). Refreshes whenever
+  // the authoritative seq bumps, so a newly-opened question surfaces at the
+  // start of the player's next turn without extra polling.
+  const [quizRefresh, setQuizRefresh] = useState(0);
+  const lastSeenSeq = useRef<number | null>(null);
+  useEffect(() => {
+    const s = Number(matchRow?.seq ?? 0);
+    if (lastSeenSeq.current !== s) {
+      lastSeenSeq.current = s;
+      setQuizRefresh(n => n + 1);
+    }
+  }, [matchRow?.seq]);
+  const quiz = useQuizProgress(
+    isPvp ? matchRow?.id ?? null : null,
+    user?.id ?? null,
+    quizRefresh,
+  );
+
+
 
 
   /* ----------- Bot driver — only for solo (matchRow null OR mode='solo') ----------- */
@@ -1282,6 +1304,13 @@ export default function Play() {
           }
         />
       )}
+
+      {isPvp && !state.finished && quiz.settings.enabled && (
+        <div className="fixed top-3 right-3 z-40">
+          <QuizBadge progress={quiz.progress} question={quiz.question} settings={quiz.settings} submit={quiz.submit} />
+        </div>
+      )}
+
 
       {/* Prominent Beat-the-Clock countdown */}
       {isBeatClock && !state.finished && (
