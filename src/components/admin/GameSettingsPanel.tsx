@@ -374,6 +374,33 @@ export default function GameSettingsPanel() {
         </div>
       </section>
 
+      {/* Creator Quiz */}
+      <section className="rounded-xl border border-border bg-card p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Trophy className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold">Creator Quiz</h3>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-end">
+          <BoolField k="quiz_enabled" label="Enable quiz" hint="Show quiz questions during matches" />
+          <div className="space-y-1">
+            <Label className="text-xs">Questions per match</Label>
+            <Select
+              value={String(s.quiz_questions_per_match)}
+              onValueChange={(v) => setS((p) => ({ ...p, quiz_questions_per_match: Number(v) as 4 | 8 | 12 }))}
+            >
+              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="4">4 questions</SelectItem>
+                <SelectItem value="8">8 questions</SelectItem>
+                <SelectItem value="12">12 questions</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground">Max questions served to any player per match.</p>
+          </div>
+          <NumField k="quiz_bonus_points" label="Bonus points per 4 correct" min={1} max={5} hint="Awarded each time the player racks up another 4 correct answers." />
+        </div>
+      </section>
+
       {/* Live Ops */}
       <section className="rounded-xl border border-destructive/40 bg-destructive/5 p-4">
         <div className="flex items-center gap-2 mb-3">
