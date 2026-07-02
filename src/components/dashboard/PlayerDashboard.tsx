@@ -8,6 +8,7 @@ import PlayerProfileDiscountCTA from "@/components/dashboard/PlayerProfileDiscou
 import DiscountCodesCard from "@/components/dashboard/DiscountCodesCard";
 import CreatorsSeenPrompt from "@/components/dashboard/CreatorsSeenPrompt";
 import PracticeRungCard from "@/components/dashboard/game/PracticeRungCard";
+import QuizStatsCard from "@/components/dashboard/QuizStatsCard";
 import { Card } from "@/components/ui/card";
 import { Gamepad2, Globe, ArrowRight, Mail } from "lucide-react";
 
@@ -82,6 +83,7 @@ export default function PlayerDashboard({ userId, email, firstName, onSignOut }:
 
         <PracticeRungCard userId={userId} />
         <CreatorsSeenPrompt userId={userId} />
+        <QuizStatsCard userId={userId} />
         <DiscountCodesCard userId={userId} />
 
 
