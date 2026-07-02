@@ -70,6 +70,8 @@ import PlayerProfileDiscountCTA from "@/components/dashboard/PlayerProfileDiscou
 import { OpponentPanel } from "@/components/game/OpponentPanel";
 import { useMatchPresence } from "@/hooks/useMatchPresence";
 import { GameModeSelector } from "@/components/game/GameModeSelector";
+import { QuizBadge } from "@/components/game/QuizBadge";
+import { useQuizProgress } from "@/hooks/useQuizProgress";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { fetchPlayerShortName } from "@/lib/playerName";
