@@ -22,9 +22,12 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
 
   const correct = progress?.correct_count ?? 0;
   const wrong = progress?.wrong_count ?? 0;
-  const bonusWon = progress?.bonus_awarded ?? false;
+  const bonusPts = progress?.bonus_points_awarded ?? 0;
+  const cap = settings.questions_per_match;
+  const answeredCount = correct + wrong;
+  const capReached = answeredCount >= cap;
   const hasOpen = !!question && !!progress?.open_question_id;
-  const threshold = settings.threshold;
+  const toNextTier = 4 - (correct % 4);
 
   const onAnswer = async (choice: "a" | "b" | "c" | "d") => {
     if (submitting || answered) return;
@@ -33,8 +36,8 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
       const res = await submit(choice);
       if (!res) return;
       setAnswered({ correct: res.correct, correct_option: res.correct_option, explanation: res.explanation });
-      if (res.bonus_just_awarded) {
-        toast.success(`+${settings.bonus_points} bonus point unlocked!`, { duration: 4000 });
+      if (res.bonus_gained && res.bonus_gained > 0) {
+        toast.success(`+${res.bonus_gained} bonus point${res.bonus_gained === 1 ? "" : "s"} earned!`, { duration: 4000 });
       }
     } catch (e: any) {
       toast.error(e?.message ?? "Submit failed");
@@ -55,27 +58,28 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            aria-label={hasOpen ? "Answer quiz question for bonus points" : `Quiz progress: ${correct} of ${threshold}`}
+            aria-label={hasOpen ? "Answer quiz question for bonus points" : `Quiz progress: ${correct} of ${cap}`}
             className={
               "relative inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition " +
-              (bonusWon
+              (bonusPts > 0
                 ? "bg-amber-500/15 border-amber-500/60 text-amber-700 dark:text-amber-300"
                 : hasOpen
                   ? "bg-primary/15 border-primary/60 text-primary hover:bg-primary/25 animate-pulse"
                   : "bg-muted/50 border-border text-muted-foreground hover:bg-muted")
             }
           >
-            {bonusWon ? <Sparkles className="h-3.5 w-3.5" /> : <HelpCircle className="h-3.5 w-3.5" />}
-            <span className="tabular-nums">{correct}/{threshold}</span>
+            {bonusPts > 0 ? <Sparkles className="h-3.5 w-3.5" /> : <HelpCircle className="h-3.5 w-3.5" />}
+            <span className="tabular-nums">{correct}/{cap}</span>
+            {bonusPts > 0 && <span className="ml-0.5 tabular-nums font-semibold">+{bonusPts}</span>}
             {hasOpen && <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary" />}
           </button>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="max-w-[240px] text-xs">
           {hasOpen
             ? "A quiz question is waiting — answer for bonus points"
-            : bonusWon
-              ? `Bonus unlocked (+${settings.bonus_points})`
-              : `Answer ${threshold - correct} more correctly to earn +${settings.bonus_points} bonus point this game`}
+            : capReached
+              ? `All ${cap} questions used this match. Bonus earned: +${bonusPts}.`
+              : `${toNextTier} more correct = +${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"}. Cap: ${cap}/match.`}
         </TooltipContent>
       </Tooltip>
 
@@ -86,11 +90,13 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
               <HelpCircle className="h-5 w-5 text-primary" />
               Creator Quiz
               <span className="ml-auto text-xs font-normal text-muted-foreground tabular-nums">
-                {correct}/{threshold} correct · {wrong} wrong
+                {correct}/{cap} correct · {wrong} wrong{bonusPts > 0 ? ` · +${bonusPts} pts` : ""}
               </span>
             </DialogTitle>
             <DialogDescription className="text-xs">
-              {bonusWon ? "Bonus already unlocked this match — keep learning for permanent mastery." : `Get ${threshold} correct to unlock +${settings.bonus_points} bonus point at the end of this match.`}
+              {capReached
+                ? `All ${cap} questions used this match. Earned +${bonusPts} bonus points.`
+                : `Every 4 correct answers = +${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"}. Up to ${cap} questions per match.`}
             </DialogDescription>
           </DialogHeader>
 

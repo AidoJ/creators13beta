@@ -21,7 +21,8 @@ type Num = keyof Pick<GameSettings,
   | "bot_think_ms" | "max_players_per_match"
   | "profile_discount_threshold_1" | "profile_discount_percent_1"
   | "profile_discount_threshold_2" | "profile_discount_percent_2"
-  | "profile_discount_threshold_3" | "profile_discount_percent_3">;
+  | "profile_discount_threshold_3" | "profile_discount_percent_3"
+  | "quiz_bonus_points">;
 
 type Bool = keyof Pick<GameSettings,
   "mode_end_of_days_enabled" | "mode_top_score_enabled" | "mode_beat_clock_enabled"
@@ -30,7 +31,8 @@ type Bool = keyof Pick<GameSettings,
   | "bot_easy_enabled" | "bot_medium_enabled" | "bot_hard_enabled"
   | "show_tutorial_overlay" | "show_review_boards" | "prompt_player_name" | "show_score_panel"
   | "highlight_playable_cards" | "highlight_valid_placements"
-  | "maintenance_banner_enabled" | "play_disabled" | "profile_discount_enabled">;
+  | "maintenance_banner_enabled" | "play_disabled" | "profile_discount_enabled"
+  | "quiz_enabled">;
 
 export default function GameSettingsPanel() {
   const [s, setS] = useState<GameSettings>(DEFAULT_GAME_SETTINGS);
@@ -369,6 +371,33 @@ export default function GameSettingsPanel() {
           <NumField k="profile_discount_percent_2" label="Tier 2 % off" min={0} max={100} />
           <NumField k="profile_discount_threshold_3" label="Tier 3 points" min={0} max={10000} />
           <NumField k="profile_discount_percent_3" label="Tier 3 % off" min={0} max={100} />
+        </div>
+      </section>
+
+      {/* Creator Quiz */}
+      <section className="rounded-xl border border-border bg-card p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Trophy className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold">Creator Quiz</h3>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-end">
+          <BoolField k="quiz_enabled" label="Enable quiz" hint="Show quiz questions during matches" />
+          <div className="space-y-1">
+            <Label className="text-xs">Questions per match</Label>
+            <Select
+              value={String(s.quiz_questions_per_match)}
+              onValueChange={(v) => setS((p) => ({ ...p, quiz_questions_per_match: Number(v) as 4 | 8 | 12 }))}
+            >
+              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="4">4 questions</SelectItem>
+                <SelectItem value="8">8 questions</SelectItem>
+                <SelectItem value="12">12 questions</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground">Max questions served to any player per match.</p>
+          </div>
+          <NumField k="quiz_bonus_points" label="Bonus points per 4 correct" min={1} max={5} hint="Awarded each time the player racks up another 4 correct answers." />
         </div>
       </section>
 

@@ -622,21 +622,29 @@ Deno.serve(async (req) => {
       const uidBySlot: Array<string | null> = nextState.players.map((_p, i) => userIdForSlot(i));
       const activeUids = uidBySlot.filter((u): u is string => !!u);
       if (activeUids.length > 0) {
-        const [{ data: gs }, { data: bonuses }] = await Promise.all([
-          svc.from("game_settings").select("quiz_enabled, quiz_bonus_points").limit(1).maybeSingle(),
-          svc.from("quiz_match_progress").select("user_id, bonus_awarded").eq("match_id", body.match_id).eq("bonus_awarded", true).in("user_id", activeUids),
+        const [{ data: gs }, { data: prog }] = await Promise.all([
+          svc.from("game_settings").select("quiz_enabled").limit(1).maybeSingle(),
+          svc.from("quiz_match_progress")
+            .select("user_id, bonus_points_awarded")
+            .eq("match_id", body.match_id)
+            .in("user_id", activeUids),
         ]);
         const quizOn = gs?.quiz_enabled ?? true;
-        const bonusPts = gs?.quiz_bonus_points ?? 1;
-        if (quizOn && bonuses && bonuses.length > 0) {
-          const winners = new Set(bonuses.map((b: any) => b.user_id));
+        if (quizOn && prog && prog.length > 0) {
+          const bonusByUid = new Map<string, number>();
+          for (const row of prog as any[]) {
+            const pts = Number(row.bonus_points_awarded ?? 0);
+            if (pts > 0) bonusByUid.set(row.user_id, pts);
+          }
           for (let slot = 0; slot < nextState.players.length; slot++) {
             const uid = uidBySlot[slot];
-            if (!uid || !winners.has(uid)) continue;
+            const pts = uid ? bonusByUid.get(uid) ?? 0 : 0;
+            if (pts <= 0) continue;
             const p: any = serialisedNext.players[slot];
             if (!p) continue;
-            p.score = (p.score ?? 0) + bonusPts;
+            p.score = (p.score ?? 0) + pts;
             p.quizBonusAwarded = true;
+            p.quizBonusPoints = pts;
           }
         }
       }

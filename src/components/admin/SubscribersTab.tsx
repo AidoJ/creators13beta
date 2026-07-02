@@ -1,8 +1,11 @@
 import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Search, BarChart3 } from "lucide-react";
 import { isPaidTier, buildCaseStudySubjectSet } from "@/lib/clientClassification";
+import QuizStatsCard from "@/components/dashboard/QuizStatsCard";
 
 interface UserRow {
   user_id: string;
@@ -34,6 +37,7 @@ const tierColors: Record<string, string> = {
 
 export default function SubscribersTab({ users, caseStudies, assignedPracMap }: SubscribersTabProps) {
   const [search, setSearch] = useState("");
+  const [statsUser, setStatsUser] = useState<UserRow | null>(null);
 
   const caseStudySubjects = useMemo(
     () => buildCaseStudySubjectSet(caseStudies),
@@ -83,12 +87,13 @@ export default function SubscribersTab({ users, caseStudies, assignedPracMap }: 
                 <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Enrollment</th>
                 <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Practitioner</th>
                 <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Origin</th>
+                <th className="text-right px-4 py-2.5 font-medium text-muted-foreground text-xs">Stats</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
                     No paying subscribers found.
                   </td>
                 </tr>
@@ -132,6 +137,11 @@ export default function SubscribersTab({ users, caseStudies, assignedPracMap }: 
                           <span className="text-[10px] text-muted-foreground">Direct</span>
                         )}
                       </td>
+                      <td className="px-4 py-2.5 text-right">
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setStatsUser(u)}>
+                          <BarChart3 className="w-3.5 h-3.5 mr-1" /> View
+                        </Button>
+                      </td>
                     </tr>
                   );
                 })
@@ -140,6 +150,18 @@ export default function SubscribersTab({ users, caseStudies, assignedPracMap }: 
           </table>
         </div>
       </div>
+
+      <Dialog open={!!statsUser} onOpenChange={(o) => { if (!o) setStatsUser(null); }}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {statsUser?.first_name || ""} {statsUser?.last_name || ""}
+              <span className="ml-2 text-xs font-normal text-muted-foreground">{statsUser?.email}</span>
+            </DialogTitle>
+          </DialogHeader>
+          {statsUser && <QuizStatsCard userId={statsUser.user_id} />}
+        </DialogContent>
+      </Dialog>
 
       <p className="text-[10px] text-muted-foreground">
         Showing {filtered.length} paying subscriber{filtered.length !== 1 ? "s" : ""} (Robin, Cockatoo, or Owl tier).
