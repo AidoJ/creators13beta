@@ -1192,7 +1192,7 @@ export default function Play() {
 
   const actionsBlock = (
     <Card className="p-1.5">
-      <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-1 px-0.5">Card actions</div>
+      <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-1 px-0.5">Actions &amp; Quiz</div>
       <div className="flex flex-col gap-1">
         <Button size="sm" variant="secondary" disabled={!canDisaster} onClick={onDisaster}
           className="h-7 py-0 px-2 text-[11px] leading-tight">
@@ -1207,6 +1207,11 @@ export default function Play() {
           className="h-7 py-0 px-2 text-[11px] leading-tight">
           {mode === "steal" ? "Cancel steal" : "Steal w/ Sky Creature"}
         </Button>
+        {isPvp && !state.finished && quiz.settings.enabled && (
+          <div className="flex justify-center pt-0.5">
+            <QuizBadge progress={quiz.progress} question={quiz.question} settings={quiz.settings} submit={quiz.submit} />
+          </div>
+        )}
       </div>
     </Card>
   );
@@ -1304,13 +1309,6 @@ export default function Play() {
           }
         />
       )}
-
-      {isPvp && !state.finished && quiz.settings.enabled && (
-        <div className="fixed top-3 right-3 z-40">
-          <QuizBadge progress={quiz.progress} question={quiz.question} settings={quiz.settings} submit={quiz.submit} />
-        </div>
-      )}
-
 
       {/* Prominent Beat-the-Clock countdown */}
       {isBeatClock && !state.finished && (
@@ -1767,6 +1765,11 @@ export default function Play() {
               className="h-7 px-2 text-[11px] shrink-0">
               {mode === "steal" ? "Cancel" : "Steal"}
             </Button>
+            {isPvp && !state.finished && quiz.settings.enabled && (
+              <div className="shrink-0">
+                <QuizBadge progress={quiz.progress} question={quiz.question} settings={quiz.settings} submit={quiz.submit} />
+              </div>
+            )}
             {(mode === "steal" || stealVictimKey) && (
               <div className="text-[10px] text-muted-foreground truncate flex-1 px-1">
                 {stealVictimKey ? "Pick a hex on YOUR board" : "Tap an opponent's animal"}
