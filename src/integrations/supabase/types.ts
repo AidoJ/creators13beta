@@ -2346,6 +2346,10 @@ export type Database = {
       }
       bump_types_seen: { Args: { _types: string[] }; Returns: undefined }
       cancel_lobby_match: { Args: { _match_id: string }; Returns: undefined }
+      close_open_quiz: {
+        Args: { _match_id: string; _user_id: string }
+        Returns: undefined
+      }
       commit_move: {
         Args: {
           _actor: string
@@ -2576,6 +2580,10 @@ export type Database = {
         Args: { _token: string }
         Returns: undefined
       }
+      open_quiz_if_needed: {
+        Args: { _creator_types: string[]; _match_id: string; _user_id: string }
+        Returns: string
+      }
       recompute_match_scores_for_user: {
         Args: { _user_id: string }
         Returns: undefined
@@ -2597,6 +2605,14 @@ export type Database = {
       send_contact_request: {
         Args: { _reason: string; _to_user_id: string }
         Returns: string
+      }
+      submit_quiz_answer: {
+        Args: {
+          _chosen_option: Database["public"]["Enums"]["quiz_option"]
+          _match_id: string
+          _question_id: string
+        }
+        Returns: Json
       }
       update_creator_of_the_month: { Args: never; Returns: Json }
       withdraw_contact_request: {
