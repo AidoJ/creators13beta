@@ -137,6 +137,11 @@ export default function SubscribersTab({ users, caseStudies, assignedPracMap }: 
                           <span className="text-[10px] text-muted-foreground">Direct</span>
                         )}
                       </td>
+                      <td className="px-4 py-2.5 text-right">
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setStatsUser(u)}>
+                          <BarChart3 className="w-3.5 h-3.5 mr-1" /> View
+                        </Button>
+                      </td>
                     </tr>
                   );
                 })
@@ -145,6 +150,18 @@ export default function SubscribersTab({ users, caseStudies, assignedPracMap }: 
           </table>
         </div>
       </div>
+
+      <Dialog open={!!statsUser} onOpenChange={(o) => { if (!o) setStatsUser(null); }}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {statsUser?.first_name || ""} {statsUser?.last_name || ""}
+              <span className="ml-2 text-xs font-normal text-muted-foreground">{statsUser?.email}</span>
+            </DialogTitle>
+          </DialogHeader>
+          {statsUser && <QuizStatsCard userId={statsUser.user_id} />}
+        </DialogContent>
+      </Dialog>
 
       <p className="text-[10px] text-muted-foreground">
         Showing {filtered.length} paying subscriber{filtered.length !== 1 ? "s" : ""} (Robin, Cockatoo, or Owl tier).
