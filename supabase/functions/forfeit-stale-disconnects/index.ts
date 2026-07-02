@@ -40,7 +40,7 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-import { forceAdvanceTurn, forceFinaliseDisconnect2p } from "../_shared/game/engine.ts";
+import { endTurnEarly, forceAdvanceTurn, forceFinaliseDisconnect2p } from "../_shared/game/engine.ts";
 import type { Ecosystem, MatchState, PlacedCard } from "../_shared/game/types.ts";
 
 // engine-mirror dispatch shape for the idle auto-pass synthetic move.
@@ -338,9 +338,12 @@ Deno.serve(async (req) => {
       }
 
 
-      // AUTO-PASS: advance the turn without disconnecting. Inject a
-      // transient past-grace disconnectedAt for ONLY the current slot
-      // so the engine's advanceTurn skips it, then commit_move.
+      // AUTO-PASS: advance the turn without disconnecting. This must NOT
+      // inject a fake past-grace disconnect for the current slot: in a 2P
+      // match that leaves only one continuing player, so the engine correctly
+      // finalises the match — but that is wrong for a 1st/2nd idle strike.
+      // Instead, apply the same reducer as a manual "end turn" and record
+      // the strike below; only the 3rd strike escalates to idle_departed.
       try {
         let state: MatchState;
         try {
@@ -349,24 +352,13 @@ Deno.serve(async (req) => {
           console.error(`[sweep] idle deserialise failed match=${m.id}`, e);
           continue;
         }
-        const graceMs = graceSec * 1000;
-        state.disconnectGraceMs = graceMs;
-        state.players = state.players.map((p, i) =>
-          i === slot
-            ? { ...p, disconnectedAt: Date.now() - graceMs - 1000 }
-            : { ...p, disconnectedAt: null },
-        );
-
-
-
-
-        const nextState = forceAdvanceTurn(state, Date.now());
+        const nextState = endTurnEarly(state);
         if (nextState === state) {
           console.log(`[sweep] idle force-advance no-op match=${m.id}`);
           continue;
         }
-        // Strip the injected disconnect from the serialised result so we
-        // don't persist a false disconnect into match.state.
+        // Keep match.state free of transient presence flags; the roster table
+        // remains the source of truth for real disconnects.
         nextState.players = nextState.players.map((p) => ({ ...p, disconnectedAt: null }));
 
         const { data: rosterAll } = await svc
