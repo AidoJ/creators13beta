@@ -961,6 +961,7 @@ export type Database = {
           quiz_bonus_points: number
           quiz_bonus_threshold: number
           quiz_enabled: boolean
+          quiz_questions_per_match: number
           show_discord_chat: boolean
           show_review_boards: boolean
           show_score_panel: boolean
@@ -1025,6 +1026,7 @@ export type Database = {
           quiz_bonus_points?: number
           quiz_bonus_threshold?: number
           quiz_enabled?: boolean
+          quiz_questions_per_match?: number
           show_discord_chat?: boolean
           show_review_boards?: boolean
           show_score_panel?: boolean
@@ -1089,6 +1091,7 @@ export type Database = {
           quiz_bonus_points?: number
           quiz_bonus_threshold?: number
           quiz_enabled?: boolean
+          quiz_questions_per_match?: number
           show_discord_chat?: boolean
           show_review_boards?: boolean
           show_score_panel?: boolean
@@ -1633,6 +1636,7 @@ export type Database = {
       quiz_match_progress: {
         Row: {
           bonus_awarded: boolean
+          bonus_points_awarded: number
           correct_count: number
           created_at: string
           last_triggered_turn: number | null
@@ -1645,6 +1649,7 @@ export type Database = {
         }
         Insert: {
           bonus_awarded?: boolean
+          bonus_points_awarded?: number
           correct_count?: number
           created_at?: string
           last_triggered_turn?: number | null
@@ -1657,6 +1662,7 @@ export type Database = {
         }
         Update: {
           bonus_awarded?: boolean
+          bonus_points_awarded?: number
           correct_count?: number
           created_at?: string
           last_triggered_turn?: number | null
@@ -2500,6 +2506,7 @@ export type Database = {
         }[]
       }
       get_pending_request_count: { Args: never; Returns: number }
+      get_player_quiz_stats: { Args: { _user_id: string }; Returns: Json }
       get_public_member_profile: {
         Args: { _target_user_id: string }
         Returns: {
@@ -2580,10 +2587,24 @@ export type Database = {
         Args: { _token: string }
         Returns: undefined
       }
-      open_quiz_if_needed: {
-        Args: { _creator_types: string[]; _match_id: string; _user_id: string }
-        Returns: string
-      }
+      open_quiz_if_needed:
+        | {
+            Args: {
+              _creator_type: string
+              _match_id: string
+              _turn: number
+              _user_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _creator_types: string[]
+              _match_id: string
+              _user_id: string
+            }
+            Returns: string
+          }
       recompute_match_scores_for_user: {
         Args: { _user_id: string }
         Returns: undefined

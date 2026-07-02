@@ -1,77 +1,62 @@
-# A.4 — Presence & Disconnect Handling
+# Quiz bonuses, caps, and mastery dashboards
 
-## 1. Config (migration)
+## 1. Admin-tunable rules (Game Settings)
 
-Add tunables to `game_settings` so the debounce/grace can be adjusted from evidence without redeploy:
+Two new controls on the Admin → Game Settings panel:
 
-- `presence_debounce_seconds` int, default `15`
-- `disconnect_grace_seconds` int, default `300`
-- `disconnect_sweep_interval_seconds` int, default `30` (informational; cron schedule is fixed at 30s, value documents intent)
+- **Questions per match**: 4, 8, or 12 (max questions the game will serve any single player).
+- **Bonus points per 4 correct**: 1–5 (points added to match score each time a player accumulates another 4 correct answers).
 
-Schedule `pg_cron` job `forfeit_stale_disconnects` every 30s that POSTs to the sweep edge function (uses the same `net.http_post` pattern as existing scheduled functions).
+Example: `Questions per match = 8`, `Bonus = 2` ⇒ a player who gets 8/8 correct earns +4 bonus points (2 at the 4-correct mark, 2 more at 8-correct).
 
-## 2. New edge functions
+## 2. Bonus accrual becomes tiered / repeating
 
-### `supabase/functions/report-presence/index.ts`
-Called by clients on presence `join` / `leave` events for `match:{match_id}`.
+Server-side change to `submit_quiz_answer`:
 
-- `join` → clear `disconnected_at`, `disconnect_reason`; update `last_seen_at`.
-- `leave` → **server-side debounce**: set `last_seen_at = now()`, do NOT stamp `disconnected_at` immediately. Instead enqueue a deferred check by writing `last_seen_at` and letting the sweep stamp `disconnected_at` only if `now() - last_seen_at > presence_debounce_seconds` AND no fresh presence has arrived.
-  - This collapses "debounce" into the sweep: a single source of truth, no in-memory timers in the edge runtime (which won't survive between invocations anyway).
-- Authenticates via JWT; verifies caller is a participant of the match.
+- Track `bonus_points_awarded` (integer) instead of a single `bonus_awarded` flag.
+- Each time `correct_count` crosses a multiple of 4 (4, 8, 12…), add another `bonus_points` to the player's ledger.
+- Stop offering new questions once `correct_count + wrong_count` reaches `questions_per_match`.
 
-### `supabase/functions/forfeit-stale-disconnects/index.ts`
-Invoked by cron. Single pass:
+Match finalisation (`apply-move`) reads `bonus_points_awarded` and adds it to the winner/finisher's score, instead of the current one-shot flag.
 
-1. **Stamp**: for any active player whose `last_seen_at < now() - presence_debounce_seconds` and `disconnected_at IS NULL`, set `disconnected_at = last_seen_at` (stable start time, not `now()`).
-2. **All-disconnect check (per match, single SQL)**: if every active player in a match has `disconnected_at IS NOT NULL`, finalise the match in one statement using `MAX(disconnected_at)` as the winner tiebreak, ties = draw. Marks state `__finalised`.
-3. **Past-grace forfeit**: for matches not all-disconnected, players with `now() - disconnected_at > disconnect_grace_seconds` are finalised via the score-ranked path (NOT the quitter band — see engine note).
+## 3. Player Dashboard – new "Game & Quiz" card
 
-Imports from `_shared/game/engine.ts` for the ranking call → marker line added so any engine change forces this function to redeploy.
+Shows for the signed-in player, lifetime across all matches:
 
-## 3. Engine predicate change (mirrored)
+- **Wins** (from `game_matches` where they are the winner).
+- **Quiz bonus points earned** (sum of `bonus_points_awarded`).
+- **Questions answered** (correct + wrong).
+- **Overall accuracy** (%).
+- **Mastery by Creator Type** — one row per of the 13 types in canonical order, showing `correct ÷ answered` as a % and a coloured bar in that Creator's palette colour.
 
-In both `src/lib/game/engine.ts` and `supabase/functions/_shared/game/engine.ts`:
+Types with zero answered show a muted "—".
 
-- Add helper `isDisconnectedWithinGrace(state, seat, graceSeconds)` reading `state.players[seat].disconnectedAt`.
-- Forward-scan predicate becomes `isStuck(seat) OR isDisconnectedWithinGrace(seat)` — single function, two callers. Comment block explains: "Disconnect-within-grace is NOT stuck (player may have legal moves); we just can't ask them. Same skip mechanism, distinct semantic."
-- Sweep's score-ranking call documents next to it: **"Disconnects MUST NOT route through the conceded/forfeit bottom-band path. A dropped connection is not a deliberate quit. Route only explicit Leave Match through `finalisePlayer(reason='conceded')`."**
+## 4. Admin per-user view
 
-Update the mirror-hash marker in `apply-move/index.ts` (already wired) plus add the same marker line to `report-presence` and `forfeit-stale-disconnects` so CI catches drift on all three.
+On the Admin → Users page, each user's detail drawer/panel gets the same "Game & Quiz" card, powered by a security-definer RPC `get_player_quiz_stats(_user_id)` so admins can read any user's numbers without loosening RLS on `quiz_player_mastery`.
 
-## 4. Instant-win composition (verify at source)
+## Technical details
 
-Read `finaliseByScore` and the apply-move completion path. If either filters seats on `disconnected_at IS NULL`, change to filter on `status='active'` (disconnect-within-grace stays `active` until the sweep forfeits). If already `status='active'`, leave alone and note in comment.
+**Migration:**
 
-## 5. Frontend
+- `ALTER TABLE game_settings ADD COLUMN quiz_questions_per_match int NOT NULL DEFAULT 4 CHECK (quiz_questions_per_match IN (4,8,12))`.
+- Widen `quiz_bonus_points` CHECK to `BETWEEN 1 AND 5` (already in place).
+- `ALTER TABLE quiz_match_progress ADD COLUMN bonus_points_awarded int NOT NULL DEFAULT 0`.
+- Rewrite `submit_quiz_answer` to award tiered bonuses and refuse to answer past the cap.
+- Update `open_quiz_if_needed` to no-op once `correct + wrong >= questions_per_match`.
+- New RPC `get_player_quiz_stats(_user_id uuid)` returning JSONB `{ wins, bonus_points, correct, wrong, accuracy, by_type: [{ type, correct, wrong, pct }] }`. Callable by the user themselves or by any user with the `admin` role via `has_role`.
 
-### `src/hooks/useMatchPresence.ts` (new)
-- Subscribes to `supabase.channel('match:' + matchId, { config: { presence: { key: userId } } })`.
-- Tracks `{ user_id, seat, status: 'connected'|'reconnecting'|'disconnected', last_seen_at, ready?: boolean }` per seat.
-- On own `join`/`leave`, calls `report-presence` edge function.
-- Exposes `{ presenceBySeat, isReconnecting(seat), isDisconnected(seat) }`.
-- Channel name shared with future B (lobby) and C (in-match) — payload includes `ready` even though A.4 doesn't set it.
+**Frontend:**
 
-### UI indicator
-- `src/components/game/OpponentPanel.tsx` + `OpponentSheet.tsx`: when `isReconnecting(seat)` show "Player X reconnecting…" badge; when `isDisconnected(seat)` show "Disconnected — Xm remaining". Tiny status dot (green/amber/grey). No layout shift.
-- `src/components/game/MatchOverDialog.tsx` already handles finalised matches — no change needed; sweep finalises via existing path.
+- `src/lib/game/settings.ts` — add `quiz_questions_per_match`, extend defaults.
+- `src/components/admin/GameSettingsPanel.tsx` — add the two selects under a "Creator Quiz" subsection (or extend if already present).
+- `src/hooks/useQuizProgress.ts` — surface `bonus_points_awarded` and `questions_per_match`, hide the question card once cap reached.
+- `src/components/game/QuizBadge.tsx` — show `correct/total` and running bonus.
+- `src/components/dashboard/QuizStatsCard.tsx` — new component using `get_player_quiz_stats` RPC; used on both player dashboard and admin per-user drawer.
 
-## 6. Deploy & CI
+**Data left in place:** `quiz_bonus_threshold` column is deprecated but retained (defaults to 4) to keep existing rows valid; new logic uses fixed block size of 4 with `quiz_bonus_points` controlling the reward, per the requested UX.
 
-- `report-presence` and `forfeit-stale-disconnects` are new files → auto-deploy on creation.
-- Marker line in both, plus updated marker in `apply-move`, ensures future `_shared/game/` changes force all three to redeploy.
-- Mirror sync script runs as part of the engine edit; CI mirror-hash check fails build if drift.
+## Out of scope
 
-## 7. Out of scope (explicit)
-
-- No "Leave Match" button (that's the explicit-quit path).
-- No spectator / late-join (B territory).
-- No Beat-the-Clock timer changes (per decision: timer ignores disconnect).
-- No `ready` flag wiring (B will flip it; payload shape reserves the field).
-
-## Technical notes
-
-- Debounce architecture: collapsing the "enqueue 15s, cancel on rejoin" into "sweep stamps based on `last_seen_at` age" is functionally equivalent and avoids relying on edge-function instance lifetime (which Supabase doesn't guarantee).
-- All-disconnect finalisation SQL runs inside the sweep function in one statement per affected match, so two sweep ticks can't miscompute MAX.
-- `state.__finalised` idempotency tag (already in apply-move) prevents double-finalisation if sweep and instant-win race.
-- Config reads: edge functions fetch the 3 ints from `game_settings` once per invocation (negligible cost, allows live tuning).
+- No leaderboard page (can add later).
+- No changes to question bank UI (Lava/Fire dropdown fix already shipped).
