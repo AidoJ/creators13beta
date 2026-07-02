@@ -717,6 +717,43 @@ Deno.serve(async (req) => {
     if (statusErr) console.error("[apply-move] lobby status flip failed", statusErr);
   }
 
+  // ────────────────────────────────────────────────────────────────
+  // Creator Quiz Layer — best-effort side effects.
+  //   • Any draw-type move by the caller silently closes any question
+  //     that was still open (soft-dismiss on next-turn draw).
+  //   • If the draw added a Creator (or Sky Creator) card to the caller's
+  //     hand, open a new quiz question tied to that Creator's type.
+  //     Rule C: open_quiz_if_needed is a no-op if one is already open.
+  //   • draw_initial_5 is skipped — the game is still bootstrapping and
+  //     firing five questions at once would swamp the player.
+  // ────────────────────────────────────────────────────────────────
+  try {
+    const drawTypes = new Set(["pickup_from_draw", "pickup_from_used", "skip_draws"]);
+    if (userId && drawTypes.has(body.move.type)) {
+      await svc.rpc("close_open_quiz", { _match_id: body.match_id, _user_id: userId });
+
+      const preSet = new Set(preCallerHandUids);
+      const newCards = (nextState.players[callerSlot]?.hand ?? []).filter(
+        (c: any) => c?.uid && !preSet.has(c.uid),
+      );
+      const creatorTypes: string[] = [];
+      for (const c of newCards) {
+        if (c.kind === "creator" && c.displayType) creatorTypes.push(c.displayType);
+        // Sky Creator is a wildcard — no single Creator type — skip.
+      }
+      if (creatorTypes.length > 0) {
+        await svc.rpc("open_quiz_if_needed", {
+          _match_id: body.match_id,
+          _user_id: userId,
+          _creator_types: creatorTypes,
+        });
+      }
+    }
+  } catch (quizErr) {
+    // Never let quiz plumbing block a game move.
+    console.warn("[apply-move] quiz hook failed (non-fatal)", quizErr);
+  }
+
   return jsonResponse({
     ok: true,
     seq: body.expected_seq + 1,
