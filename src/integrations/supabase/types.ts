@@ -958,6 +958,9 @@ export type Database = {
           profile_discount_threshold_2: number
           profile_discount_threshold_3: number
           prompt_player_name: boolean
+          quiz_bonus_points: number
+          quiz_bonus_threshold: number
+          quiz_enabled: boolean
           show_discord_chat: boolean
           show_review_boards: boolean
           show_score_panel: boolean
@@ -1019,6 +1022,9 @@ export type Database = {
           profile_discount_threshold_2?: number
           profile_discount_threshold_3?: number
           prompt_player_name?: boolean
+          quiz_bonus_points?: number
+          quiz_bonus_threshold?: number
+          quiz_enabled?: boolean
           show_discord_chat?: boolean
           show_review_boards?: boolean
           show_score_panel?: boolean
@@ -1080,6 +1086,9 @@ export type Database = {
           profile_discount_threshold_2?: number
           profile_discount_threshold_3?: number
           prompt_player_name?: boolean
+          quiz_bonus_points?: number
+          quiz_bonus_threshold?: number
+          quiz_enabled?: boolean
           show_discord_chat?: boolean
           show_review_boards?: boolean
           show_score_panel?: boolean
@@ -1621,6 +1630,152 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_match_progress: {
+        Row: {
+          bonus_awarded: boolean
+          correct_count: number
+          created_at: string
+          last_triggered_turn: number | null
+          match_id: string
+          open_question_id: string | null
+          open_question_turn: number | null
+          updated_at: string
+          user_id: string
+          wrong_count: number
+        }
+        Insert: {
+          bonus_awarded?: boolean
+          correct_count?: number
+          created_at?: string
+          last_triggered_turn?: number | null
+          match_id: string
+          open_question_id?: string | null
+          open_question_turn?: number | null
+          updated_at?: string
+          user_id: string
+          wrong_count?: number
+        }
+        Update: {
+          bonus_awarded?: boolean
+          correct_count?: number
+          created_at?: string
+          last_triggered_turn?: number | null
+          match_id?: string
+          open_question_id?: string | null
+          open_question_turn?: number | null
+          updated_at?: string
+          user_id?: string
+          wrong_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_match_progress_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "game_matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_match_progress_open_question_id_fkey"
+            columns: ["open_question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_player_mastery: {
+        Row: {
+          mastered_at: string
+          match_id: string | null
+          question_id: string
+          user_id: string
+        }
+        Insert: {
+          mastered_at?: string
+          match_id?: string | null
+          question_id: string
+          user_id: string
+        }
+        Update: {
+          mastered_at?: string
+          match_id?: string | null
+          question_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_player_mastery_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          active: boolean
+          category: Database["public"]["Enums"]["quiz_category"]
+          correct_option: Database["public"]["Enums"]["quiz_option"]
+          created_at: string
+          creator_type: string
+          explanation: string | null
+          id: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          prompt: string
+          review_status: Database["public"]["Enums"]["quiz_review_status"]
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_field: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          active?: boolean
+          category: Database["public"]["Enums"]["quiz_category"]
+          correct_option: Database["public"]["Enums"]["quiz_option"]
+          created_at?: string
+          creator_type: string
+          explanation?: string | null
+          id?: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          prompt: string
+          review_status?: Database["public"]["Enums"]["quiz_review_status"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_field?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          active?: boolean
+          category?: Database["public"]["Enums"]["quiz_category"]
+          correct_option?: Database["public"]["Enums"]["quiz_option"]
+          created_at?: string
+          creator_type?: string
+          explanation?: string | null
+          id?: string
+          option_a?: string
+          option_b?: string
+          option_c?: string
+          option_d?: string
+          prompt?: string
+          review_status?: Database["public"]["Enums"]["quiz_review_status"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_field?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       special_cards: {
         Row: {
           art_path: string | null
@@ -2112,6 +2267,15 @@ export type Database = {
         }
         Relationships: []
       }
+      v_player_creator_mastery: {
+        Row: {
+          creator_type: string | null
+          mastered_count: number | null
+          total_count: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_game_invite: {
@@ -2476,6 +2640,17 @@ export type Database = {
         | "refunded"
       practitioner_status: "in_progress" | "paused" | "cancelled" | "certified"
       product_type: "physical" | "digital"
+      quiz_category:
+        | "family"
+        | "element"
+        | "team_role"
+        | "signature"
+        | "at_the_table"
+        | "shadow_side"
+        | "you_might_be_if"
+        | "animal"
+      quiz_option: "a" | "b" | "c" | "d"
+      quiz_review_status: "pending" | "approved" | "rejected"
       subscription_status:
         | "active"
         | "past_due"
@@ -2649,6 +2824,18 @@ export const Constants = {
       ],
       practitioner_status: ["in_progress", "paused", "cancelled", "certified"],
       product_type: ["physical", "digital"],
+      quiz_category: [
+        "family",
+        "element",
+        "team_role",
+        "signature",
+        "at_the_table",
+        "shadow_side",
+        "you_might_be_if",
+        "animal",
+      ],
+      quiz_option: ["a", "b", "c", "d"],
+      quiz_review_status: ["pending", "approved", "rejected"],
       subscription_status: [
         "active",
         "past_due",
