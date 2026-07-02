@@ -21,7 +21,8 @@ type Num = keyof Pick<GameSettings,
   | "bot_think_ms" | "max_players_per_match"
   | "profile_discount_threshold_1" | "profile_discount_percent_1"
   | "profile_discount_threshold_2" | "profile_discount_percent_2"
-  | "profile_discount_threshold_3" | "profile_discount_percent_3">;
+  | "profile_discount_threshold_3" | "profile_discount_percent_3"
+  | "quiz_bonus_points">;
 
 type Bool = keyof Pick<GameSettings,
   "mode_end_of_days_enabled" | "mode_top_score_enabled" | "mode_beat_clock_enabled"
@@ -30,7 +31,8 @@ type Bool = keyof Pick<GameSettings,
   | "bot_easy_enabled" | "bot_medium_enabled" | "bot_hard_enabled"
   | "show_tutorial_overlay" | "show_review_boards" | "prompt_player_name" | "show_score_panel"
   | "highlight_playable_cards" | "highlight_valid_placements"
-  | "maintenance_banner_enabled" | "play_disabled" | "profile_discount_enabled">;
+  | "maintenance_banner_enabled" | "play_disabled" | "profile_discount_enabled"
+  | "quiz_enabled">;
 
 export default function GameSettingsPanel() {
   const [s, setS] = useState<GameSettings>(DEFAULT_GAME_SETTINGS);
