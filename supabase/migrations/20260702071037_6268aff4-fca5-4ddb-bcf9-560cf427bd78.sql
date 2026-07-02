@@ -1,0 +1,1 @@
+UPDATE public.game_settings SET quiz_enabled = true WHERE id = 'global';
