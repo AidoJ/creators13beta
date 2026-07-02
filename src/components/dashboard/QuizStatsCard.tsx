@@ -75,7 +75,7 @@ export default function QuizStatsCard({ userId, title = "Game & Quiz stats" }: P
           </div>
 
           <div className="pt-2">
-            <div className="text-xs font-semibold mb-2 text-muted-foreground">Mastery by Creator Type</div>
+            <div className="text-xs font-semibold mb-2 text-muted-foreground">Mastery by Creator Type (questions mastered of bank)</div>
             <div className="space-y-1.5">
               {rows.map((r) => {
                 const color = CREATOR_TYPE_COLORS[r.type];
