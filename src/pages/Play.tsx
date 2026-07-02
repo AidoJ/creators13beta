@@ -1305,6 +1305,13 @@ export default function Play() {
         />
       )}
 
+      {isPvp && !state.finished && quiz.settings.enabled && (
+        <div className="fixed top-3 right-3 z-40">
+          <QuizBadge progress={quiz.progress} question={quiz.question} settings={quiz.settings} submit={quiz.submit} />
+        </div>
+      )}
+
+
       {/* Prominent Beat-the-Clock countdown */}
       {isBeatClock && !state.finished && (
         <div className={
