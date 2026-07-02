@@ -74,6 +74,11 @@ export interface GameSettings {
   profile_discount_percent_2: number;
   profile_discount_threshold_3: number;
   profile_discount_percent_3: number;
+
+  // Creator Quiz
+  quiz_enabled: boolean;
+  quiz_bonus_points: number;         // Points awarded per 4 correct answers (1–5)
+  quiz_questions_per_match: 4 | 8 | 12; // Max questions any player is served per match
 }
 
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
@@ -133,6 +138,9 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   profile_discount_percent_2: 25,
   profile_discount_threshold_3: 200,
   profile_discount_percent_3: 50,
+  quiz_enabled: true,
+  quiz_bonus_points: 1,
+  quiz_questions_per_match: 4,
 };
 
 let cached: GameSettings | null = null;
