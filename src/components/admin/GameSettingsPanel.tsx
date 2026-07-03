@@ -14,7 +14,8 @@ import CreatorContentEditor from "./CreatorContentEditor";
 import { registerDirtyGetter } from "./unsavedChanges";
 
 type Num = keyof Pick<GameSettings,
-  "points_per_win" | "elo_win" | "elo_loss" | "perfect_eco_bonus"
+  "points_per_win" | "points_win_2p" | "points_win_3p" | "points_win_4p" | "points_runner_up"
+  | "elo_win" | "elo_loss" | "perfect_eco_bonus"
   | "top_score_default" | "beat_clock_match_minutes" | "beat_clock_turn_seconds" | "beat_clock_draw_seconds"
   | "idle_turn_seconds" | "idle_turn_strikes_limit"
   | "hand_size" | "hand_limit" | "ecosystem_target" | "creators_needed" | "animals_per_creator"
@@ -192,10 +193,14 @@ export default function GameSettingsPanel() {
           <h3 className="text-sm font-semibold">Scoring & Progression</h3>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <NumField k="points_per_win" label="Points per game won" min={0} max={100} hint="Dashboard pts awarded to winner" />
+          <NumField k="points_win_2p" label="Winner pts (2-player)" min={0} max={100} hint="Head-to-head PvP winner" />
+          <NumField k="points_win_3p" label="Winner pts (3-player)" min={0} max={100} hint="3-player PvP winner" />
+          <NumField k="points_win_4p" label="Winner pts (4-player)" min={0} max={100} hint="4-player PvP winner" />
+          <NumField k="points_runner_up" label="Runner-up pts (any PvP)" min={0} max={100} hint="Every non-winner in ranked PvP" />
+          <NumField k="perfect_eco_bonus" label="Perfect ecosystem bonus" min={0} max={100} hint="Extra pts for full 16-card eco" />
           <NumField k="elo_win" label="ELO gain on win" min={0} max={200} />
           <NumField k="elo_loss" label="ELO change on loss" min={-200} max={0} hint="Use negative number" />
-          <NumField k="perfect_eco_bonus" label="Perfect ecosystem bonus" min={0} max={100} hint="Extra pts for full 16-card eco" />
+          <NumField k="points_per_win" label="Legacy points_per_win" min={0} max={100} hint="Fallback only — new fields above override" />
         </div>
       </section>
 
