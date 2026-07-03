@@ -1,6 +1,7 @@
 // Admin helper: issue signed download URLs + signed upload tokens
 // for a user's HEIC profiling photos so a sandbox script can convert them.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { requireRole, AuthError } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Trainer/admin only — this mints signed URLs against private storage and
+    // rewrites DB rows for any user_id / photo_id supplied by the caller.
+    await requireRole(req, ["admin", "trainer"]);
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -62,7 +67,6 @@ Deno.serve(async (req) => {
     }
 
     if (action === "finalize") {
-      // Update DB row to point to new path, delete old HEIC
       const { data: photo } = await supabase
         .from("profiling_photos").select("storage_path").eq("id", photo_id).single();
       const oldPath = photo?.storage_path;
@@ -85,6 +89,11 @@ Deno.serve(async (req) => {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    if (e instanceof AuthError) {
+      return new Response(JSON.stringify({ error: e.message }), {
+        status: e.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     return new Response(JSON.stringify({ error: String(e) }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

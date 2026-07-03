@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { requireRole, AuthError, rateLimit } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -82,6 +83,19 @@ serve(async (req) => {
   }
 
   try {
+    // Cron / admin / trainer only. Service-role token (cron) or trainer/admin JWT accepted.
+    const caller = await requireRole(req, ["admin", "trainer"]);
+
+    // Rate-limit non-service callers to prevent a compromised admin session
+    // from being used to spam reminders. 3 runs per 10 minutes per caller.
+    if (!caller.isService) {
+      if (!rateLimit(`send-training-reminders:${caller.id}`, 3, 10 * 60 * 1000)) {
+        return new Response(JSON.stringify({ error: "rate limited" }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const apiKey = Deno.env.get("RESEND_API_KEY");
     if (!apiKey) throw new Error("RESEND_API_KEY is not configured");
 
@@ -278,6 +292,11 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: unknown) {
+    if (err instanceof AuthError) {
+      return new Response(JSON.stringify({ error: err.message }), {
+        status: err.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     console.error("send-training-reminders error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     return new Response(JSON.stringify({ error: message }), {
