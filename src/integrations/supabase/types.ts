@@ -947,6 +947,10 @@ export type Database = {
           play_disabled: boolean
           play_disabled_message: string
           points_per_win: number
+          points_runner_up: number
+          points_win_2p: number
+          points_win_3p: number
+          points_win_4p: number
           presence_debounce_seconds: number
           profile_discount_cta_body: string
           profile_discount_cta_title: string
@@ -1012,6 +1016,10 @@ export type Database = {
           play_disabled?: boolean
           play_disabled_message?: string
           points_per_win?: number
+          points_runner_up?: number
+          points_win_2p?: number
+          points_win_3p?: number
+          points_win_4p?: number
           presence_debounce_seconds?: number
           profile_discount_cta_body?: string
           profile_discount_cta_title?: string
@@ -1077,6 +1085,10 @@ export type Database = {
           play_disabled?: boolean
           play_disabled_message?: string
           points_per_win?: number
+          points_runner_up?: number
+          points_win_2p?: number
+          points_win_3p?: number
+          points_win_4p?: number
           presence_debounce_seconds?: number
           profile_discount_cta_body?: string
           profile_discount_cta_title?: string
