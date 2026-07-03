@@ -109,6 +109,10 @@ serve(async (req) => {
   }
 
   try {
+    // Trainer/admin (or service-role cron) only — this sends emails to every
+    // invitee of the supplied callId with attacker-influencable ICS content.
+    await requireRole(req, ["admin", "trainer"]);
+
     const apiKey = Deno.env.get("RESEND_API_KEY");
     if (!apiKey) throw new Error("RESEND_API_KEY is not configured");
 
@@ -123,7 +127,16 @@ serve(async (req) => {
     const { callId, updateType, previousScheduledAt } = body;
     // updateType: "rescheduled" | "cancelled"
 
-    if (!callId || !updateType) throw new Error("Missing callId or updateType");
+    if (!callId || typeof callId !== "string" || !/^[0-9a-f-]{36}$/i.test(callId)) {
+      return new Response(JSON.stringify({ error: "invalid callId" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (updateType !== "cancelled" && updateType !== "rescheduled") {
+      return new Response(JSON.stringify({ error: "invalid updateType" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Fetch the call
     const { data: call, error: callErr } = await supabase
