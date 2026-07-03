@@ -83,6 +83,19 @@ serve(async (req) => {
   }
 
   try {
+    // Cron / admin / trainer only. Service-role token (cron) or trainer/admin JWT accepted.
+    const caller = await requireRole(req, ["admin", "trainer"]);
+
+    // Rate-limit non-service callers to prevent a compromised admin session
+    // from being used to spam reminders. 3 runs per 10 minutes per caller.
+    if (!caller.isService) {
+      if (!rateLimit(`send-training-reminders:${caller.id}`, 3, 10 * 60 * 1000)) {
+        return new Response(JSON.stringify({ error: "rate limited" }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const apiKey = Deno.env.get("RESEND_API_KEY");
     if (!apiKey) throw new Error("RESEND_API_KEY is not configured");
 
