@@ -553,60 +553,6 @@ export type Database = {
         }
         Relationships: []
       }
-      discord_links: {
-        Row: {
-          discord_user_id: string
-          discord_username: string | null
-          id: string
-          last_synced_at: string | null
-          last_synced_role: string | null
-          linked_at: string
-          user_id: string
-        }
-        Insert: {
-          discord_user_id: string
-          discord_username?: string | null
-          id?: string
-          last_synced_at?: string | null
-          last_synced_role?: string | null
-          linked_at?: string
-          user_id: string
-        }
-        Update: {
-          discord_user_id?: string
-          discord_username?: string | null
-          id?: string
-          last_synced_at?: string | null
-          last_synced_role?: string | null
-          linked_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      discord_oauth_states: {
-        Row: {
-          created_at: string
-          expires_at: string
-          redirect_base: string | null
-          token: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          expires_at?: string
-          redirect_base?: string | null
-          token: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          expires_at?: string
-          redirect_base?: string | null
-          token?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       email_templates: {
         Row: {
           created_at: string
@@ -990,7 +936,6 @@ export type Database = {
           quiz_bonus_threshold: number
           quiz_enabled: boolean
           quiz_questions_per_match: number
-          show_discord_chat: boolean
           show_review_boards: boolean
           show_score_panel: boolean
           show_tutorial_overlay: boolean
@@ -1059,7 +1004,6 @@ export type Database = {
           quiz_bonus_threshold?: number
           quiz_enabled?: boolean
           quiz_questions_per_match?: number
-          show_discord_chat?: boolean
           show_review_boards?: boolean
           show_score_panel?: boolean
           show_tutorial_overlay?: boolean
@@ -1128,7 +1072,6 @@ export type Database = {
           quiz_bonus_threshold?: number
           quiz_enabled?: boolean
           quiz_questions_per_match?: number
-          show_discord_chat?: boolean
           show_review_boards?: boolean
           show_score_panel?: boolean
           show_tutorial_overlay?: boolean
