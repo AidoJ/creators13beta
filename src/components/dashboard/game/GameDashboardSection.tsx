@@ -4,13 +4,15 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Gamepad2, Flame, Trophy, Sparkles, Copy, Loader2, Info, Bot } from "lucide-react";
+import { Gamepad2, Flame, Trophy, Sparkles, Copy, Loader2, Info, Bot, ChevronDown, ChevronUp } from "lucide-react";
 
 import { toast } from "sonner";
 import { CREATOR_TYPE_NAMES, getCreatorTypeColor } from "@/lib/creatorTypes";
 import { CREATOR_TYPE_GLYPHS } from "@/lib/game/glyphs";
 import { inviteUrl } from "@/lib/game/persistence";
 import PracticeRungCard from "@/components/dashboard/game/PracticeRungCard";
+import QuizStatsCard from "@/components/dashboard/QuizStatsCard";
+
 
 interface ProgressRow {
   points: number;
