@@ -89,6 +89,11 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    if (e instanceof AuthError) {
+      return new Response(JSON.stringify({ error: e.message }), {
+        status: e.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     console.error("import-case-study-attachments error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
       status: 500,
