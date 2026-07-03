@@ -99,7 +99,6 @@ serve(async (req) => {
         .eq("user_id", userId);
 
       logStep("Subscription activated and profile updated", { userId });
-      await triggerDiscordRoleSync(userId);
     }
 
     if (event.type === "customer.subscription.updated") {
@@ -124,7 +123,6 @@ serve(async (req) => {
           .eq("user_id", subRecord.user_id);
 
         logStep("Subscription updated", { userId: subRecord.user_id, status: subscription.status });
-        await triggerDiscordRoleSync(subRecord.user_id);
       }
     }
 
@@ -145,7 +143,6 @@ serve(async (req) => {
           .eq("user_id", subRecord.user_id);
 
         logStep("Subscription canceled", { userId: subRecord.user_id });
-        await triggerDiscordRoleSync(subRecord.user_id);
       }
     }
 
