@@ -7,6 +7,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface GameSettings {
   points_per_win: number;
+  /** PvP scoring — admin-configurable per player count. */
+  points_win_2p: number;
+  points_win_3p: number;
+  points_win_4p: number;
+  /** Consolation points for every non-winner in any ranked PvP match. */
+  points_runner_up: number;
   elo_win: number;
   elo_loss: number;
   perfect_eco_bonus: number;
