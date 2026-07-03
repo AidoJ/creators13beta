@@ -13,26 +13,8 @@ const logStep = (step: string, details?: any) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
-// Fire-and-forget call to sync-discord-role so role drift is corrected after
-// every subscription change. Failures are logged but don't break the webhook.
-async function triggerDiscordRoleSync(userId: string) {
-  try {
-    const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/sync-discord-role`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-      },
-      body: JSON.stringify({ user_id: userId }),
-    });
-    if (!res.ok) {
-      console.log(`[STRIPE-WEBHOOK] discord_sync_failed - ${res.status} ${await res.text()}`);
-    }
-  } catch (e) {
-    console.log(`[STRIPE-WEBHOOK] discord_sync_error - ${String(e)}`);
-  }
-}
+
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
