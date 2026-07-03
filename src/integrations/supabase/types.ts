@@ -2408,10 +2408,12 @@ export type Database = {
         Args: { _comment?: string; _request_id: string }
         Returns: undefined
       }
-      finalise_ranked_match: {
-        Args: { _match_id: string; _placements?: Json; _reason?: string }
-        Returns: undefined
-      }
+      finalise_ranked_match:
+        | { Args: { _match_id: string; _reason?: string }; Returns: undefined }
+        | {
+            Args: { _match_id: string; _placements?: Json; _reason?: string }
+            Returns: undefined
+          }
       generate_invitation_code: { Args: never; Returns: string }
       generate_match_invite_code: { Args: never; Returns: string }
       generate_practitioner_code:
