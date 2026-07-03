@@ -578,7 +578,6 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
         )}
       </Card>
 
-      {/* ROW 3 — Recent matches */}
       <Card className="p-5">
         <div className="flex items-center gap-2 mb-3">
           <Trophy className="h-4 w-4 text-primary" />
@@ -587,32 +586,52 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
         {finished.length === 0 ? (
           <p className="text-sm text-muted-foreground italic">No completed matches yet.</p>
         ) : (
-          <ul className="divide-y divide-border">
-            {finished.slice(0, 8).map(m => {
-              const youHosted = m.host_user_id === userId;
-              const opponent = youHosted ? (m.guest_name || "Bot") : m.host_name;
-              const youWon = m.winner_user_id === userId;
-              const tie = !m.winner_user_id;
-              return (
-                <li key={m.id} className="flex items-center justify-between py-2 text-sm">
-                  <span className="text-foreground">
-                    vs {opponent}
-                    <span className="text-muted-foreground"> · {new Date(m.updated_at).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}</span>
-                  </span>
-                  <span className={
-                    "px-2 py-0.5 rounded-full text-[11px] font-bold " +
-                    (tie ? "bg-muted text-muted-foreground"
-                      : youWon ? "bg-green-500/15 text-green-700"
-                      : "bg-primary/15 text-primary")
-                  }>
-                    {tie ? "TIE" : youWon ? "WON" : "LOST"}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
+          <>
+            <ul className="divide-y divide-border">
+              {(showAllMatches ? finished : finished.slice(0, 3)).map(m => {
+                const youHosted = m.host_user_id === userId;
+                const opponent = youHosted ? (m.guest_name || "Bot") : m.host_name;
+                const youWon = m.winner_user_id === userId;
+                const tie = !m.winner_user_id;
+                return (
+                  <li key={m.id} className="flex items-center justify-between py-2 text-sm">
+                    <span className="text-foreground">
+                      vs {opponent}
+                      <span className="text-muted-foreground"> · {new Date(m.updated_at).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}</span>
+                    </span>
+                    <span className={
+                      "px-2 py-0.5 rounded-full text-[11px] font-bold " +
+                      (tie ? "bg-muted text-muted-foreground"
+                        : youWon ? "bg-green-500/15 text-green-700"
+                        : "bg-primary/15 text-primary")
+                    }>
+                      {tie ? "TIE" : youWon ? "WON" : "LOST"}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+            {finished.length > 3 && (
+              <button
+                type="button"
+                onClick={() => setShowAllMatches(v => !v)}
+                className="mt-3 w-full flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors py-1.5 rounded-md hover:bg-muted/50"
+              >
+                {showAllMatches ? (
+                  <>Show less <ChevronUp className="h-3.5 w-3.5" /></>
+                ) : (
+                  <>Show {finished.length - 3} more <ChevronDown className="h-3.5 w-3.5" /></>
+                )}
+              </button>
+            )}
+          </>
         )}
       </Card>
+
+      {/* ROW 4 — Quiz stats & mastery */}
+      <QuizStatsCard userId={userId} />
+
+
 
       {/* UPSELL — only for free/Wren */}
       {!isPaidTier && (
