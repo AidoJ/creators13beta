@@ -99,7 +99,8 @@ Deno.serve(async (req) => {
     const discordUserId = discordUser.id;
     const discordUsername = discordUser.username;
 
-    const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    // admin client already created above for state consumption
+
 
     // Look up user's subscription tier
     const { data: sub } = await admin
