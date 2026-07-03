@@ -37,24 +37,40 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const code = url.searchParams.get("code");
     const state = url.searchParams.get("state");
-    let userId = state; // legacy state format: user_id only
-    let redirectBase = getSafeRedirectBase(url.searchParams.get("redirect_base"));
 
-    if (state) {
-      try {
-        const parsedState = JSON.parse(state);
-        if (typeof parsedState.userId === "string") userId = parsedState.userId;
-        if (typeof parsedState.redirectBase === "string") redirectBase = getSafeRedirectBase(parsedState.redirectBase);
-      } catch (_) {
-        // Keep supporting existing links where state is just the user id.
-      }
-    }
-
-    if (!code || !userId) {
+    if (!code || !state) {
       return new Response("Missing code or state", { status: 400, headers: corsHeaders });
     }
 
+    const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // Consume the single-use state nonce. Must exist, not be expired, and
+    // is deleted immediately after read to prevent replay. Legacy state
+    // formats (raw user_id or JSON blobs) are intentionally rejected — they
+    // were the vulnerability that allowed account-link hijacking.
+    const { data: stateRow, error: stateErr } = await admin
+      .from("discord_oauth_states")
+      .select("user_id, redirect_base, expires_at")
+      .eq("token", state)
+      .maybeSingle();
+    if (stateErr) {
+      console.error("discord state lookup failed", stateErr);
+      return new Response("Invalid state", { status: 400, headers: corsHeaders });
+    }
+    if (!stateRow) {
+      return new Response("Invalid or expired state", { status: 400, headers: corsHeaders });
+    }
+    // Delete immediately (single-use).
+    await admin.from("discord_oauth_states").delete().eq("token", state);
+    if (new Date(stateRow.expires_at).getTime() < Date.now()) {
+      return new Response("State expired", { status: 400, headers: corsHeaders });
+    }
+
+    const userId = stateRow.user_id as string;
+    const redirectBase = getSafeRedirectBase(stateRow.redirect_base);
+
     const redirectUri = `${SUPABASE_URL}/functions/v1/discord-oauth-callback`;
+
 
     // Exchange code for token
     const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
