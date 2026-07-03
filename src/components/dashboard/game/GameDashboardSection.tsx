@@ -98,6 +98,8 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
   const [matches, setMatches] = useState<MatchRow[]>([]);
   const [botStats, setBotStats] = useState<BotStatRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAllMatches, setShowAllMatches] = useState(false);
+
 
   const loadMatches = useCallback(async () => {
     const { data } = await supabase
