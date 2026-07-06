@@ -407,7 +407,7 @@ function resolveColours(card: DeckCard): {
     const label = dt ?? card.element!;
     const c = dt ? (CREATOR_TYPE_COLORS[dt as keyof typeof CREATOR_TYPE_COLORS] ?? ELEMENT_COLORS[card.element!]) : ELEMENT_COLORS[card.element!];
     const g = dt ? (CREATOR_TYPE_GLYPHS[dt] ?? ELEMENT_GLYPHS[card.element!]) : ELEMENT_GLYPHS[card.element!];
-    return { c1: c, c2: c, chips: [{ label, color: c, glyph: g }], badge: card.element ? String(card.element).toUpperCase() : "Creator", artGlyph: g };
+    return { c1: c, c2: c, chips: [{ label, color: c, glyph: g }], badge: undefined, artGlyph: g };
   }
   if (card.kind === "sky_creator") {
     const c = ELEMENT_COLORS.Sky;
