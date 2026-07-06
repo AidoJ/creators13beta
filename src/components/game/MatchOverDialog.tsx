@@ -199,7 +199,7 @@ export function MatchOverDialog({ state, onPlayAgain, playerUserIds }: Props) {
     <>
       <Dialog open={open && !reviewOpen} onOpenChange={(o) => { if (!o) setDismissed(true); }}>
 
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-4 gap-2">
+        <DialogContent className="w-[calc(100vw-1rem)] sm:w-auto max-w-2xl max-h-[92vh] sm:max-h-[90vh] flex flex-col p-3 sm:p-4 gap-2">
           <DialogHeader className="space-y-2">
             <DialogTitle className="flex items-center gap-3 font-display text-xl">
               <Trophy className="w-5 h-5 text-amber-500 shrink-0" />
