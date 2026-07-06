@@ -107,7 +107,7 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
               className="absolute top-1 left-1 z-30 rounded-full flex items-center justify-center shadow-sm"
               style={{
                 background: "#f5945c",
-                color: "#fff",
+                color: "#000",
                 width: size * 0.2,
                 height: size * 0.2,
                 fontFamily: '"Questrial", sans-serif',
