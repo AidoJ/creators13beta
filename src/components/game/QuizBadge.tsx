@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { HelpCircle, Sparkles, Check, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -17,9 +17,6 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
   const [open, setOpen] = useState(false);
   const [answered, setAnswered] = useState<null | { correct: boolean; correct_option: string; explanation: string | null }>(null);
   const [submitting, setSubmitting] = useState(false);
-  // Re-trigger the pop animation each time a NEW question opens (id changes).
-  const [popKey, setPopKey] = useState(0);
-  const lastQidRef = useRef<string | null>(null);
 
   const correct = progress?.correct_count ?? 0;
   const wrong = progress?.wrong_count ?? 0;
@@ -29,18 +26,6 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
   const capReached = answeredCount >= cap;
   const hasOpen = !!question && !!progress?.open_question_id;
   const toNextTier = 4 - (correct % 4);
-
-  // Fire the pop animation whenever a new open question arrives so the
-  // player notices the quiz button after playing a Creator card.
-  useEffect(() => {
-    const qid = progress?.open_question_id ?? null;
-    if (qid && qid !== lastQidRef.current) {
-      lastQidRef.current = qid;
-      setPopKey((k) => k + 1);
-    } else if (!qid) {
-      lastQidRef.current = null;
-    }
-  }, [progress?.open_question_id]);
 
   if (!settings.enabled) return null;
 
@@ -73,27 +58,27 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
       <Tooltip>
         <TooltipTrigger asChild>
           <button
-            key={popKey}
             type="button"
             onClick={() => setOpen(true)}
             aria-label={hasOpen ? "Answer quiz question for bonus points" : `Quiz progress: ${correct} of ${cap}`}
-            style={hasOpen ? { animation: "quiz-pop 2s ease-out 1 both", willChange: "transform", zIndex: 50, position: "relative" } : undefined}
+            style={hasOpen ? { zIndex: 50, position: "relative", transformOrigin: "center", willChange: "transform" } : undefined}
             className={
               "relative inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition origin-center " +
               (bonusPts > 0
                 ? "bg-amber-500/15 border-amber-500/60 text-amber-700 dark:text-amber-300"
                 : hasOpen
-                  ? "bg-primary/15 border-primary/60 text-primary hover:bg-primary/25"
+                  ? "bg-primary border-primary text-primary-foreground shadow-lg animate-quiz-pop ring-2 ring-primary/50"
                   : "bg-muted/50 border-border text-muted-foreground hover:bg-muted")
             }
           >
 
-            {bonusPts > 0 ? <Sparkles className="h-3.5 w-3.5" /> : <HelpCircle className="h-3.5 w-3.5" />}
+            {bonusPts > 0 ? <Sparkles className="h-3.5 w-3.5" /> : <HelpCircle className={"h-3.5 w-3.5" + (hasOpen ? " animate-quiz-bounce" : "")} />}
             <span className="tabular-nums">{correct}/{cap}</span>
             {bonusPts > 0 && <span className="ml-0.5 tabular-nums font-semibold">+{bonusPts}</span>}
-            {hasOpen && <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary" />}
+            {hasOpen && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-background animate-quiz-bounce" />}
           </button>
         </TooltipTrigger>
+
         <TooltipContent side="bottom" className="max-w-[240px] text-xs">
           {hasOpen
             ? "A quiz question is waiting — answer for bonus points"
