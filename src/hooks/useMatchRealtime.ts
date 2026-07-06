@@ -118,6 +118,23 @@ export function useMatchRealtime(
             } catch (e) {
               console.error("[match-realtime] finished-status synth failed", e);
             }
+            return;
+          }
+
+          if (newRow.status === "active" && newRow.last_action_by !== selfUserId) {
+            try {
+              const { data: stateRow } = await supabase
+                .from("game_match_player_states")
+                .select("state")
+                .eq("match_id", matchId)
+                .eq("user_id", selfUserId)
+                .maybeSingle();
+              const raw = (stateRow as { state: any } | null)?.state;
+              if (!raw) return;
+              onRemoteUpdate(deserializeMatch(raw), newRow);
+            } catch (e) {
+              console.error("[match-realtime] active-meta sync failed", e);
+            }
           }
         },
       )
