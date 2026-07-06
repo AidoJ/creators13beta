@@ -38,6 +38,30 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
 
   const descriptor = card.source?.descriptor?.trim() || defaultDescriptor(card);
 
+  // Double-tap opens the info popup (or zoom for animals) — useful on mobile
+  // where the small info icon can be tricky to hit. We handle it manually via
+  // pointerup timestamps so it works reliably on touch (native dblclick is
+  // unreliable on iOS).
+  const lastTapRef = useRef<number>(0);
+  const openInfo = () => {
+    if (forceFlipped !== undefined) return;
+    if (isCreatorLike && !isGolden) setInfoOpen(true);
+    else setZoomed(true);
+  };
+  const handlePointerUpForDoubleTap = (e: React.PointerEvent) => {
+    // Ignore taps that started on the info button itself (it already handles it).
+    if ((e.target as HTMLElement).closest("[data-info-btn]")) return;
+    const now = Date.now();
+    if (now - lastTapRef.current < 320) {
+      e.preventDefault();
+      e.stopPropagation();
+      openInfo();
+      lastTapRef.current = 0;
+    } else {
+      lastTapRef.current = now;
+    }
+  };
+
   return (
     <div
       className="relative"
