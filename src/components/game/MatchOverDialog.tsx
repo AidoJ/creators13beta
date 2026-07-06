@@ -371,7 +371,7 @@ function orderedPlayers(state: MatchState): Array<{ player: PlayerState; rank: n
     .sort((a, b) => (a.rank ?? total + 1) - (b.rank ?? total + 1));
 }
 
-function PlayerBreakdown({ player, winner, rank, tied }: { player: PlayerState; winner: boolean; rank?: number | null; tied?: boolean }) {
+function PlayerBreakdown({ player, winner, rank, tied, avatarUrl }: { player: PlayerState; winner: boolean; rank?: number | null; tied?: boolean; avatarUrl?: string | null }) {
   const data = useMemo(() => {
     const placedList = Array.from(player.ecosystem.placed.values());
     const creators: PlacedCard[] = [];
