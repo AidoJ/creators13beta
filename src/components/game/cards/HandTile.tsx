@@ -97,29 +97,15 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
             )}
 
 
-            {codeLabel && (
-              <div
-                className="absolute z-20 bg-white text-black font-bold rounded-full shadow-sm border border-black/10"
-                style={{
-                  top: 4,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  fontFamily: '"Questrial", sans-serif',
-                  fontSize: Math.max(8, size * 0.096),
-                  lineHeight: 1,
-                  padding: `${Math.max(1, size * 0.024)}px ${Math.max(4, size * 0.048)}px`,
-                  letterSpacing: "0.02em",
-                }}
-              >
-                {codeLabel}
-              </div>
-            )}
+            {/* Card code badge removed from hand tiles — codes remain on
+             *  admin views only. Encourages learning names + descriptors
+             *  rather than memorising 2/4-letter abbreviations. */}
             {badge && (
               <div className="absolute bottom-1.5 right-1.5 z-20 text-[8px] font-bold uppercase tracking-wider bg-black/55 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm">
                 {badge}
               </div>
             )}
-            <div className={`absolute inset-0 z-10 flex items-center justify-center ${isCreatorLike ? "p-0" : "p-2"}`}>
+            <div className={`absolute inset-0 z-10 flex items-center justify-center ${isCreatorLike ? "p-0" : "p-0.5"}`}>
               {art ? (
                 <img
                   src={art}
@@ -129,36 +115,17 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
                   className="object-contain pointer-events-none"
                   style={isCreatorLike
                     ? { width: "100%", height: "100%" }
-                    : { maxWidth: "100%", maxHeight: "100%" }}
+                    : { width: "100%", height: "100%" }}
                 />
               ) : (
                 <div className="text-white/80 text-[10px] font-medium uppercase tracking-wide">{card.kind}</div>
               )}
             </div>
-            {/* Hover tooltip overlay */}
-            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center opacity-0 group-hover/art:opacity-100 transition-opacity duration-150 pointer-events-none">
-              <div className="bg-black/80 backdrop-blur-sm rounded-lg px-2 py-1.5 flex flex-col items-center gap-1 max-w-[90%]">
-                <span
-                  className="font-normal uppercase tracking-wide leading-none text-white truncate max-w-full"
-                  style={{ fontFamily: '"Questrial", sans-serif', fontSize: size * 0.1, textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
-                >
-                  {name}
-                </span>
-                <div className="flex items-center gap-1 flex-wrap justify-center">
-                  {chips.map((chip, i) => (
-                    <span key={chip.label + i} className="inline-flex items-center gap-0.5 font-semibold uppercase tracking-wider text-white" style={{ fontSize: size * 0.07 }}>
-                      {chip.glyph ? (
-                        <img src={chip.glyph} alt="" className="object-contain" style={{ width: size * 0.1, height: size * 0.1 }} aria-hidden />
-                      ) : (
-                        <span className="rounded-full" style={{ width: size * 0.06, height: size * 0.06, background: chip.color }} aria-hidden />
-                      )}
-                      {chip.label}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
+            {/* Hover tooltip removed on hand tiles — players must flip the
+             *  card or open the Info popup to see type info, promoting
+             *  animal ↔ Creator Type learning. */}
           </div>
+
 
           {/* Name plate */}
           <div className="relative z-10 bg-white px-1.5 py-1 text-center flex-1 flex flex-col justify-center">
