@@ -108,6 +108,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   idle_turn_seconds: 90,
   idle_turn_strikes_limit: 3,
   disconnect_grace_seconds: 300,
+  active_turn_skip_grace_seconds: 45,
 
   mode_end_of_days_enabled: true,
   mode_top_score_enabled: true,
