@@ -174,20 +174,33 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
   const departed = endedByDisconnect
     ? state.players.find((p) => p.id !== state.winnerId)
     : null;
+  const avatars = usePlayerAvatars(state);
 
   return (
     <>
       <Dialog open={open && !reviewOpen} onOpenChange={(o) => { if (!o) setDismissed(true); }}>
 
         <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-4 gap-2">
-          <DialogHeader className="space-y-1">
-            <DialogTitle className="flex items-center gap-2 font-display text-xl">
-              <Trophy className="w-5 h-5 text-amber-500" />
-              {isDraw
-                ? "It's a draw!"
-                : endedByDisconnect
-                ? `Opponent left — ${winner.name} wins!`
-                : `Congratulations ${winner.name} — You Win!`}
+          <DialogHeader className="space-y-2">
+            <DialogTitle className="flex items-center gap-3 font-display text-xl">
+              <Trophy className="w-5 h-5 text-amber-500 shrink-0" />
+              {isDraw ? (
+                <span>It's a draw!</span>
+              ) : (
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <PlayerAvatar
+                    player={winner}
+                    avatarUrl={avatars.get(winner.id)}
+                    winner
+                    size={44}
+                  />
+                  <span className="truncate">
+                    {endedByDisconnect
+                      ? `Opponent left — ${winner.name} wins!`
+                      : `Congratulations ${winner.name} — You Win!`}
+                  </span>
+                </div>
+              )}
             </DialogTitle>
             <DialogDescription className="text-xs leading-snug">
               {isDraw ? (
@@ -221,6 +234,7 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
                   winner={!isDraw && player.id === state.winnerId}
                   rank={rank}
                   tied={tied}
+                  avatarUrl={avatars.get(player.id)}
                 />
               ))}
             </div>
