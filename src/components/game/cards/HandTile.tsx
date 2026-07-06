@@ -58,7 +58,7 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
           } ${dimmed ? "opacity-70 saturate-75" : ""}`}
           style={{
             backfaceVisibility: "hidden",
-            border: `3px solid ${selected ? "#f5b04a" : "#f5945c"}`,
+            border: `2px solid ${selected ? "#f5b04a" : "#f5945c"}`,
           }}
         >
           {/* Flip button (top-left) */}
@@ -176,7 +176,7 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
         {/* BACK — descriptor side */}
         <div
           className="absolute inset-0 rounded-2xl overflow-hidden shadow-lg bg-card text-card-foreground flex flex-col"
-          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", border: "3px solid #f5945c" }}
+          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", border: "2px solid #f5945c" }}
         >
           {forceFlipped === undefined && (
             <button
