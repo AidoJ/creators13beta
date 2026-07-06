@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { Info, X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
