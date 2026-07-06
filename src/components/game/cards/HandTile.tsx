@@ -10,6 +10,7 @@ import type { DeckCard } from "@/lib/game/types";
 import { getCardCreditArtist } from "@/lib/cardCredits";
 import { TypeGlyphMark, displayCardName } from "./TypeGlyphMark";
 import { cardCodeLabel } from "@/lib/creatorTypeCode";
+import { creatorMetaFor } from "@/lib/creatorTypeMeta";
 import CreatorCardInfoPopup from "./CreatorCardInfoPopup";
 
 interface Props {
