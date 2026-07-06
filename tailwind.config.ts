@@ -93,16 +93,19 @@ export default {
           to: { height: "0" },
         },
         "quiz-pop": {
-          "0%":   { transform: "scale(1)",    boxShadow: "0 0 0 0 hsl(var(--primary) / 0)" },
-          "15%":  { transform: "scale(2)",    boxShadow: "0 0 0 16px hsl(var(--primary) / 0.45)" },
-          "80%":  { transform: "scale(2)",    boxShadow: "0 0 0 24px hsl(var(--primary) / 0)" },
-          "100%": { transform: "scale(1)",    boxShadow: "0 0 0 0 hsl(var(--primary) / 0)" },
+          "0%, 100%": { transform: "scale(1)",    boxShadow: "0 0 0 0 hsl(var(--primary) / 0.7)" },
+          "50%":      { transform: "scale(1.4)",  boxShadow: "0 0 0 16px hsl(var(--primary) / 0)" },
+        },
+        "quiz-bounce": {
+          "0%, 100%": { transform: "translateY(0) scale(1)" },
+          "50%":      { transform: "translateY(-6px) scale(1.15)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up":   "accordion-up 0.2s ease-out",
-        "quiz-pop":       "quiz-pop 2s ease-out",
+        "quiz-pop":       "quiz-pop 1.2s ease-in-out infinite",
+        "quiz-bounce":    "quiz-bounce 1s ease-in-out infinite",
       },
 
     },
