@@ -696,8 +696,13 @@ export default function Play() {
       const uid = getUserIdForPlayer(p.id);
       if (!uid) continue;
       const cur = presence.strikesFor(uid);
+      const seen = Object.prototype.hasOwnProperty.call(prevStrikesRef.current, uid);
       const prev = prevStrikesRef.current[uid] ?? 0;
-      if (cur > prev && cur >= 1 && cur < idleStrikesLimit) {
+      // Only toast on a real increase after we've already observed this seat
+      // at least once. Otherwise a fresh mount / late-join would surface a
+      // phantom "you timed out" toast for strikes that happened earlier (or
+      // weren't ours at all).
+      if (seen && cur > prev && cur >= 1 && cur < idleStrikesLimit) {
         if (uid === selfUid) {
           toast.error(`You timed out — turn passed (strike ${cur}/${idleStrikesLimit})`, { duration: 6000 });
         } else {
@@ -707,9 +712,10 @@ export default function Play() {
 
       prevStrikesRef.current[uid] = cur;
 
+      const departedSeen = Object.prototype.hasOwnProperty.call(prevDepartedRef.current, uid);
       const departed = presence.isDeparted(uid);
       const wasDeparted = prevDepartedRef.current[uid] ?? false;
-      if (departed && !wasDeparted) {
+      if (departedSeen && departed && !wasDeparted) {
         if (uid === selfUid) {
           toast.error("You've been removed for inactivity", { duration: 6000 });
         } else {
@@ -719,6 +725,7 @@ export default function Play() {
       prevDepartedRef.current[uid] = departed;
     }
   }, [isPvp, state, selfSlot, getUserIdForPlayer, presence, idleStrikesLimit]);
+
 
   // Blocked-action toast: if a player taps anywhere on the play surface while
   // their turn has expired but auto-pass hasn't yet landed (1-2s gap), the
