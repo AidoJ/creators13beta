@@ -1,8 +1,10 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import type { Axial, Ecosystem as EcoType } from "@/lib/game/types";
 import { axialToPixel, keyOf } from "@/lib/game/board";
 import { legalEcoCells, skyLockedSubType, goldenBodyLockedType } from "@/lib/game/engine";
 import { BoardHexPiece, EmptyHexCell } from "./BoardHexPiece";
+
 
 interface Props {
   eco: EcoType;
@@ -105,14 +107,23 @@ export function Ecosystem({
   }, [autoFit, bounds.width, bounds.height]);
 
   const placeNearestLegalHex = (e: React.DragEvent<HTMLDivElement>) => {
-    if (!selectable || legal.length === 0) return;
+    if (!selectable) return;
     e.preventDefault();
+    if (legal.length === 0) {
+      toast.error("No legal spots on your board for this action right now.");
+      return;
+    }
     const rect = e.currentTarget.getBoundingClientRect();
     const px = (e.clientX - rect.left) / scale;
     const py = (e.clientY - rect.top) / scale;
     // Only snap to cells the selected card can actually occupy.
     const candidates = legalForCard ? legal.filter(legalForCard) : legal;
-    if (candidates.length === 0) return; // nothing legal — let parent toast
+    if (candidates.length === 0) {
+      // Silent-fail here reads as "card jumped back to my hand". Surface why.
+      toast.error(illegalReason ?? "This card has no legal spot — needs a neighbour that shares a Creator Type.");
+      return;
+    }
+
     const nearest = candidates.reduce((best, cell) => {
       const { x, y } = axialToPixel(cell.q, cell.r, size);
       const cx = x + offX + size / 2;
