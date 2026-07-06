@@ -175,8 +175,8 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
 
         {/* BACK — descriptor side */}
         <div
-          className="absolute inset-0 rounded-2xl overflow-hidden shadow-lg border border-border/40 bg-card text-card-foreground flex flex-col"
-          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+          className="absolute inset-0 rounded-2xl overflow-hidden shadow-lg bg-card text-card-foreground flex flex-col"
+          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", border: "3px solid #f5945c" }}
         >
           {forceFlipped === undefined && (
             <button
