@@ -728,6 +728,7 @@ export type Database = {
       game_match_players: {
         Row: {
           disconnect_reason: string | null
+          disconnect_stamped_at: string | null
           disconnected_at: string | null
           display_name: string
           finalised_at: string | null
@@ -742,6 +743,7 @@ export type Database = {
         }
         Insert: {
           disconnect_reason?: string | null
+          disconnect_stamped_at?: string | null
           disconnected_at?: string | null
           display_name: string
           finalised_at?: string | null
@@ -756,6 +758,7 @@ export type Database = {
         }
         Update: {
           disconnect_reason?: string | null
+          disconnect_stamped_at?: string | null
           disconnected_at?: string | null
           display_name?: string
           finalised_at?: string | null
@@ -876,6 +879,7 @@ export type Database = {
       }
       game_settings: {
         Row: {
+          active_turn_skip_grace_seconds: number
           allow_guest_play: boolean
           allow_solo_vs_bot: boolean
           animals_per_creator: number
@@ -944,6 +948,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          active_turn_skip_grace_seconds?: number
           allow_guest_play?: boolean
           allow_solo_vs_bot?: boolean
           animals_per_creator?: number
@@ -1012,6 +1017,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          active_turn_skip_grace_seconds?: number
           allow_guest_play?: boolean
           allow_solo_vs_bot?: boolean
           animals_per_creator?: number
