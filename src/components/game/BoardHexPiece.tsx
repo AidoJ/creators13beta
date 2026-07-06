@@ -79,10 +79,10 @@ function BoardHexPieceImpl({ card, size = 110, onClick, onDragStart, onDragEnd, 
       : ELEMENT_COLORS.Sky;
     artGlyph = CREATOR_TYPE_GLYPHS.Sky;
   } else if (card.kind === "golden_body") {
-    c1 = "#f5c542";
+    c1 = "#d9ac20";
     c2 = goldenSplit
-      ? (CREATOR_TYPE_COLORS[goldenLockedType as keyof typeof CREATOR_TYPE_COLORS] ?? ELEMENT_COLORS[goldenLockedType as keyof typeof ELEMENT_COLORS] ?? "#e0a920")
-      : "#e0a920";
+      ? (CREATOR_TYPE_COLORS[goldenLockedType as keyof typeof CREATOR_TYPE_COLORS] ?? ELEMENT_COLORS[goldenLockedType as keyof typeof ELEMENT_COLORS] ?? "#d9ac20")
+      : "#d9ac20";
     artGlyph = goldenBodyArt;
   } else if (card.kind === "golden_hive") {
     c1 = "#f5c542"; c2 = "#fff"; artGlyph = goldenHiveArt;
