@@ -136,6 +136,7 @@ export default function CreatorCardInfoPopup({ typeName, onClose }: Props) {
                     </div>
                   );
                 })()}
+              </div>
             );
           })()}
 
