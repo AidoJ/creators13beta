@@ -20,11 +20,21 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 /** Fetches display avatars for every real (uuid-shaped) player id in the match.
  *  Bot players (non-uuid ids) resolve to `null` and fall back to initials. */
-function usePlayerAvatars(state: MatchState): Map<string, string | null> {
+function usePlayerAvatars(
+  state: MatchState,
+  playerUserIds?: readonly (string | null | undefined)[],
+): Map<string, string | null> {
   const [avatars, setAvatars] = useState<Map<string, string | null>>(new Map());
   const idsKey = state.players.map((p) => p.id).join("|");
+  const userIdsKey = playerUserIds?.map((id) => id ?? "").join("|") ?? "";
   useEffect(() => {
-    const realIds = state.players.map((p) => p.id).filter((id) => UUID_RE.test(id));
+    const playerToUserId = new Map<string, string>();
+    state.players.forEach((p, i) => {
+      const mapped = playerUserIds?.[i] ?? null;
+      const userId = mapped && UUID_RE.test(mapped) ? mapped : UUID_RE.test(p.id) ? p.id : null;
+      if (userId) playerToUserId.set(p.id, userId);
+    });
+    const realIds = Array.from(new Set(playerToUserId.values()));
     if (realIds.length === 0) {
       setAvatars(new Map());
       return;
@@ -36,11 +46,11 @@ function usePlayerAvatars(state: MatchState): Map<string, string | null> {
         .select("user_id, avatar_url, hide_avatar, stock_avatar")
         .in("user_id", realIds);
       if (cancelled) return;
-      const next = new Map<string, string | null>();
+      const urlsByUserId = new Map<string, string | null>();
       for (const row of (data ?? []) as Array<{ user_id: string; avatar_url: string | null; hide_avatar: boolean | null; stock_avatar: string | null }>) {
         // Respect hide_avatar preference by falling back to initials.
         if (row.hide_avatar) {
-          next.set(row.user_id, null);
+          urlsByUserId.set(row.user_id, null);
           continue;
         }
         // Prefer uploaded avatar_url; otherwise fall back to the user's
@@ -48,13 +58,15 @@ function usePlayerAvatars(state: MatchState): Map<string, string | null> {
         const ref = row.avatar_url ?? (row.stock_avatar ? `stock:${row.stock_avatar}` : null);
         const url = await resolveAvatarUrl(ref);
         if (cancelled) return;
-        next.set(row.user_id, url);
+        urlsByUserId.set(row.user_id, url);
       }
+      const next = new Map<string, string | null>();
+      for (const [playerId, userId] of playerToUserId) next.set(playerId, urlsByUserId.get(userId) ?? null);
       if (!cancelled) setAvatars(next);
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idsKey]);
+  }, [idsKey, userIdsKey]);
   return avatars;
 }
 
@@ -149,9 +161,10 @@ function buildWinReason(state: MatchState, winner: PlayerState): { headline: str
 interface Props {
   state: MatchState;
   onPlayAgain: () => void;
+  playerUserIds?: (string | null)[];
 }
 
-export function MatchOverDialog({ state, onPlayAgain }: Props) {
+export function MatchOverDialog({ state, onPlayAgain, playerUserIds }: Props) {
   const navigate = useNavigate();
   const [reviewOpen, setReviewOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -177,7 +190,7 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
   const departed = endedByDisconnect
     ? state.players.find((p) => p.id !== state.winnerId)
     : null;
-  const avatars = usePlayerAvatars(state);
+  const avatars = usePlayerAvatars(state, playerUserIds);
 
   return (
     <>
@@ -491,12 +504,12 @@ function PlayerBreakdown({ player, winner, rank, tied, avatarUrl }: { player: Pl
         winner ? "border-amber-400 bg-amber-50 dark:bg-amber-950/20" : "border-border/60"
       }`}
     >
-      <div className="flex items-center justify-between mb-2 gap-2">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center mb-2 gap-x-2 gap-y-1">
         <div className="flex items-center gap-2 min-w-0">
           <PlayerAvatar player={player} avatarUrl={avatarUrl} winner={winner} size={32} />
           {rank != null && (
             <span
-              className={`shrink-0 inline-flex items-center justify-center min-w-[2.25rem] px-1.5 h-6 rounded-full text-[11px] font-semibold ${
+              className={`shrink-0 inline-flex items-center justify-center min-w-[2.75rem] max-w-[4.5rem] px-1.5 h-6 rounded-full text-[11px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis ${
                 rank === 1
                   ? "bg-amber-400 text-amber-950"
                   : rank === 2
@@ -512,7 +525,7 @@ function PlayerBreakdown({ player, winner, rank, tied, avatarUrl }: { player: Pl
           )}
           <div className="font-semibold truncate">{player.name}</div>
         </div>
-        <div className="text-xs text-muted-foreground text-right shrink-0">
+        <div className="text-[11px] sm:text-xs text-muted-foreground text-right leading-tight min-w-0 max-w-[12rem] justify-self-end">
           {data.creatorsCount} creators · {data.animalsCount} animals{data.goldenBodyCount > 0 ? ` · ${data.goldenBodyCount} Golden Body` : ""} · {playerTotalScore(player)} pts
         </div>
       </div>
