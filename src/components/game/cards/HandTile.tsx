@@ -188,32 +188,11 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
                 >
                   {name}
                 </div>
-                <div className="flex items-center justify-center gap-1.5 mt-1 flex-wrap">
-                  {chips.map((chip, i) => (
-                    <span
-                      key={chip.label + i}
-                      className="inline-flex items-center gap-1 font-semibold uppercase tracking-wider"
-                      style={{ fontSize: size * 0.075, color: "#000" }}
-                    >
-                      {chip.glyph ? (
-                        <img
-                          src={chip.glyph}
-                          alt=""
-                          className="object-contain"
-                          style={{ width: size * 0.11, height: size * 0.11 }}
-                          aria-hidden
-                        />
-                      ) : (
-                        <span
-                          className="rounded-full"
-                          style={{ width: size * 0.06, height: size * 0.06, background: chip.color }}
-                          aria-hidden
-                        />
-                      )}
-                      {chip.label}
-                    </span>
-                  ))}
-                </div>
+                {/* Type chips intentionally hidden on animal/sky-creature
+                 *  hand tiles — players must open the Info popup (or flip to
+                 *  the descriptor) to learn which Creator Types the card
+                 *  matches. Chips still render for creator-like cards above. */}
+
               </>
             )}
           </div>
