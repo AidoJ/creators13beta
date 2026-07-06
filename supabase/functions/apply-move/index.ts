@@ -763,27 +763,34 @@ Deno.serve(async (req) => {
   // Creator Quiz Layer — best-effort side effects.
   //   • Draw moves (pickup_from_draw / pickup_from_used / skip_draws)
   //     silently close any open question (soft-dismiss on next-turn draw).
-  //   • Placing a Creator card opens a new quiz question tied to that
-  //     Creator's type. Rule C: open_quiz_if_needed is a no-op if a
-  //     question is already open.
-  //   • Sky Creator is a wildcard — no single Creator type — so it
-  //     doesn't trigger a question.
+  //   • Placing a Creator card (place or play_sky_steal) opens a new
+  //     quiz question. For the 12 element Creators we key on that
+  //     Creator's displayType. Sky Creator is a wildcard with no single
+  //     type — treat it as "any of the 13 types" so it still fires a
+  //     question rather than being silently skipped.
+  //   • open_quiz_if_needed is a no-op if a question is already open.
   // ────────────────────────────────────────────────────────────────
+  const ALL_CREATOR_TYPES = [
+    "Lava","Fire","Whirlwind","Snow","Lightning","Sun",
+    "Lake","Ocean","Tree","Mountain","Soil","River","Sky",
+  ];
   try {
     const drawTypes = new Set(["pickup_from_draw", "pickup_from_used", "skip_draws"]);
     if (userId && drawTypes.has(body.move.type)) {
       await svc.rpc("close_open_quiz", { _match_id: body.match_id, _user_id: userId });
     }
 
-    if (userId && body.move.type === "place") {
+    if (userId && (body.move.type === "place" || body.move.type === "play_sky_steal")) {
       const placedUid = (body.move as any).uid as string | undefined;
       const preHand = state.players[callerSlot]?.hand ?? [];
       const placedCard = preHand.find((c: any) => c?.uid === placedUid);
-      if (placedCard && placedCard.kind === "creator" && (placedCard as any).displayType) {
+      if (placedCard && placedCard.kind === "creator") {
+        const dt = (placedCard as any).displayType as string | undefined;
+        const types = dt ? [dt] : ALL_CREATOR_TYPES;
         await svc.rpc("open_quiz_if_needed", {
           _match_id: body.match_id,
           _user_id: userId,
-          _creator_types: [(placedCard as any).displayType],
+          _creator_types: types,
         });
       }
     }
@@ -791,6 +798,7 @@ Deno.serve(async (req) => {
     // Never let quiz plumbing block a game move.
     console.warn("[apply-move] quiz hook failed (non-fatal)", quizErr);
   }
+
 
 
   return jsonResponse({
