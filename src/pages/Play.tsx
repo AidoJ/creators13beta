@@ -804,17 +804,51 @@ export default function Play() {
     if (state) guarded(() => pickFromDraw(state), { type: "pickup_from_draw" });
   }
   function onPickUsed() {
-    if (!state) return;
+    if (!state || !selfPlayer || drawInFlight) return;
     const top = state.used[state.used.length - 1];
     if (!top) return;
+    drawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
+    setDrawInFlight(true);
     guarded(() => pickFromUsed(state), { type: "pickup_from_used", uid: top.uid });
   }
+
+  // Draw-pickup in-flight lock: block a second draw click until the first one
+  // has been committed to state. Without this, tapping "Draw 1" twice in
+  // quick succession fires two guarded() calls against the SAME pre-update
+  // state — both compute drawnThisTurn=1 and the second overwrite makes the
+  // first card visually disappear.
+  const [drawInFlight, setDrawInFlight] = useState(false);
+  const drawSnapshotRef = useRef<{ drawn: number; handLen: number } | null>(null);
+  useEffect(() => {
+    if (!drawInFlight || !state || !selfPlayer) return;
+    const snap = drawSnapshotRef.current;
+    if (!snap) { setDrawInFlight(false); return; }
+    if (state.drawnThisTurn > snap.drawn || selfPlayer.hand.length > snap.handLen) {
+      setDrawInFlight(false);
+      drawSnapshotRef.current = null;
+    }
+  }, [state, selfPlayer, drawInFlight]);
+  // Safety valve: clear the lock after 4s even if state didn't move (e.g.
+  // guarded() threw and toasted an error) so the player can retry.
+  useEffect(() => {
+    if (!drawInFlight) return;
+    const t = window.setTimeout(() => setDrawInFlight(false), 4000);
+    return () => window.clearTimeout(t);
+  }, [drawInFlight]);
   function onDrawOne() {
-    if (state) guarded(() => pickFromDraw(state), { type: "pickup_from_draw" });
+    if (!state || !selfPlayer || drawInFlight) return;
+    drawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
+    setDrawInFlight(true);
+    guarded(() => pickFromDraw(state), { type: "pickup_from_draw" });
   }
   function onDrawOpening() {
-    if (state) guarded(() => drawInitialFive(state), { type: "draw_initial_5" });
+    if (!state || !selfPlayer || drawInFlight) return;
+    drawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
+    setDrawInFlight(true);
+    guarded(() => drawInitialFive(state), { type: "draw_initial_5" });
   }
+
+
   function onResolveDisaster(useHive: boolean) {
     if (!state) return;
     guarded(() => resolveDisaster(state, useHive), { type: "resolve_disaster", use_hive: useHive });
@@ -1129,8 +1163,9 @@ export default function Play() {
     && selectedCard.kind === "sky_creature";
 
   const handAtLimit = selfPlayer.hand.length >= 5; // HAND_LIMIT
-  const needsOpeningDraw = !selfPlayer.firstPickupDone && state.phase === "draw" && canTakeTurn;
-  const canDrawOne = canTakeTurn && state.phase === "draw" && selfPlayer.firstPickupDone && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2 && !handAtLimit;
+  const needsOpeningDraw = !selfPlayer.firstPickupDone && state.phase === "draw" && canTakeTurn && !drawInFlight;
+  const canDrawOne = canTakeTurn && state.phase === "draw" && selfPlayer.firstPickupDone && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2 && !handAtLimit && !drawInFlight;
+
 
 
   const canTapDiscard = canTakeTurn && state.phase === "place" && !!selectedUid;
