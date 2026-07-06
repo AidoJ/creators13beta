@@ -141,8 +141,10 @@ export function Ecosystem({
       return;
     }
     const rect = e.currentTarget.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / scale;
-    const py = (e.clientY - rect.top) / scale;
+    const effectiveScale = (autoFit ? scale : 1) * userZoom;
+    const px = (e.clientX - rect.left) / effectiveScale;
+    const py = (e.clientY - rect.top) / effectiveScale;
+
     // Only snap to cells the selected card can actually occupy.
     const candidates = legalForCard ? legal.filter(legalForCard) : legal;
     if (candidates.length === 0) {
