@@ -713,28 +713,23 @@ Deno.serve(async (req) => {
   }
 
   // Per-turn idle stopwatch + strike reset.
-  //   - turn_started_at is stamped ONCE PER TURN — only when the active seat
-  //     changes (turn handed to the next player). Mid-turn actions
-  //     (draw → place → rotate within the same turn) MUST NOT reset it,
-  //     otherwise the idle window measures "time since last click" instead of
-  //     "time since your turn began" and slow-play / disconnect-reconnect can
-  //     reset the clock indefinitely.
+  //   - turn_started_at doubles as the active seat's last valid game-action
+  //     timestamp. Reset it after every committed turn-bound action so the
+  //     idle sweep only appears when the player has truly gone idle, not while
+  //     they are actively drawing/placing during a long turn.
   //   - Caller's consecutive idle strikes reset on ANY real action by that
   //     player (strikes are consecutive, per existing behaviour).
   // Skipped on finished matches (no more turns) and lobby start (handled
   // alongside the lobby flip below).
   let committedTurnStartedAt: string | null = null;
   if (!finished && !lobbyJustStarted && isTurnBoundMove) {
-    const turnChanged = nextState.turn !== state.turn;
-    if (turnChanged) {
-      const nowIso = new Date().toISOString();
-      committedTurnStartedAt = nowIso;
-      const { error: bumpErr } = await svc
-        .from("game_matches")
-        .update({ turn_started_at: nowIso })
-        .eq("id", body.match_id);
-      if (bumpErr) console.warn("[apply-move] turn_started_at bump failed", bumpErr);
-    }
+    const nowIso = new Date().toISOString();
+    committedTurnStartedAt = nowIso;
+    const { error: bumpErr } = await svc
+      .from("game_matches")
+      .update({ turn_started_at: nowIso })
+      .eq("id", body.match_id);
+    if (bumpErr) console.warn("[apply-move] turn_started_at bump failed", bumpErr);
     if (callerRosterRow) {
       const { error: strikeErr } = await svc
         .from("game_match_players")
