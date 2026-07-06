@@ -33,17 +33,20 @@ function usePlayerAvatars(state: MatchState): Map<string, string | null> {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, avatar_url, hide_avatar")
+        .select("user_id, avatar_url, hide_avatar, stock_avatar")
         .in("user_id", realIds);
       if (cancelled) return;
       const next = new Map<string, string | null>();
-      for (const row of data ?? []) {
+      for (const row of (data ?? []) as Array<{ user_id: string; avatar_url: string | null; hide_avatar: boolean | null; stock_avatar: string | null }>) {
         // Respect hide_avatar preference by falling back to initials.
         if (row.hide_avatar) {
           next.set(row.user_id, null);
           continue;
         }
-        const url = await resolveAvatarUrl(row.avatar_url);
+        // Prefer uploaded avatar_url; otherwise fall back to the user's
+        // selected stock avatar (bare key, e.g. "penguin" or "fire").
+        const ref = row.avatar_url ?? (row.stock_avatar ? `stock:${row.stock_avatar}` : null);
+        const url = await resolveAvatarUrl(ref);
         if (cancelled) return;
         next.set(row.user_id, url);
       }
