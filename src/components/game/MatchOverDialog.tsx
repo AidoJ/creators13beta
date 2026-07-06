@@ -269,7 +269,7 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
             <div className="flex-1 overflow-y-auto mt-2">
               {orderedPlayers(state).map(({ player, rank, tied }) => (
                 <TabsContent key={player.id} value={player.id} className="mt-0">
-                  <PlayerBreakdown player={player} winner={player.id === state.winnerId} rank={rank} tied={tied} />
+                  <PlayerBreakdown player={player} winner={player.id === state.winnerId} rank={rank} tied={tied} avatarUrl={avatars.get(player.id)} />
                   <div className="mt-3 rounded-lg border border-border/60 bg-card/40 p-2 overflow-auto">
                     <Ecosystem eco={player.ecosystem} size={56} showEmpties={false} minHeight={320} />
                   </div>
