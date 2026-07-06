@@ -91,6 +91,7 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
           {forceFlipped === undefined && (
             <button
               type="button"
+              data-info-btn="true"
               onPointerDown={(e) => { e.stopPropagation(); }}
               onPointerUp={(e) => { e.stopPropagation(); }}
               onMouseDown={(e) => { e.stopPropagation(); }}
