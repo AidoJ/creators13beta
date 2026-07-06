@@ -343,6 +343,7 @@ Deno.serve(async (req) => {
           .from("game_match_players")
           .update({
             disconnected_at: stampIso,
+            disconnect_stamped_at: stampIso,
             disconnect_reason: "idle_departed",
             idle_strikes: newStrikes,
           })
