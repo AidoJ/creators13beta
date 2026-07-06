@@ -400,7 +400,7 @@ function resolveColours(card: DeckCard): {
         ? [{ label: String(t2), color: c2, glyph: glyphForType(t2 as string) }]
         : []),
     ].filter((c) => c.label);
-    return { c1, c2, chips, badge: card.kind === "sky_creature" ? "Sky" : undefined };
+    return { c1, c2, chips, badge: undefined };
   }
   if (card.kind === "creator") {
     const dt = card.displayType;
