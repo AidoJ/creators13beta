@@ -488,8 +488,9 @@ function PlayerBreakdown({ player, winner, rank, tied, avatarUrl }: { player: Pl
         winner ? "border-amber-400 bg-amber-50 dark:bg-amber-950/20" : "border-border/60"
       }`}
     >
-      <div className="flex items-baseline justify-between mb-2 gap-2">
+      <div className="flex items-center justify-between mb-2 gap-2">
         <div className="flex items-center gap-2 min-w-0">
+          <PlayerAvatar player={player} avatarUrl={avatarUrl} winner={winner} size={32} />
           {rank != null && (
             <span
               className={`shrink-0 inline-flex items-center justify-center min-w-[2.25rem] px-1.5 h-6 rounded-full text-[11px] font-semibold ${
