@@ -4,7 +4,7 @@ import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType, glyphMarkForType } from "@/lib/game/glyphs";
 import type { DeckCard } from "@/lib/game/types";
 import { TypeGlyphMark, displayCardName } from "./cards/TypeGlyphMark";
-import { cardCodeLabel } from "@/lib/creatorTypeCode";
+// (card code label no longer shown on board pieces)
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { startTouchDragGhost, updateTouchDragGhost, endTouchDragGhost } from "@/lib/touchDrag";
 import goldenBodyArt from "@/assets/golden-body-card.webp";
