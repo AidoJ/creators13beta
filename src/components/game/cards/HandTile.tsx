@@ -77,11 +77,21 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
                   setZoomed(true);
                 }
               }}
-              className="absolute left-0.5 top-1/2 -translate-y-1/2 z-30 rounded-full p-0.5 bg-white/70 backdrop-blur-sm"
-              style={{ color: "#f5945c" }}
+              className="absolute top-1 left-1 z-30 rounded-full flex items-center justify-center shadow-sm"
+              style={{
+                background: "#f5945c",
+                color: "#fff",
+                width: size * 0.2,
+                height: size * 0.2,
+                fontFamily: '"Questrial", sans-serif',
+                fontSize: size * 0.15,
+                fontWeight: 700,
+                lineHeight: 1,
+                fontStyle: "italic",
+              }}
               aria-label="Show descriptor"
             >
-              <Info className="w-[9px] h-[9px]" strokeWidth={2.25} />
+              i
             </button>
           )}
 
