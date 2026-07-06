@@ -233,6 +233,7 @@ export default function GameSettingsPanel() {
           <NumField k="beat_clock_draw_seconds" label="Beat the Clock draw phase (sec)" min={3} max={120} />
           <NumField k="idle_turn_seconds" label="Baseline idle timeout (sec)" min={20} max={600} hint="End of Days & Top Score auto-pass after this much inactivity" />
           <NumField k="idle_turn_strikes_limit" label="Idle strikes → departure" min={1} max={10} hint="Consecutive idle timeouts before player is treated as departed" />
+          <NumField k="active_turn_skip_grace_seconds" label="Active-turn skip grace (sec)" min={10} max={300} hint="Grace after a mid-turn disconnect is noticed before the sweep skips that seat. Reconnect within this window cancels the skip." />
         </div>
       </section>
 
