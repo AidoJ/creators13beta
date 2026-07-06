@@ -158,16 +158,13 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
                 </span>
                 <div className="flex items-center gap-1 flex-wrap justify-center">
                   {chips.map((chip, i) => (
-                    <span key={chip.label + i} className="contents">
-                      {i > 0 && <span className="text-white/50 text-[8px]">+</span>}
-                      <span className="inline-flex items-center gap-0.5 font-semibold uppercase tracking-wider text-white" style={{ fontSize: size * 0.07 }}>
-                        {chip.glyph ? (
-                          <img src={chip.glyph} alt="" className="object-contain" style={{ width: size * 0.1, height: size * 0.1 }} aria-hidden />
-                        ) : (
-                          <span className="rounded-full" style={{ width: size * 0.06, height: size * 0.06, background: chip.color }} aria-hidden />
-                        )}
-                        {chip.label}
-                      </span>
+                    <span key={chip.label + i} className="inline-flex items-center gap-0.5 font-semibold uppercase tracking-wider text-white" style={{ fontSize: size * 0.07 }}>
+                      {chip.glyph ? (
+                        <img src={chip.glyph} alt="" className="object-contain" style={{ width: size * 0.1, height: size * 0.1 }} aria-hidden />
+                      ) : (
+                        <span className="rounded-full" style={{ width: size * 0.06, height: size * 0.06, background: chip.color }} aria-hidden />
+                      )}
+                      {chip.label}
                     </span>
                   ))}
                 </div>
