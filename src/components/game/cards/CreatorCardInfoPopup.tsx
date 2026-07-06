@@ -126,7 +126,16 @@ export default function CreatorCardInfoPopup({ typeName, onClose }: Props) {
                   <span className="uppercase tracking-widest font-semibold text-[10px]" style={{ color }}>Team Role</span>
                   <div className="text-neutral-900" style={{ fontFamily: '"Questrial", sans-serif' }}>{meta.teamRole}</div>
                 </div>
-              </div>
+                {(() => {
+                  const el = TYPE_TO_ELEMENT[typeName as keyof typeof TYPE_TO_ELEMENT];
+                  if (!el) return null;
+                  return (
+                    <div>
+                      <span className="uppercase tracking-widest font-semibold text-[10px]" style={{ color }}>Element</span>
+                      <div className="text-neutral-900" style={{ fontFamily: '"Questrial", sans-serif' }}>{el}</div>
+                    </div>
+                  );
+                })()}
             );
           })()}
 
