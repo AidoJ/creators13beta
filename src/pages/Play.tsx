@@ -1284,7 +1284,7 @@ export default function Play() {
 
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-background overflow-hidden">
+    <div className="min-h-[100dvh] md:h-[100dvh] flex flex-col bg-background overflow-y-auto md:overflow-hidden overscroll-contain">
       {user && <PlayerProfileDiscountCTA userId={user.id} />}
 
 
