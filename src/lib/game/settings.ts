@@ -31,6 +31,11 @@ export interface GameSettings {
   /** Grace seconds after a player's disconnect is stamped before the match
    *  is auto-ended. In 2-player matches the survivor wins once this elapses. */
   disconnect_grace_seconds: number;
+  /** Grace seconds after a mid-turn disconnect is NOTICED (stamped) before
+   *  the sweep auto-skips that seat's turn. Measured from
+   *  `disconnect_stamped_at`, not last_seen_at, so the debounce window is
+   *  not silently consumed. Reconnect within this window cancels the skip. */
+  active_turn_skip_grace_seconds: number;
 
   mode_end_of_days_enabled: boolean;
   mode_top_score_enabled: boolean;
