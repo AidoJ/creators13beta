@@ -77,7 +77,7 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
             type="button"
             onClick={() => setOpen(true)}
             aria-label={hasOpen ? "Answer quiz question for bonus points" : `Quiz progress: ${correct} of ${cap}`}
-            style={hasOpen ? { animation: "quiz-pop 1.4s ease-out 3" } : undefined}
+            style={hasOpen ? { animation: "quiz-pop 2s ease-out 1 both", willChange: "transform", zIndex: 50, position: "relative" } : undefined}
             className={
               "relative inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition origin-center " +
               (bonusPts > 0
