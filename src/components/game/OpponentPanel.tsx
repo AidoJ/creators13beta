@@ -189,11 +189,11 @@ export function OpponentPanel({ open, onClose, player, opponentUserId, presenceS
           {banner}
         </div>
       )}
-      <div className="flex-1 min-h-0 overflow-auto p-3 flex items-start justify-center">
+      <div className="flex-1 min-h-0 overflow-hidden p-2 sm:p-3 flex items-stretch justify-stretch">
         <Ecosystem
           eco={player.ecosystem}
           size={tileSize}
-          minHeight={Math.max(240, size.h - 120)}
+          autoFit
           showEmpties={false}
           onStealClick={onStealClick}
         />
