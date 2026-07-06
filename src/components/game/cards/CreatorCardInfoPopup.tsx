@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { X, Shuffle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCreatorTypeColor } from "@/lib/creatorTypes";
+import { creatorMetaFor } from "@/lib/creatorTypeMeta";
 
 interface CreatorTypeRow {
   name: string;
