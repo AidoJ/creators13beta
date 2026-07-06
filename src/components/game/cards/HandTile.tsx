@@ -271,8 +271,21 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
           </div>
           <div
             className="flex-1 overflow-auto px-2 py-1.5 leading-snug"
-            style={{ fontSize: size * 0.072, color: "#111" }}
+            style={{ fontSize: Math.max(11, size * 0.092), color: "#111" }}
           >
+            {card.kind === "creator" && (() => {
+              const meta = creatorMetaFor(card.displayType ?? null);
+              if (!meta) return null;
+              return (
+                <div
+                  className="mb-1.5 flex flex-wrap gap-x-2 gap-y-0.5 font-semibold uppercase tracking-wide"
+                  style={{ fontSize: Math.max(10, size * 0.082), color: "#000" }}
+                >
+                  <span>Family: <span className="font-normal normal-case tracking-normal">{meta.family}</span></span>
+                  <span>Team Role: <span className="font-normal normal-case tracking-normal">{meta.teamRole}</span></span>
+                </div>
+              );
+            })()}
             {descriptor}
           </div>
           {/* Artist credit shown only in the zoomed-in popup, not on the
