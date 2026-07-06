@@ -93,10 +93,9 @@ export default {
           to: { height: "0" },
         },
         "quiz-pop": {
-          "0%":   { transform: "scale(1)",    boxShadow: "0 0 0 0 hsl(var(--primary) / 0.6)" },
-          "20%":  { transform: "scale(1.45)", boxShadow: "0 0 0 8px hsl(var(--primary) / 0.35)" },
-          "45%":  { transform: "scale(1.15)", boxShadow: "0 0 0 14px hsl(var(--primary) / 0)" },
-          "70%":  { transform: "scale(1.35)", boxShadow: "0 0 0 6px hsl(var(--primary) / 0.25)" },
+          "0%":   { transform: "scale(1)",    boxShadow: "0 0 0 0 hsl(var(--primary) / 0)" },
+          "15%":  { transform: "scale(2)",    boxShadow: "0 0 0 16px hsl(var(--primary) / 0.45)" },
+          "80%":  { transform: "scale(2)",    boxShadow: "0 0 0 24px hsl(var(--primary) / 0)" },
           "100%": { transform: "scale(1)",    boxShadow: "0 0 0 0 hsl(var(--primary) / 0)" },
         },
       },
