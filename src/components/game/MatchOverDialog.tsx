@@ -48,9 +48,12 @@ function usePlayerAvatars(
       if (cancelled) return;
       const urlsByUserId = new Map<string, string | null>();
       for (const row of (data ?? []) as Array<{ user_id: string; avatar_url: string | null; hide_avatar: boolean | null; stock_avatar: string | null }>) {
-        // Respect hide_avatar preference by falling back to initials.
+        // Match profile settings: if the photo is hidden, show the selected
+        // stock avatar when available; otherwise fall back to initials.
         if (row.hide_avatar) {
-          urlsByUserId.set(row.user_id, null);
+          const url = row.stock_avatar ? await resolveAvatarUrl(`stock:${row.stock_avatar}`) : null;
+          if (cancelled) return;
+          urlsByUserId.set(row.user_id, url);
           continue;
         }
         // Prefer uploaded avatar_url; otherwise fall back to the user's
