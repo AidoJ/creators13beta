@@ -1712,8 +1712,11 @@ export default function Play() {
           )}
 
 
-          {/* Board takes all remaining space */}
-          <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center px-1 py-1">
+          {/* Board takes all remaining space. `overflow-auto` + touch-pan lets
+              the player pan/scroll when their ecosystem grows beyond what
+              autoFit can shrink to (small Android portrait viewports especially). */}
+          <div className="flex-1 min-h-0 overflow-auto touch-pan-x touch-pan-y flex items-center justify-center px-1 py-1 overscroll-contain">
+
             <Ecosystem
               eco={selfPlayer.ecosystem}
               size={72}

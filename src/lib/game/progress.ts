@@ -62,6 +62,14 @@ export async function recordProgressDiff(args: {
     // End of Days where neither player completed a valid ecosystem before
     // both piles emptied) every player gets HALF the win points and ELO is
     // unaffected. Values come from the admin-configurable game_settings row.
+    //
+    // NO-CONTEST: if the match ended because a player disconnected past the
+    // grace window, no points / no ELO / no win-or-loss is recorded on either
+    // side. This prevents rage-quitting from feeding wins to opponents.
+    if (next.endedByDisconnect) {
+      return;
+    }
+
     const settings = await fetchGameSettings();
     let pointsDelta = 0;
     let won: boolean | null = null;
