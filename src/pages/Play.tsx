@@ -699,11 +699,12 @@ export default function Play() {
       const prev = prevStrikesRef.current[uid] ?? 0;
       if (cur > prev && cur >= 1 && cur < idleStrikesLimit) {
         if (uid === selfUid) {
-          toast.warning(`You timed out — turn passed (${cur}/${idleStrikesLimit})`);
+          toast.error(`You timed out — turn passed (strike ${cur}/${idleStrikesLimit})`, { duration: 6000 });
         } else {
-          toast(`${p.name} timed out (${cur}/${idleStrikesLimit})`);
+          toast(`${p.name} timed out (strike ${cur}/${idleStrikesLimit})`, { duration: 5000 });
         }
       }
+
       prevStrikesRef.current[uid] = cur;
 
       const departed = presence.isDeparted(uid);
