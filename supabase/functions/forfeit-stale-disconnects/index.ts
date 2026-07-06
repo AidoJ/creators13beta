@@ -102,6 +102,7 @@ interface SettingsRow {
   disconnect_grace_seconds: number | null;
   idle_turn_seconds: number | null;
   idle_turn_strikes_limit: number | null;
+  active_turn_skip_grace_seconds: number | null;
 }
 
 interface MatchSweepRow {
@@ -136,10 +137,11 @@ Deno.serve(async (req) => {
   let graceSec = 300;
   let idleSec = 90;
   let idleStrikesLimit = 3;
+  let activeTurnSkipGraceSec = 45;
   try {
     const { data: settings } = await svc
       .from("game_settings")
-      .select("presence_debounce_seconds, disconnect_grace_seconds, idle_turn_seconds, idle_turn_strikes_limit")
+      .select("presence_debounce_seconds, disconnect_grace_seconds, idle_turn_seconds, idle_turn_strikes_limit, active_turn_skip_grace_seconds")
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle<SettingsRow>();
@@ -148,10 +150,12 @@ Deno.serve(async (req) => {
       const g = Number(settings.disconnect_grace_seconds);
       const i = Number(settings.idle_turn_seconds);
       const k = Number(settings.idle_turn_strikes_limit);
+      const a = Number(settings.active_turn_skip_grace_seconds);
       if (Number.isFinite(d) && d > 0) debounceSec = d;
       if (Number.isFinite(g) && g > 0) graceSec = g;
       if (Number.isFinite(i) && i > 0) idleSec = i;
       if (Number.isFinite(k) && k > 0) idleStrikesLimit = k;
+      if (Number.isFinite(a) && a > 0) activeTurnSkipGraceSec = a;
     }
   } catch (e) {
     console.warn("[sweep] settings read failed; using defaults", e);
@@ -177,6 +181,7 @@ Deno.serve(async (req) => {
     startup_grace_sec: startupGraceSec,
     idle_sec: idleSec,
     idle_strikes_limit: idleStrikesLimit,
+    active_turn_skip_grace_sec: activeTurnSkipGraceSec,
   };
 
   // Build the set of match ids currently in startup grace, so we can skip
@@ -197,9 +202,16 @@ Deno.serve(async (req) => {
   }
 
   // 2. STAMP: convert silent last_seen_at into disconnected_at.
-  //    disconnected_at = last_seen_at (stable start; NOT now()).
+  //    disconnected_at = last_seen_at (stable start; NOT now()) — used for
+  //    match-forfeit grace so the 5min clock runs from when the player was
+  //    actually last seen.
+  //    disconnect_stamped_at = now() — used for the active-turn-skip grace
+  //    so the shorter turn-skip window runs from when we NOTICED the
+  //    disconnect, not from last_seen_at (which already ate ~15s of
+  //    debounce before we could stamp it).
   try {
     const cutoff = new Date(Date.now() - debounceSec * 1000).toISOString();
+    const nowIso = new Date().toISOString();
     const { data: rows, error: selErr } = await svc
       .from("game_match_players")
       .select("match_id, user_id, last_seen_at")
@@ -215,7 +227,7 @@ Deno.serve(async (req) => {
       }
       await svc
         .from("game_match_players")
-        .update({ disconnected_at: r.last_seen_at })
+        .update({ disconnected_at: r.last_seen_at, disconnect_stamped_at: nowIso })
         .eq("match_id", r.match_id)
         .eq("user_id", r.user_id)
         .is("disconnected_at", null);
@@ -271,7 +283,7 @@ Deno.serve(async (req) => {
 
       const { data: rrow } = await svc
         .from("game_match_players")
-        .select("user_id, slot, status, idle_strikes, disconnected_at")
+        .select("user_id, slot, status, idle_strikes, disconnected_at, disconnect_stamped_at")
         .eq("match_id", m.id)
         .eq("slot", slot)
         .maybeSingle();
@@ -281,10 +293,22 @@ Deno.serve(async (req) => {
       const turnAgeMs = m.turn_started_at
         ? Date.now() - Date.parse(m.turn_started_at)
         : 0;
-      const discAgeMs = rrow.disconnected_at
-        ? Date.now() - Date.parse(rrow.disconnected_at)
+      // ACTIVE-TURN SKIP GRACE — governs when a mid-turn disconnect converts
+      // into an auto-pass. Measured from `disconnect_stamped_at` (when we
+      // NOTICED the disconnect), NOT from disconnected_at/last_seen_at,
+      // otherwise the debounce window is silently eaten by this grace.
+      // Reconnect clears disconnected_at + disconnect_stamped_at via
+      // report-presence, which naturally cancels the skip (isAbsent = false).
+      const stampedAtMs = rrow.disconnect_stamped_at
+        ? Date.parse(rrow.disconnect_stamped_at)
+        : rrow.disconnected_at
+        // Backfill for rows stamped before disconnect_stamped_at existed:
+        // fall back to disconnected_at so old stuck disconnects still resolve.
+        ? Date.parse(rrow.disconnected_at)
         : 0;
-      const isAbsent = !!rrow.disconnected_at && discAgeMs > debounceSec * 1000;
+      const stampedAgeMs = stampedAtMs > 0 ? Date.now() - stampedAtMs : 0;
+      const isAbsent =
+        !!rrow.disconnected_at && stampedAgeMs > activeTurnSkipGraceSec * 1000;
       const isIdle = !rrow.disconnected_at && turnAgeMs > idleSec * 1000;
       if (!isAbsent && !isIdle) continue;
       // Absent current-turn player → skip seat with no strike penalty.
@@ -319,6 +343,7 @@ Deno.serve(async (req) => {
           .from("game_match_players")
           .update({
             disconnected_at: stampIso,
+            disconnect_stamped_at: stampIso,
             disconnect_reason: "idle_departed",
             idle_strikes: newStrikes,
           })
