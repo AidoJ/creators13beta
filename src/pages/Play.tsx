@@ -193,6 +193,7 @@ export default function Play() {
   const [nowTick, setNowTick] = useState(0);
   const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
   const turnStartedAtRef = useRef<number>(Date.now());
+  const [localTurnActivity, setLocalTurnActivity] = useState<{ key: string; at: number } | null>(null);
 
   // 1Hz ticker so the idle-warning ribbon (End-of-Days + Top Score) re-evaluates
   // `idleSecondsLeft` once per second without depending on matchRow churn.
@@ -582,15 +583,19 @@ export default function Play() {
   const drawSecs = state?.gameConfig?.drawSeconds ?? 0;
   const idleWindowSec = Math.max(20, Number(gameSettings.idle_turn_seconds ?? 90));
   const turnStartedMs = matchRow?.turn_started_at ? Date.parse(matchRow.turn_started_at) : 0;
+  const currentTurnActivityKey = `${matchRow?.id ?? "local"}:${state?.turn ?? -1}`;
+  const localTurnActivityMs = localTurnActivity?.key === currentTurnActivityKey ? localTurnActivity.at : 0;
+  const effectiveTurnStartedMs = Math.max(turnStartedMs, localTurnActivityMs);
   const showIdleWarning =
     isPvp &&
     !isBeatClock &&
+    matchRow?.status === "active" &&
     !state?.finished &&
     isYourTurn &&
-    Number.isFinite(turnStartedMs) &&
-    turnStartedMs > 0;
+    Number.isFinite(effectiveTurnStartedMs) &&
+    effectiveTurnStartedMs > 0;
   const idleSecondsLeft = showIdleWarning
-    ? Math.max(0, Math.ceil((turnStartedMs + idleWindowSec * 1000 - Date.now()) / 1000))
+    ? Math.max(0, Math.ceil((effectiveTurnStartedMs + idleWindowSec * 1000 - Date.now()) / 1000))
     : 0;
   const idleTurnExpired = showIdleWarning && idleSecondsLeft <= 0;
   const canTakeTurn = isYourTurn && !idleTurnExpired;
@@ -608,9 +613,9 @@ export default function Play() {
    * call per 8s to avoid spamming. */
   const lastNudgeAtRef = useRef<number>(0);
   useEffect(() => {
-    if (!isPvp || isBeatClock || !state || state.finished) return;
-    if (!Number.isFinite(turnStartedMs) || turnStartedMs <= 0) return;
-    const elapsedMs = Date.now() - turnStartedMs;
+    if (!isPvp || isBeatClock || matchRow?.status !== "active" || !state || state.finished) return;
+    if (!Number.isFinite(effectiveTurnStartedMs) || effectiveTurnStartedMs <= 0) return;
+    const elapsedMs = Date.now() - effectiveTurnStartedMs;
     // Start nudging in the final 5s of the idle window so the sweep is
     // primed to auto-pass the instant the turn actually expires. Re-nudge
     // every 3s until the auto-pass lands (previous 8s throttle + fire-only-
@@ -622,7 +627,7 @@ export default function Play() {
     void supabase.functions.invoke("forfeit-stale-disconnects", {
       body: { nudge: true, match_id: matchRow?.id ?? null },
     }).catch(() => { /* best-effort; cron is the safety net */ });
-  }, [isPvp, isBeatClock, state, turnStartedMs, idleWindowSec, matchRow?.id, nowTick]);
+  }, [isPvp, isBeatClock, state, effectiveTurnStartedMs, idleWindowSec, matchRow?.id, matchRow?.status, nowTick]);
 
 
 
@@ -797,6 +802,9 @@ export default function Play() {
     }
     try {
       const next = fn();
+      if (isPvp && isTurnBoundMove) {
+        setLocalTurnActivity({ key: `${matchRow?.id ?? "local"}:${next.turn}`, at: Date.now() });
+      }
       setLoggedState(next, "optimistic_engine");
       schedulePersist(next, move);
       setSelectedUid(null);
