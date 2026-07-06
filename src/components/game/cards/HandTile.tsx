@@ -119,7 +119,7 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
               }}
               aria-label="Show descriptor"
             >
-              ?
+              <span style={{ display: "block", lineHeight: 1, transform: `translateY(${size * 0.012}px)` }}>?</span>
             </button>
           )}
 
