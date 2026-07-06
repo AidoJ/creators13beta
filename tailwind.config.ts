@@ -92,11 +92,20 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "quiz-pop": {
+          "0%":   { transform: "scale(1)",    boxShadow: "0 0 0 0 hsl(var(--primary) / 0.6)" },
+          "20%":  { transform: "scale(1.45)", boxShadow: "0 0 0 8px hsl(var(--primary) / 0.35)" },
+          "45%":  { transform: "scale(1.15)", boxShadow: "0 0 0 14px hsl(var(--primary) / 0)" },
+          "70%":  { transform: "scale(1.35)", boxShadow: "0 0 0 6px hsl(var(--primary) / 0.25)" },
+          "100%": { transform: "scale(1)",    boxShadow: "0 0 0 0 hsl(var(--primary) / 0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        "accordion-up":   "accordion-up 0.2s ease-out",
+        "quiz-pop":       "quiz-pop 1.4s ease-out",
       },
+
     },
   },
   plugins: [require("tailwindcss-animate")],
