@@ -1253,11 +1253,15 @@ function playerHasAnyLegalMove(state: MatchState, slot: number): boolean {
     if (hasAnyLegalAction(state, p.id, card)) return true;
   }
 
-  // Discarding a non-Hive card is always legal once in the place phase
-  // (and reachable via skipDraws). It feeds the used pile, so it's
-  // productive — keeps the game progressing. Hive-only hands fall through
-  // to `return false` and are correctly treated as stuck.
-  if (p.hand.some((c) => c.kind !== "golden_hive")) return true;
+  // Discarding a non-Hive card is only "productive" if the piles are still
+  // alive — i.e. the discarded card can be recycled into a future draw or
+  // picked up from the used pile top. When BOTH the draw pile is empty AND
+  // the used pile has no live (non-spent) cards left, a discard just cycles
+  // dead cards around forever without any player being able to progress.
+  // Treating such a discard as productive was the wedge behind the
+  // "deck + discard exhausted → nobody wins → game stuck" softlock.
+  const pilesAlive = state.draw.length > 0 || state.used.some((c) => !c.spent);
+  if (pilesAlive && p.hand.some((c) => c.kind !== "golden_hive")) return true;
 
 
 
