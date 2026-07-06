@@ -73,18 +73,21 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
       <Tooltip>
         <TooltipTrigger asChild>
           <button
+            key={popKey}
             type="button"
             onClick={() => setOpen(true)}
             aria-label={hasOpen ? "Answer quiz question for bonus points" : `Quiz progress: ${correct} of ${cap}`}
+            style={hasOpen ? { animation: "quiz-pop 1.4s ease-out 3" } : undefined}
             className={
-              "relative inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition " +
+              "relative inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition origin-center " +
               (bonusPts > 0
                 ? "bg-amber-500/15 border-amber-500/60 text-amber-700 dark:text-amber-300"
                 : hasOpen
-                  ? "bg-primary/15 border-primary/60 text-primary hover:bg-primary/25 animate-pulse"
+                  ? "bg-primary/15 border-primary/60 text-primary hover:bg-primary/25"
                   : "bg-muted/50 border-border text-muted-foreground hover:bg-muted")
             }
           >
+
             {bonusPts > 0 ? <Sparkles className="h-3.5 w-3.5" /> : <HelpCircle className="h-3.5 w-3.5" />}
             <span className="tabular-nums">{correct}/{cap}</span>
             {bonusPts > 0 && <span className="ml-0.5 tabular-nums font-semibold">+{bonusPts}</span>}
