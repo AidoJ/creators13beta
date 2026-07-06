@@ -17,7 +17,7 @@ type Num = keyof Pick<GameSettings,
   "points_per_win" | "points_win_2p" | "points_win_3p" | "points_win_4p" | "points_runner_up"
   | "elo_win" | "elo_loss" | "perfect_eco_bonus"
   | "top_score_default" | "beat_clock_match_minutes" | "beat_clock_turn_seconds" | "beat_clock_draw_seconds"
-  | "idle_turn_seconds" | "idle_turn_strikes_limit"
+  | "idle_turn_seconds" | "idle_turn_strikes_limit" | "active_turn_skip_grace_seconds"
   | "hand_size" | "hand_limit" | "ecosystem_target" | "creators_needed" | "animals_per_creator"
   | "bot_think_ms" | "max_players_per_match"
   | "profile_discount_threshold_1" | "profile_discount_percent_1"
