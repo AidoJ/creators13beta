@@ -1,9 +1,11 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
+import { ZoomIn, ZoomOut, Maximize } from "lucide-react";
 import type { Axial, Ecosystem as EcoType } from "@/lib/game/types";
 import { axialToPixel, keyOf } from "@/lib/game/board";
 import { legalEcoCells, skyLockedSubType, goldenBodyLockedType } from "@/lib/game/engine";
 import { BoardHexPiece, EmptyHexCell } from "./BoardHexPiece";
+
 
 
 interface Props {
@@ -59,6 +61,31 @@ export function Ecosystem({
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
+  // User zoom (on top of autoFit scale) + pan. Pinch-to-zoom on touch, or
+  // the +/-/⤢ buttons on any device. Panning only becomes active when
+  // zoomed in. Two-finger pan avoids conflict with single-finger card drag.
+  const [userZoom, setUserZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const pinchRef = useRef<{
+    startDist: number;
+    startZoom: number;
+    startMid: { x: number; y: number };
+    startPan: { x: number; y: number };
+    pointers: Map<number, { x: number; y: number }>;
+  } | null>(null);
+  const MIN_ZOOM = 1;
+  const MAX_ZOOM = 3;
+
+  const clampZoom = (z: number) => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z));
+  const resetZoom = useCallback(() => { setUserZoom(1); setPan({ x: 0, y: 0 }); }, []);
+  const bumpZoom = useCallback((delta: number) => {
+    setUserZoom((z) => {
+      const next = clampZoom(z + delta);
+      if (next <= 1) setPan({ x: 0, y: 0 });
+      return next;
+    });
+  }, []);
+
 
   const { placed, empties, legal, legalKeys, bounds } = useMemo(() => {
     const placed = Array.from(eco.placed.values());
@@ -114,8 +141,10 @@ export function Ecosystem({
       return;
     }
     const rect = e.currentTarget.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / scale;
-    const py = (e.clientY - rect.top) / scale;
+    const effectiveScale = (autoFit ? scale : 1) * userZoom;
+    const px = (e.clientX - rect.left) / effectiveScale;
+    const py = (e.clientY - rect.top) / effectiveScale;
+
     // Only snap to cells the selected card can actually occupy.
     const candidates = legalForCard ? legal.filter(legalForCard) : legal;
     if (candidates.length === 0) {
@@ -136,21 +165,100 @@ export function Ecosystem({
   };
 
 
+  // Two-finger pinch + pan handlers. Single-touch is deliberately ignored
+  // so card drag (touchDrag) continues to work unchanged.
+  const onPointerDownCapture = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "touch") return;
+    const p = pinchRef.current ?? { startDist: 0, startZoom: userZoom, startMid: { x: 0, y: 0 }, startPan: pan, pointers: new Map() };
+    p.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (p.pointers.size === 2) {
+      const [a, b] = Array.from(p.pointers.values());
+      p.startDist = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      p.startZoom = userZoom;
+      p.startMid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      p.startPan = { ...pan };
+    }
+    pinchRef.current = p;
+  };
+  const onPointerMoveCapture = (e: React.PointerEvent<HTMLDivElement>) => {
+    const p = pinchRef.current;
+    if (!p || !p.pointers.has(e.pointerId)) return;
+    p.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (p.pointers.size !== 2) return;
+    e.preventDefault();
+    const [a, b] = Array.from(p.pointers.values());
+    const dist = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    const nextZoom = clampZoom(p.startZoom * (dist / p.startDist));
+    setUserZoom(nextZoom);
+    setPan({
+      x: p.startPan.x + (mid.x - p.startMid.x),
+      y: p.startPan.y + (mid.y - p.startMid.y),
+    });
+  };
+  const endPointer = (e: React.PointerEvent<HTMLDivElement>) => {
+    const p = pinchRef.current;
+    if (!p) return;
+    p.pointers.delete(e.pointerId);
+    if (p.pointers.size === 0) pinchRef.current = null;
+    if (userZoom <= 1) setPan({ x: 0, y: 0 });
+  };
+
   return (
     <div
       ref={wrapRef}
-      className="flex items-center justify-center w-full h-full"
-      style={autoFit ? { minHeight: 0 } : { minHeight }}
+      className="relative flex items-center justify-center w-full h-full overflow-hidden"
+      style={autoFit ? { minHeight: 0, touchAction: userZoom > 1 ? "none" : undefined } : { minHeight, touchAction: userZoom > 1 ? "none" : undefined }}
+      onPointerDownCapture={onPointerDownCapture}
+      onPointerMoveCapture={onPointerMoveCapture}
+      onPointerUp={endPointer}
+      onPointerCancel={endPointer}
+      onPointerLeave={endPointer}
     >
+      {/* Zoom controls — always visible so mobile players can tap them
+          when pinch is awkward. Positioned inside the wrap so they follow
+          the board area. */}
+      <div className="absolute top-1 right-1 z-30 flex flex-col gap-1 pointer-events-auto">
+        <button
+          type="button"
+          onClick={() => bumpZoom(0.4)}
+          aria-label="Zoom in on board"
+          className="h-8 w-8 rounded-full bg-background/85 border border-border shadow flex items-center justify-center active:scale-95"
+        >
+          <ZoomIn className="w-4 h-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => bumpZoom(-0.4)}
+          aria-label="Zoom out on board"
+          className="h-8 w-8 rounded-full bg-background/85 border border-border shadow flex items-center justify-center active:scale-95"
+          disabled={userZoom <= MIN_ZOOM}
+        >
+          <ZoomOut className="w-4 h-4" />
+        </button>
+        {userZoom > 1 && (
+          <button
+            type="button"
+            onClick={resetZoom}
+            aria-label="Reset zoom"
+            className="h-8 w-8 rounded-full bg-background/85 border border-border shadow flex items-center justify-center active:scale-95"
+          >
+            <Maximize className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
       <div
         className="relative"
         style={{
           width: bounds.width,
           height: bounds.height,
-          transform: autoFit ? `scale(${scale})` : undefined,
+          transform: `translate(${pan.x}px, ${pan.y}px) scale(${(autoFit ? scale : 1) * userZoom})`,
           transformOrigin: "center center",
+          transition: pinchRef.current ? "none" : "transform 120ms ease-out",
         }}
         onDragOver={selectable ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } : undefined}
+
         onDrop={selectable ? placeNearestLegalHex : undefined}
       >
         {empties.map((cell) => {
