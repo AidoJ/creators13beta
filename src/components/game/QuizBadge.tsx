@@ -17,6 +17,9 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
   const [open, setOpen] = useState(false);
   const [answered, setAnswered] = useState<null | { correct: boolean; correct_option: string; explanation: string | null }>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Re-trigger the pop animation each time a NEW question opens (id changes).
+  const [popKey, setPopKey] = useState(0);
+  const lastQidRef = useRef<string | null>(null);
 
   if (!settings.enabled) return null;
 
@@ -28,6 +31,7 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
   const capReached = answeredCount >= cap;
   const hasOpen = !!question && !!progress?.open_question_id;
   const toNextTier = 4 - (correct % 4);
+
 
   const onAnswer = async (choice: "a" | "b" | "c" | "d") => {
     if (submitting || answered) return;
