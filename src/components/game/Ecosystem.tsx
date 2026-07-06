@@ -163,21 +163,100 @@ export function Ecosystem({
   };
 
 
+  // Two-finger pinch + pan handlers. Single-touch is deliberately ignored
+  // so card drag (touchDrag) continues to work unchanged.
+  const onPointerDownCapture = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "touch") return;
+    const p = pinchRef.current ?? { startDist: 0, startZoom: userZoom, startMid: { x: 0, y: 0 }, startPan: pan, pointers: new Map() };
+    p.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (p.pointers.size === 2) {
+      const [a, b] = Array.from(p.pointers.values());
+      p.startDist = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      p.startZoom = userZoom;
+      p.startMid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      p.startPan = { ...pan };
+    }
+    pinchRef.current = p;
+  };
+  const onPointerMoveCapture = (e: React.PointerEvent<HTMLDivElement>) => {
+    const p = pinchRef.current;
+    if (!p || !p.pointers.has(e.pointerId)) return;
+    p.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (p.pointers.size !== 2) return;
+    e.preventDefault();
+    const [a, b] = Array.from(p.pointers.values());
+    const dist = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    const nextZoom = clampZoom(p.startZoom * (dist / p.startDist));
+    setUserZoom(nextZoom);
+    setPan({
+      x: p.startPan.x + (mid.x - p.startMid.x),
+      y: p.startPan.y + (mid.y - p.startMid.y),
+    });
+  };
+  const endPointer = (e: React.PointerEvent<HTMLDivElement>) => {
+    const p = pinchRef.current;
+    if (!p) return;
+    p.pointers.delete(e.pointerId);
+    if (p.pointers.size === 0) pinchRef.current = null;
+    if (userZoom <= 1) setPan({ x: 0, y: 0 });
+  };
+
   return (
     <div
       ref={wrapRef}
-      className="flex items-center justify-center w-full h-full"
-      style={autoFit ? { minHeight: 0 } : { minHeight }}
+      className="relative flex items-center justify-center w-full h-full overflow-hidden"
+      style={autoFit ? { minHeight: 0, touchAction: userZoom > 1 ? "none" : undefined } : { minHeight, touchAction: userZoom > 1 ? "none" : undefined }}
+      onPointerDownCapture={onPointerDownCapture}
+      onPointerMoveCapture={onPointerMoveCapture}
+      onPointerUp={endPointer}
+      onPointerCancel={endPointer}
+      onPointerLeave={endPointer}
     >
+      {/* Zoom controls — always visible so mobile players can tap them
+          when pinch is awkward. Positioned inside the wrap so they follow
+          the board area. */}
+      <div className="absolute top-1 right-1 z-30 flex flex-col gap-1 pointer-events-auto">
+        <button
+          type="button"
+          onClick={() => bumpZoom(0.4)}
+          aria-label="Zoom in on board"
+          className="h-8 w-8 rounded-full bg-background/85 border border-border shadow flex items-center justify-center active:scale-95"
+        >
+          <ZoomIn className="w-4 h-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => bumpZoom(-0.4)}
+          aria-label="Zoom out on board"
+          className="h-8 w-8 rounded-full bg-background/85 border border-border shadow flex items-center justify-center active:scale-95"
+          disabled={userZoom <= MIN_ZOOM}
+        >
+          <ZoomOut className="w-4 h-4" />
+        </button>
+        {userZoom > 1 && (
+          <button
+            type="button"
+            onClick={resetZoom}
+            aria-label="Reset zoom"
+            className="h-8 w-8 rounded-full bg-background/85 border border-border shadow flex items-center justify-center active:scale-95"
+          >
+            <Maximize className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
       <div
         className="relative"
         style={{
           width: bounds.width,
           height: bounds.height,
-          transform: autoFit ? `scale(${scale})` : undefined,
+          transform: `translate(${pan.x}px, ${pan.y}px) scale(${(autoFit ? scale : 1) * userZoom})`,
           transformOrigin: "center center",
+          transition: pinchRef.current ? "none" : "transform 120ms ease-out",
         }}
         onDragOver={selectable ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } : undefined}
+
         onDrop={selectable ? placeNearestLegalHex : undefined}
       >
         {empties.map((cell) => {
