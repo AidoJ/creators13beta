@@ -270,7 +270,7 @@ export function MatchOverDialog({ state, onPlayAgain, playerUserIds }: Props) {
       </Dialog>
 
       <Dialog open={open && reviewOpen} onOpenChange={setReviewOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-4 gap-2">
+        <DialogContent className="w-[calc(100vw-1rem)] sm:w-auto max-w-4xl max-h-[92vh] sm:max-h-[90vh] flex flex-col p-3 sm:p-4 gap-2">
           <DialogHeader>
             <DialogTitle className="font-display text-xl">Review final boards</DialogTitle>
             <DialogDescription>
@@ -280,17 +280,17 @@ export function MatchOverDialog({ state, onPlayAgain, playerUserIds }: Props) {
           <Tabs defaultValue={state.players[0]?.id} className="flex-1 flex flex-col min-h-0">
             <TabsList className="w-full shrink-0">
               {state.players.map((p) => (
-                <TabsTrigger key={p.id} value={p.id} className="flex-1">
+                <TabsTrigger key={p.id} value={p.id} className="flex-1 truncate">
                   {p.name}{p.id === state.winnerId ? " 🏆" : ""}
                 </TabsTrigger>
               ))}
             </TabsList>
-            <div className="flex-1 overflow-y-auto mt-2">
+            <div className="flex-1 overflow-y-auto mt-2 min-h-0">
               {orderedPlayers(state).map(({ player, rank, tied }) => (
-                <TabsContent key={player.id} value={player.id} className="mt-0">
+                <TabsContent key={player.id} value={player.id} className="mt-0 flex flex-col gap-3">
                   <PlayerBreakdown player={player} winner={player.id === state.winnerId} rank={rank} tied={tied} avatarUrl={avatars.get(player.id)} />
-                  <div className="mt-3 rounded-lg border border-border/60 bg-card/40 p-2 overflow-auto">
-                    <Ecosystem eco={player.ecosystem} size={56} showEmpties={false} minHeight={320} />
+                  <div className="rounded-lg border border-border/60 bg-card/40 p-2 h-[45vh] sm:h-[420px] min-h-[260px]">
+                    <Ecosystem eco={player.ecosystem} size={64} showEmpties={false} autoFit />
                   </div>
                 </TabsContent>
               ))}
