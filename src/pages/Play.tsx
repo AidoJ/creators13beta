@@ -1822,28 +1822,30 @@ export default function Play() {
           </div>
 
           {/* Compact action chips (Disaster / Steal) */}
-          <div className="flex items-center gap-1 px-2 py-1 border-t border-border/40 bg-card/30 overflow-x-auto">
-
-            <Button size="sm" variant="secondary" disabled={!canDisaster} onClick={onDisaster}
-              className="h-7 px-2 text-[11px] shrink-0">
-              Disaster
-            </Button>
-            <Button size="sm" variant={mode === "steal" ? "default" : "secondary"} disabled={!canSteal}
-              onClick={() => { setStealVictimKey(null); setMode(mode === "steal" ? "place" : "steal"); }}
-              className="h-7 px-2 text-[11px] shrink-0">
-              {mode === "steal" ? "Cancel" : "Steal"}
-            </Button>
+          <div className="flex items-center gap-2 px-2 py-1 border-t border-border/40 bg-card/30">
+            <div className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0">
+              <Button size="sm" variant="secondary" disabled={!canDisaster} onClick={onDisaster}
+                className="h-7 px-2 text-[11px] shrink-0">
+                Disaster
+              </Button>
+              <Button size="sm" variant={mode === "steal" ? "default" : "secondary"} disabled={!canSteal}
+                onClick={() => { setStealVictimKey(null); setMode(mode === "steal" ? "place" : "steal"); }}
+                className="h-7 px-2 text-[11px] shrink-0">
+                {mode === "steal" ? "Cancel" : "Steal"}
+              </Button>
+              {(mode === "steal" || stealVictimKey) && (
+                <div className="text-[10px] text-muted-foreground truncate flex-1 px-1">
+                  {stealVictimKey ? "Pick a hex on YOUR board" : "Tap an opponent's animal"}
+                </div>
+              )}
+            </div>
             {isPvp && !state.finished && quiz.settings.enabled && (
-              <div className="shrink-0">
+              <div className="shrink-0 pr-1 py-1.5">
                 <QuizBadge progress={quiz.progress} question={quiz.question} settings={quiz.settings} submit={quiz.submit} />
               </div>
             )}
-            {(mode === "steal" || stealVictimKey) && (
-              <div className="text-[10px] text-muted-foreground truncate flex-1 px-1">
-                {stealVictimKey ? "Pick a hex on YOUR board" : "Tap an opponent's animal"}
-              </div>
-            )}
           </div>
+
 
           {/* Bottom hand dock */}
           <PlayerHand
