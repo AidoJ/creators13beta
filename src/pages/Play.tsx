@@ -611,14 +611,19 @@ export default function Play() {
     if (!isPvp || isBeatClock || !state || state.finished) return;
     if (!Number.isFinite(turnStartedMs) || turnStartedMs <= 0) return;
     const elapsedMs = Date.now() - turnStartedMs;
-    if (elapsedMs < idleWindowSec * 1000) return;
+    // Start nudging in the final 5s of the idle window so the sweep is
+    // primed to auto-pass the instant the turn actually expires. Re-nudge
+    // every 3s until the auto-pass lands (previous 8s throttle + fire-only-
+    // after-expiry combo let the turn sit for ~10s before commit).
+    if (elapsedMs < (idleWindowSec - 5) * 1000) return;
     const now = Date.now();
-    if (now - lastNudgeAtRef.current < 8000) return;
+    if (now - lastNudgeAtRef.current < 3000) return;
     lastNudgeAtRef.current = now;
     void supabase.functions.invoke("forfeit-stale-disconnects", {
       body: { nudge: true, match_id: matchRow?.id ?? null },
     }).catch(() => { /* best-effort; cron is the safety net */ });
   }, [isPvp, isBeatClock, state, turnStartedMs, idleWindowSec, matchRow?.id, nowTick]);
+
 
 
 
@@ -694,11 +699,12 @@ export default function Play() {
       const prev = prevStrikesRef.current[uid] ?? 0;
       if (cur > prev && cur >= 1 && cur < idleStrikesLimit) {
         if (uid === selfUid) {
-          toast.warning(`You timed out — turn passed (${cur}/${idleStrikesLimit})`);
+          toast.error(`You timed out — turn passed (strike ${cur}/${idleStrikesLimit})`, { duration: 6000 });
         } else {
-          toast(`${p.name} timed out (${cur}/${idleStrikesLimit})`);
+          toast(`${p.name} timed out (strike ${cur}/${idleStrikesLimit})`, { duration: 5000 });
         }
       }
+
       prevStrikesRef.current[uid] = cur;
 
       const departed = presence.isDeparted(uid);
