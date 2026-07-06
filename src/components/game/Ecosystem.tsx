@@ -61,6 +61,31 @@ export function Ecosystem({
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
+  // User zoom (on top of autoFit scale) + pan. Pinch-to-zoom on touch, or
+  // the +/-/⤢ buttons on any device. Panning only becomes active when
+  // zoomed in. Two-finger pan avoids conflict with single-finger card drag.
+  const [userZoom, setUserZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const pinchRef = useRef<{
+    startDist: number;
+    startZoom: number;
+    startMid: { x: number; y: number };
+    startPan: { x: number; y: number };
+    pointers: Map<number, { x: number; y: number }>;
+  } | null>(null);
+  const MIN_ZOOM = 1;
+  const MAX_ZOOM = 3;
+
+  const clampZoom = (z: number) => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z));
+  const resetZoom = useCallback(() => { setUserZoom(1); setPan({ x: 0, y: 0 }); }, []);
+  const bumpZoom = useCallback((delta: number) => {
+    setUserZoom((z) => {
+      const next = clampZoom(z + delta);
+      if (next <= 1) setPan({ x: 0, y: 0 });
+      return next;
+    });
+  }, []);
+
 
   const { placed, empties, legal, legalKeys, bounds } = useMemo(() => {
     const placed = Array.from(eco.placed.values());
