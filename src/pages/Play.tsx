@@ -544,6 +544,18 @@ export default function Play() {
 
   const selfPlayer = state?.players.find((p) => p.id === selfSlot);
   const opponent = state?.players.find((p) => p.id !== selfSlot);
+  const playerUserIds = useMemo(
+    () =>
+      state?.players.map((p) => {
+        if (matchRow?.mode === "pvp") {
+          if (p.id === "host") return matchRow.host_user_id;
+          if (p.id === "guest") return matchRow.guest_user_id;
+          return null;
+        }
+        return p.id === "you" ? user?.id ?? null : null;
+      }) ?? [],
+    [matchRow, state?.players, user?.id],
+  );
   const opponents = useMemo(
     () => state?.players.filter((p) => p.id !== selfSlot) ?? [],
     [state, selfSlot],
@@ -1300,13 +1312,7 @@ export default function Play() {
       {!ribbonHidden && gameSettings.show_score_panel && (
         <ScorePanel
           state={state}
-          playerUserIds={
-            matchRow?.mode === "pvp"
-              ? state.players.map((p) =>
-                  p.id === "host" ? matchRow.host_user_id : p.id === "guest" ? matchRow.guest_user_id : null,
-                )
-              : state.players.map((p) => (p.id === "you" ? user?.id ?? null : null))
-          }
+          playerUserIds={playerUserIds}
         />
       )}
 
@@ -2095,7 +2101,7 @@ export default function Play() {
 
 
 
-      <MatchOverDialog state={state} onPlayAgain={onNewGame} />
+      <MatchOverDialog state={state} onPlayAgain={onNewGame} playerUserIds={playerUserIds} />
       {gameSettings.prompt_player_name && <NamePrompt />}
       {modeSelectorOpen && (
         <GameModeSelector
