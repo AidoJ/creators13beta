@@ -809,12 +809,40 @@ export default function Play() {
     if (!top) return;
     guarded(() => pickFromUsed(state), { type: "pickup_from_used", uid: top.uid });
   }
+  // Draw-pickup in-flight lock: block a second draw click until the first one
+  // has been committed to state (either optimistic engine update lands or the
+  // server round-trip resolves). Without this, tapping "Draw 1" twice in
+  // quick succession fires two guarded() calls against the SAME pre-update
+  // state — both compute drawnThisTurn=1 and the second overwrite makes the
+  // first card visually disappear.
+  const drawInFlightRef = useRef(false);
+  const lastDrawSnapshotRef = useRef<{ drawn: number; handLen: number } | null>(null);
+  useEffect(() => {
+    if (!drawInFlightRef.current || !state || !selfPlayer) return;
+    const snap = lastDrawSnapshotRef.current;
+    if (!snap) { drawInFlightRef.current = false; return; }
+    // Clear the lock as soon as either drawnThisTurn advances or the hand
+    // grew (opening draw sets drawnThisTurn=0 but hand jumps to 5).
+    if (state.drawnThisTurn > snap.drawn || selfPlayer.hand.length > snap.handLen) {
+      drawInFlightRef.current = false;
+      lastDrawSnapshotRef.current = null;
+    }
+  }, [state, selfPlayer]);
   function onDrawOne() {
-    if (state) guarded(() => pickFromDraw(state), { type: "pickup_from_draw" });
+    if (!state || !selfPlayer) return;
+    if (drawInFlightRef.current) return;
+    drawInFlightRef.current = true;
+    lastDrawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
+    guarded(() => pickFromDraw(state), { type: "pickup_from_draw" });
   }
   function onDrawOpening() {
-    if (state) guarded(() => drawInitialFive(state), { type: "draw_initial_5" });
+    if (!state || !selfPlayer) return;
+    if (drawInFlightRef.current) return;
+    drawInFlightRef.current = true;
+    lastDrawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
+    guarded(() => drawInitialFive(state), { type: "draw_initial_5" });
   }
+
   function onResolveDisaster(useHive: boolean) {
     if (!state) return;
     guarded(() => resolveDisaster(state, useHive), { type: "resolve_disaster", use_hive: useHive });
