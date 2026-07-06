@@ -804,11 +804,14 @@ export default function Play() {
     if (state) guarded(() => pickFromDraw(state), { type: "pickup_from_draw" });
   }
   function onPickUsed() {
-    if (!state) return;
+    if (!state || !selfPlayer || drawInFlight) return;
     const top = state.used[state.used.length - 1];
     if (!top) return;
+    drawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
+    setDrawInFlight(true);
     guarded(() => pickFromUsed(state), { type: "pickup_from_used", uid: top.uid });
   }
+
   // Draw-pickup in-flight lock: block a second draw click until the first one
   // has been committed to state. Without this, tapping "Draw 1" twice in
   // quick succession fires two guarded() calls against the SAME pre-update
