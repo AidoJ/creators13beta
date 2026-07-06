@@ -114,7 +114,7 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
                 fontSize: size * 0.17,
                 fontWeight: 700,
                 lineHeight: 1,
-                paddingBottom: size * 0.01,
+                padding: 0,
                 border: "2px solid #f5945c",
               }}
               aria-label="Show descriptor"
