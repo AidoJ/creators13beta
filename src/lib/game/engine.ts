@@ -325,7 +325,9 @@ export function isSkyCluster(eco: Ecosystem, skyPos: Axial): boolean {
   let n = 0;
   for (const nb of neighbours(skyPos)) {
     const pc = eco.placed.get(keyOf(nb));
-    if (pc?.card.kind === "sky_creature") n += 1;
+    // Golden Body is a wildcard animal — it stands in for a Sky Creature
+    // when counting toward the cluster threshold.
+    if (pc?.card.kind === "sky_creature" || pc?.card.kind === "golden_body") n += 1;
   }
   return n >= 3;
 }
