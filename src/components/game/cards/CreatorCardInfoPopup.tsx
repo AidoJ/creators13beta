@@ -4,6 +4,7 @@ import { X, Shuffle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCreatorTypeColor } from "@/lib/creatorTypes";
 import { creatorMetaFor } from "@/lib/creatorTypeMeta";
+import { TYPE_TO_ELEMENT } from "@/lib/game/elements";
 
 interface CreatorTypeRow {
   name: string;
@@ -125,6 +126,16 @@ export default function CreatorCardInfoPopup({ typeName, onClose }: Props) {
                   <span className="uppercase tracking-widest font-semibold text-[10px]" style={{ color }}>Team Role</span>
                   <div className="text-neutral-900" style={{ fontFamily: '"Questrial", sans-serif' }}>{meta.teamRole}</div>
                 </div>
+                {(() => {
+                  const el = TYPE_TO_ELEMENT[typeName as keyof typeof TYPE_TO_ELEMENT];
+                  if (!el) return null;
+                  return (
+                    <div>
+                      <span className="uppercase tracking-widest font-semibold text-[10px]" style={{ color }}>Element</span>
+                      <div className="text-neutral-900" style={{ fontFamily: '"Questrial", sans-serif' }}>{el}</div>
+                    </div>
+                  );
+                })()}
               </div>
             );
           })()}
