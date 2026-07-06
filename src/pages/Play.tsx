@@ -1160,8 +1160,9 @@ export default function Play() {
     && selectedCard.kind === "sky_creature";
 
   const handAtLimit = selfPlayer.hand.length >= 5; // HAND_LIMIT
-  const needsOpeningDraw = !selfPlayer.firstPickupDone && state.phase === "draw" && canTakeTurn;
-  const canDrawOne = canTakeTurn && state.phase === "draw" && selfPlayer.firstPickupDone && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2 && !handAtLimit;
+  const needsOpeningDraw = !selfPlayer.firstPickupDone && state.phase === "draw" && canTakeTurn && !drawInFlight;
+  const canDrawOne = canTakeTurn && state.phase === "draw" && selfPlayer.firstPickupDone && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2 && !handAtLimit && !drawInFlight;
+
 
 
   const canTapDiscard = canTakeTurn && state.phase === "place" && !!selectedUid;
