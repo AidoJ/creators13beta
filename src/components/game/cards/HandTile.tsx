@@ -84,6 +84,8 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
             backfaceVisibility: "hidden",
             border: `2px solid ${selected ? "#f5b04a" : "#f5945c"}`,
           }}
+          onPointerUp={handlePointerUpForDoubleTap}
+          onDoubleClick={(e) => { e.stopPropagation(); e.preventDefault(); openInfo(); }}
         >
           {/* Flip button (top-left) */}
           {forceFlipped === undefined && (
