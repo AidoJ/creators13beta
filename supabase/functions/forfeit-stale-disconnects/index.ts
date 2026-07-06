@@ -202,9 +202,16 @@ Deno.serve(async (req) => {
   }
 
   // 2. STAMP: convert silent last_seen_at into disconnected_at.
-  //    disconnected_at = last_seen_at (stable start; NOT now()).
+  //    disconnected_at = last_seen_at (stable start; NOT now()) — used for
+  //    match-forfeit grace so the 5min clock runs from when the player was
+  //    actually last seen.
+  //    disconnect_stamped_at = now() — used for the active-turn-skip grace
+  //    so the shorter turn-skip window runs from when we NOTICED the
+  //    disconnect, not from last_seen_at (which already ate ~15s of
+  //    debounce before we could stamp it).
   try {
     const cutoff = new Date(Date.now() - debounceSec * 1000).toISOString();
+    const nowIso = new Date().toISOString();
     const { data: rows, error: selErr } = await svc
       .from("game_match_players")
       .select("match_id, user_id, last_seen_at")
@@ -220,7 +227,7 @@ Deno.serve(async (req) => {
       }
       await svc
         .from("game_match_players")
-        .update({ disconnected_at: r.last_seen_at })
+        .update({ disconnected_at: r.last_seen_at, disconnect_stamped_at: nowIso })
         .eq("match_id", r.match_id)
         .eq("user_id", r.user_id)
         .is("disconnected_at", null);
