@@ -21,8 +21,6 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
   const [popKey, setPopKey] = useState(0);
   const lastQidRef = useRef<string | null>(null);
 
-  if (!settings.enabled) return null;
-
   const correct = progress?.correct_count ?? 0;
   const wrong = progress?.wrong_count ?? 0;
   const bonusPts = progress?.bonus_points_awarded ?? 0;
@@ -31,6 +29,21 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
   const capReached = answeredCount >= cap;
   const hasOpen = !!question && !!progress?.open_question_id;
   const toNextTier = 4 - (correct % 4);
+
+  // Fire the pop animation whenever a new open question arrives so the
+  // player notices the quiz button after playing a Creator card.
+  useEffect(() => {
+    const qid = progress?.open_question_id ?? null;
+    if (qid && qid !== lastQidRef.current) {
+      lastQidRef.current = qid;
+      setPopKey((k) => k + 1);
+    } else if (!qid) {
+      lastQidRef.current = null;
+    }
+  }, [progress?.open_question_id]);
+
+  if (!settings.enabled) return null;
+
 
 
   const onAnswer = async (choice: "a" | "b" | "c" | "d") => {
