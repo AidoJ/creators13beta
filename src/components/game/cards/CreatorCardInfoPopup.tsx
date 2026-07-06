@@ -4,6 +4,7 @@ import { X, Shuffle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCreatorTypeColor } from "@/lib/creatorTypes";
 import { creatorMetaFor } from "@/lib/creatorTypeMeta";
+import { TYPE_TO_ELEMENT } from "@/lib/game/elements";
 
 interface CreatorTypeRow {
   name: string;
