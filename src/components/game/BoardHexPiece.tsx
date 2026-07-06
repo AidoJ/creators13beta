@@ -90,7 +90,6 @@ function BoardHexPieceImpl({ card, size = 110, onClick, onDragStart, onDragEnd, 
 
   const art = card.source?.art_url ?? artGlyph;
   const displayName = displayCardName(card.name);
-  const codeLabel = cardCodeLabel(card);
 
   const ring =
     highlight === "selected" ? "rgba(255,255,255,0.95)"
