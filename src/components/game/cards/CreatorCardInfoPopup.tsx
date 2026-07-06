@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { X, Shuffle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCreatorTypeColor } from "@/lib/creatorTypes";
+import { creatorMetaFor } from "@/lib/creatorTypeMeta";
 
 interface CreatorTypeRow {
   name: string;
@@ -107,6 +108,26 @@ export default function CreatorCardInfoPopup({ typeName, onClose }: Props) {
               />
             </div>
           )}
+
+          {(() => {
+            const meta = creatorMetaFor(typeName);
+            if (!meta) return null;
+            return (
+              <div
+                className="rounded-2xl border-2 p-3 flex flex-wrap gap-x-4 gap-y-1 text-[13px]"
+                style={{ borderColor: color, background: `${color}12` }}
+              >
+                <div>
+                  <span className="uppercase tracking-widest font-semibold text-[10px]" style={{ color }}>Family</span>
+                  <div className="text-neutral-900" style={{ fontFamily: '"Questrial", sans-serif' }}>{meta.family}</div>
+                </div>
+                <div>
+                  <span className="uppercase tracking-widest font-semibold text-[10px]" style={{ color }}>Team Role</span>
+                  <div className="text-neutral-900" style={{ fontFamily: '"Questrial", sans-serif' }}>{meta.teamRole}</div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Random aspect */}
           <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
