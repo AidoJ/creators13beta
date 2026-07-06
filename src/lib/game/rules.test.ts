@@ -335,7 +335,7 @@ describe("classic ecosystem win validation", () => {
       players: [p], turn: 0, draw: [], used: [], phase: "place", drawnThisTurn: 2, placedThisTurn: 0,
       turnNumber: 1, finished: false, winnerId: null,
     };
-    expect(() => placeOnEcosystem(state, swordfish.uid, { q: 1, r: 0 })).toThrowError(/at least one neighbour that shares/);
+    expect(() => placeOnEcosystem(state, swordfish.uid, { q: 1, r: 0 })).toThrowError(/none of the touching neighbours share/);
   });
 
   it("client scenario: Soil Creator → Alpaca legal on one side, Swordfish illegal on another side of the same Creator", () => {
