@@ -53,10 +53,13 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
       >
         {/* FRONT — art side */}
         <div
-          className={`absolute inset-0 rounded-2xl overflow-hidden shadow-lg border bg-white flex flex-col ${
-            selected ? "border-amber-400 ring-2 ring-amber-300 -translate-y-2" : "border-border/40"
+          className={`absolute inset-0 rounded-2xl overflow-hidden shadow-lg bg-white flex flex-col ${
+            selected ? "ring-2 ring-amber-300 -translate-y-2" : ""
           } ${dimmed ? "opacity-70 saturate-75" : ""}`}
-          style={{ backfaceVisibility: "hidden" }}
+          style={{
+            backfaceVisibility: "hidden",
+            border: `3px solid ${selected ? "#f5b04a" : "#f5945c"}`,
+          }}
         >
           {/* Flip button (top-left) */}
           {forceFlipped === undefined && (
