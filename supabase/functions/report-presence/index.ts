@@ -102,9 +102,11 @@ Deno.serve(async (req) => {
           disconnect_reason: body.reason ?? "presence_leave",
         }
       : {
-          // Join or heartbeat: clear any stale disconnect markers.
+          // Join or heartbeat: clear any stale disconnect markers, including
+          // the stamp used by the active-turn-skip grace.
           last_seen_at: nowIso,
           disconnected_at: null,
+          disconnect_stamped_at: null,
           disconnect_reason: null,
         };
 
