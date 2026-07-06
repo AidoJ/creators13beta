@@ -810,38 +810,41 @@ export default function Play() {
     guarded(() => pickFromUsed(state), { type: "pickup_from_used", uid: top.uid });
   }
   // Draw-pickup in-flight lock: block a second draw click until the first one
-  // has been committed to state (either optimistic engine update lands or the
-  // server round-trip resolves). Without this, tapping "Draw 1" twice in
+  // has been committed to state. Without this, tapping "Draw 1" twice in
   // quick succession fires two guarded() calls against the SAME pre-update
   // state — both compute drawnThisTurn=1 and the second overwrite makes the
   // first card visually disappear.
-  const drawInFlightRef = useRef(false);
-  const lastDrawSnapshotRef = useRef<{ drawn: number; handLen: number } | null>(null);
+  const [drawInFlight, setDrawInFlight] = useState(false);
+  const drawSnapshotRef = useRef<{ drawn: number; handLen: number } | null>(null);
   useEffect(() => {
-    if (!drawInFlightRef.current || !state || !selfPlayer) return;
-    const snap = lastDrawSnapshotRef.current;
-    if (!snap) { drawInFlightRef.current = false; return; }
-    // Clear the lock as soon as either drawnThisTurn advances or the hand
-    // grew (opening draw sets drawnThisTurn=0 but hand jumps to 5).
+    if (!drawInFlight || !state || !selfPlayer) return;
+    const snap = drawSnapshotRef.current;
+    if (!snap) { setDrawInFlight(false); return; }
     if (state.drawnThisTurn > snap.drawn || selfPlayer.hand.length > snap.handLen) {
-      drawInFlightRef.current = false;
-      lastDrawSnapshotRef.current = null;
+      setDrawInFlight(false);
+      drawSnapshotRef.current = null;
     }
-  }, [state, selfPlayer]);
+  }, [state, selfPlayer, drawInFlight]);
+  // Safety valve: clear the lock after 4s even if state didn't move (e.g.
+  // guarded() threw and toasted an error) so the player can retry.
+  useEffect(() => {
+    if (!drawInFlight) return;
+    const t = window.setTimeout(() => setDrawInFlight(false), 4000);
+    return () => window.clearTimeout(t);
+  }, [drawInFlight]);
   function onDrawOne() {
-    if (!state || !selfPlayer) return;
-    if (drawInFlightRef.current) return;
-    drawInFlightRef.current = true;
-    lastDrawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
+    if (!state || !selfPlayer || drawInFlight) return;
+    drawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
+    setDrawInFlight(true);
     guarded(() => pickFromDraw(state), { type: "pickup_from_draw" });
   }
   function onDrawOpening() {
-    if (!state || !selfPlayer) return;
-    if (drawInFlightRef.current) return;
-    drawInFlightRef.current = true;
-    lastDrawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
+    if (!state || !selfPlayer || drawInFlight) return;
+    drawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
+    setDrawInFlight(true);
     guarded(() => drawInitialFive(state), { type: "draw_initial_5" });
   }
+
 
   function onResolveDisaster(useHive: boolean) {
     if (!state) return;
