@@ -102,7 +102,7 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up":   "accordion-up 0.2s ease-out",
-        "quiz-pop":       "quiz-pop 1.4s ease-out",
+        "quiz-pop":       "quiz-pop 2s ease-out",
       },
 
     },
