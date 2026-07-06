@@ -1822,7 +1822,7 @@ export default function Play() {
           </div>
 
           {/* Compact action chips (Disaster / Steal) */}
-          <div className="flex items-center gap-2 px-2 py-1 border-t border-border/40 bg-card/30">
+          <div className="flex items-center gap-2 px-2 py-1 border-t border-border/40 bg-card/30" style={{ overflow: "visible" }}>
             <div className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0">
               <Button size="sm" variant="secondary" disabled={!canDisaster} onClick={onDisaster}
                 className="h-7 px-2 text-[11px] shrink-0">
@@ -1840,11 +1840,12 @@ export default function Play() {
               )}
             </div>
             {isPvp && !state.finished && quiz.settings.enabled && (
-              <div className="shrink-0 pr-1 py-1.5">
+              <div className="shrink-0 pr-3 py-3" style={{ overflow: "visible" }}>
                 <QuizBadge progress={quiz.progress} question={quiz.question} settings={quiz.settings} submit={quiz.submit} />
               </div>
             )}
           </div>
+
 
 
           {/* Bottom hand dock */}
