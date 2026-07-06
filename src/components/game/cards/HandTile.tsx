@@ -412,7 +412,7 @@ function resolveColours(card: DeckCard): {
   if (card.kind === "sky_creator") {
     const c = ELEMENT_COLORS.Sky;
     const g = CREATOR_TYPE_GLYPHS.Sky;
-    return { c1: c, c2: "#ffffff", chips: [{ label: "Sky", color: c, glyph: g }], badge: "SKY CREATOR", artGlyph: g };
+    return { c1: c, c2: "#ffffff", chips: [{ label: "Sky", color: c, glyph: g }], badge: undefined, artGlyph: g };
   }
 
   if (card.kind === "golden_body") {
