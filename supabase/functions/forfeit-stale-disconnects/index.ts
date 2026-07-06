@@ -102,6 +102,7 @@ interface SettingsRow {
   disconnect_grace_seconds: number | null;
   idle_turn_seconds: number | null;
   idle_turn_strikes_limit: number | null;
+  active_turn_skip_grace_seconds: number | null;
 }
 
 interface MatchSweepRow {
