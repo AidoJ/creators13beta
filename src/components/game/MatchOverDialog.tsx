@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Trophy, Eye } from "lucide-react";
+import { Trophy, Eye, Bot as BotIcon } from "lucide-react";
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { glyphForType } from "@/lib/game/glyphs";
 import { Ecosystem } from "@/components/game/Ecosystem";
@@ -13,6 +13,98 @@ import { validateEcosystemWin } from "@/lib/game/engine";
 import { TYPE_TO_ELEMENT } from "@/lib/game/elements";
 import { keyOf, neighbours } from "@/lib/game/board";
 import { creatorTypeCode } from "@/lib/creatorTypeCode";
+import { supabase } from "@/integrations/supabase/client";
+import { resolveAvatarUrl } from "@/lib/avatar";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Fetches display avatars for every real (uuid-shaped) player id in the match.
+ *  Bot players (non-uuid ids) resolve to `null` and fall back to initials. */
+function usePlayerAvatars(state: MatchState): Map<string, string | null> {
+  const [avatars, setAvatars] = useState<Map<string, string | null>>(new Map());
+  const idsKey = state.players.map((p) => p.id).join("|");
+  useEffect(() => {
+    const realIds = state.players.map((p) => p.id).filter((id) => UUID_RE.test(id));
+    if (realIds.length === 0) {
+      setAvatars(new Map());
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, avatar_url, hide_avatar")
+        .in("user_id", realIds);
+      if (cancelled) return;
+      const next = new Map<string, string | null>();
+      for (const row of data ?? []) {
+        // Respect hide_avatar preference by falling back to initials.
+        if (row.hide_avatar) {
+          next.set(row.user_id, null);
+          continue;
+        }
+        const url = await resolveAvatarUrl(row.avatar_url);
+        if (cancelled) return;
+        next.set(row.user_id, url);
+      }
+      if (!cancelled) setAvatars(next);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idsKey]);
+  return avatars;
+}
+
+function initialsOf(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase() ?? "")
+    .join("") || "?";
+}
+
+function PlayerAvatar({
+  player,
+  avatarUrl,
+  winner,
+  size = 40,
+}: {
+  player: PlayerState;
+  avatarUrl: string | null | undefined;
+  winner: boolean;
+  size?: number;
+}) {
+  const isBot = !UUID_RE.test(player.id);
+  const ringClass = winner
+    ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-background"
+    : "ring-1 ring-border/60";
+  return (
+    <div
+      className={`shrink-0 relative rounded-full overflow-hidden bg-muted flex items-center justify-center ${ringClass}`}
+      style={{ width: size, height: size }}
+      aria-label={`${player.name} avatar`}
+    >
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt=""
+          className="w-full h-full object-cover"
+          loading="lazy"
+          decoding="async"
+        />
+      ) : isBot ? (
+        <BotIcon className="w-1/2 h-1/2 text-muted-foreground" />
+      ) : (
+        <span className="text-xs font-semibold text-muted-foreground">
+          {initialsOf(player.name)}
+        </span>
+      )}
+    </div>
+  );
+}
+
+
 
 
 function buildWinReason(state: MatchState, winner: PlayerState): { headline: string; detail: string } {
@@ -82,20 +174,33 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
   const departed = endedByDisconnect
     ? state.players.find((p) => p.id !== state.winnerId)
     : null;
+  const avatars = usePlayerAvatars(state);
 
   return (
     <>
       <Dialog open={open && !reviewOpen} onOpenChange={(o) => { if (!o) setDismissed(true); }}>
 
         <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-4 gap-2">
-          <DialogHeader className="space-y-1">
-            <DialogTitle className="flex items-center gap-2 font-display text-xl">
-              <Trophy className="w-5 h-5 text-amber-500" />
-              {isDraw
-                ? "It's a draw!"
-                : endedByDisconnect
-                ? `Opponent left — ${winner.name} wins!`
-                : `Congratulations ${winner.name} — You Win!`}
+          <DialogHeader className="space-y-2">
+            <DialogTitle className="flex items-center gap-3 font-display text-xl">
+              <Trophy className="w-5 h-5 text-amber-500 shrink-0" />
+              {isDraw ? (
+                <span>It's a draw!</span>
+              ) : (
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <PlayerAvatar
+                    player={winner}
+                    avatarUrl={avatars.get(winner.id)}
+                    winner
+                    size={44}
+                  />
+                  <span className="truncate">
+                    {endedByDisconnect
+                      ? `Opponent left — ${winner.name} wins!`
+                      : `Congratulations ${winner.name} — You Win!`}
+                  </span>
+                </div>
+              )}
             </DialogTitle>
             <DialogDescription className="text-xs leading-snug">
               {isDraw ? (
@@ -129,6 +234,7 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
                   winner={!isDraw && player.id === state.winnerId}
                   rank={rank}
                   tied={tied}
+                  avatarUrl={avatars.get(player.id)}
                 />
               ))}
             </div>
@@ -163,7 +269,7 @@ export function MatchOverDialog({ state, onPlayAgain }: Props) {
             <div className="flex-1 overflow-y-auto mt-2">
               {orderedPlayers(state).map(({ player, rank, tied }) => (
                 <TabsContent key={player.id} value={player.id} className="mt-0">
-                  <PlayerBreakdown player={player} winner={player.id === state.winnerId} rank={rank} tied={tied} />
+                  <PlayerBreakdown player={player} winner={player.id === state.winnerId} rank={rank} tied={tied} avatarUrl={avatars.get(player.id)} />
                   <div className="mt-3 rounded-lg border border-border/60 bg-card/40 p-2 overflow-auto">
                     <Ecosystem eco={player.ecosystem} size={56} showEmpties={false} minHeight={320} />
                   </div>
@@ -265,7 +371,7 @@ function orderedPlayers(state: MatchState): Array<{ player: PlayerState; rank: n
     .sort((a, b) => (a.rank ?? total + 1) - (b.rank ?? total + 1));
 }
 
-function PlayerBreakdown({ player, winner, rank, tied }: { player: PlayerState; winner: boolean; rank?: number | null; tied?: boolean }) {
+function PlayerBreakdown({ player, winner, rank, tied, avatarUrl }: { player: PlayerState; winner: boolean; rank?: number | null; tied?: boolean; avatarUrl?: string | null }) {
   const data = useMemo(() => {
     const placedList = Array.from(player.ecosystem.placed.values());
     const creators: PlacedCard[] = [];
@@ -382,8 +488,9 @@ function PlayerBreakdown({ player, winner, rank, tied }: { player: PlayerState; 
         winner ? "border-amber-400 bg-amber-50 dark:bg-amber-950/20" : "border-border/60"
       }`}
     >
-      <div className="flex items-baseline justify-between mb-2 gap-2">
+      <div className="flex items-center justify-between mb-2 gap-2">
         <div className="flex items-center gap-2 min-w-0">
+          <PlayerAvatar player={player} avatarUrl={avatarUrl} winner={winner} size={32} />
           {rank != null && (
             <span
               className={`shrink-0 inline-flex items-center justify-center min-w-[2.25rem] px-1.5 h-6 rounded-full text-[11px] font-semibold ${

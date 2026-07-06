@@ -4,7 +4,7 @@ import { ELEMENT_COLORS } from "@/lib/game/elements";
 import { CREATOR_TYPE_GLYPHS, ELEMENT_GLYPHS, glyphForType, glyphMarkForType } from "@/lib/game/glyphs";
 import type { DeckCard } from "@/lib/game/types";
 import { TypeGlyphMark, displayCardName } from "./cards/TypeGlyphMark";
-import { cardCodeLabel } from "@/lib/creatorTypeCode";
+// (card code label no longer shown on board pieces)
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { startTouchDragGhost, updateTouchDragGhost, endTouchDragGhost } from "@/lib/touchDrag";
 import goldenBodyArt from "@/assets/golden-body-card.webp";
@@ -79,10 +79,10 @@ function BoardHexPieceImpl({ card, size = 110, onClick, onDragStart, onDragEnd, 
       : ELEMENT_COLORS.Sky;
     artGlyph = CREATOR_TYPE_GLYPHS.Sky;
   } else if (card.kind === "golden_body") {
-    c1 = "#f5c542";
+    c1 = "#d9ac20";
     c2 = goldenSplit
-      ? (CREATOR_TYPE_COLORS[goldenLockedType as keyof typeof CREATOR_TYPE_COLORS] ?? ELEMENT_COLORS[goldenLockedType as keyof typeof ELEMENT_COLORS] ?? "#e0a920")
-      : "#e0a920";
+      ? (CREATOR_TYPE_COLORS[goldenLockedType as keyof typeof CREATOR_TYPE_COLORS] ?? ELEMENT_COLORS[goldenLockedType as keyof typeof ELEMENT_COLORS] ?? "#d9ac20")
+      : "#d9ac20";
     artGlyph = goldenBodyArt;
   } else if (card.kind === "golden_hive") {
     c1 = "#f5c542"; c2 = "#fff"; artGlyph = goldenHiveArt;
@@ -90,7 +90,6 @@ function BoardHexPieceImpl({ card, size = 110, onClick, onDragStart, onDragEnd, 
 
   const art = card.source?.art_url ?? artGlyph;
   const displayName = displayCardName(card.name);
-  const codeLabel = cardCodeLabel(card);
 
   const ring =
     highlight === "selected" ? "rgba(255,255,255,0.95)"
@@ -253,25 +252,9 @@ function BoardHexPieceImpl({ card, size = 110, onClick, onDragStart, onDragEnd, 
         </div>
       )}
 
-      {/* Card code badge — top-left white pill, bold black text. Sits above
-       *  the rotating glyphs and art so it stays upright as the hex rotates. */}
-      {codeLabel && (
-        <div
-          className="absolute z-30 pointer-events-none bg-white text-black font-bold rounded-full flex items-center justify-center shadow-sm border border-black/10"
-          style={{
-            top: "10%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            fontFamily: '"Questrial", sans-serif',
-            fontSize: Math.max(7, size * 0.104),
-            lineHeight: 1,
-            padding: `${Math.max(1, size * 0.02)}px ${Math.max(3, size * 0.04)}px`,
-            letterSpacing: "0.02em",
-          }}
-        >
-          {codeLabel}
-        </div>
-      )}
+      {/* Card code badge removed from board pieces — codes stay on hand tiles
+       *  and admin views only. Board relies on colour halves + type glyphs. */}
+
 
 
 

@@ -10,6 +10,7 @@ import type { DeckCard } from "@/lib/game/types";
 import { getCardCreditArtist } from "@/lib/cardCredits";
 import { TypeGlyphMark, displayCardName } from "./TypeGlyphMark";
 import { cardCodeLabel } from "@/lib/creatorTypeCode";
+import { creatorMetaFor } from "@/lib/creatorTypeMeta";
 import CreatorCardInfoPopup from "./CreatorCardInfoPopup";
 
 interface Props {
@@ -158,16 +159,13 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
                 </span>
                 <div className="flex items-center gap-1 flex-wrap justify-center">
                   {chips.map((chip, i) => (
-                    <span key={chip.label + i} className="contents">
-                      {i > 0 && <span className="text-white/50 text-[8px]">+</span>}
-                      <span className="inline-flex items-center gap-0.5 font-semibold uppercase tracking-wider text-white" style={{ fontSize: size * 0.07 }}>
-                        {chip.glyph ? (
-                          <img src={chip.glyph} alt="" className="object-contain" style={{ width: size * 0.1, height: size * 0.1 }} aria-hidden />
-                        ) : (
-                          <span className="rounded-full" style={{ width: size * 0.06, height: size * 0.06, background: chip.color }} aria-hidden />
-                        )}
-                        {chip.label}
-                      </span>
+                    <span key={chip.label + i} className="inline-flex items-center gap-0.5 font-semibold uppercase tracking-wider text-white" style={{ fontSize: size * 0.07 }}>
+                      {chip.glyph ? (
+                        <img src={chip.glyph} alt="" className="object-contain" style={{ width: size * 0.1, height: size * 0.1 }} aria-hidden />
+                      ) : (
+                        <span className="rounded-full" style={{ width: size * 0.06, height: size * 0.06, background: chip.color }} aria-hidden />
+                      )}
+                      {chip.label}
                     </span>
                   ))}
                 </div>
@@ -203,31 +201,29 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
                 >
                   {name}
                 </div>
-                <div className="flex items-center justify-center gap-1 mt-1 flex-wrap">
+                <div className="flex items-center justify-center gap-1.5 mt-1 flex-wrap">
                   {chips.map((chip, i) => (
-                    <span key={chip.label + i} className="contents">
-                      {i > 0 && <span className="text-black/40 text-[9px]">+</span>}
-                      <span
-                        className="inline-flex items-center gap-1 font-semibold uppercase tracking-wider"
-                        style={{ fontSize: size * 0.075, color: "#000" }}
-                      >
-                        {chip.glyph ? (
-                          <img
-                            src={chip.glyph}
-                            alt=""
-                            className="object-contain"
-                            style={{ width: size * 0.11, height: size * 0.11 }}
-                            aria-hidden
-                          />
-                        ) : (
-                          <span
-                            className="rounded-full"
-                            style={{ width: size * 0.06, height: size * 0.06, background: chip.color }}
-                            aria-hidden
-                          />
-                        )}
-                        {chip.label}
-                      </span>
+                    <span
+                      key={chip.label + i}
+                      className="inline-flex items-center gap-1 font-semibold uppercase tracking-wider"
+                      style={{ fontSize: size * 0.075, color: "#000" }}
+                    >
+                      {chip.glyph ? (
+                        <img
+                          src={chip.glyph}
+                          alt=""
+                          className="object-contain"
+                          style={{ width: size * 0.11, height: size * 0.11 }}
+                          aria-hidden
+                        />
+                      ) : (
+                        <span
+                          className="rounded-full"
+                          style={{ width: size * 0.06, height: size * 0.06, background: chip.color }}
+                          aria-hidden
+                        />
+                      )}
+                      {chip.label}
                     </span>
                   ))}
                 </div>
@@ -276,8 +272,21 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
           </div>
           <div
             className="flex-1 overflow-auto px-2 py-1.5 leading-snug"
-            style={{ fontSize: size * 0.072, color: "#111" }}
+            style={{ fontSize: Math.max(11, size * 0.092), color: "#111" }}
           >
+            {card.kind === "creator" && (() => {
+              const meta = creatorMetaFor(card.displayType ?? null);
+              if (!meta) return null;
+              return (
+                <div
+                  className="mb-1.5 flex flex-wrap gap-x-2 gap-y-0.5 font-semibold uppercase tracking-wide"
+                  style={{ fontSize: Math.max(10, size * 0.082), color: "#000" }}
+                >
+                  <span>Family: <span className="font-normal normal-case tracking-normal">{meta.family}</span></span>
+                  <span>Team Role: <span className="font-normal normal-case tracking-normal">{meta.teamRole}</span></span>
+                </div>
+              );
+            })()}
             {descriptor}
           </div>
           {/* Artist credit shown only in the zoomed-in popup, not on the
@@ -432,7 +441,7 @@ function resolveColours(card: DeckCard): {
   }
 
   if (card.kind === "golden_body") {
-    return { c1: "#f5c542", c2: "#e0a920", chips: [{ label: "Golden", color: "#e0a920" }], badge: "GOLDEN BODY", artGlyph: getSpecialCardFallbackArt("golden-body") ?? undefined };
+    return { c1: "#d9ac20", c2: "#d9ac20", chips: [{ label: "Golden", color: "#d9ac20" }], badge: "GOLDEN BODY", artGlyph: getSpecialCardFallbackArt("golden-body") ?? undefined };
   }
   if (card.kind === "golden_hive") {
     return { c1: "#f5c542", c2: "#ffffff", chips: [{ label: "Hive", color: "#e0a920" }], badge: "GOLDEN HIVE", artGlyph: getSpecialCardFallbackArt("golden-hive") ?? undefined };
