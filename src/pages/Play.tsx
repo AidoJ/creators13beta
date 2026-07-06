@@ -585,7 +585,10 @@ export default function Play() {
   const turnStartedMs = matchRow?.turn_started_at ? Date.parse(matchRow.turn_started_at) : 0;
   const currentTurnActivityKey = `${matchRow?.id ?? "local"}:${state?.turn ?? -1}`;
   const localTurnActivityMs = localTurnActivity?.key === currentTurnActivityKey ? localTurnActivity.at : 0;
-  const effectiveTurnStartedMs = Math.max(turnStartedMs, localTurnActivityMs);
+  const effectiveTurnStartedMs = Math.max(
+    Number.isFinite(turnStartedMs) ? turnStartedMs : 0,
+    localTurnActivityMs,
+  );
   const showIdleWarning =
     isPvp &&
     !isBeatClock &&
