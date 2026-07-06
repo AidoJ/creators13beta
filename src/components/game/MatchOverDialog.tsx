@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Trophy, Eye } from "lucide-react";
+import { Trophy, Eye, Bot as BotIcon } from "lucide-react";
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
 import { glyphForType } from "@/lib/game/glyphs";
 import { Ecosystem } from "@/components/game/Ecosystem";
@@ -13,6 +13,98 @@ import { validateEcosystemWin } from "@/lib/game/engine";
 import { TYPE_TO_ELEMENT } from "@/lib/game/elements";
 import { keyOf, neighbours } from "@/lib/game/board";
 import { creatorTypeCode } from "@/lib/creatorTypeCode";
+import { supabase } from "@/integrations/supabase/client";
+import { resolveAvatarUrl } from "@/lib/avatar";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Fetches display avatars for every real (uuid-shaped) player id in the match.
+ *  Bot players (non-uuid ids) resolve to `null` and fall back to initials. */
+function usePlayerAvatars(state: MatchState): Map<string, string | null> {
+  const [avatars, setAvatars] = useState<Map<string, string | null>>(new Map());
+  const idsKey = state.players.map((p) => p.id).join("|");
+  useEffect(() => {
+    const realIds = state.players.map((p) => p.id).filter((id) => UUID_RE.test(id));
+    if (realIds.length === 0) {
+      setAvatars(new Map());
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, avatar_url, hide_avatar")
+        .in("user_id", realIds);
+      if (cancelled) return;
+      const next = new Map<string, string | null>();
+      for (const row of data ?? []) {
+        // Respect hide_avatar preference by falling back to initials.
+        if (row.hide_avatar) {
+          next.set(row.user_id, null);
+          continue;
+        }
+        const url = await resolveAvatarUrl(row.avatar_url);
+        if (cancelled) return;
+        next.set(row.user_id, url);
+      }
+      if (!cancelled) setAvatars(next);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idsKey]);
+  return avatars;
+}
+
+function initialsOf(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase() ?? "")
+    .join("") || "?";
+}
+
+function PlayerAvatar({
+  player,
+  avatarUrl,
+  winner,
+  size = 40,
+}: {
+  player: PlayerState;
+  avatarUrl: string | null | undefined;
+  winner: boolean;
+  size?: number;
+}) {
+  const isBot = !UUID_RE.test(player.id);
+  const ringClass = winner
+    ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-background"
+    : "ring-1 ring-border/60";
+  return (
+    <div
+      className={`shrink-0 relative rounded-full overflow-hidden bg-muted flex items-center justify-center ${ringClass}`}
+      style={{ width: size, height: size }}
+      aria-label={`${player.name} avatar`}
+    >
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt=""
+          className="w-full h-full object-cover"
+          loading="lazy"
+          decoding="async"
+        />
+      ) : isBot ? (
+        <BotIcon className="w-1/2 h-1/2 text-muted-foreground" />
+      ) : (
+        <span className="text-xs font-semibold text-muted-foreground">
+          {initialsOf(player.name)}
+        </span>
+      )}
+    </div>
+  );
+}
+
+
 
 
 function buildWinReason(state: MatchState, winner: PlayerState): { headline: string; detail: string } {
