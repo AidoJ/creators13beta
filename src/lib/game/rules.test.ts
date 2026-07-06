@@ -355,7 +355,8 @@ describe("classic ecosystem win validation", () => {
     expect(afterAlpaca.players[0].ecosystem.placed.has("1,0")).toBe(true);
     // Swordfish on the opposite side of the same Soil Creator → no shared
     // type with Soil → still rejected (Creator is NOT a wildcard).
-    expect(() => placeOnEcosystem(afterAlpaca, swordfish.uid, { q: -1, r: 0 })).toThrowError(/at least one neighbour that shares/);
+    const midTurn: MatchState = { ...afterAlpaca, finished: false, winnerId: null, phase: "place", placedThisTurn: 0, drawnThisTurn: 2 };
+    expect(() => placeOnEcosystem(midTurn, swordfish.uid, { q: -1, r: 0 })).toThrowError(/none of the touching neighbours share/);
   });
 
   it("creators may always sit beside other creators", () => {
