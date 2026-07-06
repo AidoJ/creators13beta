@@ -108,17 +108,17 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
               style={{
                 background: "#f5945c",
                 color: "#000",
-                width: size * 0.2,
-                height: size * 0.2,
+                width: size * 0.22,
+                height: size * 0.22,
                 fontFamily: '"Questrial", sans-serif',
-                fontSize: size * 0.15,
+                fontSize: size * 0.17,
                 fontWeight: 700,
                 lineHeight: 1,
-                fontStyle: "italic",
+                paddingBottom: size * 0.01,
               }}
               aria-label="Show descriptor"
             >
-              i
+              ?
             </button>
           )}
 
