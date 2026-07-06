@@ -1,8 +1,10 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import type { Axial, Ecosystem as EcoType } from "@/lib/game/types";
 import { axialToPixel, keyOf } from "@/lib/game/board";
 import { legalEcoCells, skyLockedSubType, goldenBodyLockedType } from "@/lib/game/engine";
 import { BoardHexPiece, EmptyHexCell } from "./BoardHexPiece";
+
 
 interface Props {
   eco: EcoType;
