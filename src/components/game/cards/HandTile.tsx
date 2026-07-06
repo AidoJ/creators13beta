@@ -77,10 +77,11 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
                   setZoomed(true);
                 }
               }}
-              className="absolute top-1.5 left-1.5 z-30 bg-black/55 hover:bg-black/75 text-white rounded-full p-1 backdrop-blur-sm"
+              className="absolute left-0.5 top-1/2 -translate-y-1/2 z-30 rounded-full p-0.5 bg-white/70 backdrop-blur-sm"
+              style={{ color: "#f5945c" }}
               aria-label="Show descriptor"
             >
-              <Info className="w-3 h-3" />
+              <Info className="w-[9px] h-[9px]" strokeWidth={2.25} />
             </button>
           )}
 
