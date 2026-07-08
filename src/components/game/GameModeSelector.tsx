@@ -88,7 +88,7 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onCancel?.(); }}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl">Choose a Game Type</DialogTitle>
           <DialogDescription>Pick how this match ends.</DialogDescription>
