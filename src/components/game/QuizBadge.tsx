@@ -72,7 +72,7 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
             }
           >
 
-            {bonusPts > 0 ? <Sparkles className="h-3.5 w-3.5" /> : <HelpCircle className={"h-3.5 w-3.5" + (hasOpen ? " animate-quiz-bounce" : "")} />}
+            {bonusPts > 0 ? <Sparkles className="h-4 w-4" /> : <HelpCircle className={"h-4 w-4" + (hasOpen ? " animate-quiz-bounce" : "")} />}
             <span className="tabular-nums">{correct}/{cap}</span>
             {bonusPts > 0 && <span className="ml-0.5 tabular-nums font-semibold">+{bonusPts}</span>}
             {hasOpen && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-background animate-quiz-bounce" />}
