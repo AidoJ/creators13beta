@@ -1644,7 +1644,7 @@ export default function Play() {
       {isMobile ? (
         <>
           {/* Top utility row: opponent peek + draw/discard quick access */}
-          <div className="flex items-center gap-1.5 px-2 pt-1.5 pb-1 border-b border-border/40">
+          <div className="shrink-0 flex items-center gap-1.5 px-2 pt-1.5 pb-1 border-b border-border/40">
             {(() => {
               const oppCount = opponents.length;
               const idx = oppCount > 0 ? ((mobileOppIdx % oppCount) + oppCount) % oppCount : 0;
