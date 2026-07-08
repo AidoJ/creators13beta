@@ -1632,7 +1632,7 @@ export default function Play() {
       <button
         type="button"
         onClick={() => setRibbonHidden((v) => !v)}
-        className="w-full flex items-center justify-center gap-1 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground bg-card/40 hover:bg-card/60 border-b border-border/40 transition-colors"
+        className="shrink-0 w-full flex items-center justify-center gap-1 min-h-8 py-1.5 text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground bg-card/40 hover:bg-card/60 border-b border-border/40 transition-colors"
         aria-label={ribbonHidden ? "Show ribbon" : "Hide ribbon"}
       >
         {ribbonHidden ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
