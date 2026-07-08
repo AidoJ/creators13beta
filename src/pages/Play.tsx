@@ -1838,7 +1838,7 @@ export default function Play() {
           </div>
 
           {/* Compact action chips (Disaster / Steal) */}
-          <div className="flex items-center gap-2 px-2 py-1 border-t border-border/40 bg-card/30" style={{ overflow: "visible" }}>
+          <div className="shrink-0 flex items-center gap-2 px-2 py-1 border-t border-border/40 bg-card/30" style={{ overflow: "visible" }}>
             <div className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0">
               <Button size="sm" variant="secondary" disabled={!canDisaster} onClick={onDisaster}
                 className="h-7 px-2 text-[11px] shrink-0">
