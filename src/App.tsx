@@ -145,6 +145,9 @@ const App = () => (
                   />
                 )}
 
+                <Route path="/play-dashboard" element={<Navigate to="/play" replace />} />
+                <Route path="/lobby" element={<Navigate to="/play" replace />} />
+                <Route path="/lobby/:matchId" element={<Navigate to="/play" replace />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
