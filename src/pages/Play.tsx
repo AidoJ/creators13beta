@@ -822,11 +822,11 @@ export default function Play() {
     if (state) guarded(() => pickFromDraw(state), { type: "pickup_from_draw" });
   }
   function onPickUsed() {
-    if (!state || !selfPlayer || drawInFlight) return;
+    if (!state || !selfPlayer) return;
     const top = state.used[state.used.length - 1];
     if (!top) return;
+    if (!beginDraw()) return;
     drawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
-    setDrawInFlight(true);
     guarded(() => pickFromUsed(state), { type: "pickup_from_used", uid: top.uid });
   }
 
