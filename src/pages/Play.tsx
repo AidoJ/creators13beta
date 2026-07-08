@@ -822,11 +822,11 @@ export default function Play() {
     if (state) guarded(() => pickFromDraw(state), { type: "pickup_from_draw" });
   }
   function onPickUsed() {
-    if (!state || !selfPlayer || drawInFlight) return;
+    if (!state || !selfPlayer) return;
     const top = state.used[state.used.length - 1];
     if (!top) return;
+    if (!beginDraw()) return;
     drawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
-    setDrawInFlight(true);
     guarded(() => pickFromUsed(state), { type: "pickup_from_used", uid: top.uid });
   }
 
@@ -836,33 +836,48 @@ export default function Play() {
   // state — both compute drawnThisTurn=1 and the second overwrite makes the
   // first card visually disappear.
   const [drawInFlight, setDrawInFlight] = useState(false);
+  // Synchronous mirror of drawInFlight. React batches setState, so within a
+  // single event tick two rapid taps both read `drawInFlight === false`. A
+  // ref gives us a guaranteed-monotonic read/write path that blocks the
+  // second tap the instant the first one lands.
+  const drawInFlightRef = useRef(false);
   const drawSnapshotRef = useRef<{ drawn: number; handLen: number } | null>(null);
+  const beginDraw = () => {
+    if (drawInFlightRef.current) return false;
+    drawInFlightRef.current = true;
+    setDrawInFlight(true);
+    return true;
+  };
+  const endDraw = () => {
+    drawInFlightRef.current = false;
+    setDrawInFlight(false);
+    drawSnapshotRef.current = null;
+  };
   useEffect(() => {
     if (!drawInFlight || !state || !selfPlayer) return;
     const snap = drawSnapshotRef.current;
-    if (!snap) { setDrawInFlight(false); return; }
+    if (!snap) { endDraw(); return; }
     if (state.drawnThisTurn > snap.drawn || selfPlayer.hand.length > snap.handLen) {
-      setDrawInFlight(false);
-      drawSnapshotRef.current = null;
+      endDraw();
     }
   }, [state, selfPlayer, drawInFlight]);
   // Safety valve: clear the lock after 4s even if state didn't move (e.g.
   // guarded() threw and toasted an error) so the player can retry.
   useEffect(() => {
     if (!drawInFlight) return;
-    const t = window.setTimeout(() => setDrawInFlight(false), 4000);
+    const t = window.setTimeout(() => endDraw(), 4000);
     return () => window.clearTimeout(t);
   }, [drawInFlight]);
   function onDrawOne() {
-    if (!state || !selfPlayer || drawInFlight) return;
+    if (!state || !selfPlayer) return;
+    if (!beginDraw()) return;
     drawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
-    setDrawInFlight(true);
     guarded(() => pickFromDraw(state), { type: "pickup_from_draw" });
   }
   function onDrawOpening() {
-    if (!state || !selfPlayer || drawInFlight) return;
+    if (!state || !selfPlayer) return;
+    if (!beginDraw()) return;
     drawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
-    setDrawInFlight(true);
     guarded(() => drawInitialFive(state), { type: "draw_initial_5" });
   }
 
@@ -1343,7 +1358,8 @@ export default function Play() {
 
 
   return (
-    <div className="min-h-[100dvh] md:h-[100dvh] flex flex-col bg-background overflow-y-auto md:overflow-hidden overscroll-contain">
+    <div className="h-[100dvh] flex flex-col bg-background overflow-hidden overscroll-contain">
+
       {user && <PlayerProfileDiscountCTA userId={user.id} />}
 
 
@@ -1616,7 +1632,7 @@ export default function Play() {
       <button
         type="button"
         onClick={() => setRibbonHidden((v) => !v)}
-        className="w-full flex items-center justify-center gap-1 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground bg-card/40 hover:bg-card/60 border-b border-border/40 transition-colors"
+        className="shrink-0 w-full flex items-center justify-center gap-1 min-h-8 py-1.5 text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground bg-card/40 hover:bg-card/60 border-b border-border/40 transition-colors"
         aria-label={ribbonHidden ? "Show ribbon" : "Hide ribbon"}
       >
         {ribbonHidden ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
@@ -1628,7 +1644,7 @@ export default function Play() {
       {isMobile ? (
         <>
           {/* Top utility row: opponent peek + draw/discard quick access */}
-          <div className="flex items-center gap-1.5 px-2 pt-1.5 pb-1 border-b border-border/40">
+          <div className="shrink-0 flex items-center gap-1.5 px-2 pt-1.5 pb-1 border-b border-border/40">
             {(() => {
               const oppCount = opponents.length;
               const idx = oppCount > 0 ? ((mobileOppIdx % oppCount) + oppCount) % oppCount : 0;
@@ -1763,7 +1779,7 @@ export default function Play() {
           </div>
 
           {showPiles && (
-            <div className="px-2 py-1 border-b border-border/40 bg-card/30 relative">
+            <div className="shrink-0 px-2 py-1 border-b border-border/40 bg-card/30 relative max-h-[40vh] overflow-y-auto">
               <button
                 type="button"
                 onClick={() => setShowPiles(false)}
@@ -1822,7 +1838,7 @@ export default function Play() {
           </div>
 
           {/* Compact action chips (Disaster / Steal) */}
-          <div className="flex items-center gap-2 px-2 py-1 border-t border-border/40 bg-card/30" style={{ overflow: "visible" }}>
+          <div className="shrink-0 flex items-center gap-2 px-2 py-1 border-t border-border/40 bg-card/30" style={{ overflow: "visible" }}>
             <div className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0">
               <Button size="sm" variant="secondary" disabled={!canDisaster} onClick={onDisaster}
                 className="h-7 px-2 text-[11px] shrink-0">
@@ -2178,7 +2194,10 @@ export default function Play() {
       {/* Golden Hive prompt — shown to the targeted victim when an opponent
           plays a Disaster while you hold an unspent Hive. */}
       {state.pendingDisaster && state.pendingDisaster.victimId === selfSlot && (
-        <div className="fixed inset-x-0 bottom-0 z-50 pointer-events-none flex justify-center px-3 pb-3 sm:pb-4">
+        <div
+          className="fixed inset-x-0 bottom-0 z-50 pointer-events-none flex justify-center px-3 pb-3 sm:pb-4"
+          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+        >
           <div className="pointer-events-auto w-full max-w-lg rounded-xl border border-amber-400/60 bg-card/95 backdrop-blur-md shadow-2xl p-3 sm:p-4">
             <div className="flex items-start gap-3">
               <div className="flex-1 min-w-0">

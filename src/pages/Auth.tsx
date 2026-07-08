@@ -68,7 +68,7 @@ export default function Auth() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <button type="button" onClick={() => setForgotOpen(true)} className="text-xs text-primary hover:underline">
+                  <button type="button" onClick={() => setForgotOpen(true)} className="text-sm text-primary hover:underline py-2 px-1 -my-1 min-h-11 inline-flex items-center">
                     Forgot password?
                   </button>
                 </div>

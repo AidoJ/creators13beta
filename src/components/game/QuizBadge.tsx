@@ -63,7 +63,7 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
             aria-label={hasOpen ? "Answer quiz question for bonus points" : `Quiz progress: ${correct} of ${cap}`}
             style={hasOpen ? { zIndex: 50, position: "relative", transformOrigin: "center", willChange: "transform" } : undefined}
             className={
-              "relative inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition origin-center " +
+              "relative inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 min-h-11 text-sm font-medium border transition origin-center " +
               (bonusPts > 0
                 ? "bg-amber-500/15 border-amber-500/60 text-amber-700 dark:text-amber-300"
                 : hasOpen
@@ -72,7 +72,7 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
             }
           >
 
-            {bonusPts > 0 ? <Sparkles className="h-3.5 w-3.5" /> : <HelpCircle className={"h-3.5 w-3.5" + (hasOpen ? " animate-quiz-bounce" : "")} />}
+            {bonusPts > 0 ? <Sparkles className="h-4 w-4" /> : <HelpCircle className={"h-4 w-4" + (hasOpen ? " animate-quiz-bounce" : "")} />}
             <span className="tabular-nums">{correct}/{cap}</span>
             {bonusPts > 0 && <span className="ml-0.5 tabular-nums font-semibold">+{bonusPts}</span>}
             {hasOpen && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-background animate-quiz-bounce" />}

@@ -108,8 +108,12 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
 
 
   return (
-    <div className="border-t border-border/40 bg-card/40 backdrop-blur p-2 sm:p-3">
+    <div
+      className="shrink-0 border-t border-border/40 bg-card/40 backdrop-blur p-2 sm:p-3"
+      style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+    >
       <div className="flex flex-nowrap items-end gap-2 sm:gap-3 justify-start sm:justify-center overflow-x-auto overflow-y-hidden scrollbar-thin">
+
 
         {hand.map((card, idx) => {
           const selected = card.uid === selectedUid;
