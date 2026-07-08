@@ -836,33 +836,48 @@ export default function Play() {
   // state — both compute drawnThisTurn=1 and the second overwrite makes the
   // first card visually disappear.
   const [drawInFlight, setDrawInFlight] = useState(false);
+  // Synchronous mirror of drawInFlight. React batches setState, so within a
+  // single event tick two rapid taps both read `drawInFlight === false`. A
+  // ref gives us a guaranteed-monotonic read/write path that blocks the
+  // second tap the instant the first one lands.
+  const drawInFlightRef = useRef(false);
   const drawSnapshotRef = useRef<{ drawn: number; handLen: number } | null>(null);
+  const beginDraw = () => {
+    if (drawInFlightRef.current) return false;
+    drawInFlightRef.current = true;
+    setDrawInFlight(true);
+    return true;
+  };
+  const endDraw = () => {
+    drawInFlightRef.current = false;
+    setDrawInFlight(false);
+    drawSnapshotRef.current = null;
+  };
   useEffect(() => {
     if (!drawInFlight || !state || !selfPlayer) return;
     const snap = drawSnapshotRef.current;
-    if (!snap) { setDrawInFlight(false); return; }
+    if (!snap) { endDraw(); return; }
     if (state.drawnThisTurn > snap.drawn || selfPlayer.hand.length > snap.handLen) {
-      setDrawInFlight(false);
-      drawSnapshotRef.current = null;
+      endDraw();
     }
   }, [state, selfPlayer, drawInFlight]);
   // Safety valve: clear the lock after 4s even if state didn't move (e.g.
   // guarded() threw and toasted an error) so the player can retry.
   useEffect(() => {
     if (!drawInFlight) return;
-    const t = window.setTimeout(() => setDrawInFlight(false), 4000);
+    const t = window.setTimeout(() => endDraw(), 4000);
     return () => window.clearTimeout(t);
   }, [drawInFlight]);
   function onDrawOne() {
-    if (!state || !selfPlayer || drawInFlight) return;
+    if (!state || !selfPlayer) return;
+    if (!beginDraw()) return;
     drawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
-    setDrawInFlight(true);
     guarded(() => pickFromDraw(state), { type: "pickup_from_draw" });
   }
   function onDrawOpening() {
-    if (!state || !selfPlayer || drawInFlight) return;
+    if (!state || !selfPlayer) return;
+    if (!beginDraw()) return;
     drawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
-    setDrawInFlight(true);
     guarded(() => drawInitialFive(state), { type: "draw_initial_5" });
   }
 
