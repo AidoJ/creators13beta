@@ -50,6 +50,19 @@ export function useEnrollmentGate(): { ready: boolean; state: EnrollmentState | 
           return;
         }
 
+        // Edit-from-dashboard escape hatch: when a `returnTo` query param is
+        // present the user is intentionally revisiting an enrollment page to
+        // amend earlier answers (Edit personal details, re-upload photos,
+        // reschedule booking). Do NOT bounce them — the page will `navigate(returnTo)`
+        // on save. Without this bypass, completed users are kicked back to
+        // dashboard immediately and mid-enrollment users are shoved to the
+        // next required step instead of the one they picked.
+        const hasReturnTo = new URLSearchParams(location.search).has("returnTo");
+        if (hasReturnTo && current.startsWith("/enroll")) {
+          setReady(true);
+          return;
+        }
+
         // Enrollment is complete: kick the user out of any /enroll/* page to dashboard.
         if (required === null) {
           if (current.startsWith("/enroll")) {

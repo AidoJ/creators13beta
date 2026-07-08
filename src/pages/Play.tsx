@@ -795,6 +795,16 @@ export default function Play() {
   }, [state, selfPlayer, selfSlot]);
 
 
+  // Synchronous in-flight lock covering EVERY guarded() move (place, discard,
+  // steal, pickup, disaster resolution, rotate, concede). React batches
+  // setState, so two rapid taps within the same event tick both read the
+  // pre-update `state` closure and both call the engine — the first succeeds,
+  // the second throws and pops an "Illegal move" toast. A synchronous ref
+  // gate blocks the second tap the instant the first one lands; it's cleared
+  // as soon as the optimistic state commit + schedulePersist() run below.
+  // Draw has its own `beginDraw()` ref for the deck-count invariant; this
+  // lock is the general one for all other move controls. */
+  const guardedInFlightRef = useRef(false);
   const guarded = (fn: () => MatchState, move?: ServerMove) => {
     const isTurnBoundMove =
       !!move &&
@@ -803,6 +813,8 @@ export default function Play() {
       toast.error("Time ran out — waiting for auto-pass.");
       return;
     }
+    if (guardedInFlightRef.current) return;
+    guardedInFlightRef.current = true;
     try {
       const next = fn();
       if (isPvp && isTurnBoundMove) {
@@ -815,6 +827,11 @@ export default function Play() {
       setStealVictimKey(null);
     } catch (e: any) {
       toast.error(e?.message ?? "Illegal move");
+    } finally {
+      // Release on next microtask so a second synchronous tap in the same
+      // event tick is blocked, but the very next user interaction (after
+      // React has committed the state update) is free to fire.
+      queueMicrotask(() => { guardedInFlightRef.current = false; });
     }
   };
 
@@ -1760,7 +1777,7 @@ export default function Play() {
               }}
               disabled={!needsOpeningDraw && !canDrawOne}
               className={
-                "shrink-0 h-7 px-2 rounded-md border text-[11px] font-semibold transition " +
+                "shrink-0 min-h-11 px-3 rounded-md border text-[11px] font-semibold transition " +
                 (needsOpeningDraw || canDrawOne
                   ? "border-primary bg-primary/15 text-primary ring-1 ring-primary/50"
                   : "border-border/60 bg-card/60 text-muted-foreground opacity-70")
@@ -1771,7 +1788,7 @@ export default function Play() {
             </button>
             <Collapsible open={showPiles} onOpenChange={setShowPiles}>
               <CollapsibleTrigger asChild>
-                <Button variant="outline" size="sm" className="h-7 px-2 text-[11px]">
+                <Button variant="outline" size="sm" className="min-h-11 px-3 text-[11px]">
                   Piles
                 </Button>
               </CollapsibleTrigger>
