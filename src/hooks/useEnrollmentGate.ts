@@ -91,7 +91,7 @@ export function useEnrollmentGate(): { ready: boolean; state: EnrollmentState | 
     return () => {
       cancelled = true;
     };
-  }, [user, authLoading, location.pathname, navigate]);
+  }, [user, authLoading, location.pathname, location.search, navigate]);
 
   return { ready, state };
 }
