@@ -2194,7 +2194,10 @@ export default function Play() {
       {/* Golden Hive prompt — shown to the targeted victim when an opponent
           plays a Disaster while you hold an unspent Hive. */}
       {state.pendingDisaster && state.pendingDisaster.victimId === selfSlot && (
-        <div className="fixed inset-x-0 bottom-0 z-50 pointer-events-none flex justify-center px-3 pb-3 sm:pb-4">
+        <div
+          className="fixed inset-x-0 bottom-0 z-50 pointer-events-none flex justify-center px-3 pb-3 sm:pb-4"
+          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+        >
           <div className="pointer-events-auto w-full max-w-lg rounded-xl border border-amber-400/60 bg-card/95 backdrop-blur-md shadow-2xl p-3 sm:p-4">
             <div className="flex items-start gap-3">
               <div className="flex-1 min-w-0">
