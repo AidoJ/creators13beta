@@ -1779,7 +1779,7 @@ export default function Play() {
           </div>
 
           {showPiles && (
-            <div className="px-2 py-1 border-b border-border/40 bg-card/30 relative">
+            <div className="shrink-0 px-2 py-1 border-b border-border/40 bg-card/30 relative max-h-[40vh] overflow-y-auto">
               <button
                 type="button"
                 onClick={() => setShowPiles(false)}
