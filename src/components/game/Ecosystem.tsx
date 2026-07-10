@@ -142,6 +142,51 @@ export function Ecosystem({
     return () => ro.disconnect();
   }, [autoFit, bounds.width, bounds.height]);
 
+  // Follow-the-action: when the ecosystem grows, drift pan so the newest
+  // placement slides toward the viewport centre. Only active when the user
+  // is zoomed in (otherwise autoFit already shows the whole board and
+  // panning would clip an edge). Clamped so the board can't be pushed
+  // off-screen. Purely local render state — never enters engine/PvP sync.
+  const prevPlacedKeysRef = useRef<Set<string>>(new Set());
+  const [lastPlacedKey, setLastPlacedKey] = useState<string | null>(null);
+  useEffect(() => {
+    const currentKeys = new Set<string>();
+    let newKey: string | null = null;
+    for (const k of eco.placed.keys()) {
+      currentKeys.add(k);
+      if (!prevPlacedKeysRef.current.has(k)) newKey = k;
+    }
+    prevPlacedKeysRef.current = currentKeys;
+    if (newKey) setLastPlacedKey(newKey);
+  }, [eco.placed]);
+
+  useEffect(() => {
+    if (!lastPlacedKey || userZoom <= 1) return;
+    const el = wrapRef.current;
+    if (!el) return;
+    const pos = parseKey(lastPlacedKey);
+    const { x, y } = axialToPixel(pos.q, pos.r, size);
+    const hxCenter = x + offX + size / 2;
+    const hyCenter = y + offY + (size * 1.1547) / 2;
+    const boardCenterX = bounds.width / 2;
+    const boardCenterY = bounds.height / 2;
+    const effectiveScale = (autoFit ? scale : 1) * userZoom;
+    const targetPanX = (boardCenterX - hxCenter) * effectiveScale;
+    const targetPanY = (boardCenterY - hyCenter) * effectiveScale;
+    const cw = el.clientWidth;
+    const ch = el.clientHeight;
+    const scaledW = bounds.width * effectiveScale;
+    const scaledH = bounds.height * effectiveScale;
+    const maxPanX = Math.max(0, (scaledW - cw) / 2);
+    const maxPanY = Math.max(0, (scaledH - ch) / 2);
+    setPan({
+      x: Math.max(-maxPanX, Math.min(maxPanX, targetPanX)),
+      y: Math.max(-maxPanY, Math.min(maxPanY, targetPanY)),
+    });
+  }, [lastPlacedKey, userZoom, scale, autoFit, size, offX, offY, bounds.width, bounds.height]);
+
+
+
   const placeNearestLegalHex = (e: React.DragEvent<HTMLDivElement>) => {
     if (!selectable) return;
     e.preventDefault();
