@@ -888,7 +888,7 @@ export default function Play() {
       if (!s) return s;
       try {
         const next = pickFromUsed(s);
-        setLoggedState(next, "optimistic_engine");
+        if (isPvp) logClientStateChange("optimistic_engine", serverSeqRef.current, next);
         schedulePersist(next, { type: "pickup_from_used", uid: top.uid });
         setSelectedUid(null);
         setMode("place");
