@@ -943,7 +943,7 @@ export default function Play() {
       if (!s) return s;
       try {
         const next = pickFromDraw(s);
-        setLoggedState(next, "optimistic_engine");
+        if (isPvp) logClientStateChange("optimistic_engine", serverSeqRef.current, next);
         schedulePersist(next, { type: "pickup_from_draw" });
         setSelectedUid(null);
         setMode("place");
