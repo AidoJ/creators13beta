@@ -835,6 +835,41 @@ export default function Play() {
     }
   };
 
+  // ── Optimistic draw queue ──────────────────────────────────────────────
+  // Instant visual feedback: on tap we insert a "pending" tile into the
+  // rendered hand (face-down for deck; muted real card for discard). The
+  // engine call still runs immediately via functional setState so back-to-back
+  // taps read fresh state (no stale-closure races, no serialised wait for
+  // server ack). When state reconciles and the real hand grows we FIFO-remove
+  // one pending per new card. On a rejected submit we remove that one pending
+  // and toast.
+  type PendingDraw = {
+    id: string;
+    source: "deck" | "discard";
+    card: DeckCard | null;
+  };
+  const [pendingDraws, setPendingDraws] = useState<PendingDraw[]>([]);
+  const pendingIdRef = useRef(0);
+  const prevHandLenRef = useRef<number>(selfPlayer?.hand.length ?? 0);
+  useEffect(() => {
+    const len = selfPlayer?.hand.length ?? 0;
+    const grew = len - prevHandLenRef.current;
+    prevHandLenRef.current = len;
+    if (grew > 0) setPendingDraws((pd) => (pd.length ? pd.slice(grew) : pd));
+  }, [selfPlayer?.hand.length]);
+  // Clear any stragglers when it stops being our turn or we leave the draw
+  // phase (server-reconciled hand is now authoritative).
+  useEffect(() => {
+    if (!state || !selfPlayer) return;
+    if (state.phase !== "draw" || state.players[state.turn]?.id !== selfPlayer.id) {
+      if (pendingDraws.length) setPendingDraws([]);
+    }
+  }, [state?.phase, state?.turn, selfPlayer?.id, pendingDraws.length]);
+
+  const pendingCount = pendingDraws.length;
+  const effectiveHandLen = (selfPlayer?.hand.length ?? 0) + pendingCount;
+  const effectiveDrawnThisTurn = (state?.drawnThisTurn ?? 0) + pendingCount;
+
   function onPickDraw() {
     if (state) guarded(() => pickFromDraw(state), { type: "pickup_from_draw" });
   }
@@ -842,21 +877,34 @@ export default function Play() {
     if (!state || !selfPlayer) return;
     const top = state.used[state.used.length - 1];
     if (!top) return;
-    if (!beginDraw()) return;
-    drawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
-    guarded(() => pickFromUsed(state), { type: "pickup_from_used", uid: top.uid });
+    // 5-card hand limit (hand + pending).
+    if (effectiveHandLen >= 5) { toast.error("Hand full — max 5 cards."); return; }
+    // 2-draws-per-turn cap (already-drawn + queued pending).
+    if (effectiveDrawnThisTurn >= 2) return;
+    if (isPvp && idleTurnExpired) { toast.error("Time ran out — waiting for auto-pass."); return; }
+    const pid = `pd-${++pendingIdRef.current}`;
+    setPendingDraws((pd) => [...pd, { id: pid, source: "discard", card: top }]);
+    setState((s) => {
+      if (!s) return s;
+      try {
+        const next = pickFromUsed(s);
+        if (isPvp) logClientStateChange("optimistic_engine", serverSeqRef.current, next);
+        schedulePersist(next, { type: "pickup_from_used", uid: top.uid });
+        setSelectedUid(null);
+        setMode("place");
+        setStealVictimKey(null);
+        return next;
+      } catch (e: any) {
+        setPendingDraws((pd) => pd.filter((p) => p.id !== pid));
+        toast.error(e?.message ?? "Illegal move");
+        return s;
+      }
+    });
   }
 
-  // Draw-pickup in-flight lock: block a second draw click until the first one
-  // has been committed to state. Without this, tapping "Draw 1" twice in
-  // quick succession fires two guarded() calls against the SAME pre-update
-  // state — both compute drawnThisTurn=1 and the second overwrite makes the
-  // first card visually disappear.
+  // Opening draw keeps the legacy synchronous lock — it's a one-shot burst,
+  // not part of the rapid-tap flow the queue targets.
   const [drawInFlight, setDrawInFlight] = useState(false);
-  // Synchronous mirror of drawInFlight. React batches setState, so within a
-  // single event tick two rapid taps both read `drawInFlight === false`. A
-  // ref gives us a guaranteed-monotonic read/write path that blocks the
-  // second tap the instant the first one lands.
   const drawInFlightRef = useRef(false);
   const drawSnapshotRef = useRef<{ drawn: number; handLen: number } | null>(null);
   const beginDraw = () => {
@@ -878,18 +926,35 @@ export default function Play() {
       endDraw();
     }
   }, [state, selfPlayer, drawInFlight]);
-  // Safety valve: clear the lock after 4s even if state didn't move (e.g.
-  // guarded() threw and toasted an error) so the player can retry.
   useEffect(() => {
     if (!drawInFlight) return;
     const t = window.setTimeout(() => endDraw(), 4000);
     return () => window.clearTimeout(t);
   }, [drawInFlight]);
+
   function onDrawOne() {
     if (!state || !selfPlayer) return;
-    if (!beginDraw()) return;
-    drawSnapshotRef.current = { drawn: state.drawnThisTurn, handLen: selfPlayer.hand.length };
-    guarded(() => pickFromDraw(state), { type: "pickup_from_draw" });
+    if (effectiveHandLen >= 5) { toast.error("Hand full — max 5 cards."); return; }
+    if (effectiveDrawnThisTurn >= 2) return;
+    if (isPvp && idleTurnExpired) { toast.error("Time ran out — waiting for auto-pass."); return; }
+    const pid = `pd-${++pendingIdRef.current}`;
+    setPendingDraws((pd) => [...pd, { id: pid, source: "deck", card: null }]);
+    setState((s) => {
+      if (!s) return s;
+      try {
+        const next = pickFromDraw(s);
+        if (isPvp) logClientStateChange("optimistic_engine", serverSeqRef.current, next);
+        schedulePersist(next, { type: "pickup_from_draw" });
+        setSelectedUid(null);
+        setMode("place");
+        setStealVictimKey(null);
+        return next;
+      } catch (e: any) {
+        setPendingDraws((pd) => pd.filter((p) => p.id !== pid));
+        toast.error(e?.message ?? "Illegal move");
+        return s;
+      }
+    });
   }
   function onDrawOpening() {
     if (!state || !selfPlayer) return;
@@ -1212,9 +1277,9 @@ export default function Play() {
   const canSteal = canTakeTurn && state.phase === "place" && !!selectedCard
     && selectedCard.kind === "sky_creature";
 
-  const handAtLimit = selfPlayer.hand.length >= 5; // HAND_LIMIT
+  const handAtLimit = effectiveHandLen >= 5; // HAND_LIMIT (hand + optimistic pending)
   const needsOpeningDraw = !selfPlayer.firstPickupDone && state.phase === "draw" && canTakeTurn && !drawInFlight;
-  const canDrawOne = canTakeTurn && state.phase === "draw" && selfPlayer.firstPickupDone && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2 && !handAtLimit && !drawInFlight;
+  const canDrawOne = canTakeTurn && state.phase === "draw" && selfPlayer.firstPickupDone && (state.draw.length > 0 || state.used.length > 0) && effectiveDrawnThisTurn < 2 && !handAtLimit;
 
 
 
@@ -1890,7 +1955,7 @@ export default function Play() {
             size={62}
             stuckUids={gameSettings.highlight_playable_cards ? stuckUids : undefined}
             onTouchDropDiscard={(uid) => { onDiscardUid(uid); setShowPiles(false); }}
-
+            pending={pendingDraws}
           />
 
         </>
@@ -2086,6 +2151,7 @@ export default function Play() {
                   size={76}
                   stuckUids={gameSettings.highlight_playable_cards ? stuckUids : undefined}
                   onTouchDropDiscard={(uid) => onDiscardUid(uid)}
+                  pending={pendingDraws}
                 />
 
               </div>

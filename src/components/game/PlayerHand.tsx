@@ -5,6 +5,15 @@ import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { startTouchDragGhost, updateTouchDragGhost, endTouchDragGhost } from "@/lib/touchDrag";
 import logoBack from "@/assets/13creators-logo.png";
 
+export interface PendingDraw {
+  /** Stable client id for this pending draw. */
+  id: string;
+  /** 'deck' shows a face-down back; 'discard' shows the real card muted. */
+  source: "deck" | "discard";
+  /** Real card for discard draws; null for deck (unknown until server ack). */
+  card: DeckCard | null;
+}
+
 interface Props {
   hand: DeckCard[];
   selectedUid?: string | null;
@@ -19,6 +28,8 @@ interface Props {
   /** Touch-drag dropped onto the discard pile. Bypasses synthetic click so
    *  it doesn't depend on the discard pile's stale-closure selectedUid. */
   onTouchDropDiscard?: (uid: string) => void;
+  /** Optimistic draw placeholders rendered after the real hand. */
+  pending?: PendingDraw[];
 }
 
 
@@ -35,7 +46,7 @@ interface PointerTrack {
   suppressClick: boolean;
 }
 
-export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd, disabled, size = 104, stuckUids, onTouchDropDiscard }: Props) {
+export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd, disabled, size = 104, stuckUids, onTouchDropDiscard, pending }: Props) {
   const coarse = useCoarsePointer();
   // Track which card uids have completed their draw-in animation.
   const revealedRef = useRef<Set<string>>(new Set());
@@ -290,13 +301,58 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
             </div>
           );
         })}
-        {hand.length === 0 && <div className="text-sm text-muted-foreground italic">No cards in hand.</div>}
+        {(pending ?? []).map((p) => {
+          const height = size * 1.35;
+          return (
+            <div
+              key={p.id}
+              aria-label={p.source === "deck" ? "Drawing from deck…" : `Drawing ${p.card?.name ?? "card"}…`}
+              className="select-none pointer-events-none"
+              style={{
+                width: size,
+                height,
+                animation: "handDrop 320ms cubic-bezier(0.2, 0.85, 0.35, 1.1) both",
+              }}
+            >
+              {p.source === "discard" && p.card ? (
+                <div className="relative w-full h-full">
+                  <HandTile card={p.card} size={size} selected={false} dimmed />
+                  <div
+                    className="absolute inset-0 rounded-2xl ring-2 ring-primary/60 pointer-events-none"
+                    style={{ animation: "pendingPulse 1200ms ease-in-out infinite" }}
+                  />
+                </div>
+              ) : (
+                <div
+                  className="relative w-full h-full rounded-2xl overflow-hidden shadow-lg border border-border/40 flex items-center justify-center"
+                  style={{
+                    background:
+                      "radial-gradient(circle at 30% 25%, hsl(var(--primary) / 0.35), hsl(var(--background)) 70%), hsl(var(--card))",
+                    animation: "pendingPulse 1200ms ease-in-out infinite",
+                  }}
+                >
+                  <img
+                    src={logoBack}
+                    alt=""
+                    className="object-contain pointer-events-none"
+                    style={{ width: "78%", height: "78%" }}
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {hand.length === 0 && (pending?.length ?? 0) === 0 && <div className="text-sm text-muted-foreground italic">No cards in hand.</div>}
       </div>
       <style>{`
         @keyframes handDrop {
           0% { transform: translateY(-220px) rotate(-8deg); opacity: 0; }
           70% { opacity: 1; }
           100% { transform: translateY(0) rotate(0deg); opacity: 1; }
+        }
+        @keyframes pendingPulse {
+          0%, 100% { opacity: 0.55; }
+          50% { opacity: 1; }
         }
       `}</style>
     </div>
