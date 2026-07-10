@@ -350,6 +350,10 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
           70% { opacity: 1; }
           100% { transform: translateY(0) rotate(0deg); opacity: 1; }
         }
+        @keyframes pendingPulse {
+          0%, 100% { opacity: 0.55; }
+          50% { opacity: 1; }
+        }
       `}</style>
     </div>
   );
