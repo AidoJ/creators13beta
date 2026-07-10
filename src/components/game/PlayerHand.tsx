@@ -301,7 +301,48 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
             </div>
           );
         })}
-        {hand.length === 0 && <div className="text-sm text-muted-foreground italic">No cards in hand.</div>}
+        {(pending ?? []).map((p) => {
+          const height = size * 1.35;
+          return (
+            <div
+              key={p.id}
+              aria-label={p.source === "deck" ? "Drawing from deck…" : `Drawing ${p.card?.name ?? "card"}…`}
+              className="select-none pointer-events-none"
+              style={{
+                width: size,
+                height,
+                animation: "handDrop 320ms cubic-bezier(0.2, 0.85, 0.35, 1.1) both",
+              }}
+            >
+              {p.source === "discard" && p.card ? (
+                <div className="relative w-full h-full">
+                  <HandTile card={p.card} size={size} selected={false} dimmed />
+                  <div
+                    className="absolute inset-0 rounded-2xl ring-2 ring-primary/60 pointer-events-none"
+                    style={{ animation: "pendingPulse 1200ms ease-in-out infinite" }}
+                  />
+                </div>
+              ) : (
+                <div
+                  className="relative w-full h-full rounded-2xl overflow-hidden shadow-lg border border-border/40 flex items-center justify-center"
+                  style={{
+                    background:
+                      "radial-gradient(circle at 30% 25%, hsl(var(--primary) / 0.35), hsl(var(--background)) 70%), hsl(var(--card))",
+                    animation: "pendingPulse 1200ms ease-in-out infinite",
+                  }}
+                >
+                  <img
+                    src={logoBack}
+                    alt=""
+                    className="object-contain pointer-events-none"
+                    style={{ width: "78%", height: "78%" }}
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {hand.length === 0 && (pending?.length ?? 0) === 0 && <div className="text-sm text-muted-foreground italic">No cards in hand.</div>}
       </div>
       <style>{`
         @keyframes handDrop {
