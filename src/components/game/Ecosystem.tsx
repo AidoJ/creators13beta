@@ -100,13 +100,22 @@ export function Ecosystem({
       minX = Math.min(minX, x); maxX = Math.max(maxX, x);
       minY = Math.min(minY, y); maxY = Math.max(maxY, y);
     }
-    const pad = 0;
+    // Symmetrize the bounding box around the ORIGIN hex (0,0) so the board
+    // never "leans" as it grows one-sided — the origin hex stays dead-centre
+    // and autoFit scales evenly regardless of which edge grew first.
+    const hexW = size;
+    const hexH = size * 1.1547;
+    const ox = hexW / 2;             // pixel centre of origin hex
+    const oy = hexH / 2;
+    const halfW = Math.max(ox - minX, maxX + hexW - ox, hexW / 2);
+    const halfH = Math.max(oy - minY, maxY + hexH - oy, hexH / 2);
     return {
       placed, empties, legal, legalKeys,
       bounds: {
-        minX: minX - pad, minY: minY - pad,
-        width: maxX - minX + size + pad * 2,
-        height: maxY - minY + size * 1.1547 + pad * 2,
+        minX: ox - halfW,
+        minY: oy - halfH,
+        width: halfW * 2,
+        height: halfH * 2,
       },
     };
   }, [eco, selectable, showEmpties, size, moveFromKey]);
