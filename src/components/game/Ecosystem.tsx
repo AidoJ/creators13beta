@@ -1,8 +1,8 @@
-import { useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { ZoomIn, ZoomOut, Maximize } from "lucide-react";
 import type { Axial, Ecosystem as EcoType } from "@/lib/game/types";
-import { axialToPixel, keyOf } from "@/lib/game/board";
+import { axialToPixel, keyOf, parseKey } from "@/lib/game/board";
 import { legalEcoCells, skyLockedSubType, goldenBodyLockedType } from "@/lib/game/engine";
 import { BoardHexPiece, EmptyHexCell } from "./BoardHexPiece";
 
