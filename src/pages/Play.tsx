@@ -2151,6 +2151,7 @@ export default function Play() {
                   size={76}
                   stuckUids={gameSettings.highlight_playable_cards ? stuckUids : undefined}
                   onTouchDropDiscard={(uid) => onDiscardUid(uid)}
+                  pending={pendingDraws}
                 />
 
               </div>
