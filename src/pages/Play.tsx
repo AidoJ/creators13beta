@@ -1277,9 +1277,9 @@ export default function Play() {
   const canSteal = canTakeTurn && state.phase === "place" && !!selectedCard
     && selectedCard.kind === "sky_creature";
 
-  const handAtLimit = selfPlayer.hand.length >= 5; // HAND_LIMIT
+  const handAtLimit = effectiveHandLen >= 5; // HAND_LIMIT (hand + optimistic pending)
   const needsOpeningDraw = !selfPlayer.firstPickupDone && state.phase === "draw" && canTakeTurn && !drawInFlight;
-  const canDrawOne = canTakeTurn && state.phase === "draw" && selfPlayer.firstPickupDone && (state.draw.length > 0 || state.used.length > 0) && state.drawnThisTurn < 2 && !handAtLimit && !drawInFlight;
+  const canDrawOne = canTakeTurn && state.phase === "draw" && selfPlayer.firstPickupDone && (state.draw.length > 0 || state.used.length > 0) && effectiveDrawnThisTurn < 2 && !handAtLimit;
 
 
 
