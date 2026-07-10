@@ -1,8 +1,8 @@
-import { useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { ZoomIn, ZoomOut, Maximize } from "lucide-react";
 import type { Axial, Ecosystem as EcoType } from "@/lib/game/types";
-import { axialToPixel, keyOf } from "@/lib/game/board";
+import { axialToPixel, keyOf, parseKey } from "@/lib/game/board";
 import { legalEcoCells, skyLockedSubType, goldenBodyLockedType } from "@/lib/game/engine";
 import { BoardHexPiece, EmptyHexCell } from "./BoardHexPiece";
 
@@ -100,13 +100,22 @@ export function Ecosystem({
       minX = Math.min(minX, x); maxX = Math.max(maxX, x);
       minY = Math.min(minY, y); maxY = Math.max(maxY, y);
     }
-    const pad = 0;
+    // Symmetrize the bounding box around the ORIGIN hex (0,0) so the board
+    // never "leans" as it grows one-sided — the origin hex stays dead-centre
+    // and autoFit scales evenly regardless of which edge grew first.
+    const hexW = size;
+    const hexH = size * 1.1547;
+    const ox = hexW / 2;             // pixel centre of origin hex
+    const oy = hexH / 2;
+    const halfW = Math.max(ox - minX, maxX + hexW - ox, hexW / 2);
+    const halfH = Math.max(oy - minY, maxY + hexH - oy, hexH / 2);
     return {
       placed, empties, legal, legalKeys,
       bounds: {
-        minX: minX - pad, minY: minY - pad,
-        width: maxX - minX + size + pad * 2,
-        height: maxY - minY + size * 1.1547 + pad * 2,
+        minX: ox - halfW,
+        minY: oy - halfH,
+        width: halfW * 2,
+        height: halfH * 2,
       },
     };
   }, [eco, selectable, showEmpties, size, moveFromKey]);
@@ -132,6 +141,51 @@ export function Ecosystem({
     ro.observe(el);
     return () => ro.disconnect();
   }, [autoFit, bounds.width, bounds.height]);
+
+  // Follow-the-action: when the ecosystem grows, drift pan so the newest
+  // placement slides toward the viewport centre. Only active when the user
+  // is zoomed in (otherwise autoFit already shows the whole board and
+  // panning would clip an edge). Clamped so the board can't be pushed
+  // off-screen. Purely local render state — never enters engine/PvP sync.
+  const prevPlacedKeysRef = useRef<Set<string>>(new Set());
+  const [lastPlacedKey, setLastPlacedKey] = useState<string | null>(null);
+  useEffect(() => {
+    const currentKeys = new Set<string>();
+    let newKey: string | null = null;
+    for (const k of eco.placed.keys()) {
+      currentKeys.add(k);
+      if (!prevPlacedKeysRef.current.has(k)) newKey = k;
+    }
+    prevPlacedKeysRef.current = currentKeys;
+    if (newKey) setLastPlacedKey(newKey);
+  }, [eco.placed]);
+
+  useEffect(() => {
+    if (!lastPlacedKey || userZoom <= 1) return;
+    const el = wrapRef.current;
+    if (!el) return;
+    const pos = parseKey(lastPlacedKey);
+    const { x, y } = axialToPixel(pos.q, pos.r, size);
+    const hxCenter = x + offX + size / 2;
+    const hyCenter = y + offY + (size * 1.1547) / 2;
+    const boardCenterX = bounds.width / 2;
+    const boardCenterY = bounds.height / 2;
+    const effectiveScale = (autoFit ? scale : 1) * userZoom;
+    const targetPanX = (boardCenterX - hxCenter) * effectiveScale;
+    const targetPanY = (boardCenterY - hyCenter) * effectiveScale;
+    const cw = el.clientWidth;
+    const ch = el.clientHeight;
+    const scaledW = bounds.width * effectiveScale;
+    const scaledH = bounds.height * effectiveScale;
+    const maxPanX = Math.max(0, (scaledW - cw) / 2);
+    const maxPanY = Math.max(0, (scaledH - ch) / 2);
+    setPan({
+      x: Math.max(-maxPanX, Math.min(maxPanX, targetPanX)),
+      y: Math.max(-maxPanY, Math.min(maxPanY, targetPanY)),
+    });
+  }, [lastPlacedKey, userZoom, scale, autoFit, size, offX, offY, bounds.width, bounds.height]);
+
+
 
   const placeNearestLegalHex = (e: React.DragEvent<HTMLDivElement>) => {
     if (!selectable) return;
