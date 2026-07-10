@@ -1955,7 +1955,7 @@ export default function Play() {
             size={62}
             stuckUids={gameSettings.highlight_playable_cards ? stuckUids : undefined}
             onTouchDropDiscard={(uid) => { onDiscardUid(uid); setShowPiles(false); }}
-
+            pending={pendingDraws}
           />
 
         </>
