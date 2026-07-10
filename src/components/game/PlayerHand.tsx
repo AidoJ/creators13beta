@@ -5,6 +5,15 @@ import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { startTouchDragGhost, updateTouchDragGhost, endTouchDragGhost } from "@/lib/touchDrag";
 import logoBack from "@/assets/13creators-logo.png";
 
+export interface PendingDraw {
+  /** Stable client id for this pending draw. */
+  id: string;
+  /** 'deck' shows a face-down back; 'discard' shows the real card muted. */
+  source: "deck" | "discard";
+  /** Real card for discard draws; null for deck (unknown until server ack). */
+  card: DeckCard | null;
+}
+
 interface Props {
   hand: DeckCard[];
   selectedUid?: string | null;
@@ -19,6 +28,8 @@ interface Props {
   /** Touch-drag dropped onto the discard pile. Bypasses synthetic click so
    *  it doesn't depend on the discard pile's stale-closure selectedUid. */
   onTouchDropDiscard?: (uid: string) => void;
+  /** Optimistic draw placeholders rendered after the real hand. */
+  pending?: PendingDraw[];
 }
 
 
