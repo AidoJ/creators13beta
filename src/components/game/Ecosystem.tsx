@@ -77,19 +77,6 @@ export function Ecosystem({
   const MAX_ZOOM = 3;
 
   const clampZoom = (z: number) => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z));
-  const clampPanForZoom = useCallback((nextPan: { x: number; y: number }, zoom: number) => {
-    const el = wrapRef.current;
-    if (!el) return nextPan;
-    const effectiveScale = (autoFit ? scale : 1) * zoom;
-    const scaledW = bounds.width * effectiveScale;
-    const scaledH = bounds.height * effectiveScale;
-    const maxPanX = Math.max(0, (scaledW - el.clientWidth) / 2);
-    const maxPanY = Math.max(0, (scaledH - el.clientHeight) / 2);
-    return {
-      x: Math.max(-maxPanX, Math.min(maxPanX, nextPan.x)),
-      y: Math.max(-maxPanY, Math.min(maxPanY, nextPan.y)),
-    };
-  }, [autoFit, scale, bounds.width, bounds.height]);
   const resetZoom = useCallback(() => { setUserZoom(1); setPan({ x: 0, y: 0 }); }, []);
   const bumpZoom = useCallback((delta: number) => {
     setUserZoom((z) => {
@@ -98,10 +85,6 @@ export function Ecosystem({
       return next;
     });
   }, []);
-
-  useEffect(() => {
-    setPan((cur) => userZoom <= 1 ? { x: 0, y: 0 } : clampPanForZoom(cur, userZoom));
-  }, [userZoom, clampPanForZoom]);
 
 
   const { placed, empties, legal, legalKeys, bounds } = useMemo(() => {
@@ -139,6 +122,24 @@ export function Ecosystem({
 
   const offX = -bounds.minX;
   const offY = -bounds.minY;
+
+  const clampPanForZoom = useCallback((nextPan: { x: number; y: number }, zoom: number) => {
+    const el = wrapRef.current;
+    if (!el) return nextPan;
+    const effectiveScale = (autoFit ? scale : 1) * zoom;
+    const scaledW = bounds.width * effectiveScale;
+    const scaledH = bounds.height * effectiveScale;
+    const maxPanX = Math.max(0, (scaledW - el.clientWidth) / 2);
+    const maxPanY = Math.max(0, (scaledH - el.clientHeight) / 2);
+    return {
+      x: Math.max(-maxPanX, Math.min(maxPanX, nextPan.x)),
+      y: Math.max(-maxPanY, Math.min(maxPanY, nextPan.y)),
+    };
+  }, [autoFit, scale, bounds.width, bounds.height]);
+
+  useEffect(() => {
+    setPan((cur) => userZoom <= 1 ? { x: 0, y: 0 } : clampPanForZoom(cur, userZoom));
+  }, [userZoom, clampPanForZoom]);
 
   // Auto-fit: observe parent container size and scale the board uniformly.
   useLayoutEffect(() => {
