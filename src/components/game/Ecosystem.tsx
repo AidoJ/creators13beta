@@ -92,30 +92,30 @@ export function Ecosystem({
     const legal = legalEcoCells(eco, moveFromKey ?? undefined);
     const legalKeys = new Set(legal.map(keyOf));
     const empties = showEmpties || selectable ? buildScaffold(eco, moveFromKey) : [];
-    const all: Axial[] = [...placed.map((p) => p.pos), ...empties];
-    if (all.length === 0) all.push({ q: 0, r: 0 });
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    for (const p of all) {
-      const { x, y } = axialToPixel(p.q, p.r, size);
-      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
-      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
-    }
-    // Symmetrize the bounding box around the ORIGIN hex (0,0) so the board
-    // never "leans" as it grows one-sided — the origin hex stays dead-centre
-    // and autoFit scales evenly regardless of which edge grew first.
+    // Content bounds = placed hexes + the legal placement fringe. This is
+    // what the player cares about; the coordinate origin (0,0) is irrelevant.
+    // Symmetrising around origin puts content in one half when growth is
+    // one-sided — instead we take the true min/max of the content region so
+    // it sits centered inside the container regardless of direction.
+    const contentCells: Axial[] = [...placed.map((p) => p.pos), ...empties];
+    if (contentCells.length === 0) contentCells.push({ q: 0, r: 0 });
     const hexW = size;
     const hexH = size * 1.1547;
-    const ox = hexW / 2;             // pixel centre of origin hex
-    const oy = hexH / 2;
-    const halfW = Math.max(ox - minX, maxX + hexW - ox, hexW / 2);
-    const halfH = Math.max(oy - minY, maxY + hexH - oy, hexH / 2);
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const p of contentCells) {
+      const { x, y } = axialToPixel(p.q, p.r, size);
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x + hexW);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y + hexH);
+    }
     return {
       placed, empties, legal, legalKeys,
       bounds: {
-        minX: ox - halfW,
-        minY: oy - halfH,
-        width: halfW * 2,
-        height: halfH * 2,
+        minX,
+        minY,
+        width: maxX - minX,
+        height: maxY - minY,
       },
     };
   }, [eco, selectable, showEmpties, size, moveFromKey]);
