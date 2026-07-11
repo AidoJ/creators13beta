@@ -1875,10 +1875,13 @@ export default function Play() {
           )}
 
 
-          {/* Board takes all remaining space. `overflow-auto` + touch-pan lets
-              the player pan/scroll when their ecosystem grows beyond what
-              autoFit can shrink to (small Android portrait viewports especially). */}
-          <div className="flex-1 min-h-0 overflow-auto touch-pan-x touch-pan-y flex items-center justify-center px-1 py-1 overscroll-contain">
+          {/* Board takes all remaining space. Ecosystem owns its own
+              pan/zoom (pinch + on-screen buttons), so this wrapper must NOT
+              add its own scroll layer — an outer `overflow-auto` combined
+              with the inner scaled div's unscaled layout box creates
+              phantom empty space that pushes the visual board off-centre. */}
+          <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center px-1 py-1">
+
 
             <Ecosystem
               eco={selfPlayer.ecosystem}
