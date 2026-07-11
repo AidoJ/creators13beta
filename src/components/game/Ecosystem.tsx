@@ -77,6 +77,19 @@ export function Ecosystem({
   const MAX_ZOOM = 3;
 
   const clampZoom = (z: number) => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z));
+  const clampPanForZoom = useCallback((nextPan: { x: number; y: number }, zoom: number) => {
+    const el = wrapRef.current;
+    if (!el) return nextPan;
+    const effectiveScale = (autoFit ? scale : 1) * zoom;
+    const scaledW = bounds.width * effectiveScale;
+    const scaledH = bounds.height * effectiveScale;
+    const maxPanX = Math.max(0, (scaledW - el.clientWidth) / 2);
+    const maxPanY = Math.max(0, (scaledH - el.clientHeight) / 2);
+    return {
+      x: Math.max(-maxPanX, Math.min(maxPanX, nextPan.x)),
+      y: Math.max(-maxPanY, Math.min(maxPanY, nextPan.y)),
+    };
+  }, [autoFit, scale, bounds.width, bounds.height]);
   const resetZoom = useCallback(() => { setUserZoom(1); setPan({ x: 0, y: 0 }); }, []);
   const bumpZoom = useCallback((delta: number) => {
     setUserZoom((z) => {
@@ -85,6 +98,10 @@ export function Ecosystem({
       return next;
     });
   }, []);
+
+  useEffect(() => {
+    setPan((cur) => userZoom <= 1 ? { x: 0, y: 0 } : clampPanForZoom(cur, userZoom));
+  }, [userZoom, clampPanForZoom]);
 
 
   const { placed, empties, legal, legalKeys, bounds } = useMemo(() => {
@@ -245,10 +262,10 @@ export function Ecosystem({
     const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
     const nextZoom = clampZoom(p.startZoom * (dist / p.startDist));
     setUserZoom(nextZoom);
-    setPan({
+    setPan(clampPanForZoom({
       x: p.startPan.x + (mid.x - p.startMid.x),
       y: p.startPan.y + (mid.y - p.startMid.y),
-    });
+    }, nextZoom));
   };
   const endPointer = (e: React.PointerEvent<HTMLDivElement>) => {
     const p = pinchRef.current;
@@ -262,7 +279,7 @@ export function Ecosystem({
     <div
       ref={wrapRef}
       className="relative flex items-center justify-center w-full h-full overflow-hidden"
-      style={autoFit ? { minHeight: 0, touchAction: userZoom > 1 ? "none" : undefined } : { minHeight, touchAction: userZoom > 1 ? "none" : undefined }}
+      style={autoFit ? { minHeight: 0, touchAction: "none" } : { minHeight, touchAction: userZoom > 1 ? "none" : undefined }}
       onPointerDownCapture={onPointerDownCapture}
       onPointerMoveCapture={onPointerMoveCapture}
       onPointerUp={endPointer}
@@ -303,7 +320,7 @@ export function Ecosystem({
       </div>
 
       <div
-        className="relative"
+        className="relative shrink-0"
         style={{
           width: bounds.width,
           height: bounds.height,
