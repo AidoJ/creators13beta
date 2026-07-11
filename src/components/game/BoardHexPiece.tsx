@@ -108,6 +108,7 @@ function BoardHexPieceImpl({ card, size = 110, onClick, onDragStart, onDragEnd, 
         onClick?.();
       }}
       draggable={nativeDraggable}
+      data-touch-drag-source={draggable ? "true" : undefined}
       onDragStart={nativeDraggable ? onDragStart : undefined}
       onDragEnd={nativeDraggable ? onDragEnd : undefined}
       onPointerDown={draggable ? (e) => {
