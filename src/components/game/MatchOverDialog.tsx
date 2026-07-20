@@ -165,9 +165,10 @@ interface Props {
   state: MatchState;
   onPlayAgain: () => void;
   playerUserIds?: (string | null)[];
+  onDismissed?: () => void;
 }
 
-export function MatchOverDialog({ state, onPlayAgain, playerUserIds }: Props) {
+export function MatchOverDialog({ state, onPlayAgain, playerUserIds, onDismissed }: Props) {
   const navigate = useNavigate();
   const [reviewOpen, setReviewOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
