@@ -180,20 +180,7 @@ export function LotusProfile({
         const ringPx = glyphPx * 1.55;
         return (
           <div key={`glyph-${key}`} className="pointer-events-none">
-            {muted && (
-              <div
-                aria-hidden
-                className="absolute rounded-full border"
-                style={{
-                  width: `${ringPx}px`,
-                  height: `${ringPx}px`,
-                  left: `${pos.x * (px / 100) - ringPx / 2}px`,
-                  top: `${pos.y * (px / 100) - ringPx / 2}px`,
-                  borderColor: "rgba(255,255,255,0.85)",
-                  borderWidth: Math.max(1, px * 0.008),
-                }}
-              />
-            )}
+            {/* Guessed (self_selected) types are indicated by the muted glyph opacity below — no outline ring. */}
             <img
               src={glyph}
               alt=""
