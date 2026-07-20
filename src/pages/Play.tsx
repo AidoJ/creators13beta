@@ -2266,7 +2266,9 @@ export default function Play() {
 
 
 
-      <MatchOverDialog state={state} onPlayAgain={onNewGame} playerUserIds={playerUserIds} />
+      <MatchOverDialog state={state} onPlayAgain={onNewGame} playerUserIds={playerUserIds} onDismissed={() => setMatchOverDismissed(true)} />
+      {user?.id && <ProfilingPromptDialog userId={user.id} ready={!!state?.finished && matchOverDismissed} />}
+
       {gameSettings.prompt_player_name && <NamePrompt />}
       {modeSelectorOpen && (
         <GameModeSelector
