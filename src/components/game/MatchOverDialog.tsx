@@ -198,7 +198,7 @@ export function MatchOverDialog({ state, onPlayAgain, playerUserIds, onDismissed
 
   return (
     <>
-      <Dialog open={open && !reviewOpen} onOpenChange={(o) => { if (!o) setDismissed(true); }}>
+      <Dialog open={open && !reviewOpen} onOpenChange={(o) => { if (!o) { setDismissed(true); onDismissed?.(); } }}>
 
         <DialogContent className="w-[calc(100vw-1rem)] sm:w-auto max-w-2xl max-h-[92vh] sm:max-h-[90vh] flex flex-col p-3 sm:p-4 gap-2">
           <DialogHeader className="space-y-2">
