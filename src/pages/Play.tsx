@@ -60,6 +60,7 @@ import { PlayerHand } from "@/components/game/PlayerHand";
 import { ScorePanel } from "@/components/game/ScorePanel";
 import { BoardHexPiece } from "@/components/game/BoardHexPiece";
 import { MatchOverDialog } from "@/components/game/MatchOverDialog";
+import ProfilingPromptDialog from "@/components/game/ProfilingPromptDialog";
 
 import { TutorialOverlay, resetTutorial } from "@/components/game/TutorialOverlay";
 // (legacy MultiplayerLobby dialog removed in Batch B — multiplayer now flows
