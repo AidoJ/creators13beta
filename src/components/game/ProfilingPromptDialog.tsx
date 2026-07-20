@@ -44,7 +44,7 @@ export default function ProfilingPromptDialog({ userId, ready }: Props) {
           supabase
             .from("game_settings" as any)
             .select("profiling_prompt_quiz_mastery_threshold, profiling_prompt_games_threshold")
-            .eq("id", "singleton")
+            .eq("id", "global")
             .maybeSingle(),
         ]);
         if (cancelled) return;
