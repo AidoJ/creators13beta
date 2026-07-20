@@ -57,10 +57,10 @@ export function TutorialOverlay() {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && close()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] max-h-[85dvh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl">{s.title}</DialogTitle>
-          <DialogDescription className="text-sm leading-relaxed">{s.body}</DialogDescription>
+          <DialogTitle className="font-display text-base sm:text-xl">{s.title}</DialogTitle>
+          <DialogDescription className="text-[0.7rem] sm:text-sm leading-snug sm:leading-relaxed">{s.body}</DialogDescription>
         </DialogHeader>
         <div className="flex items-center justify-center gap-1 my-2">
           {STEPS.map((_, i) => (
