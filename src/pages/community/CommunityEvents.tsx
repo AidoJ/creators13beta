@@ -250,6 +250,14 @@ function EventTile({ ev, past }: { ev: CommunityEvent; past?: boolean }) {
                 </PopoverContent>
               </Popover>
             )}
+            {ev.promo_link && (
+              <Button size="sm" variant="secondary" asChild className="gap-1">
+                <a href={ev.promo_link} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  {ev.promo_label || "More info"}
+                </a>
+              </Button>
+            )}
           </div>
         )}
       </div>
