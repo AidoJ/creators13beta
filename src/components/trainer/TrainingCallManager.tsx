@@ -224,6 +224,8 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     setDate(""); setTime(""); setEndDate(""); setEndTime(""); setIsMultiDay(false);
     setDaySessions([]);
     setDuration("60"); setZoomLink(""); setRecurrence("none"); setRecurrenceEnd("");
+    setCoverImageUrl(""); setCoverImageFit("cover"); setCoverImagePosition("center");
+    setPromoLink(""); setPromoLabel("");
     setExternalEmails([]); setNewExternalEmail("");
     setTierGrid(emptyTierGrid());
     setBulkInvitedTiers(new Set());
