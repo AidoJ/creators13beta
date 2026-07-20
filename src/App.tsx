@@ -27,6 +27,8 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CardPreview from "./pages/CardPreview";
 import Unsubscribe from "./pages/Unsubscribe";
+import EnrollmentResume from "./pages/EnrollmentResume";
+import EnrollmentRemindersUnsubscribe from "./pages/EnrollmentRemindersUnsubscribe";
 
 import Play from "./pages/Play";
 import PlayDashboard from "./pages/PlayDashboard";
