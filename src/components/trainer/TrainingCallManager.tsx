@@ -251,6 +251,11 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     setRecurrence(call.recurrence_rule || "none");
     setRecurrenceEnd(call.recurrence_end_date || "");
     setIsMultiDay(!!call.is_multi_day);
+    setCoverImageUrl(call.cover_image_url || "");
+    setCoverImageFit((call.cover_image_fit as "cover" | "contain") || "cover");
+    setCoverImagePosition(call.cover_image_position || "center");
+    setPromoLink(call.promo_link || "");
+    setPromoLabel(call.promo_label || "");
 
     const start = new Date(call.starts_at || call.scheduled_at);
     const end = new Date(call.ends_at || new Date(start.getTime() + (call.duration_minutes || 60) * 60000));
