@@ -583,6 +583,98 @@ export type Database = {
         }
         Relationships: []
       }
+      enrollment_recovery_episodes: {
+        Row: {
+          clicked_at: string | null
+          closed_at: string | null
+          closed_reason: string | null
+          completed_at: string | null
+          created_at: string
+          discount_code: string | null
+          emails_sent: number
+          first_email_sent_at: string | null
+          id: string
+          last_email_sent_at: string | null
+          paygate: boolean
+          resumed_at: string | null
+          step_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          clicked_at?: string | null
+          closed_at?: string | null
+          closed_reason?: string | null
+          completed_at?: string | null
+          created_at?: string
+          discount_code?: string | null
+          emails_sent?: number
+          first_email_sent_at?: string | null
+          id?: string
+          last_email_sent_at?: string | null
+          paygate?: boolean
+          resumed_at?: string | null
+          step_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          clicked_at?: string | null
+          closed_at?: string | null
+          closed_reason?: string | null
+          completed_at?: string | null
+          created_at?: string
+          discount_code?: string | null
+          emails_sent?: number
+          first_email_sent_at?: string | null
+          id?: string
+          last_email_sent_at?: string | null
+          paygate?: boolean
+          resumed_at?: string | null
+          step_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      enrollment_recovery_events: {
+        Row: {
+          created_at: string
+          episode_id: string | null
+          event: string
+          id: string
+          metadata: Json
+          step_key: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          episode_id?: string | null
+          event: string
+          id?: string
+          metadata?: Json
+          step_key?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          episode_id?: string | null
+          event?: string
+          id?: string
+          metadata?: Json
+          step_key?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollment_recovery_events_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "enrollment_recovery_episodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       faqs: {
         Row: {
           answer: string
@@ -903,6 +995,10 @@ export type Database = {
           enable_golden_hive: boolean
           enable_sky_creator: boolean
           enable_sky_creature_steal: boolean
+          enrollment_paygate_recovery_hours: number
+          enrollment_recovery_followup_days: number
+          enrollment_recovery_followup_enabled: boolean
+          enrollment_recovery_hours: number
           featured_mode: string | null
           hand_limit: number
           hand_size: number
@@ -974,6 +1070,10 @@ export type Database = {
           enable_golden_hive?: boolean
           enable_sky_creator?: boolean
           enable_sky_creature_steal?: boolean
+          enrollment_paygate_recovery_hours?: number
+          enrollment_recovery_followup_days?: number
+          enrollment_recovery_followup_enabled?: boolean
+          enrollment_recovery_hours?: number
           featured_mode?: string | null
           hand_limit?: number
           hand_size?: number
@@ -1045,6 +1145,10 @@ export type Database = {
           enable_golden_hive?: boolean
           enable_sky_creator?: boolean
           enable_sky_creature_steal?: boolean
+          enrollment_paygate_recovery_hours?: number
+          enrollment_recovery_followup_days?: number
+          enrollment_recovery_followup_enabled?: boolean
+          enrollment_recovery_hours?: number
           featured_mode?: string | null
           hand_limit?: number
           hand_size?: number
@@ -1458,6 +1562,11 @@ export type Database = {
           date_of_birth: string | null
           display_name: string | null
           email: string | null
+          enrollment_recovery_resume_token_expires_at: string | null
+          enrollment_recovery_resume_token_hash: string | null
+          enrollment_reminders_opt_out: boolean
+          enrollment_reminders_opt_out_at: string | null
+          enrollment_reminders_opt_out_token: string | null
           enrollment_step: Database["public"]["Enums"]["enrollment_step"] | null
           first_name: string | null
           gender: string | null
@@ -1466,6 +1575,7 @@ export type Database = {
           id: string
           invitation_code: string
           invited_by_user_id: string | null
+          last_enrollment_activity_at: string | null
           last_name: string | null
           location_label: string | null
           location_lat: number | null
@@ -1518,6 +1628,11 @@ export type Database = {
           date_of_birth?: string | null
           display_name?: string | null
           email?: string | null
+          enrollment_recovery_resume_token_expires_at?: string | null
+          enrollment_recovery_resume_token_hash?: string | null
+          enrollment_reminders_opt_out?: boolean
+          enrollment_reminders_opt_out_at?: string | null
+          enrollment_reminders_opt_out_token?: string | null
           enrollment_step?:
             | Database["public"]["Enums"]["enrollment_step"]
             | null
@@ -1528,6 +1643,7 @@ export type Database = {
           id?: string
           invitation_code?: string
           invited_by_user_id?: string | null
+          last_enrollment_activity_at?: string | null
           last_name?: string | null
           location_label?: string | null
           location_lat?: number | null
@@ -1580,6 +1696,11 @@ export type Database = {
           date_of_birth?: string | null
           display_name?: string | null
           email?: string | null
+          enrollment_recovery_resume_token_expires_at?: string | null
+          enrollment_recovery_resume_token_hash?: string | null
+          enrollment_reminders_opt_out?: boolean
+          enrollment_reminders_opt_out_at?: string | null
+          enrollment_reminders_opt_out_token?: string | null
           enrollment_step?:
             | Database["public"]["Enums"]["enrollment_step"]
             | null
@@ -1590,6 +1711,7 @@ export type Database = {
           id?: string
           invitation_code?: string
           invited_by_user_id?: string | null
+          last_enrollment_activity_at?: string | null
           last_name?: string | null
           location_label?: string | null
           location_lat?: number | null
@@ -2426,6 +2548,14 @@ export type Database = {
         Args: { _comment?: string; _request_id: string }
         Returns: undefined
       }
+      enrollment_reminders_unsubscribe: {
+        Args: { _token: string }
+        Returns: boolean
+      }
+      ensure_enrollment_reminders_opt_out_token: {
+        Args: { _user_id: string }
+        Returns: string
+      }
       ensure_marketing_unsubscribe_token: {
         Args: { _user_id: string }
         Returns: string
@@ -2607,6 +2737,7 @@ export type Database = {
           last_name: string
         }[]
       }
+      mark_enrollment_activity: { Args: never; Returns: undefined }
       mark_invitation_link_clicked: {
         Args: { _token: string }
         Returns: undefined
