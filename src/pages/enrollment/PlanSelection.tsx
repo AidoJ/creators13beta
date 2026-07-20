@@ -335,7 +335,7 @@ export default function PlanSelection() {
 
         {/* ── Path Selector ── */}
         {!urlCaseStudy && (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto mb-10">
+          <div className={cn("grid gap-4 max-w-4xl mx-auto mb-10", isPlayerPath ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3")}>
             <button
               onClick={() => setSignupPath("case_study")}
               className={cn(
