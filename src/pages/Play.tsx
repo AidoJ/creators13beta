@@ -88,6 +88,7 @@ export default function Play() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const [matchOverDismissed, setMatchOverDismissed] = useState(false);
   // Practice rung — set on /play/new?practice=1. While true, the post-game
   // path skips `bump_bot_match_stats` (no pollution of the bot-record panel)
   // and instead bumps `player_progress.practice_games_played`.
