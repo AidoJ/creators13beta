@@ -1603,6 +1603,7 @@ export type Database = {
           project_seek_me_for: string | null
           project_top_skills: string | null
           pronouns: string | null
+          reached_checkout_at: string | null
           shoe_size: string | null
           state: string | null
           stock_avatar: string | null
@@ -1671,6 +1672,7 @@ export type Database = {
           project_seek_me_for?: string | null
           project_top_skills?: string | null
           pronouns?: string | null
+          reached_checkout_at?: string | null
           shoe_size?: string | null
           state?: string | null
           stock_avatar?: string | null
@@ -1739,6 +1741,7 @@ export type Database = {
           project_seek_me_for?: string | null
           project_top_skills?: string | null
           pronouns?: string | null
+          reached_checkout_at?: string | null
           shoe_size?: string | null
           state?: string | null
           stock_avatar?: string | null
