@@ -748,6 +748,11 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       zoom_link: zoomLink.trim() || null,
       recurrence_rule: recurrence,
       recurrence_end_date: recurrenceEnd || null,
+      cover_image_url: coverImageUrl.trim() || null,
+      cover_image_fit: coverImageFit,
+      cover_image_position: coverImagePosition.trim() || "center",
+      promo_link: promoLink.trim() || null,
+      promo_label: promoLabel.trim() || null,
     };
 
     const { error } = await supabase.from("training_calls").update(updatePayload).eq("id", editingCallId);
