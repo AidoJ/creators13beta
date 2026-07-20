@@ -630,7 +630,7 @@ export default function CommunityDashboard() {
         <h1 className="font-display font-normal text-2xl sm:text-3xl md:text-4xl text-gold text-center drop-shadow-sm">
           Who's your Creator Match?
         </h1>
-        {!loading && matches.length > 0 && (
+        {!loading && (
           <section aria-label="Filter community members" className="space-y-3 border-y border-border/70 py-4">
             <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Filter by">
               {([
@@ -683,7 +683,13 @@ export default function CommunityDashboard() {
           <EmptyState code={myCode} onCopy={copyInvite} copied={copied} />
         ) : filteredMatches.length === 0 ? (
           <div className="py-16 text-center space-y-3">
-            <p className="text-muted-foreground">No community members match this filter yet.</p>
+            <p className="text-muted-foreground">
+              No discoverable Creators match this filter yet
+              {filterMode === "month" && featured ? ` — no ${capitaliseTypeName(featured.creator_type)} members are visible in your community right now.` : "."}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Matches only include members who have set their profile discoverable. Try a broader filter, or invite more Creators.
+            </p>
             <Button type="button" variant="outline" onClick={() => setFilterMode("all")}>Show all Creator Types</Button>
           </div>
         ) : view === "map" ? (
