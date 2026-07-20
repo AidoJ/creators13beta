@@ -32,6 +32,11 @@ interface TrainingCall {
   recurrence_end_date: string | null;
   cancelled: boolean;
   created_at: string;
+  cover_image_url?: string | null;
+  cover_image_fit?: "cover" | "contain" | null;
+  cover_image_position?: string | null;
+  promo_link?: string | null;
+  promo_label?: string | null;
 }
 
 interface Invitee {
