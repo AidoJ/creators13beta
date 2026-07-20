@@ -192,8 +192,8 @@ export function LotusProfile({
                 height: `${glyphPx}px`,
                 left: `${pos.x * (px / 100) - glyphPx / 2}px`,
                 top: `${pos.y * (px / 100) - glyphPx / 2}px`,
-                opacity: muted ? 0.6 : 0.95,
-                filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.3))",
+                opacity: muted ? 0.85 : 1,
+                filter: "brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0,0,0,0.55))",
               }}
             />
           </div>
