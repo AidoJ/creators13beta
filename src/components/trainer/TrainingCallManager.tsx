@@ -1675,7 +1675,8 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onEdit, onResend, sen
           </Button>
         </div>
       )}
-
+      </div>
     </div>
   );
 }
+
