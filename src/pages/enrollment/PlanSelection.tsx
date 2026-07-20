@@ -392,7 +392,8 @@ export default function PlanSelection() {
               )}
             </button>
 
-            <button
+            {!isPlayerPath && <button
+
               onClick={() => setSignupPath("player")}
               className={cn(
                 "relative flex flex-col items-center gap-3 rounded-2xl border-2 p-6 text-center transition-all duration-200 overflow-hidden",
