@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import { PasswordStrengthMeter } from "./PasswordStrengthMeter";
 import { signupSchema, type SignupValues } from "./signupValidation";
@@ -11,8 +12,9 @@ export interface SignupFieldsProps {
   submitLabel?: string;
   submitIcon?: "arrow" | "none";
   initial?: Partial<SignupValues>;
-  onSubmit: (values: SignupValues) => void | Promise<void>;
+  onSubmit: (values: SignupValues & { marketingOptIn: boolean }) => void | Promise<void>;
 }
+
 
 /**
  * Shared signup form used by /auth and /enroll/signup. Captures the same five
@@ -35,6 +37,7 @@ export function SignupFields({
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [marketingOptIn, setMarketingOptIn] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   async function handleSubmit(e: React.FormEvent) {
@@ -57,8 +60,9 @@ export function SignupFields({
       return;
     }
     setErrors({});
-    await onSubmit(parsed.data);
+    await onSubmit({ ...parsed.data, marketingOptIn });
   }
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -156,7 +160,19 @@ export function SignupFields({
         {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword}</p>}
       </div>
 
+      <label className="flex items-start gap-2.5 cursor-pointer select-none">
+        <Checkbox
+          checked={marketingOptIn}
+          onCheckedChange={(v) => setMarketingOptIn(v === true)}
+          className="mt-0.5"
+        />
+        <span className="text-sm text-muted-foreground leading-snug">
+          Keep me posted on Creator Types events, tips and offers. You can unsubscribe at any time.
+        </span>
+      </label>
+
       <Button type="submit" size="lg" className="w-full rounded-full" disabled={loading}>
+
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
