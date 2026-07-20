@@ -111,9 +111,12 @@ export default function Signup() {
       last_name: values.lastName,
       phone: values.phone,
       email: values.email,
+      marketing_opt_in: values.marketingOptIn,
+      marketing_opt_in_at: values.marketingOptIn ? new Date().toISOString() : null,
     };
     if (invitedBy) profilePatch.invited_by_user_id = invitedBy;
     await supabase.from("profiles").upsert(profilePatch as never, { onConflict: "user_id" });
+
 
     // Create subscription/role records via edge function (handles all paths).
     const priceId = tierInfo.stripe?.price_id || null;
