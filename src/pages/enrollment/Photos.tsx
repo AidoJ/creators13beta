@@ -614,6 +614,15 @@ export default function Photos() {
               I Understand — Start Photos <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             <div>
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard")}
+                className="text-sm text-muted-foreground underline underline-offset-2 hover:text-primary transition-colors"
+              >
+                Skip for now — I'll upload photos later
+              </button>
+            </div>
+            <div>
               <a
                 href="/privacy-policy"
                 target="_blank"
