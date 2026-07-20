@@ -465,12 +465,34 @@ export default function PlanSelection() {
                   </div>
                 )}
                 {!lookingUpCode && practitionerCode.trim() && !practitionerName && (
-                  <p className="text-[11px] text-destructive mt-1.5">No practitioner found with this code.</p>
+                  <div className="mt-1.5 space-y-1">
+                    <p className="text-[11px] text-destructive">No practitioner found with this code.</p>
+                    <button
+                      type="button"
+                      onClick={() => { setSignupPath("paying"); setPractitionerCode(""); setSelectedTier(null); }}
+                      className="text-[11px] font-semibold text-primary hover:underline"
+                    >
+                      Get profiled with a certified practitioner →
+                    </button>
+                  </div>
                 )}
+              </div>
+              <div className="mt-4 pt-4 border-t border-primary/20 text-center">
+                <p className="text-[11px] text-muted-foreground">
+                  Don't have a code? Case-study profiling is by practitioner invitation only.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setSignupPath("paying"); setPractitionerCode(""); setSelectedTier(null); }}
+                  className="mt-1 text-xs font-semibold text-primary hover:underline"
+                >
+                  Get profiled with a certified practitioner →
+                </button>
               </div>
             </div>
           </div>
         )}
+
 
         {/* ── Paying Client: tier selection ── */}
         {signupPath === "paying" && (
