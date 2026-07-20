@@ -15,6 +15,7 @@ import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
 import DiscountCodesCard from "@/components/dashboard/DiscountCodesCard";
+import ProfilingJourneyBlock from "@/components/dashboard/ProfilingJourneyBlock";
 
 import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
 import CreatorsSeenPrompt from "@/components/dashboard/CreatorsSeenPrompt";
@@ -211,6 +212,16 @@ export default function Dashboard() {
 
           <section className="pt-6 mt-4 border-t border-dashed border-border space-y-5">
             <p className="text-xs uppercase tracking-widest text-primary font-semibold">Your profile</p>
+
+            {user && (
+              <ProfilingJourneyBlock
+                userId={user.id}
+                isPlayerPath={isPlayerOnly}
+                isCaseStudy={isCaseStudySubject}
+                isPaidTier={isPaidTier}
+                creatorTypes={creatorTypes}
+              />
+            )}
 
             {/* Two-column layout */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

@@ -6,6 +6,7 @@ import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 
 import PlayerProfileDiscountCTA from "@/components/dashboard/PlayerProfileDiscountCTA";
 import DiscountCodesCard from "@/components/dashboard/DiscountCodesCard";
+import ProfilingJourneyBlock from "@/components/dashboard/ProfilingJourneyBlock";
 import CreatorsSeenPrompt from "@/components/dashboard/CreatorsSeenPrompt";
 import PracticeRungCard from "@/components/dashboard/game/PracticeRungCard";
 import QuizStatsCard from "@/components/dashboard/QuizStatsCard";
@@ -44,30 +45,20 @@ export default function PlayerDashboard({ userId, email, firstName, onSignOut }:
           <h1 className="font-display text-2xl text-foreground">Welcome, {firstName}.</h1>
         )}
 
-        {/* Once the milestone profiling prompt has been dismissed, the discount
-            card takes over as the permanent memory — top of dashboard, milestone
-            copy — so the offer isn't forgotten. */}
-        {promptDismissed && (
-          <div className="rounded-xl border-2 border-primary/40 bg-primary/5 p-4 space-y-3">
-            <div>
-              <p className="text-sm font-display font-bold text-foreground">
-                Your profiling discount is waiting
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                You unlocked <strong className="text-foreground">20% off</strong> your
-                profiling assessment. Get profiled with a certified practitioner whenever
-                you're ready.
-              </p>
-            </div>
-            <DiscountCodesCard userId={userId} />
-            <button
-              onClick={() => navigate("/enroll?upgrade=true")}
-              className="text-xs font-semibold text-primary hover:underline"
-            >
-              Explore profiling →
-            </button>
-          </div>
-        )}
+        {/* The profiling journey block replaces the ad-hoc "discount waiting"
+            card as the single, always-visible enrolment-status surface for
+            player-path users. It renders the discovery framing + one-tap
+            route to the two-option chooser, and surfaces any active discount
+            code inline. Funnel events (shown/tapped) are logged inside the
+            block for surface-conversion comparison against the milestone
+            dialog. */}
+        <ProfilingJourneyBlock
+          userId={userId}
+          isPlayerPath={true}
+          isCaseStudy={false}
+          isPaidTier={false}
+          creatorTypes={[]}
+        />
 
         {/* Section teasers — Play & Community surfaces without duplicating
             their content. Matches the paid-tier Me page for nav consistency. */}
