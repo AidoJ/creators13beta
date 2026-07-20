@@ -32,9 +32,9 @@ export default function CommunitySettings() {
   const [bioIntriguing, setBioIntriguing] = useState("");
   const [primaryType, setPrimaryType] = useState<string | null>(null);
   const [ctSource, setCtSource] = useState<string | null>(null);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
   const [hadJoinedAt, setHadJoinedAt] = useState(false);
-  const [acceptsMessages, setAcceptsMessages] = useState(false);
+  const [acceptsMessages, setAcceptsMessages] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [hideAvatar, setHideAvatar] = useState(false);
