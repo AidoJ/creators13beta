@@ -104,7 +104,10 @@ export function LotusProfile({
     const fills: Partial<Record<PetalKey, string>> = {};
     (Object.keys(slots) as CardinalKey[]).forEach((key) => {
       const slot = slots[key];
-      if (slot) fills[key] = petalColor(slot.type);
+      if (!slot) return;
+      // Self-guessed types get a neutral grey petal so other players can see
+      // this is a self-selected guess, not a practitioner-verified type.
+      fills[key] = slot.source === "self_selected" ? "#c9cbd1" : petalColor(slot.type);
     });
     return fills;
   }, [slots]);

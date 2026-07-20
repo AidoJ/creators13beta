@@ -9,11 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Leaf, ArrowLeft, Check, Upload, User as UserIcon } from "lucide-react";
+import { Leaf, ArrowLeft, Check, Upload, User as UserIcon, Info } from "lucide-react";
 import { CREATOR_TYPE_NAMES, CREATOR_TYPE_COLORS } from "@/lib/creatorTypes";
+import { CREATOR_TYPE_GLYPHS } from "@/lib/game/glyphs";
 import { resolveAvatarUrl, avatarStorageKey, stockAvatarUrl, PEOPLE_STOCK_AVATARS } from "@/lib/avatar";
 import type { ContactChannels } from "@/lib/contacts";
 import { PlacesAutocompleteInput } from "@/components/community/PlacesAutocompleteInput";
+import CreatorCardInfoPopup from "@/components/game/cards/CreatorCardInfoPopup";
 
 export default function CommunitySettings() {
   const { user, loading: authLoading } = useAuth();
@@ -37,6 +39,7 @@ export default function CommunitySettings() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [hideAvatar, setHideAvatar] = useState(false);
   const [stockAvatar, setStockAvatar] = useState<string | null>(null);
+  const [infoType, setInfoType] = useState<string | null>(null);
 
   // Batch C — contact preferences
   const [openToContact, setOpenToContact] = useState(false);
@@ -383,35 +386,68 @@ export default function CommunitySettings() {
           </div>
         </section>
 
+        {!creatorTypeLocked && (
         <section className="bg-card border border-border rounded-2xl p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display font-semibold text-lg">Creator Type</h2>
-            {creatorTypeLocked && (
-              <span className="text-xs text-muted-foreground">Locked by practitioner</span>
-            )}
+          <div>
+            <h2 className="font-display font-semibold text-lg">Guess your Creator Type</h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              A fun, unverified guess — tap <Info className="inline h-3 w-3 mx-0.5" /> to explore each type, then tick the one you feel closest to. Others will see this as a greyed symbol on your lotus (a practitioner-assigned type replaces it in full colour).
+            </p>
           </div>
           <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
             {CREATOR_TYPE_NAMES.map((name) => {
               const key = name.toLowerCase();
               const selected = primaryType === key;
+              const color = CREATOR_TYPE_COLORS[key];
+              const glyph = CREATOR_TYPE_GLYPHS[name];
               return (
-                <button
-                  key={name}
-                  type="button"
-                  disabled={creatorTypeLocked}
-                  onClick={() => setPrimaryType(key)}
-                  className={`relative aspect-square rounded-lg border-2 flex items-center justify-center transition-all text-xs font-display font-bold ${
-                    selected ? "border-foreground scale-105" : "border-border"
-                  } ${creatorTypeLocked ? "opacity-60 cursor-not-allowed" : "hover:border-foreground/40"}`}
-                  style={{ backgroundColor: CREATOR_TYPE_COLORS[key] }}
-                >
-                  {selected && <Check className="absolute top-0.5 right-0.5 h-3 w-3 text-foreground" />}
-                  {name}
-                </button>
+                <div key={name} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setPrimaryType(selected ? null : key)}
+                    aria-label={`${name} — ${selected ? "selected" : "select"}`}
+                    className={`relative aspect-square w-full rounded-lg border-2 flex flex-col items-center justify-center gap-1 p-1 transition-all ${
+                      selected ? "border-foreground scale-105 shadow-sm" : "border-border hover:border-foreground/40"
+                    }`}
+                    style={{ backgroundColor: `${color}22` }}
+                  >
+                    {glyph && (
+                      <img
+                        src={glyph}
+                        alt=""
+                        aria-hidden
+                        draggable={false}
+                        className="w-[70%] h-[70%] object-contain"
+                      />
+                    )}
+                    <span className="text-[10px] font-display font-bold leading-none" style={{ color }}>{name}</span>
+                    {selected && (
+                      <span
+                        className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-foreground text-background flex items-center justify-center shadow"
+                        aria-hidden
+                      >
+                        <Check className="h-3 w-3" />
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setInfoType(name); }}
+                    aria-label={`More about ${name}`}
+                    className="absolute top-1 left-1 h-5 w-5 rounded-full bg-white/90 hover:bg-white border border-border flex items-center justify-center shadow-sm"
+                  >
+                    <Info className="h-3 w-3 text-foreground" />
+                  </button>
+                </div>
               );
             })}
           </div>
         </section>
+        )}
+
+        {infoType && (
+          <CreatorCardInfoPopup typeName={infoType} onClose={() => setInfoType(null)} />
+        )}
 
         {/* Contact Preferences moved to /settings/contact (Me → Settings).
             Account-level handles do not belong under Community settings. */}
