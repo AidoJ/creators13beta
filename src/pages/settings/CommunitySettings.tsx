@@ -9,11 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Leaf, ArrowLeft, Check, Upload, User as UserIcon } from "lucide-react";
+import { Leaf, ArrowLeft, Check, Upload, User as UserIcon, Info } from "lucide-react";
 import { CREATOR_TYPE_NAMES, CREATOR_TYPE_COLORS } from "@/lib/creatorTypes";
+import { CREATOR_TYPE_GLYPHS } from "@/lib/game/glyphs";
 import { resolveAvatarUrl, avatarStorageKey, stockAvatarUrl, PEOPLE_STOCK_AVATARS } from "@/lib/avatar";
 import type { ContactChannels } from "@/lib/contacts";
 import { PlacesAutocompleteInput } from "@/components/community/PlacesAutocompleteInput";
+import CreatorCardInfoPopup from "@/components/game/cards/CreatorCardInfoPopup";
 
 export default function CommunitySettings() {
   const { user, loading: authLoading } = useAuth();
