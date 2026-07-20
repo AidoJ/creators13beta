@@ -2424,6 +2424,10 @@ export type Database = {
       }
     }
     Functions: {
+      _bump_enrollment_activity: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       accept_game_invite: {
         Args: { _guest_name: string; _token: string }
         Returns: string
