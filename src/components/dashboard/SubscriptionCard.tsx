@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { TIERS } from "@/lib/tiers";
 import type { TierKey } from "@/lib/tiers";
-import { CreditCard, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowRight, CreditCard, ExternalLink, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { loadEnrollmentState } from "@/lib/enrollmentGate";
+import { getNextEnrollmentStep, type EnrollmentStep } from "@/lib/enrollmentSteps";
+
 
 interface SubData {
   tier: TierKey;
