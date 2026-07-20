@@ -61,7 +61,9 @@ export default function Signup() {
     email: string;
     phone: string;
     password: string;
+    marketingOptIn: boolean;
   }) {
+
     setLoading(true);
     const appOrigin = getAppOrigin();
     const verifyParams = new URLSearchParams({ tier, billing });
