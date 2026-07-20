@@ -157,9 +157,12 @@ export default function Auth() {
                     last_name: values.lastName,
                     phone: values.phone,
                     email: values.email,
+                    marketing_opt_in: values.marketingOptIn,
+                    marketing_opt_in_at: values.marketingOptIn ? new Date().toISOString() : null,
                   };
                   if (invitedBy) patch.invited_by_user_id = invitedBy;
                   await supabase.from("profiles").upsert(patch as never, { onConflict: "user_id" });
+
                 }
                 setLoading(false);
                 setSignupSuccessEmail(values.email);
