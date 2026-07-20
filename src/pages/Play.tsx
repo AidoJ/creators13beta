@@ -60,6 +60,7 @@ import { PlayerHand } from "@/components/game/PlayerHand";
 import { ScorePanel } from "@/components/game/ScorePanel";
 import { BoardHexPiece } from "@/components/game/BoardHexPiece";
 import { MatchOverDialog } from "@/components/game/MatchOverDialog";
+import ProfilingPromptDialog from "@/components/game/ProfilingPromptDialog";
 
 import { TutorialOverlay, resetTutorial } from "@/components/game/TutorialOverlay";
 // (legacy MultiplayerLobby dialog removed in Batch B — multiplayer now flows
@@ -87,6 +88,7 @@ export default function Play() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const [matchOverDismissed, setMatchOverDismissed] = useState(false);
   // Practice rung — set on /play/new?practice=1. While true, the post-game
   // path skips `bump_bot_match_stats` (no pollution of the bot-record panel)
   // and instead bumps `player_progress.practice_games_played`.
@@ -2265,7 +2267,9 @@ export default function Play() {
 
 
 
-      <MatchOverDialog state={state} onPlayAgain={onNewGame} playerUserIds={playerUserIds} />
+      <MatchOverDialog state={state} onPlayAgain={onNewGame} playerUserIds={playerUserIds} onDismissed={() => setMatchOverDismissed(true)} />
+      {user?.id && <ProfilingPromptDialog userId={user.id} ready={!!state?.finished && matchOverDismissed} />}
+
       {gameSettings.prompt_player_name && <NamePrompt />}
       {modeSelectorOpen && (
         <GameModeSelector

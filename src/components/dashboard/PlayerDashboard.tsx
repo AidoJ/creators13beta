@@ -22,15 +22,17 @@ interface Props {
 export default function PlayerDashboard({ userId, email, firstName, onSignOut }: Props) {
   const navigate = useNavigate();
   const [profileComplete, setProfileComplete] = useState(false);
+  const [promptDismissed, setPromptDismissed] = useState(false);
 
   useEffect(() => {
     (async () => {
       const { data: prof } = await supabase
         .from("profiles")
-        .select("profile_completed_at")
+        .select("profile_completed_at, profiling_prompt_dismissed_at")
         .eq("user_id", userId)
         .maybeSingle();
       setProfileComplete(!!prof?.profile_completed_at);
+      setPromptDismissed(!!(prof as any)?.profiling_prompt_dismissed_at);
     })();
   }, [userId]);
 
@@ -40,6 +42,31 @@ export default function PlayerDashboard({ userId, email, firstName, onSignOut }:
       <main className="container mx-auto px-4 py-8 max-w-5xl space-y-5">
         {firstName && (
           <h1 className="font-display text-2xl text-foreground">Welcome, {firstName}.</h1>
+        )}
+
+        {/* Once the milestone profiling prompt has been dismissed, the discount
+            card takes over as the permanent memory — top of dashboard, milestone
+            copy — so the offer isn't forgotten. */}
+        {promptDismissed && (
+          <div className="rounded-xl border-2 border-primary/40 bg-primary/5 p-4 space-y-3">
+            <div>
+              <p className="text-sm font-display font-bold text-foreground">
+                Your profiling discount is waiting
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                You unlocked <strong className="text-foreground">20% off</strong> your
+                profiling assessment. Get profiled with a certified practitioner whenever
+                you're ready.
+              </p>
+            </div>
+            <DiscountCodesCard userId={userId} />
+            <button
+              onClick={() => navigate("/enroll?upgrade=true")}
+              className="text-xs font-semibold text-primary hover:underline"
+            >
+              Explore profiling →
+            </button>
+          </div>
         )}
 
         {/* Section teasers — Play & Community surfaces without duplicating
@@ -84,7 +111,7 @@ export default function PlayerDashboard({ userId, email, firstName, onSignOut }:
         <PracticeRungCard userId={userId} />
         <CreatorsSeenPrompt userId={userId} />
         <QuizStatsCard userId={userId} />
-        <DiscountCodesCard userId={userId} />
+        {!promptDismissed && <DiscountCodesCard userId={userId} />}
 
 
         {/* Account settings */}
