@@ -19,6 +19,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
+  const [signupSuccessEmail, setSignupSuccessEmail] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -59,7 +60,34 @@ export default function Auth() {
         </div>
 
         <div className="bg-card rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
-          {isLogin ? (
+          {signupSuccessEmail ? (
+            <div className="space-y-5 text-center">
+              <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
+                <Leaf className="h-7 w-7 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-display font-semibold text-foreground">Check your email</h2>
+                <p className="text-sm text-muted-foreground mt-2">
+                  We've sent a verification link to <span className="font-medium text-foreground">{signupSuccessEmail}</span>.
+                  Click the link in that email to activate your account, then sign in.
+                </p>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Can't find it? Check your spam folder. You can safely close this page.
+                </p>
+              </div>
+              <Button
+                type="button"
+                className="w-full rounded-full"
+                onClick={() => {
+                  setSignupSuccessEmail(null);
+                  setIsLogin(true);
+                  setEmail(signupSuccessEmail);
+                }}
+              >
+                Back to sign in
+              </Button>
+            </div>
+          ) : isLogin ? (
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -134,6 +162,7 @@ export default function Auth() {
                   await supabase.from("profiles").upsert(patch as never, { onConflict: "user_id" });
                 }
                 setLoading(false);
+                setSignupSuccessEmail(values.email);
                 toast({
                   title: "Check your email",
                   description: "We've sent you a verification link. Please confirm your email to continue.",
@@ -142,14 +171,16 @@ export default function Auth() {
             />
           )}
 
-          <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">
-              {isLogin ? "Don't have an account? " : "Already have an account? "}
-            </span>
-            <button onClick={() => setIsLogin(!isLogin)} className="text-primary font-medium hover:underline">
-              {isLogin ? "Sign up" : "Sign in"}
-            </button>
-          </div>
+          {!signupSuccessEmail && (
+            <div className="mt-6 text-center text-sm">
+              <span className="text-muted-foreground">
+                {isLogin ? "Don't have an account? " : "Already have an account? "}
+              </span>
+              <button onClick={() => setIsLogin(!isLogin)} className="text-primary font-medium hover:underline">
+                {isLogin ? "Sign up" : "Sign in"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
