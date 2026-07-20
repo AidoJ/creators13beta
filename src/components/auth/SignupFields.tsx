@@ -160,7 +160,19 @@ export function SignupFields({
         {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword}</p>}
       </div>
 
+      <label className="flex items-start gap-2.5 cursor-pointer select-none">
+        <Checkbox
+          checked={marketingOptIn}
+          onCheckedChange={(v) => setMarketingOptIn(v === true)}
+          className="mt-0.5"
+        />
+        <span className="text-sm text-muted-foreground leading-snug">
+          Keep me posted on Creator Types events, tips and offers. You can unsubscribe at any time.
+        </span>
+      </label>
+
       <Button type="submit" size="lg" className="w-full rounded-full" disabled={loading}>
+
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
