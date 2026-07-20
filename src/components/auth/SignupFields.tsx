@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import { PasswordStrengthMeter } from "./PasswordStrengthMeter";
 import { signupSchema, type SignupValues } from "./signupValidation";
@@ -11,8 +12,9 @@ export interface SignupFieldsProps {
   submitLabel?: string;
   submitIcon?: "arrow" | "none";
   initial?: Partial<SignupValues>;
-  onSubmit: (values: SignupValues) => void | Promise<void>;
+  onSubmit: (values: SignupValues & { marketingOptIn: boolean }) => void | Promise<void>;
 }
+
 
 /**
  * Shared signup form used by /auth and /enroll/signup. Captures the same five
