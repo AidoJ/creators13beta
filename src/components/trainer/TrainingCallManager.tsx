@@ -472,6 +472,11 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       duration_minutes: Math.round((end.getTime()-start.getTime())/60000),
       zoom_link: zoomLink.trim() || null,
       recurrence_rule: recurrence,
+      cover_image_url: coverImageUrl.trim() || null,
+      cover_image_fit: coverImageFit,
+      cover_image_position: coverImagePosition.trim() || "center",
+      promo_link: promoLink.trim() || null,
+      promo_label: promoLabel.trim() || null,
       created_by: user.id,
     });
 
