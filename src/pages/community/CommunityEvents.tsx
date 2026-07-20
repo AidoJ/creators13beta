@@ -9,6 +9,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ArrowLeft, Calendar, Video, Clock, Lock, CalendarPlus, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { sanitizeEventHtml } from "@/components/ui/rich-text-editor";
+import { EventCover } from "@/components/events/EventCover";
+
 
 interface EventSession {
   date: string;
