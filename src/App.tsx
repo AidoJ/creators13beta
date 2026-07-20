@@ -118,6 +118,8 @@ const App = () => (
                 <Route path="/admin" element={<ProtectedRoute><RoleGuard allowedRoles={["trainer", "admin"]}><AdminDashboard /></RoleGuard></ProtectedRoute>} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
+                <Route path="/unsubscribe" element={<Unsubscribe />} />
+
                 <Route path="/card-preview" element={<CardPreview />} />
                 <Route path="/play" element={<ProtectedRoute><RequiresCompletedProfile><PlayDashboard /></RequiresCompletedProfile></ProtectedRoute>} />
                 <Route path="/play/new" element={<RequiresCompletedProfile><ErrorBoundary><Play /></ErrorBoundary></RequiresCompletedProfile>} />
