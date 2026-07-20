@@ -508,6 +508,73 @@ export default function CommunityDashboard() {
 
             <TooltipProvider delayDuration={150}>
               <nav aria-label="Community quick nav" className="flex flex-col items-center gap-3">
+                {/* Filters — gold circular button with funnel icon, opens compact popover */}
+                <Popover>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label="Filter community members"
+                          className="relative h-14 w-14 rounded-full flex items-center justify-center bg-card/80 backdrop-blur transition-transform hover:scale-110 active:scale-95"
+                          style={{ border: `2.5px solid #c9a84c`, color: "#c9a84c" }}
+                        >
+                          <SlidersHorizontal className="h-7 w-7" strokeWidth={2.25} style={{ color: "#c9a84c" }} />
+                          {filterMode !== "month" && (
+                            <span
+                              aria-hidden
+                              className="absolute -top-1 -right-1 h-3 w-3 rounded-full shadow"
+                              style={{ backgroundColor: "#c9a84c" }}
+                            />
+                          )}
+                        </button>
+                      </PopoverTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">Filters</TooltipContent>
+                  </Tooltip>
+                  <PopoverContent side="right" align="start" className="w-64 p-3 space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Filter by</p>
+                    <div className="grid grid-cols-2 gap-1.5" role="group" aria-label="Filter by">
+                      {([
+                        ["month", "Month"],
+                        ["family", "Family"],
+                        ["element", "Element"],
+                        ["role", "Role"],
+                        ["type", "Type"],
+                        ["all", "All"],
+                      ] as Array<[FilterMode, string]>).map(([mode, label]) => (
+                        <Button
+                          key={mode}
+                          type="button"
+                          size="sm"
+                          variant={filterMode === mode ? "default" : "outline"}
+                          onClick={() => setFilterMode(mode)}
+                          aria-pressed={filterMode === mode}
+                          className="h-8 text-xs px-2"
+                        >
+                          {label}
+                        </Button>
+                      ))}
+                    </div>
+                    {filterOptions.length > 0 && (
+                      <div>
+                        <label className="sr-only" htmlFor="community-filter-value">Choose filter value</label>
+                        <select
+                          id="community-filter-value"
+                          value={filterValue}
+                          onChange={(event) => setFilterValue(event.target.value)}
+                          className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm text-foreground"
+                        >
+                          {filterOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                        </select>
+                      </div>
+                    )}
+                    <p className="text-[11px] text-muted-foreground">
+                      {filteredMatches.length} of {matches.length} shown
+                    </p>
+                  </PopoverContent>
+                </Popover>
+
                 {[
                   { label: "Events", img: eventsIcon.url, soon: false, onClick: () => navigate("/community/events"), badge: 0 },
                   {
