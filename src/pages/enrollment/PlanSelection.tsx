@@ -55,6 +55,7 @@ export default function PlanSelection() {
   const [lookingUpCode, setLookingUpCode] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
+  const [isPlayerPath, setIsPlayerPath] = useState(false);
   const caseStudyRef = useRef<HTMLDivElement>(null);
 
   const isCaseStudy = signupPath === "case_study";
@@ -125,22 +126,28 @@ export default function PlanSelection() {
     return () => { cancelled = true; };
   }, [user, urlCaseStudy, urlInviteToken, signingOut]);
 
-  // Detect if a signed-in user is staff so we can show a helpful banner
+  // Detect if a signed-in user is staff so we can show a helpful banner.
+  // Also detect if they signed up on the game-only "player" path so we can
+  // hide the third "Just Here for the Game" chooser (they're already here).
   useEffect(() => {
     if (!user) {
       setIsStaff(false);
+      setIsPlayerPath(false);
       return;
     }
     let cancelled = false;
     (async () => {
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id);
+      const [{ data: roles }, { data: sub }] = await Promise.all([
+        supabase.from("user_roles").select("role").eq("user_id", user.id),
+        supabase.from("subscriptions").select("signup_path").eq("user_id", user.id).maybeSingle(),
+      ]);
       const staff = (roles || []).some((r: any) =>
         ["practitioner", "trainee", "trainer", "admin"].includes(r.role)
       );
-      if (!cancelled) setIsStaff(staff);
+      if (!cancelled) {
+        setIsStaff(staff);
+        setIsPlayerPath((sub as any)?.signup_path === "player");
+      }
     })();
     return () => { cancelled = true; };
   }, [user]);
@@ -317,18 +324,21 @@ export default function PlanSelection() {
 
         <div className="text-center mb-10">
           <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-3">
-            {urlCaseStudy ? "Your Case Study Invitation" : "How Are You Joining?"}
+            {urlCaseStudy ? "Your Case Study Invitation" : isPlayerPath ? "Explore Profiling" : "How Are You Joining?"}
           </h1>
           <p className="text-muted-foreground max-w-lg mx-auto">
             {urlCaseStudy
               ? "You've been invited to participate as a case study. Review your plan below and continue."
+              : isPlayerPath
+              ? "Ready to go deeper than the game? Choose how you'd like to be profiled."
               : "Select how you'd like to begin your Creator Types journey."}
           </p>
         </div>
 
+
         {/* ── Path Selector ── */}
         {!urlCaseStudy && (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto mb-10">
+          <div className={cn("grid gap-4 max-w-4xl mx-auto mb-10", isPlayerPath ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3")}>
             <button
               onClick={() => setSignupPath("case_study")}
               className={cn(
@@ -385,7 +395,8 @@ export default function PlanSelection() {
               )}
             </button>
 
-            <button
+            {!isPlayerPath && <button
+
               onClick={() => setSignupPath("player")}
               className={cn(
                 "relative flex flex-col items-center gap-3 rounded-2xl border-2 p-6 text-center transition-all duration-200 overflow-hidden",
@@ -411,7 +422,8 @@ export default function PlanSelection() {
                   <Check className="h-4 w-4" />
                 </div>
               )}
-            </button>
+            </button>}
+
           </div>
         )}
 
@@ -453,12 +465,34 @@ export default function PlanSelection() {
                   </div>
                 )}
                 {!lookingUpCode && practitionerCode.trim() && !practitionerName && (
-                  <p className="text-[11px] text-destructive mt-1.5">No practitioner found with this code.</p>
+                  <div className="mt-1.5 space-y-1">
+                    <p className="text-[11px] text-destructive">No practitioner found with this code.</p>
+                    <button
+                      type="button"
+                      onClick={() => { setSignupPath("paying"); setPractitionerCode(""); setSelectedTier(null); }}
+                      className="text-[11px] font-semibold text-primary hover:underline"
+                    >
+                      Get profiled with a certified practitioner →
+                    </button>
+                  </div>
                 )}
+              </div>
+              <div className="mt-4 pt-4 border-t border-primary/20 text-center">
+                <p className="text-[11px] text-muted-foreground">
+                  Don't have a code? Case-study profiling is by practitioner invitation only.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setSignupPath("paying"); setPractitionerCode(""); setSelectedTier(null); }}
+                  className="mt-1 text-xs font-semibold text-primary hover:underline"
+                >
+                  Get profiled with a certified practitioner →
+                </button>
               </div>
             </div>
           </div>
         )}
+
 
         {/* ── Paying Client: tier selection ── */}
         {signupPath === "paying" && (
