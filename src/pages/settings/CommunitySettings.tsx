@@ -32,9 +32,9 @@ export default function CommunitySettings() {
   const [bioIntriguing, setBioIntriguing] = useState("");
   const [primaryType, setPrimaryType] = useState<string | null>(null);
   const [ctSource, setCtSource] = useState<string | null>(null);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
   const [hadJoinedAt, setHadJoinedAt] = useState(false);
-  const [acceptsMessages, setAcceptsMessages] = useState(false);
+  const [acceptsMessages, setAcceptsMessages] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [hideAvatar, setHideAvatar] = useState(false);
@@ -80,10 +80,10 @@ export default function CommunitySettings() {
         setBioSuper(p.bio_superpower ?? "");
         setBioWhere(p.bio_where_i_live ?? "");
         setBioIntriguing(p.bio_intriguing ?? "");
-        setVisible(!!p.community_visible);
+        setVisible(p.community_visible !== false);
         setHadJoinedAt(!!p.community_joined_at);
         const prefs = (p.member_preferences as Record<string, unknown>) ?? {};
-        setAcceptsMessages(prefs?.accepts_messages === true);
+        setAcceptsMessages(prefs?.accepts_messages !== false);
         setHideAvatar(!!(p as any).hide_avatar);
         setStockAvatar(((p as any).stock_avatar as string | null) ?? null);
         if (p.avatar_url) {
