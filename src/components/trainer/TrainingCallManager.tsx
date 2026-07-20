@@ -1506,7 +1506,7 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onEdit, onResend, sen
             </DropdownMenu>
           )}
         </div>
-      </div>
+
 
       {/* Cancel confirmation */}
       <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
