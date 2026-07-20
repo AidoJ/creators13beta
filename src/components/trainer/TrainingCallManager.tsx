@@ -936,6 +936,56 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
               <RichTextEditor value={description} onChange={setDescription} placeholder="Agenda, notes, images, links…" minHeight={160} />
             </div>
 
+            {/* Cover image — sized to the community tile panel */}
+            <div className="sm:col-span-2 rounded-lg border border-border bg-muted/20 p-3 space-y-2">
+              <p className="text-xs font-semibold text-foreground">Cover image (community tile)</p>
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_140px] gap-2">
+                <Input value={coverImageUrl} onChange={e => setCoverImageUrl(e.target.value)} placeholder="https://…/cover.jpg" />
+                <Select value={coverImageFit} onValueChange={(v) => setCoverImageFit(v as "cover" | "contain")}>
+                  <SelectTrigger><SelectValue placeholder="Fit" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cover">Fill (crop)</SelectItem>
+                    <SelectItem value="contain">Fit (letterbox)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={coverImagePosition} onValueChange={setCoverImagePosition}>
+                  <SelectTrigger><SelectValue placeholder="Focus" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="center">Center</SelectItem>
+                    <SelectItem value="top">Top</SelectItem>
+                    <SelectItem value="bottom">Bottom</SelectItem>
+                    <SelectItem value="left">Left</SelectItem>
+                    <SelectItem value="right">Right</SelectItem>
+                    <SelectItem value="top left">Top-left</SelectItem>
+                    <SelectItem value="top right">Top-right</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {coverImageUrl && (
+                <div className="rounded-md overflow-hidden border border-border max-w-sm">
+                  <div className="relative aspect-[16/10] w-full bg-muted">
+                    <img
+                      src={coverImageUrl}
+                      alt=""
+                      className={`absolute inset-0 h-full w-full ${coverImageFit === "contain" ? "object-contain" : "object-cover"}`}
+                      style={{ objectPosition: coverImagePosition }}
+                    />
+                  </div>
+                </div>
+              )}
+              <p className="text-[10px] text-muted-foreground">Tile aspect is 16:10. If no cover image is set, the first image in the description is used, otherwise a tier-tinted gradient is shown.</p>
+            </div>
+
+            {/* Promo / external link */}
+            <div className="sm:col-span-2 rounded-lg border border-border bg-muted/20 p-3 space-y-2">
+              <p className="text-xs font-semibold text-foreground">Promotional / external link (optional)</p>
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-2">
+                <Input value={promoLink} onChange={e => setPromoLink(e.target.value)} placeholder="https://facebook.com/events/… or ticket page" />
+                <Input value={promoLabel} onChange={e => setPromoLabel(e.target.value)} placeholder="Button label (e.g. Get tickets)" />
+              </div>
+              <p className="text-[10px] text-muted-foreground">Shown on the community tile as a button — use for ticket agents, Facebook events, or landing pages.</p>
+            </div>
+
             <div className="sm:col-span-2 flex items-center gap-2 pt-1">
               <Checkbox id="multi-day" checked={isMultiDay} onCheckedChange={(v) => setIsMultiDay(v === true)} />
               <Label htmlFor="multi-day" className="text-xs cursor-pointer">Multi-day event (spans more than one day)</Label>
