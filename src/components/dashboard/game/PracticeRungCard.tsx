@@ -66,16 +66,16 @@ export default function PracticeRungCard({ userId }: Props) {
   }
 
   return (
-    <Card className="p-5 border-secondary/40 bg-gradient-to-br from-secondary/10 to-primary/5">
-      <div className="flex items-start gap-4">
-        <div className="w-11 h-11 rounded-xl bg-secondary/15 flex items-center justify-center flex-shrink-0">
+    <Card className="p-4 sm:p-5 border-secondary/40 bg-gradient-to-br from-secondary/10 to-primary/5 overflow-hidden">
+      <div className="flex items-start gap-3 sm:gap-4">
+        <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-secondary/15 flex items-center justify-center flex-shrink-0">
           <Bot className="h-5 w-5 text-secondary-foreground" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm sm:text-base font-display font-semibold text-foreground leading-tight">
+          <p className="text-[0.8rem] sm:text-base font-display font-semibold text-foreground leading-tight break-words">
             Warm up against the bot — no points at stake.
           </p>
-          <p className="text-xs text-muted-foreground mt-1.5">
+          <p className="text-[0.65rem] sm:text-xs text-muted-foreground mt-1.5 break-words">
             Play {PRACTICE_TARGET} quick practice games before your first live match. These don't
             affect your points, ELO, or win-loss record.
           </p>
@@ -83,17 +83,19 @@ export default function PracticeRungCard({ userId }: Props) {
             <Button
               size="sm"
               onClick={() => navigate("/play/new?practice=1")}
-              className="bg-primary text-primary-foreground"
+              className="bg-primary text-primary-foreground max-w-full whitespace-normal h-auto py-2 text-left"
             >
-              {played === 0 ? "Start practice" : `Continue practice (${remaining} left)`}
-              <ArrowRight className="ml-1.5 h-4 w-4" />
+              <span className="break-words">
+                {played === 0 ? "Start practice" : `Continue practice (${remaining} left)`}
+              </span>
+              <ArrowRight className="ml-1.5 h-4 w-4 flex-shrink-0" />
             </Button>
             <Button
               size="sm"
               variant="ghost"
               onClick={onSkip}
               disabled={skipping}
-              className="text-muted-foreground"
+              className="text-muted-foreground max-w-full whitespace-normal h-auto py-2 text-left"
             >
               {skipping ? "Skipping…" : "Skip — I'm ready for live"}
             </Button>
