@@ -97,6 +97,11 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [zoomLink, setZoomLink] = useState("");
   const [recurrence, setRecurrence] = useState("none");
   const [recurrenceEnd, setRecurrenceEnd] = useState("");
+  const [coverImageUrl, setCoverImageUrl] = useState("");
+  const [coverImageFit, setCoverImageFit] = useState<"cover" | "contain">("cover");
+  const [coverImagePosition, setCoverImagePosition] = useState("center");
+  const [promoLink, setPromoLink] = useState("");
+  const [promoLabel, setPromoLabel] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   // Invitee selection
