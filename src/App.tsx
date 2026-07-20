@@ -27,6 +27,8 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CardPreview from "./pages/CardPreview";
 import Unsubscribe from "./pages/Unsubscribe";
+import EnrollmentResume from "./pages/EnrollmentResume";
+import EnrollmentRemindersUnsubscribe from "./pages/EnrollmentRemindersUnsubscribe";
 
 import Play from "./pages/Play";
 import PlayDashboard from "./pages/PlayDashboard";
@@ -119,6 +121,8 @@ const App = () => (
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route path="/unsubscribe" element={<Unsubscribe />} />
+                <Route path="/unsubscribe/enrollment" element={<EnrollmentRemindersUnsubscribe />} />
+                <Route path="/enroll/resume" element={<EnrollmentResume />} />
 
                 <Route path="/card-preview" element={<CardPreview />} />
                 <Route path="/play" element={<ProtectedRoute><RequiresCompletedProfile><PlayDashboard /></RequiresCompletedProfile></ProtectedRoute>} />
