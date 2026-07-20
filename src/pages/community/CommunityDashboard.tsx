@@ -17,8 +17,9 @@ import LotusProfile, { LotusCreatorType } from "@/components/community/LotusProf
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, Map as MapIcon, Users, MessageCircle, Calendar, ShoppingBag, Copy, Check, LayoutDashboard, Menu, X, EyeOff } from "lucide-react";
+import { Settings, Map as MapIcon, Users, MessageCircle, Calendar, ShoppingBag, Copy, Check, LayoutDashboard, Menu, X, EyeOff, SlidersHorizontal } from "lucide-react";
 import { capitaliseTypeName, CREATOR_TYPE_NAMES, getCreatorTypeColor } from "@/lib/creatorTypes";
 import { isStockAvatarRef, stockAvatarUrl } from "@/lib/avatar";
 import { glyphForType } from "@/lib/game/glyphs";
