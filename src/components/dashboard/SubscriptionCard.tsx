@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { TIERS } from "@/lib/tiers";
 import type { TierKey } from "@/lib/tiers";
-import { CreditCard, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowRight, CreditCard, ExternalLink, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { loadEnrollmentState } from "@/lib/enrollmentGate";
+import { getNextEnrollmentStep, type EnrollmentStep } from "@/lib/enrollmentSteps";
+
 
 interface SubData {
   tier: TierKey;
@@ -19,22 +23,43 @@ interface SubData {
 export default function SubscriptionCard() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [sub, setSub] = useState<SubData | null>(null);
   const [loading, setLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [nextStep, setNextStep] = useState<EnrollmentStep | null>(null);
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("subscriptions")
-      .select("tier, status, billing_period, current_period_end, stripe_subscription_id")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) setSub(data as SubData);
-        setLoading(false);
-      });
+    let cancelled = false;
+    (async () => {
+      const [{ data: subData }, { data: profData }] = await Promise.all([
+        supabase
+          .from("subscriptions")
+          .select("tier, status, billing_period, current_period_end, stripe_subscription_id")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("reached_checkout_at")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
+      if (cancelled) return;
+      if (subData) setSub(subData as SubData);
+      try {
+        const s = await loadEnrollmentState(user.id);
+        if (!cancelled) setNextStep(getNextEnrollmentStep(s, (profData as any)?.reached_checkout_at ?? null));
+      } catch {
+        /* non-fatal */
+      }
+      if (!cancelled) setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
+
 
   const handleManageSubscription = async () => {
     setPortalLoading(true);
@@ -93,6 +118,27 @@ export default function SubscriptionCard() {
           </span>
         </p>
       )}
+
+      {nextStep && (
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+          <div className="text-sm">
+            <p className="font-semibold text-foreground">Your onboarding isn't finished yet</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Next: {nextStep.label} · Step {nextStep.index} of {nextStep.total}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            className="w-full"
+            onClick={() => navigate(nextStep.route)}
+          >
+            Continue onboarding
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        </div>
+      )}
+
+
 
       {isPaid && sub.stripe_subscription_id && (
         <Button
