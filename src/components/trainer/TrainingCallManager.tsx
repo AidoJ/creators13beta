@@ -1379,9 +1379,23 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onEdit, onResend, sen
     onInvitesSent?.();
   }
 
+  const startDt = new Date(call.starts_at || call.scheduled_at);
+  const endDt = new Date(call.ends_at || new Date(startDt.getTime() + (call.duration_minutes || 60) * 60000));
+
   return (
-    <div className={`rounded-xl border bg-card p-4 space-y-3 ${cancelled ? "opacity-50 border-border" : past ? "border-border" : "border-primary/20"}`}>
-      <div className="space-y-3">
+    <div className={`flex flex-col rounded-xl border bg-card overflow-hidden ${cancelled ? "opacity-50 border-border" : past ? "border-border" : "border-primary/20"}`}>
+      <EventCover
+        coverImageUrl={call.cover_image_url}
+        coverImageFit={call.cover_image_fit}
+        coverImagePosition={call.cover_image_position}
+        descriptionHtml={call.description}
+        tier={undefined}
+        start={startDt}
+        end={endDt}
+        isMultiDay={!!call.is_multi_day}
+        cornerBadge={cancelled ? <Badge variant="outline" className="text-[10px] text-destructive border-destructive/30 bg-background/80 backdrop-blur">Cancelled</Badge> : call.recurrence_rule !== "none" ? <Badge variant="outline" className="text-[10px] bg-background/80 backdrop-blur"><Repeat className="h-2.5 w-2.5 mr-0.5" />{call.recurrence_rule}</Badge> : null}
+      />
+      <div className="p-4 space-y-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h4 className="font-medium text-foreground text-sm">
@@ -1390,18 +1404,10 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onEdit, onResend, sen
                 <span className="text-yellow-300 font-normal not-italic ml-1.5 bg-black px-1.5 py-0.5 rounded text-[10px]">(Cloned)</span>
               )}
             </h4>
-            {call.recurrence_rule !== "none" && (
-              <Badge variant="outline" className="text-[10px]">
-                <Repeat className="h-2.5 w-2.5 mr-0.5" />
-                {call.recurrence_rule}
-              </Badge>
-            )}
-            {cancelled && <Badge variant="outline" className="text-[10px] text-destructive border-destructive/30">Cancelled</Badge>}
           </div>
           <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{dateStr}</span>
-            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{timeStr}</span>
             <span>{call.duration_minutes}min</span>
+            {call.promo_link && <span className="text-[10px] text-primary">Promo link set</span>}
           </div>
           {call.description && (
             <div
