@@ -55,6 +55,7 @@ export default function PlanSelection() {
   const [lookingUpCode, setLookingUpCode] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
+  const [isPlayerPath, setIsPlayerPath] = useState(false);
   const caseStudyRef = useRef<HTMLDivElement>(null);
 
   const isCaseStudy = signupPath === "case_study";
