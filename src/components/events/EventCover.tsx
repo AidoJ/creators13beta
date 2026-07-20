@@ -50,43 +50,46 @@ export function EventCover({
 
   const img = coverImageUrl || extractFirstImage(descriptionHtml);
   const gradient = TIER_GRADIENTS[(tier || "wren").toLowerCase()] ?? TIER_GRADIENTS.wren;
-  const fit = coverImageFit === "contain" ? "object-contain" : "object-cover";
+  // Default to "contain" so uploaded flyers/posters are fully visible and never crop.
+  const fit = coverImageFit === "cover" ? "object-cover" : "object-contain";
   const position = coverImagePosition || "center";
 
   return (
-    <div
-      className={`relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br ${gradient}`}
-    >
-      {img ? (
-        <img
-          src={img}
-          alt=""
-          className={`absolute inset-0 h-full w-full ${fit}`}
-          style={{ objectPosition: position }}
-          loading="lazy"
-        />
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Calendar className="h-14 w-14 text-foreground/40" strokeWidth={1.25} />
+    <div className="w-full">
+      <div
+        className={`relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br ${gradient}`}
+      >
+        {img ? (
+          <img
+            src={img}
+            alt=""
+            className={`absolute inset-0 h-full w-full ${fit}`}
+            style={{ objectPosition: position }}
+            loading="lazy"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Calendar className="h-14 w-14 text-foreground/40" strokeWidth={1.25} />
+          </div>
+        )}
+        <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
+          {cornerBadge}
+          {accessBadge === "joinable" && (
+            <Badge className="bg-primary/90 text-primary-foreground border-0 backdrop-blur">Joinable</Badge>
+          )}
+          {accessBadge === "preview" && (
+            <Badge variant="outline" className="gap-1 bg-background/80 backdrop-blur">
+              <Lock className="h-3 w-3" />Preview
+            </Badge>
+          )}
         </div>
-      )}
-      <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
-        {cornerBadge}
-        {accessBadge === "joinable" && (
-          <Badge className="bg-primary/90 text-primary-foreground border-0 backdrop-blur">Joinable</Badge>
-        )}
-        {accessBadge === "preview" && (
-          <Badge variant="outline" className="gap-1 bg-background/80 backdrop-blur">
-            <Lock className="h-3 w-3" />Preview
-          </Badge>
-        )}
       </div>
-      <div className="absolute bottom-2 left-2 flex flex-wrap items-center gap-1.5">
-        <span className="inline-flex items-center gap-1 rounded-md bg-background/85 px-2 py-0.5 text-[11px] font-medium text-foreground backdrop-blur">
+      <div className="flex flex-wrap items-center gap-1.5 px-2 py-2 border-t border-border/50 bg-card">
+        <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
           <Calendar className="h-3 w-3" />
           {showMulti ? `${fmtDate(start)} – ${fmtDate(end)}` : fmtDate(start)}
         </span>
-        <span className="inline-flex items-center gap-1 rounded-md bg-background/85 px-2 py-0.5 text-[11px] font-medium text-foreground backdrop-blur">
+        <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
           <Clock className="h-3 w-3" />
           {fmtTime(start)} – {fmtTime(end)}
         </span>
