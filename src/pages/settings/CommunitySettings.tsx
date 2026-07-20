@@ -13,6 +13,7 @@ import { Leaf, ArrowLeft, Check, Upload, User as UserIcon } from "lucide-react";
 import { CREATOR_TYPE_NAMES, CREATOR_TYPE_COLORS } from "@/lib/creatorTypes";
 import { resolveAvatarUrl, avatarStorageKey, stockAvatarUrl, PEOPLE_STOCK_AVATARS } from "@/lib/avatar";
 import type { ContactChannels } from "@/lib/contacts";
+import { PlacesAutocompleteInput } from "@/components/community/PlacesAutocompleteInput";
 
 export default function CommunitySettings() {
   const { user, loading: authLoading } = useAuth();
@@ -362,7 +363,7 @@ export default function CommunitySettings() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="loc">City & country</Label>
-            <Input id="loc" value={locationLabel} onChange={(e) => setLocationLabel(e.target.value)} placeholder="Byron Bay, NSW, AU" />
+            <PlacesAutocompleteInput id="loc" value={locationLabel} onChange={setLocationLabel} placeholder="Byron Bay, NSW, AU" />
           </div>
 
           <div className="space-y-2">
