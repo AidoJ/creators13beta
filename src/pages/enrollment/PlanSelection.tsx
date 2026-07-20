@@ -324,14 +324,17 @@ export default function PlanSelection() {
 
         <div className="text-center mb-10">
           <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-3">
-            {urlCaseStudy ? "Your Case Study Invitation" : "How Are You Joining?"}
+            {urlCaseStudy ? "Your Case Study Invitation" : isPlayerPath ? "Explore Profiling" : "How Are You Joining?"}
           </h1>
           <p className="text-muted-foreground max-w-lg mx-auto">
             {urlCaseStudy
               ? "You've been invited to participate as a case study. Review your plan below and continue."
+              : isPlayerPath
+              ? "Ready to go deeper than the game? Choose how you'd like to be profiled."
               : "Select how you'd like to begin your Creator Types journey."}
           </p>
         </div>
+
 
         {/* ── Path Selector ── */}
         {!urlCaseStudy && (
