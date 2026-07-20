@@ -419,7 +419,8 @@ export default function PlanSelection() {
                   <Check className="h-4 w-4" />
                 </div>
               )}
-            </button>
+            </button>}
+
           </div>
         )}
 
