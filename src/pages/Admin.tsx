@@ -403,7 +403,13 @@ export default function AdminDashboard() {
             <TabsTrigger value="invitations"><Send className="h-3.5 w-3.5 mr-1" />Invitations</TabsTrigger>
             <TabsTrigger value="game"><Gamepad2 className="h-3.5 w-3.5 mr-1" />Game</TabsTrigger>
             <TabsTrigger value="quiz"><Brain className="h-3.5 w-3.5 mr-1" />Quiz Bank</TabsTrigger>
+            <TabsTrigger value="marketing"><Megaphone className="h-3.5 w-3.5 mr-1" />Marketing</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="marketing" className="space-y-4">
+            <MarketingPanel />
+          </TabsContent>
+
 
           <TabsContent value="game" className="space-y-4">
             <GameSettingsPanel />
