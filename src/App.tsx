@@ -26,6 +26,8 @@ import NotFound from "./pages/NotFound";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CardPreview from "./pages/CardPreview";
+import Unsubscribe from "./pages/Unsubscribe";
+
 import Play from "./pages/Play";
 import PlayDashboard from "./pages/PlayDashboard";
 import JoinMatch from "./pages/JoinMatch";
