@@ -6,6 +6,7 @@ import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 
 import PlayerProfileDiscountCTA from "@/components/dashboard/PlayerProfileDiscountCTA";
 import DiscountCodesCard from "@/components/dashboard/DiscountCodesCard";
+import ProfilingJourneyBlock from "@/components/dashboard/ProfilingJourneyBlock";
 import CreatorsSeenPrompt from "@/components/dashboard/CreatorsSeenPrompt";
 import PracticeRungCard from "@/components/dashboard/game/PracticeRungCard";
 import QuizStatsCard from "@/components/dashboard/QuizStatsCard";
