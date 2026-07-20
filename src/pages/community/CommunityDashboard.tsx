@@ -176,7 +176,7 @@ export default function CommunityDashboard() {
 
     (async () => {
       const [matchesRes, featuredRes, codeRes, mineRes, typeMetaRes] = await Promise.all([
-        supabase.rpc("get_my_top_matches", { _limit: 50 }),
+        supabase.rpc("get_community_members", { _limit: 200 }),
         supabase.rpc("get_creator_of_the_month"),
         supabase.from("profiles").select("invitation_code, community_visible").eq("user_id", user.id).maybeSingle(),
         supabase
@@ -189,7 +189,7 @@ export default function CommunityDashboard() {
 
       if (cancelled) return;
 
-      const rows = ((matchesRes.data as unknown as MatchRow[] | null) ?? []).filter((r) => r.score > 0);
+      const rows = ((matchesRes.data as unknown as MatchRow[] | null) ?? []);
       setMatches(rows);
 
       // Batch-sign avatars in a single storage round-trip. Skip absolute URLs
