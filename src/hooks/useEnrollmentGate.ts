@@ -73,13 +73,19 @@ export function useEnrollmentGate(): { ready: boolean; state: EnrollmentState | 
           return;
         }
 
-        // Enrollment incomplete: if current path doesn't match required, redirect.
-        // Strip query when comparing — required path includes its own query.
+        // Enrollment incomplete: if the user is on an /enroll page other than
+        // the required one, redirect them to the required step. Do NOT force-
+        // redirect from non-enrollment routes (e.g. /dashboard) — users must
+        // be able to bail out of the enrollment flow to see their progress
+        // dashboard and pick up later. The dashboard itself surfaces the
+        // "resume enrollment" CTA when needed.
         const requiredPath = required.split("?")[0];
-        if (current !== requiredPath) {
+        if (current.startsWith("/enroll") && current !== requiredPath) {
           navigate(required, { replace: true });
           return;
         }
+
+
 
         setReady(true);
       } catch (e) {
