@@ -126,22 +126,28 @@ export default function PlanSelection() {
     return () => { cancelled = true; };
   }, [user, urlCaseStudy, urlInviteToken, signingOut]);
 
-  // Detect if a signed-in user is staff so we can show a helpful banner
+  // Detect if a signed-in user is staff so we can show a helpful banner.
+  // Also detect if they signed up on the game-only "player" path so we can
+  // hide the third "Just Here for the Game" chooser (they're already here).
   useEffect(() => {
     if (!user) {
       setIsStaff(false);
+      setIsPlayerPath(false);
       return;
     }
     let cancelled = false;
     (async () => {
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id);
+      const [{ data: roles }, { data: sub }] = await Promise.all([
+        supabase.from("user_roles").select("role").eq("user_id", user.id),
+        supabase.from("subscriptions").select("signup_path").eq("user_id", user.id).maybeSingle(),
+      ]);
       const staff = (roles || []).some((r: any) =>
         ["practitioner", "trainee", "trainer", "admin"].includes(r.role)
       );
-      if (!cancelled) setIsStaff(staff);
+      if (!cancelled) {
+        setIsStaff(staff);
+        setIsPlayerPath((sub as any)?.signup_path === "player");
+      }
     })();
     return () => { cancelled = true; };
   }, [user]);
