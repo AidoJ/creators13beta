@@ -22,15 +22,17 @@ interface Props {
 export default function PlayerDashboard({ userId, email, firstName, onSignOut }: Props) {
   const navigate = useNavigate();
   const [profileComplete, setProfileComplete] = useState(false);
+  const [promptDismissed, setPromptDismissed] = useState(false);
 
   useEffect(() => {
     (async () => {
       const { data: prof } = await supabase
         .from("profiles")
-        .select("profile_completed_at")
+        .select("profile_completed_at, profiling_prompt_dismissed_at")
         .eq("user_id", userId)
         .maybeSingle();
       setProfileComplete(!!prof?.profile_completed_at);
+      setPromptDismissed(!!(prof as any)?.profiling_prompt_dismissed_at);
     })();
   }, [userId]);
 
