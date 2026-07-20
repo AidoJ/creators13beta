@@ -37,6 +37,7 @@ export function SignupFields({
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [marketingOptIn, setMarketingOptIn] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   async function handleSubmit(e: React.FormEvent) {
@@ -59,8 +60,9 @@ export function SignupFields({
       return;
     }
     setErrors({});
-    await onSubmit(parsed.data);
+    await onSubmit({ ...parsed.data, marketingOptIn });
   }
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
