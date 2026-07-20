@@ -165,9 +165,15 @@ export default function Dashboard() {
       <DashboardHeader email={user?.email} onSignOut={signOut} />
 
       <main className="container mx-auto px-4 py-8 max-w-5xl space-y-5">
+        {/* Continue where you left off — appears only for users mid-enrolment.
+            Silent when complete/staff/player-only. Same resolver as the
+            enrollment gate + the recovery sweep so the surfaces never diverge. */}
+        {user && <ContinueEnrollmentBlock userId={user.id} />}
+
         {/* Section teasers — surface Play & Community without duplicating
             their content here. Phase 2.1: simple label + arrow, no live data. */}
         <div className={`grid gap-4 ${(profileComplete || gateState?.isStaff) ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
+
           <Card
             role="button"
             tabIndex={0}
