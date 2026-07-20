@@ -632,47 +632,15 @@ export default function CommunityDashboard() {
           Who's your Creator Match?
         </h1>
         {!loading && (
-          <section aria-label="Filter community members" className="space-y-3 border-y border-border/70 py-4">
-            <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Filter by">
-              {([
-                ["month", "Creator of the month"],
-                ["family", "Family"],
-                ["element", "Element"],
-                ["role", "Role type"],
-                ["type", "Creator Type"],
-                ["all", "All Creator Types"],
-              ] as Array<[FilterMode, string]>).map(([mode, label]) => (
-                <Button
-                  key={mode}
-                  type="button"
-                  size="sm"
-                  variant={filterMode === mode ? "default" : "outline"}
-                  onClick={() => setFilterMode(mode)}
-                  aria-pressed={filterMode === mode}
-                  className="min-h-11"
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
-            {filterOptions.length > 0 && (
-              <div className="flex justify-center">
-                <label className="sr-only" htmlFor="community-filter-value">Choose filter value</label>
-                <select
-                  id="community-filter-value"
-                  value={filterValue}
-                  onChange={(event) => setFilterValue(event.target.value)}
-                  className="min-h-11 w-full max-w-xs rounded-md border border-input bg-background px-3 text-sm text-foreground"
-                >
-                  {filterOptions.map((option) => <option key={option} value={option}>{option}</option>)}
-                </select>
-              </div>
-            )}
-            <p className="text-center text-xs text-muted-foreground" aria-live="polite">
-              Showing {filteredMatches.length} of {matches.length} members
-              {filterMode === "month" && featured ? ` · ${capitaliseTypeName(featured.creator_type)} is Creator of the Month` : ""}
-            </p>
-          </section>
+          <p className="text-center text-xs text-muted-foreground" aria-live="polite">
+            Showing {filteredMatches.length} of {matches.length} members
+            {filterMode === "month" && featured ? ` · ${capitaliseTypeName(featured.creator_type)} is Creator of the Month` : ""}
+            {filterMode === "family" && filterValue ? ` · Family: ${filterValue}` : ""}
+            {filterMode === "element" && filterValue ? ` · Element: ${filterValue}` : ""}
+            {filterMode === "role" && filterValue ? ` · Role: ${filterValue}` : ""}
+            {filterMode === "type" && filterValue ? ` · Type: ${filterValue}` : ""}
+            {filterMode === "all" ? " · All Creator Types" : ""}
+          </p>
         )}
         {loading ? (
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
