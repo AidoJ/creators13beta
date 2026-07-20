@@ -39,6 +39,7 @@ export default function CommunitySettings() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [hideAvatar, setHideAvatar] = useState(false);
   const [stockAvatar, setStockAvatar] = useState<string | null>(null);
+  const [infoType, setInfoType] = useState<string | null>(null);
 
   // Batch C — contact preferences
   const [openToContact, setOpenToContact] = useState(false);
