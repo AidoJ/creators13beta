@@ -140,7 +140,7 @@ export default function SubscriptionCard() {
 
 
 
-      {isPaid && sub.stripe_subscription_id && (
+      {isPaid && (
         <Button
           variant="outline"
           size="sm"
