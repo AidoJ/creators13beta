@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Settings, Map as MapIcon, Users, MessageCircle, Calendar, ShoppingBag, Copy, Check, LayoutDashboard, Menu, X, EyeOff } from "lucide-react";
-import { capitaliseTypeName, getCreatorTypeColor } from "@/lib/creatorTypes";
+import { capitaliseTypeName, CREATOR_TYPE_NAMES, getCreatorTypeColor } from "@/lib/creatorTypes";
 import { isStockAvatarRef, stockAvatarUrl } from "@/lib/avatar";
 import { glyphForType } from "@/lib/game/glyphs";
 import { toast } from "@/hooks/use-toast";
@@ -93,6 +93,8 @@ type CreatorOfMonth = {
 };
 
 type FeaturedMeta = { family: string | null; team_role: string | null };
+type CreatorTypeMeta = FeaturedMeta & { name: string; element: string | null };
+type FilterMode = "month" | "family" | "element" | "role" | "type" | "all";
 
 // Tier order for size buckets. Compressed 2.5:1 range so smaller matches still
 // register as members rather than visual placeholders.
@@ -121,6 +123,9 @@ export default function CommunityDashboard() {
   const [signedAvatars, setSignedAvatars] = useState<Record<string, string>>({});
   const [featured, setFeatured] = useState<CreatorOfMonth | null>(null);
   const [featuredMeta, setFeaturedMeta] = useState<FeaturedMeta | null>(null);
+  const [creatorTypeMeta, setCreatorTypeMeta] = useState<CreatorTypeMeta[]>([]);
+  const [filterMode, setFilterMode] = useState<FilterMode>("month");
+  const [filterValue, setFilterValue] = useState("");
   const [myCode, setMyCode] = useState<string | null>(null);
   const [myTypes, setMyTypes] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
@@ -169,7 +174,7 @@ export default function CommunityDashboard() {
     let cancelled = false;
 
     (async () => {
-      const [matchesRes, featuredRes, codeRes, mineRes] = await Promise.all([
+      const [matchesRes, featuredRes, codeRes, mineRes, typeMetaRes] = await Promise.all([
         supabase.rpc("get_my_top_matches", { _limit: 50 }),
         supabase.rpc("get_creator_of_the_month"),
         supabase.from("profiles").select("invitation_code, community_visible").eq("user_id", user.id).maybeSingle(),
@@ -178,6 +183,7 @@ export default function CommunityDashboard() {
           .select("primary_type, secondary_type, type_3, type_4")
           .eq("user_id", user.id)
           .maybeSingle(),
+        supabase.from("creator_types").select("name, family, team_role, element"),
       ]);
 
       if (cancelled) return;
@@ -215,6 +221,7 @@ export default function CommunityDashboard() {
       }
       if (codeRes.data?.invitation_code) setMyCode(codeRes.data.invitation_code);
       setIsCommunityVisible(codeRes.data?.community_visible ?? false);
+      setCreatorTypeMeta((typeMetaRes.data as CreatorTypeMeta[] | null) ?? []);
       if (mineRes.data) {
         const t = [
           mineRes.data.primary_type,
@@ -235,6 +242,41 @@ export default function CommunityDashboard() {
   const featuredKey = featured?.creator_type?.toLowerCase() ?? null;
   const featuredColor = featuredKey ? getCreatorTypeColor(featuredKey) : undefined;
   const viewerShares = !!(featuredKey && myTypes.includes(featuredKey));
+
+  const filterOptions = useMemo(() => {
+    const unique = (values: Array<string | null>) =>
+      [...new Set(values.filter((value): value is string => !!value))].sort();
+    if (filterMode === "family") return unique(creatorTypeMeta.map((row) => row.family));
+    if (filterMode === "element") return unique(creatorTypeMeta.map((row) => row.element));
+    if (filterMode === "role") return unique(creatorTypeMeta.map((row) => row.team_role));
+    if (filterMode === "type") return [...CREATOR_TYPE_NAMES];
+    return [];
+  }, [creatorTypeMeta, filterMode]);
+
+  useEffect(() => {
+    if (filterMode === "month" || filterMode === "all") {
+      setFilterValue("");
+      return;
+    }
+    setFilterValue((current) => filterOptions.includes(current) ? current : (filterOptions[0] ?? ""));
+  }, [filterMode, filterOptions]);
+
+  const filteredMatches = useMemo(() => {
+    if (filterMode === "all") return matches;
+    const wantedTypeNames = new Set<string>();
+    if (filterMode === "month" && featuredKey) wantedTypeNames.add(featuredKey);
+    if (filterMode === "type" && filterValue) wantedTypeNames.add(filterValue.toLowerCase());
+    if (filterMode === "family" || filterMode === "element" || filterMode === "role") {
+      for (const row of creatorTypeMeta) {
+        const candidate = filterMode === "family" ? row.family : filterMode === "element" ? row.element : row.team_role;
+        if (candidate === filterValue) wantedTypeNames.add(row.name.toLowerCase());
+      }
+    }
+    if (wantedTypeNames.size === 0) return [];
+    return matches.filter((member) =>
+      member.creator_types?.some((creatorType) => wantedTypeNames.has(creatorType.type.toLowerCase()))
+    );
+  }, [matches, filterMode, filterValue, featuredKey, creatorTypeMeta]);
 
   // Group rings by size for organic concentric layout.
   const rings = useMemo(() => {
@@ -268,7 +310,7 @@ export default function CommunityDashboard() {
   // type so the MapView component stays a presentation layer.
   const mapMembers: MapMember[] = useMemo(
     () =>
-      matches.map((m) => ({
+      filteredMatches.map((m) => ({
         user_id: m.user_id,
         display_name: m.display_name,
         avatar_url: resolveAvatar(m.avatar_url),
@@ -278,7 +320,7 @@ export default function CommunityDashboard() {
         primary_type: m.creator_types?.[0]?.type?.toLowerCase() ?? null,
         featured: isFeaturedMember(m.creator_types),
       })),
-    [matches, resolveAvatar, isFeaturedMember]
+    [filteredMatches, resolveAvatar, isFeaturedMember]
   );
 
   const handleSelectMember = useCallback(
@@ -588,6 +630,49 @@ export default function CommunityDashboard() {
         <h1 className="font-display font-normal text-2xl sm:text-3xl md:text-4xl text-gold text-center drop-shadow-sm">
           Who's your Creator Match?
         </h1>
+        {!loading && matches.length > 0 && (
+          <section aria-label="Filter community members" className="space-y-3 border-y border-border/70 py-4">
+            <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Filter by">
+              {([
+                ["month", "Creator of the month"],
+                ["family", "Family"],
+                ["element", "Element"],
+                ["role", "Role type"],
+                ["type", "Creator Type"],
+                ["all", "All Creator Types"],
+              ] as Array<[FilterMode, string]>).map(([mode, label]) => (
+                <Button
+                  key={mode}
+                  type="button"
+                  size="sm"
+                  variant={filterMode === mode ? "default" : "outline"}
+                  onClick={() => setFilterMode(mode)}
+                  aria-pressed={filterMode === mode}
+                  className="min-h-11"
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+            {filterOptions.length > 0 && (
+              <div className="flex justify-center">
+                <label className="sr-only" htmlFor="community-filter-value">Choose filter value</label>
+                <select
+                  id="community-filter-value"
+                  value={filterValue}
+                  onChange={(event) => setFilterValue(event.target.value)}
+                  className="min-h-11 w-full max-w-xs rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                >
+                  {filterOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                </select>
+              </div>
+            )}
+            <p className="text-center text-xs text-muted-foreground" aria-live="polite">
+              Showing {filteredMatches.length} of {matches.length} members
+              {filterMode === "month" && featured ? ` · ${capitaliseTypeName(featured.creator_type)} is Creator of the Month` : ""}
+            </p>
+          </section>
+        )}
         {loading ? (
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
             {Array.from({ length: 10 }).map((_, i) => (
@@ -596,6 +681,11 @@ export default function CommunityDashboard() {
           </div>
         ) : matches.length === 0 ? (
           <EmptyState code={myCode} onCopy={copyInvite} copied={copied} />
+        ) : filteredMatches.length === 0 ? (
+          <div className="py-16 text-center space-y-3">
+            <p className="text-muted-foreground">No community members match this filter yet.</p>
+            <Button type="button" variant="outline" onClick={() => setFilterMode("all")}>Show all Creator Types</Button>
+          </div>
         ) : view === "map" ? (
           <div className="space-y-2">
             <div
@@ -619,7 +709,7 @@ export default function CommunityDashboard() {
           </div>
         ) : (
           <Honeycomb
-            members={matches}
+            members={filteredMatches}
             navigate={navigate}
             resolveAvatar={resolveAvatar}
             isFeatured={isFeaturedMember}

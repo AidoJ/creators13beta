@@ -184,12 +184,17 @@ export default function CommunitySettings() {
 
     // Try to update creator type if it isn't locked and the user actually changed it.
     if (primaryType && !creatorTypeLocked) {
-      const { error: ctErr } = await supabase
-        .from("creator_type_profiles")
-        .upsert(
-          { user_id: user.id, source: "self_selected", primary_type: primaryType } as never,
-          { onConflict: "user_id" }
-        );
+      // Do not use upsert for an existing row: its INSERT-side RLS check correctly
+      // rejects a second profile before Postgres can resolve the conflict as UPDATE.
+      const creatorTypeWrite = ctSource
+        ? supabase
+            .from("creator_type_profiles")
+            .update({ source: "self_selected", primary_type: primaryType } as never)
+            .eq("user_id", user.id)
+        : supabase
+            .from("creator_type_profiles")
+            .insert({ user_id: user.id, source: "self_selected", primary_type: primaryType } as never);
+      const { error: ctErr } = await creatorTypeWrite;
       if (ctErr) {
         setSaving(false);
         const friendly = ctErr.message?.includes("locked")
@@ -198,6 +203,7 @@ export default function CommunitySettings() {
         toast({ title: "Couldn't update Creator Type", description: friendly, variant: "destructive" });
         return;
       }
+      setCtSource("self_selected");
     }
 
     if (visible && !hadJoinedAt) setHadJoinedAt(true);
