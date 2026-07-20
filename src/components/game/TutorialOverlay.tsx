@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-const STORAGE_KEY = "creators13.play.tutorial-seen.v3";
+const STORAGE_KEY = "creators13.play.tutorial-seen.v4";
 
 const STEPS: { title: string; body: string }[] = [
   {
@@ -17,10 +17,13 @@ const STEPS: { title: string; body: string }[] = [
     title: "Step 2 — Play 2",
     body: "You MUST take 2 placement actions every turn: place a card on a glowing hex next to your ecosystem, or drag a card onto the Used Pile to discard it. The rule is simple — at least one neighbour must share a Creator Type with the card you're placing. Non-matching neighbours are ignored. Sky Creator and Golden Body are wildcards. Hover any hex to see why a placement is legal or illegal. Cards with no legal play this turn show muted in your hand — discard is your only option for those.",
   },
-
   {
     title: "Disasters & specials",
     body: "Once all 4 of your own Creators are on the board, any Creator in your hand can be played as a Disaster — it wipes every matching Animal from rivals straight onto your board. A Sky Creator Disaster only wipes Sky Mystical Creatures. Sky Creatures can also steal an Animal. Golden Hive sits passively in your hand and can only leave it by blocking an incoming Disaster — you choose whether to spend it when the prompt appears. Golden Body is a wildcard Animal.",
+  },
+  {
+    title: "Quiz bonuses",
+    body: "Every time you play a Creator card, a pulsing Quiz badge pops out — tap it to answer a short question about that Creator Type. Correct answers earn bonus points and speed up your mastery. You can skip a quiz and keep playing, but you'll miss the bonus. Quizzes are optional but they're the fastest way to climb the score.",
   },
   {
     title: "Free actions & tips",
