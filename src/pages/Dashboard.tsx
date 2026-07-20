@@ -15,6 +15,7 @@ import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
 import DiscountCodesCard from "@/components/dashboard/DiscountCodesCard";
+import ProfilingJourneyBlock from "@/components/dashboard/ProfilingJourneyBlock";
 
 import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
 import CreatorsSeenPrompt from "@/components/dashboard/CreatorsSeenPrompt";
