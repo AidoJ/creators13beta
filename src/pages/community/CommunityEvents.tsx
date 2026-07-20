@@ -124,7 +124,7 @@ export default function CommunityEvents() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-3xl mx-auto px-4 py-6">
+      <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <Button variant="ghost" size="sm" onClick={() => navigate("/community/dashboard")} className="gap-1">
             <ArrowLeft className="h-4 w-4" />
@@ -153,17 +153,21 @@ export default function CommunityEvents() {
             </p>
           </Card>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {upcoming.length > 0 && (
               <section className="space-y-3">
                 <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Upcoming</h2>
-                {upcoming.map(ev => <EventCard key={ev.id} ev={ev} />)}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {upcoming.map(ev => <EventTile key={ev.id} ev={ev} />)}
+                </div>
               </section>
             )}
             {past.length > 0 && (
               <section className="space-y-3">
                 <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Past</h2>
-                {past.slice(0, 10).map(ev => <EventCard key={ev.id} ev={ev} past />)}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {past.slice(0, 12).map(ev => <EventTile key={ev.id} ev={ev} past />)}
+                </div>
               </section>
             )}
           </div>
@@ -173,103 +177,115 @@ export default function CommunityEvents() {
   );
 }
 
-function EventCard({ ev, past }: { ev: CommunityEvent; past?: boolean }) {
+function extractFirstImage(html: string | null | undefined): string | null {
+  if (!html) return null;
+  const m = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  return m ? m[1] : null;
+}
+
+const TIER_GRADIENTS: Record<string, string> = {
+  wren: "from-emerald-500/30 via-teal-500/20 to-cyan-500/30",
+  robin: "from-amber-500/30 via-orange-500/20 to-rose-500/30",
+  falcon: "from-indigo-500/30 via-violet-500/20 to-fuchsia-500/30",
+  owl: "from-yellow-500/30 via-amber-600/25 to-orange-700/30",
+};
+
+function EventTile({ ev, past }: { ev: CommunityEvent; past?: boolean }) {
   const start = eventStart(ev);
   const end = eventEnd(ev);
   const fmtDate = (d: Date) =>
-    d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+    d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
   const fmtTime = (d: Date) =>
     d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 
   const sameDay = start.toDateString() === end.toDateString();
   const isMulti = !!ev.is_multi_day && !sameDay;
 
+  const coverImage = extractFirstImage(ev.description);
+  const gradient = TIER_GRADIENTS[ev.caller_tier?.toLowerCase()] ?? TIER_GRADIENTS.wren;
+  const descText = stripHtml(ev.description);
+
   return (
-    <Card className={`p-4 ${past ? "opacity-70" : ""}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <h3 className="text-base font-semibold text-foreground">{ev.title}</h3>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
-            {isMulti ? (
-              <>
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {fmtDate(start)} – {fmtDate(end)}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {fmtTime(start)} → {fmtTime(end)}
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {fmtDate(start)}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {fmtTime(start)} – {fmtTime(end)}
-                </span>
-              </>
-            )}
+    <Card className={`flex flex-col overflow-hidden ${past ? "opacity-70" : ""}`}>
+      {/* Cover */}
+      <div className={`relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br ${gradient}`}>
+        {coverImage ? (
+          <img src={coverImage} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Calendar className="h-14 w-14 text-foreground/40" strokeWidth={1.25} />
           </div>
-          {ev.description && (
-            <div
-              className="text-sm text-foreground/80 mt-3 prose prose-sm max-w-none prose-img:rounded-md prose-img:my-2 prose-img:max-h-80 prose-a:text-primary [&_*]:!bg-transparent [&_p]:!my-1.5 [&_p:empty]:hidden"
-              dangerouslySetInnerHTML={{ __html: sanitizeEventHtml(ev.description) }}
-            />
+        )}
+        <div className="absolute top-2 right-2">
+          {ev.has_access ? (
+            <Badge className="bg-primary/90 text-primary-foreground border-0 backdrop-blur">Joinable</Badge>
+          ) : (
+            <Badge variant="outline" className="gap-1 bg-background/80 backdrop-blur">
+              <Lock className="h-3 w-3" />Preview
+            </Badge>
           )}
         </div>
-
-        {ev.has_access ? (
-          <Badge className="bg-primary/15 text-primary border-primary/30">Joinable</Badge>
-        ) : (
-          <Badge variant="outline" className="gap-1"><Lock className="h-3 w-3" />Preview</Badge>
-        )}
+        <div className="absolute bottom-2 left-2 flex flex-wrap items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 rounded-md bg-background/85 px-2 py-0.5 text-[11px] font-medium text-foreground backdrop-blur">
+            <Calendar className="h-3 w-3" />
+            {isMulti ? `${fmtDate(start)} – ${fmtDate(end)}` : fmtDate(start)}
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-md bg-background/85 px-2 py-0.5 text-[11px] font-medium text-foreground backdrop-blur">
+            <Clock className="h-3 w-3" />
+            {fmtTime(start)} – {fmtTime(end)}
+          </span>
+        </div>
       </div>
 
-      {!past && (
-        <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-border">
-          {ev.has_access && ev.zoom_link ? (
-            <Button size="sm" asChild className="gap-1">
-              <a href={ev.zoom_link} target="_blank" rel="noopener noreferrer">
-                <Video className="h-3.5 w-3.5" />
-                Join Zoom
-              </a>
-            </Button>
-          ) : (
-            <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <Lock className="h-3 w-3" />
-              Join link available to upgraded tiers
-            </div>
-          )}
-          {ev.has_access && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button size="sm" variant="outline" className="gap-1">
-                  <CalendarPlus className="h-3.5 w-3.5" />
-                  Add to calendar
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-48 p-2" align="end">
-                <div className="flex flex-col gap-1">
-                  <Button size="sm" variant="ghost" className="justify-start gap-2" asChild>
-                    <a href={buildGoogleCalendarUrl(ev)} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-3 w-3" />
-                      Google Calendar
-                    </a>
+      {/* Body */}
+      <div className="flex flex-1 flex-col p-4">
+        <h3 className="text-base font-semibold text-foreground leading-snug line-clamp-2">{ev.title}</h3>
+        {descText && (
+          <p className="text-xs text-muted-foreground mt-1.5 line-clamp-3">{descText}</p>
+        )}
+
+        {!past && (
+          <div className="mt-auto flex flex-wrap items-center gap-2 pt-3">
+            {ev.has_access && ev.zoom_link ? (
+              <Button size="sm" asChild className="gap-1">
+                <a href={ev.zoom_link} target="_blank" rel="noopener noreferrer">
+                  <Video className="h-3.5 w-3.5" />
+                  Join Zoom
+                </a>
+              </Button>
+            ) : (
+              <div className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                <Lock className="h-3 w-3" />
+                Upgrade to join
+              </div>
+            )}
+            {ev.has_access && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button size="sm" variant="outline" className="gap-1">
+                    <CalendarPlus className="h-3.5 w-3.5" />
+                    Add
                   </Button>
-                  <Button size="sm" variant="ghost" className="justify-start gap-2" onClick={() => downloadICS(ev)}>
-                    <CalendarPlus className="h-3 w-3" />
-                    Apple / Outlook (.ics)
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
-        </div>
-      )}
+                </PopoverTrigger>
+                <PopoverContent className="w-48 p-2" align="end">
+                  <div className="flex flex-col gap-1">
+                    <Button size="sm" variant="ghost" className="justify-start gap-2" asChild>
+                      <a href={buildGoogleCalendarUrl(ev)} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-3 w-3" />
+                        Google Calendar
+                      </a>
+                    </Button>
+                    <Button size="sm" variant="ghost" className="justify-start gap-2" onClick={() => downloadICS(ev)}>
+                      <CalendarPlus className="h-3 w-3" />
+                      Apple / Outlook (.ics)
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
+          </div>
+        )}
+      </div>
     </Card>
   );
 }
