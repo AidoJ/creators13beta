@@ -2596,6 +2596,21 @@ export type Database = {
           zoom_link: string
         }[]
       }
+      get_community_members: {
+        Args: { _limit?: number }
+        Returns: {
+          avatar_url: string
+          community_joined_at: string
+          creator_types: Json
+          display_name: string
+          location_label: string
+          location_lat: number
+          location_lng: number
+          score: number
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          user_id: string
+        }[]
+      }
       get_creator_of_the_month: { Args: never; Returns: Json }
       get_enrollment_practitioner_options: {
         Args: { _practitioner_code?: string }
