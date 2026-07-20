@@ -121,6 +121,8 @@ const App = () => (
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route path="/unsubscribe" element={<Unsubscribe />} />
+                <Route path="/unsubscribe/enrollment" element={<EnrollmentRemindersUnsubscribe />} />
+                <Route path="/enroll/resume" element={<EnrollmentResume />} />
 
                 <Route path="/card-preview" element={<CardPreview />} />
                 <Route path="/play" element={<ProtectedRoute><RequiresCompletedProfile><PlayDashboard /></RequiresCompletedProfile></ProtectedRoute>} />
