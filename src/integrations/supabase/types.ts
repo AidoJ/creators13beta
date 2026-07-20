@@ -935,6 +935,8 @@ export type Database = {
           profile_discount_threshold_1: number
           profile_discount_threshold_2: number
           profile_discount_threshold_3: number
+          profiling_prompt_games_threshold: number
+          profiling_prompt_quiz_mastery_threshold: number
           prompt_player_name: boolean
           quiz_bonus_points: number
           quiz_bonus_threshold: number
@@ -1004,6 +1006,8 @@ export type Database = {
           profile_discount_threshold_1?: number
           profile_discount_threshold_2?: number
           profile_discount_threshold_3?: number
+          profiling_prompt_games_threshold?: number
+          profiling_prompt_quiz_mastery_threshold?: number
           prompt_player_name?: boolean
           quiz_bonus_points?: number
           quiz_bonus_threshold?: number
@@ -1073,6 +1077,8 @@ export type Database = {
           profile_discount_threshold_1?: number
           profile_discount_threshold_2?: number
           profile_discount_threshold_3?: number
+          profiling_prompt_games_threshold?: number
+          profiling_prompt_quiz_mastery_threshold?: number
           prompt_player_name?: boolean
           quiz_bonus_points?: number
           quiz_bonus_threshold?: number
@@ -1474,6 +1480,11 @@ export type Database = {
             | Database["public"]["Enums"]["practitioner_status"]
             | null
           profile_completed_at: string | null
+          profiling_prompt_dismissed_at: string | null
+          profiling_prompt_reached_checkout_at: string | null
+          profiling_prompt_shown_at: string | null
+          profiling_prompt_tapped_at: string | null
+          profiling_prompt_trigger: string | null
           project_dream: string | null
           project_seek_me_for: string | null
           project_top_skills: string | null
@@ -1527,6 +1538,11 @@ export type Database = {
             | Database["public"]["Enums"]["practitioner_status"]
             | null
           profile_completed_at?: string | null
+          profiling_prompt_dismissed_at?: string | null
+          profiling_prompt_reached_checkout_at?: string | null
+          profiling_prompt_shown_at?: string | null
+          profiling_prompt_tapped_at?: string | null
+          profiling_prompt_trigger?: string | null
           project_dream?: string | null
           project_seek_me_for?: string | null
           project_top_skills?: string | null
@@ -1580,6 +1596,11 @@ export type Database = {
             | Database["public"]["Enums"]["practitioner_status"]
             | null
           profile_completed_at?: string | null
+          profiling_prompt_dismissed_at?: string | null
+          profiling_prompt_reached_checkout_at?: string | null
+          profiling_prompt_shown_at?: string | null
+          profiling_prompt_tapped_at?: string | null
+          profiling_prompt_trigger?: string | null
           project_dream?: string | null
           project_seek_me_for?: string | null
           project_top_skills?: string | null
