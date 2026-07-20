@@ -1242,25 +1242,29 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       ) : (
         <>
           {upcomingCalls.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Upcoming</h3>
-              {upcomingCalls.map(call => (
-                <CallCard key={call.id} call={call} onCancel={handleCancel} onDelete={handleDelete} onDuplicate={openDuplicateDialog} onEdit={openEditDialog} onResend={handleResendAll} sending={sending === call.id} practitioners={practitioners} onSendInvites={sendInvites} onLoadPractitioners={fetchPractitioners} practLoading={practLoading} invitees={inviteesByCall[call.id] || []} events={eventsByCall[call.id] || []} onInvitesSent={() => fetchInvitees(calls.map(c => c.id))} />
-              ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {upcomingCalls.map(call => (
+                  <CallCard key={call.id} call={call} onCancel={handleCancel} onDelete={handleDelete} onDuplicate={openDuplicateDialog} onEdit={openEditDialog} onResend={handleResendAll} sending={sending === call.id} practitioners={practitioners} onSendInvites={sendInvites} onLoadPractitioners={fetchPractitioners} practLoading={practLoading} invitees={inviteesByCall[call.id] || []} events={eventsByCall[call.id] || []} onInvitesSent={() => fetchInvitees(calls.map(c => c.id))} />
+                ))}
+              </div>
             </div>
           )}
           {pastCalls.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Past</h3>
-              {pastCalls.slice(0, 10).map(call => (
-                <CallCard key={call.id} call={call} onCancel={handleCancel} onDelete={handleDelete} onDuplicate={openDuplicateDialog} onResend={handleResendAll} sending={sending === call.id} past invitees={inviteesByCall[call.id] || []} events={eventsByCall[call.id] || []} />
-              ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {pastCalls.slice(0, 12).map(call => (
+                  <CallCard key={call.id} call={call} onCancel={handleCancel} onDelete={handleDelete} onDuplicate={openDuplicateDialog} onResend={handleResendAll} sending={sending === call.id} past invitees={inviteesByCall[call.id] || []} events={eventsByCall[call.id] || []} />
+                ))}
+              </div>
             </div>
           )}
           {cancelledCalls.length > 0 && (
             <details className="mt-4">
               <summary className="text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer">Cancelled ({cancelledCalls.length})</summary>
-              <div className="space-y-2 mt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
                 {cancelledCalls.map(call => (
                   <CallCard key={call.id} call={call} onCancel={handleCancel} onDelete={handleDelete} onDuplicate={openDuplicateDialog} onResend={handleResendAll} sending={false} cancelled invitees={inviteesByCall[call.id] || []} events={eventsByCall[call.id] || []} />
                 ))}
