@@ -213,6 +213,16 @@ export default function Dashboard() {
           <section className="pt-6 mt-4 border-t border-dashed border-border space-y-5">
             <p className="text-xs uppercase tracking-widest text-primary font-semibold">Your profile</p>
 
+            {user && (
+              <ProfilingJourneyBlock
+                userId={user.id}
+                isPlayerPath={isPlayerOnly}
+                isCaseStudy={isCaseStudySubject}
+                isPaidTier={isPaidTier}
+                creatorTypes={creatorTypes}
+              />
+            )}
+
             {/* Two-column layout */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-5">
