@@ -9,6 +9,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ArrowLeft, Calendar, Video, Clock, Lock, CalendarPlus, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { sanitizeEventHtml } from "@/components/ui/rich-text-editor";
+import { EventCover } from "@/components/events/EventCover";
+
 
 interface EventSession {
   date: string;
@@ -30,6 +32,11 @@ interface CommunityEvent {
   is_multi_day: boolean | null;
   sessions: EventSession[] | null;
   event_type: string | null;
+  cover_image_url: string | null;
+  cover_image_fit: "cover" | "contain" | null;
+  cover_image_position: string | null;
+  promo_link: string | null;
+  promo_label: string | null;
 }
 
 function eventStart(ev: CommunityEvent): Date {
@@ -177,65 +184,25 @@ export default function CommunityEvents() {
   );
 }
 
-function extractFirstImage(html: string | null | undefined): string | null {
-  if (!html) return null;
-  const m = html.match(/<img[^>]+src=["']([^"']+)["']/i);
-  return m ? m[1] : null;
-}
-
-const TIER_GRADIENTS: Record<string, string> = {
-  wren: "from-emerald-500/30 via-teal-500/20 to-cyan-500/30",
-  robin: "from-amber-500/30 via-orange-500/20 to-rose-500/30",
-  falcon: "from-indigo-500/30 via-violet-500/20 to-fuchsia-500/30",
-  owl: "from-yellow-500/30 via-amber-600/25 to-orange-700/30",
-};
-
 function EventTile({ ev, past }: { ev: CommunityEvent; past?: boolean }) {
   const start = eventStart(ev);
   const end = eventEnd(ev);
-  const fmtDate = (d: Date) =>
-    d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
-  const fmtTime = (d: Date) =>
-    d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
-
-  const sameDay = start.toDateString() === end.toDateString();
-  const isMulti = !!ev.is_multi_day && !sameDay;
-
-  const coverImage = extractFirstImage(ev.description);
-  const gradient = TIER_GRADIENTS[ev.caller_tier?.toLowerCase()] ?? TIER_GRADIENTS.wren;
   const descText = stripHtml(ev.description);
 
   return (
     <Card className={`flex flex-col overflow-hidden ${past ? "opacity-70" : ""}`}>
-      {/* Cover */}
-      <div className={`relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br ${gradient}`}>
-        {coverImage ? (
-          <img src={coverImage} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Calendar className="h-14 w-14 text-foreground/40" strokeWidth={1.25} />
-          </div>
-        )}
-        <div className="absolute top-2 right-2">
-          {ev.has_access ? (
-            <Badge className="bg-primary/90 text-primary-foreground border-0 backdrop-blur">Joinable</Badge>
-          ) : (
-            <Badge variant="outline" className="gap-1 bg-background/80 backdrop-blur">
-              <Lock className="h-3 w-3" />Preview
-            </Badge>
-          )}
-        </div>
-        <div className="absolute bottom-2 left-2 flex flex-wrap items-center gap-1.5">
-          <span className="inline-flex items-center gap-1 rounded-md bg-background/85 px-2 py-0.5 text-[11px] font-medium text-foreground backdrop-blur">
-            <Calendar className="h-3 w-3" />
-            {isMulti ? `${fmtDate(start)} – ${fmtDate(end)}` : fmtDate(start)}
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-md bg-background/85 px-2 py-0.5 text-[11px] font-medium text-foreground backdrop-blur">
-            <Clock className="h-3 w-3" />
-            {fmtTime(start)} – {fmtTime(end)}
-          </span>
-        </div>
-      </div>
+      <EventCover
+        coverImageUrl={ev.cover_image_url}
+        coverImageFit={ev.cover_image_fit}
+        coverImagePosition={ev.cover_image_position}
+        descriptionHtml={ev.description}
+        tier={ev.caller_tier}
+        start={start}
+        end={end}
+        isMultiDay={!!ev.is_multi_day}
+        accessBadge={ev.has_access ? "joinable" : "preview"}
+      />
+
 
       {/* Body */}
       <div className="flex flex-1 flex-col p-4">
@@ -282,6 +249,14 @@ function EventTile({ ev, past }: { ev: CommunityEvent; past?: boolean }) {
                   </div>
                 </PopoverContent>
               </Popover>
+            )}
+            {ev.promo_link && (
+              <Button size="sm" variant="secondary" asChild className="gap-1">
+                <a href={ev.promo_link} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  {ev.promo_label || "More info"}
+                </a>
+              </Button>
             )}
           </div>
         )}

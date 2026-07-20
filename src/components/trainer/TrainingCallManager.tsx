@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { RichTextEditor, sanitizeEventHtml } from "@/components/ui/rich-text-editor";
+import { EventCover } from "@/components/events/EventCover";
 
 interface TrainingCall {
   id: string;
@@ -31,6 +32,11 @@ interface TrainingCall {
   recurrence_end_date: string | null;
   cancelled: boolean;
   created_at: string;
+  cover_image_url?: string | null;
+  cover_image_fit?: "cover" | "contain" | null;
+  cover_image_position?: string | null;
+  promo_link?: string | null;
+  promo_label?: string | null;
 }
 
 interface Invitee {
@@ -91,6 +97,11 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [zoomLink, setZoomLink] = useState("");
   const [recurrence, setRecurrence] = useState("none");
   const [recurrenceEnd, setRecurrenceEnd] = useState("");
+  const [coverImageUrl, setCoverImageUrl] = useState("");
+  const [coverImageFit, setCoverImageFit] = useState<"cover" | "contain">("cover");
+  const [coverImagePosition, setCoverImagePosition] = useState("center");
+  const [promoLink, setPromoLink] = useState("");
+  const [promoLabel, setPromoLabel] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   // Invitee selection
@@ -213,6 +224,8 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     setDate(""); setTime(""); setEndDate(""); setEndTime(""); setIsMultiDay(false);
     setDaySessions([]);
     setDuration("60"); setZoomLink(""); setRecurrence("none"); setRecurrenceEnd("");
+    setCoverImageUrl(""); setCoverImageFit("cover"); setCoverImagePosition("center");
+    setPromoLink(""); setPromoLabel("");
     setExternalEmails([]); setNewExternalEmail("");
     setTierGrid(emptyTierGrid());
     setBulkInvitedTiers(new Set());
@@ -238,6 +251,11 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     setRecurrence(call.recurrence_rule || "none");
     setRecurrenceEnd(call.recurrence_end_date || "");
     setIsMultiDay(!!call.is_multi_day);
+    setCoverImageUrl(call.cover_image_url || "");
+    setCoverImageFit((call.cover_image_fit as "cover" | "contain") || "cover");
+    setCoverImagePosition(call.cover_image_position || "center");
+    setPromoLink(call.promo_link || "");
+    setPromoLabel(call.promo_label || "");
 
     const start = new Date(call.starts_at || call.scheduled_at);
     const end = new Date(call.ends_at || new Date(start.getTime() + (call.duration_minutes || 60) * 60000));
@@ -454,6 +472,11 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       duration_minutes: Math.round((end.getTime()-start.getTime())/60000),
       zoom_link: zoomLink.trim() || null,
       recurrence_rule: recurrence,
+      cover_image_url: coverImageUrl.trim() || null,
+      cover_image_fit: coverImageFit,
+      cover_image_position: coverImagePosition.trim() || "center",
+      promo_link: promoLink.trim() || null,
+      promo_label: promoLabel.trim() || null,
       created_by: user.id,
     });
 
@@ -725,6 +748,11 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       zoom_link: zoomLink.trim() || null,
       recurrence_rule: recurrence,
       recurrence_end_date: recurrenceEnd || null,
+      cover_image_url: coverImageUrl.trim() || null,
+      cover_image_fit: coverImageFit,
+      cover_image_position: coverImagePosition.trim() || "center",
+      promo_link: promoLink.trim() || null,
+      promo_label: promoLabel.trim() || null,
     };
 
     const { error } = await supabase.from("training_calls").update(updatePayload).eq("id", editingCallId);
@@ -906,6 +934,56 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
             <div className="sm:col-span-2">
               <label className="text-xs text-muted-foreground mb-1 block">Description</label>
               <RichTextEditor value={description} onChange={setDescription} placeholder="Agenda, notes, images, links…" minHeight={160} />
+            </div>
+
+            {/* Cover image — sized to the community tile panel */}
+            <div className="sm:col-span-2 rounded-lg border border-border bg-muted/20 p-3 space-y-2">
+              <p className="text-xs font-semibold text-foreground">Cover image (community tile)</p>
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_140px] gap-2">
+                <Input value={coverImageUrl} onChange={e => setCoverImageUrl(e.target.value)} placeholder="https://…/cover.jpg" />
+                <Select value={coverImageFit} onValueChange={(v) => setCoverImageFit(v as "cover" | "contain")}>
+                  <SelectTrigger><SelectValue placeholder="Fit" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cover">Fill (crop)</SelectItem>
+                    <SelectItem value="contain">Fit (letterbox)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={coverImagePosition} onValueChange={setCoverImagePosition}>
+                  <SelectTrigger><SelectValue placeholder="Focus" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="center">Center</SelectItem>
+                    <SelectItem value="top">Top</SelectItem>
+                    <SelectItem value="bottom">Bottom</SelectItem>
+                    <SelectItem value="left">Left</SelectItem>
+                    <SelectItem value="right">Right</SelectItem>
+                    <SelectItem value="top left">Top-left</SelectItem>
+                    <SelectItem value="top right">Top-right</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {coverImageUrl && (
+                <div className="rounded-md overflow-hidden border border-border max-w-sm">
+                  <div className="relative aspect-[16/10] w-full bg-muted">
+                    <img
+                      src={coverImageUrl}
+                      alt=""
+                      className={`absolute inset-0 h-full w-full ${coverImageFit === "contain" ? "object-contain" : "object-cover"}`}
+                      style={{ objectPosition: coverImagePosition }}
+                    />
+                  </div>
+                </div>
+              )}
+              <p className="text-[10px] text-muted-foreground">Tile aspect is 16:10. If no cover image is set, the first image in the description is used, otherwise a tier-tinted gradient is shown.</p>
+            </div>
+
+            {/* Promo / external link */}
+            <div className="sm:col-span-2 rounded-lg border border-border bg-muted/20 p-3 space-y-2">
+              <p className="text-xs font-semibold text-foreground">Promotional / external link (optional)</p>
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-2">
+                <Input value={promoLink} onChange={e => setPromoLink(e.target.value)} placeholder="https://facebook.com/events/… or ticket page" />
+                <Input value={promoLabel} onChange={e => setPromoLabel(e.target.value)} placeholder="Button label (e.g. Get tickets)" />
+              </div>
+              <p className="text-[10px] text-muted-foreground">Shown on the community tile as a button — use for ticket agents, Facebook events, or landing pages.</p>
             </div>
 
             <div className="sm:col-span-2 flex items-center gap-2 pt-1">
@@ -1164,25 +1242,29 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       ) : (
         <>
           {upcomingCalls.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Upcoming</h3>
-              {upcomingCalls.map(call => (
-                <CallCard key={call.id} call={call} onCancel={handleCancel} onDelete={handleDelete} onDuplicate={openDuplicateDialog} onEdit={openEditDialog} onResend={handleResendAll} sending={sending === call.id} practitioners={practitioners} onSendInvites={sendInvites} onLoadPractitioners={fetchPractitioners} practLoading={practLoading} invitees={inviteesByCall[call.id] || []} events={eventsByCall[call.id] || []} onInvitesSent={() => fetchInvitees(calls.map(c => c.id))} />
-              ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {upcomingCalls.map(call => (
+                  <CallCard key={call.id} call={call} onCancel={handleCancel} onDelete={handleDelete} onDuplicate={openDuplicateDialog} onEdit={openEditDialog} onResend={handleResendAll} sending={sending === call.id} practitioners={practitioners} onSendInvites={sendInvites} onLoadPractitioners={fetchPractitioners} practLoading={practLoading} invitees={inviteesByCall[call.id] || []} events={eventsByCall[call.id] || []} onInvitesSent={() => fetchInvitees(calls.map(c => c.id))} />
+                ))}
+              </div>
             </div>
           )}
           {pastCalls.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Past</h3>
-              {pastCalls.slice(0, 10).map(call => (
-                <CallCard key={call.id} call={call} onCancel={handleCancel} onDelete={handleDelete} onDuplicate={openDuplicateDialog} onResend={handleResendAll} sending={sending === call.id} past invitees={inviteesByCall[call.id] || []} events={eventsByCall[call.id] || []} />
-              ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {pastCalls.slice(0, 12).map(call => (
+                  <CallCard key={call.id} call={call} onCancel={handleCancel} onDelete={handleDelete} onDuplicate={openDuplicateDialog} onResend={handleResendAll} sending={sending === call.id} past invitees={inviteesByCall[call.id] || []} events={eventsByCall[call.id] || []} />
+                ))}
+              </div>
             </div>
           )}
           {cancelledCalls.length > 0 && (
             <details className="mt-4">
               <summary className="text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer">Cancelled ({cancelledCalls.length})</summary>
-              <div className="space-y-2 mt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
                 {cancelledCalls.map(call => (
                   <CallCard key={call.id} call={call} onCancel={handleCancel} onDelete={handleDelete} onDuplicate={openDuplicateDialog} onResend={handleResendAll} sending={false} cancelled invitees={inviteesByCall[call.id] || []} events={eventsByCall[call.id] || []} />
                 ))}
@@ -1297,9 +1379,23 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onEdit, onResend, sen
     onInvitesSent?.();
   }
 
+  const startDt = new Date(call.starts_at || call.scheduled_at);
+  const endDt = new Date(call.ends_at || new Date(startDt.getTime() + (call.duration_minutes || 60) * 60000));
+
   return (
-    <div className={`rounded-xl border bg-card p-4 space-y-3 ${cancelled ? "opacity-50 border-border" : past ? "border-border" : "border-primary/20"}`}>
-      <div className="space-y-3">
+    <div className={`flex flex-col rounded-xl border bg-card overflow-hidden ${cancelled ? "opacity-50 border-border" : past ? "border-border" : "border-primary/20"}`}>
+      <EventCover
+        coverImageUrl={call.cover_image_url}
+        coverImageFit={call.cover_image_fit}
+        coverImagePosition={call.cover_image_position}
+        descriptionHtml={call.description}
+        tier={undefined}
+        start={startDt}
+        end={endDt}
+        isMultiDay={!!call.is_multi_day}
+        cornerBadge={cancelled ? <Badge variant="outline" className="text-[10px] text-destructive border-destructive/30 bg-background/80 backdrop-blur">Cancelled</Badge> : call.recurrence_rule !== "none" ? <Badge variant="outline" className="text-[10px] bg-background/80 backdrop-blur"><Repeat className="h-2.5 w-2.5 mr-0.5" />{call.recurrence_rule}</Badge> : null}
+      />
+      <div className="p-4 space-y-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h4 className="font-medium text-foreground text-sm">
@@ -1308,18 +1404,10 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onEdit, onResend, sen
                 <span className="text-yellow-300 font-normal not-italic ml-1.5 bg-black px-1.5 py-0.5 rounded text-[10px]">(Cloned)</span>
               )}
             </h4>
-            {call.recurrence_rule !== "none" && (
-              <Badge variant="outline" className="text-[10px]">
-                <Repeat className="h-2.5 w-2.5 mr-0.5" />
-                {call.recurrence_rule}
-              </Badge>
-            )}
-            {cancelled && <Badge variant="outline" className="text-[10px] text-destructive border-destructive/30">Cancelled</Badge>}
           </div>
           <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{dateStr}</span>
-            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{timeStr}</span>
             <span>{call.duration_minutes}min</span>
+            {call.promo_link && <span className="text-[10px] text-primary">Promo link set</span>}
           </div>
           {call.description && (
             <div
@@ -1418,7 +1506,7 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onEdit, onResend, sen
             </DropdownMenu>
           )}
         </div>
-      </div>
+
 
       {/* Cancel confirmation */}
       <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
@@ -1587,7 +1675,8 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onEdit, onResend, sen
           </Button>
         </div>
       )}
-
+      </div>
     </div>
   );
 }
+

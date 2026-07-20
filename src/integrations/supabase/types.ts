@@ -2179,6 +2179,9 @@ export type Database = {
       training_calls: {
         Row: {
           cancelled: boolean | null
+          cover_image_fit: string
+          cover_image_position: string
+          cover_image_url: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -2188,6 +2191,8 @@ export type Database = {
           id: string
           is_multi_day: boolean
           parent_call_id: string | null
+          promo_label: string | null
+          promo_link: string | null
           recurrence_end_date: string | null
           recurrence_rule: string | null
           scheduled_at: string
@@ -2199,6 +2204,9 @@ export type Database = {
         }
         Insert: {
           cancelled?: boolean | null
+          cover_image_fit?: string
+          cover_image_position?: string
+          cover_image_url?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -2208,6 +2216,8 @@ export type Database = {
           id?: string
           is_multi_day?: boolean
           parent_call_id?: string | null
+          promo_label?: string | null
+          promo_link?: string | null
           recurrence_end_date?: string | null
           recurrence_rule?: string | null
           scheduled_at: string
@@ -2219,6 +2229,9 @@ export type Database = {
         }
         Update: {
           cancelled?: boolean | null
+          cover_image_fit?: string
+          cover_image_position?: string
+          cover_image_url?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -2228,6 +2241,8 @@ export type Database = {
           id?: string
           is_multi_day?: boolean
           parent_call_id?: string | null
+          promo_label?: string | null
+          promo_link?: string | null
           recurrence_end_date?: string | null
           recurrence_rule?: string | null
           scheduled_at?: string
@@ -2582,6 +2597,9 @@ export type Database = {
         Args: { _from?: string; _to?: string }
         Returns: {
           caller_tier: Database["public"]["Enums"]["subscription_tier"]
+          cover_image_fit: string
+          cover_image_position: string
+          cover_image_url: string
           description: string
           duration_minutes: number
           ends_at: string
@@ -2589,6 +2607,8 @@ export type Database = {
           has_access: boolean
           id: string
           is_multi_day: boolean
+          promo_label: string
+          promo_link: string
           scheduled_at: string
           sessions: Json
           starts_at: string
