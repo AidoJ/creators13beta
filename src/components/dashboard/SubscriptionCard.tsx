@@ -119,6 +119,27 @@ export default function SubscriptionCard() {
         </p>
       )}
 
+      {nextStep && (
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+          <div className="text-sm">
+            <p className="font-semibold text-foreground">Your onboarding isn't finished yet</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Next: {nextStep.label} · Step {nextStep.index} of {nextStep.total}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            className="w-full"
+            onClick={() => navigate(nextStep.route)}
+          >
+            Continue onboarding
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        </div>
+      )}
+
+
+
       {isPaid && sub.stripe_subscription_id && (
         <Button
           variant="outline"
