@@ -53,6 +53,25 @@ export default function Payment() {
     }
   }, [authLoading, userEmail, userId, tier, billing, navigate]);
 
+  // Instrument milestone profiling funnel: stamp reached_checkout_at once the
+  // player-path user actually lands on Stripe checkout. No-op if already set.
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("profiling_prompt_tapped_at, profiling_prompt_reached_checkout_at")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if ((prof as any)?.profiling_prompt_tapped_at && !(prof as any)?.profiling_prompt_reached_checkout_at) {
+        await supabase
+          .from("profiles")
+          .update({ profiling_prompt_reached_checkout_at: new Date().toISOString() } as any)
+          .eq("user_id", userId);
+      }
+    })();
+  }, [userId]);
+
   const fetchClientSecret = useCallback(async () => {
     const priceId = tierInfo.stripe?.price_id;
     if (!priceId) throw new Error("No Stripe price configured for this tier.");
