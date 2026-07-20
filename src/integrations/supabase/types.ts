@@ -1470,6 +1470,10 @@ export type Database = {
           location_label: string | null
           location_lat: number | null
           location_lng: number | null
+          marketing_opt_in: boolean | null
+          marketing_opt_in_at: string | null
+          marketing_unsubscribe_token: string | null
+          marketing_unsubscribed_at: string | null
           medical_history: string | null
           member_preferences: Json
           open_to_contact: boolean
@@ -1528,6 +1532,10 @@ export type Database = {
           location_label?: string | null
           location_lat?: number | null
           location_lng?: number | null
+          marketing_opt_in?: boolean | null
+          marketing_opt_in_at?: string | null
+          marketing_unsubscribe_token?: string | null
+          marketing_unsubscribed_at?: string | null
           medical_history?: string | null
           member_preferences?: Json
           open_to_contact?: boolean
@@ -1586,6 +1594,10 @@ export type Database = {
           location_label?: string | null
           location_lat?: number | null
           location_lng?: number | null
+          marketing_opt_in?: boolean | null
+          marketing_opt_in_at?: string | null
+          marketing_unsubscribe_token?: string | null
+          marketing_unsubscribed_at?: string | null
           medical_history?: string | null
           member_preferences?: Json
           open_to_contact?: boolean
@@ -2414,6 +2426,10 @@ export type Database = {
         Args: { _comment?: string; _request_id: string }
         Returns: undefined
       }
+      ensure_marketing_unsubscribe_token: {
+        Args: { _user_id: string }
+        Returns: string
+      }
       finalise_ranked_match:
         | { Args: { _match_id: string; _reason?: string }; Returns: undefined }
         | {
@@ -2595,6 +2611,7 @@ export type Database = {
         Args: { _token: string }
         Returns: undefined
       }
+      marketing_unsubscribe: { Args: { _token: string }; Returns: boolean }
       open_quiz_if_needed:
         | {
             Args: {
