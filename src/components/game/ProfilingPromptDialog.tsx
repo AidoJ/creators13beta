@@ -56,7 +56,9 @@ export default function ProfilingPromptDialog({ userId, ready }: Props) {
         const gamesThreshold = (settingsRes.data as any)?.profiling_prompt_games_threshold ?? 6;
 
         // 2. Compute masteredTypes distinct count + bonus_points + games count in parallel.
-        const [masteryRes, progressRes, gamesRes] = await Promise.all([
+        // Games count = multiplayer matches (game_matches finished) + bot matches
+        // (bot_match_stats wins+losses+draws). Bot matches don't create game_matches rows.
+        const [masteryRes, progressRes, gamesRes, botRes] = await Promise.all([
           supabase.rpc("get_player_quiz_stats", { _user_id: userId }),
           supabase.from("player_progress").select("bonus_points").eq("user_id", userId).maybeSingle(),
           supabase
@@ -64,13 +66,16 @@ export default function ProfilingPromptDialog({ userId, ready }: Props) {
             .select("id", { count: "exact", head: true })
             .or(`host_user_id.eq.${userId},guest_user_id.eq.${userId}`)
             .eq("status", "finished"),
+          supabase.from("bot_match_stats").select("wins, losses, draws").eq("user_id", userId),
         ]);
         if (cancelled) return;
 
         const byType = ((masteryRes.data as any)?.by_type ?? []) as Array<{ correct: number }>;
         const distinctMastered = byType.filter((t) => (t.correct ?? 0) > 0).length;
         const bonusPoints = (progressRes.data as any)?.bonus_points ?? 0;
-        const gamesPlayed = gamesRes.count ?? 0;
+        const botCount = ((botRes.data as any[]) ?? []).reduce(
+          (n, r) => n + (r.wins ?? 0) + (r.losses ?? 0) + (r.draws ?? 0), 0);
+        const gamesPlayed = (gamesRes.count ?? 0) + botCount;
 
         const quizHit = distinctMastered >= quizThreshold || bonusPoints > 0;
         const gamesHit = gamesPlayed >= gamesThreshold;
