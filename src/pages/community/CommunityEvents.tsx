@@ -30,6 +30,11 @@ interface CommunityEvent {
   is_multi_day: boolean | null;
   sessions: EventSession[] | null;
   event_type: string | null;
+  cover_image_url: string | null;
+  cover_image_fit: "cover" | "contain" | null;
+  cover_image_position: string | null;
+  promo_link: string | null;
+  promo_label: string | null;
 }
 
 function eventStart(ev: CommunityEvent): Date {
