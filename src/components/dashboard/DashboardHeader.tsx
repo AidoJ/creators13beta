@@ -103,7 +103,7 @@ export default function DashboardHeader({ email, onSignOut }: DashboardHeaderPro
             <img src={logo} alt="13 Creators" className="h-7" />
           </a>
           {/* Desktop nav */}
-          <nav className="hidden sm:flex items-center gap-1">
+          <nav className="hidden xl:flex items-center gap-1">
             {visibleCore.map((item) => renderButton(item))}
             {visibleTools.length > 0 && (
               <span aria-hidden className="mx-2 h-5 w-px bg-border" />
@@ -112,12 +112,12 @@ export default function DashboardHeader({ email, onSignOut }: DashboardHeaderPro
           </nav>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground hidden sm:inline">{email}</span>
-          <Button variant="ghost" size="sm" className="text-xs h-8" onClick={onSignOut}>
+          <span className="text-xs text-muted-foreground hidden 2xl:inline max-w-48 truncate">{email}</span>
+          <Button variant="ghost" size="sm" className="text-xs min-h-11 xl:min-h-8 px-2 sm:px-3" onClick={onSignOut}>
             <LogOut className="h-3.5 w-3.5 mr-1" /> Sign Out
           </Button>
           <button
-            className="sm:hidden p-1.5 text-foreground"
+            className="xl:hidden min-h-11 min-w-11 inline-flex items-center justify-center text-foreground"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
@@ -127,7 +127,7 @@ export default function DashboardHeader({ email, onSignOut }: DashboardHeaderPro
       </div>
       {/* Mobile nav dropdown — grouped Sections / Tools */}
       {mobileOpen && (
-        <nav className="sm:hidden border-t border-primary/10 bg-card/95 px-4 py-3 space-y-3">
+        <nav className="xl:hidden border-t border-primary/10 bg-card/95 px-4 py-3 space-y-3 max-h-[calc(100dvh-3.5rem)] overflow-y-auto">
           <div>
             <p className="px-2 pb-1 text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
               Sections
