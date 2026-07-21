@@ -65,7 +65,21 @@ export default function SubscriptionCard() {
     setPortalLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal");
-      if (error) throw error;
+      if (error) {
+        // Try to read the structured error body from the edge function
+        let msg = "Could not open subscription portal.";
+        try {
+          const ctx: any = (error as any).context;
+          if (ctx?.text) {
+            const body = await ctx.text();
+            const parsed = JSON.parse(body);
+            if (parsed?.message) msg = parsed.message;
+            else if (parsed?.error) msg = parsed.error;
+          }
+        } catch { /* ignore */ }
+        toast({ title: "Subscription unavailable", description: msg, variant: "destructive" });
+        return;
+      }
       if (data?.url) {
         window.open(data.url, "_blank");
       }
