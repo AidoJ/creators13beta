@@ -738,7 +738,9 @@ export default function CommunityDashboard() {
         )}
       >
         <h1 className="font-display font-normal text-2xl sm:text-3xl md:text-4xl text-gold text-center drop-shadow-sm">
-          Who's your Creator Match?
+          {featured?.creator_type
+            ? `Who's your ${capitaliseTypeName(featured.creator_type)} Match?`
+            : "Who's your Creator Match?"}
         </h1>
         {!loading && (
           <p className="text-center text-xs text-muted-foreground" aria-live="polite">
