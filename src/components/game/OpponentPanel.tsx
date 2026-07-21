@@ -50,30 +50,44 @@ export function OpponentPanel({ open, onClose, player, opponentUserId, presenceS
   const swipeRef = useRef<{ x: number; y: number; t: number } | null>(null);
   const lastTapRef = useRef<number>(0);
 
-  // Fit-to-viewport on open: especially important on mobile where the
-  // default 640px width pushed the close (X) button off-screen.
+  // Fit and re-clamp on open, rotation, and viewport resize so every control
+  // remains reachable on phones, foldables, and tablets.
   useEffect(() => {
     if (!open) return;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const w = Math.min(640, vw - 16);
-    const h = Math.min(560, vh - 32);
-    setSize({ w, h });
-    setPos({ x: Math.max(8, Math.floor((vw - w) / 2)), y: Math.max(8, Math.floor((vh - h) / 2)) });
+    const fit = () => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      setSize((current) => {
+        const w = Math.min(current.w, 640, Math.max(280, vw - 16));
+        const h = Math.min(current.h, 560, Math.max(240, vh - 16));
+        setPos((currentPos) => ({
+          x: Math.max(8, Math.min(currentPos.x, vw - w - 8)),
+          y: Math.max(8, Math.min(currentPos.y, vh - h - 8)),
+        }));
+        return { w, h };
+      });
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    window.addEventListener("orientationchange", fit);
+    return () => {
+      window.removeEventListener("resize", fit);
+      window.removeEventListener("orientationchange", fit);
+    };
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     function onMove(e: PointerEvent) {
       if (dragRef.current) {
         setPos({
-          x: Math.max(0, Math.min(window.innerWidth - 120, e.clientX - dragRef.current.dx)),
-          y: Math.max(0, Math.min(window.innerHeight - 60, e.clientY - dragRef.current.dy)),
+          x: Math.max(8, Math.min(window.innerWidth - size.w - 8, e.clientX - dragRef.current.dx)),
+          y: Math.max(8, Math.min(window.innerHeight - size.h - 8, e.clientY - dragRef.current.dy)),
         });
       } else if (resizeRef.current) {
         const r = resizeRef.current;
         setSize({
-          w: Math.max(320, Math.min(window.innerWidth - 40, r.sw + (e.clientX - r.sx))),
-          h: Math.max(280, Math.min(window.innerHeight - 40, r.sh + (e.clientY - r.sy))),
+          w: Math.max(280, Math.min(window.innerWidth - pos.x - 8, r.sw + (e.clientX - r.sx))),
+          h: Math.max(240, Math.min(window.innerHeight - pos.y - 8, r.sh + (e.clientY - r.sy))),
         });
       }
     }
@@ -88,7 +102,7 @@ export function OpponentPanel({ open, onClose, player, opponentUserId, presenceS
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
     };
-  }, []);
+  }, [pos.x, pos.y, size.w, size.h]);
 
   if (!open || !player) return null;
   const placed = player.ecosystem.placed.size;
@@ -205,10 +219,10 @@ export function OpponentPanel({ open, onClose, player, opponentUserId, presenceS
           resizeRef.current = { sx: e.clientX, sy: e.clientY, sw: size.w, sh: size.h };
           document.body.style.userSelect = "none";
         }}
-        className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize"
+        className="absolute bottom-0 right-0 min-w-11 min-h-11 cursor-nwse-resize flex items-end justify-end p-2"
         aria-label="Resize"
       >
-        <div className="absolute bottom-1 right-1 w-2.5 h-2.5 border-r-2 border-b-2 border-muted-foreground/60" />
+        <div className="w-3 h-3 border-r-2 border-b-2 border-muted-foreground/60" />
       </div>
     </div>
   );

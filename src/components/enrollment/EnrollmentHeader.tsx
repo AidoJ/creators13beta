@@ -44,7 +44,7 @@ export default function EnrollmentHeader({ currentStep }: EnrollmentHeaderProps)
         <a href="/" className="flex items-center gap-3">
           <img src={logo} alt="13 Creators" className="h-10" />
         </a>
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+        <div className="hidden xl:flex items-center gap-1 text-sm text-muted-foreground min-w-0">
           {STEPS.map((step, i) => {
             const isCurrent = i === currentStep;
             const isCompleted = i < currentStep;
@@ -81,14 +81,14 @@ export default function EnrollmentHeader({ currentStep }: EnrollmentHeaderProps)
         {!user ? (
           <Link
             to={`/auth?returnTo=${returnTo}`}
-            className="ml-4 inline-flex items-center justify-center rounded-full border-2 border-primary bg-primary text-primary-foreground hover:bg-primary/90 px-5 py-2 text-sm font-semibold transition-colors whitespace-nowrap shadow-sm"
+            className="ml-auto xl:ml-4 min-h-11 inline-flex items-center justify-center rounded-full border-2 border-primary bg-primary text-primary-foreground hover:bg-primary/90 px-3 sm:px-5 py-2 text-sm font-semibold transition-colors whitespace-nowrap shadow-sm"
           >
             Sign in
           </Link>
         ) : (
           <Link
             to="/dashboard"
-            className="ml-4 inline-flex items-center justify-center rounded-full border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground px-5 py-2 text-sm font-semibold transition-colors whitespace-nowrap"
+            className="ml-auto xl:ml-4 min-h-11 inline-flex items-center justify-center rounded-full border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground px-3 sm:px-5 py-2 text-sm font-semibold transition-colors whitespace-nowrap"
           >
             Dashboard
           </Link>

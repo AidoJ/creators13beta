@@ -657,7 +657,7 @@ export default function Photos() {
 
           {/* Composite layout */}
           <div className="bg-card border border-border rounded-2xl p-4 mb-6">
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
               {/* Face photos */}
               {(["face_front_closed", "face_front_smiling", "face_side"] as PhotoKey[]).map((key) => {
                 const s = PHOTO_SLOTS.find((x) => x.key === key)!;
@@ -673,7 +673,7 @@ export default function Photos() {
                     <button
                       type="button"
                       onClick={() => { removePhoto(key); setViewMode("wizard"); setCurrentStep(PHOTO_SLOTS.findIndex((x) => x.key === key)); }}
-                      className="absolute top-1 right-1 bg-foreground/60 text-white rounded-full p-0.5 hover:bg-foreground/80"
+                      className="absolute top-0 right-0 min-h-11 min-w-11 inline-flex items-center justify-center bg-foreground/60 text-white rounded-full hover:bg-foreground/80"
                     >
                       <X className="h-3 w-3" />
                     </button>

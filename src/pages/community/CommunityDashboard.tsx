@@ -395,13 +395,13 @@ export default function CommunityDashboard() {
       )}
 
 
-      {/* Top-left stack — collapses on mobile while Map view is active so the
-          map gets the full viewport width. Desktop keeps the full rail. */}
+      {/* Desktop rail. Phone and tablet controls render in-flow below so they
+          can never cover navigation, banners, headings, or member content. */}
       {(() => {
         const collapsed = isMobile && view === "map" && !mobileNavOpen;
         if (collapsed) {
           return (
-            <div className="fixed top-20 left-3 z-30 flex items-center gap-2">
+            <div className="hidden lg:flex fixed top-20 left-3 z-30 items-center gap-2">
               <button
                 type="button"
                 onClick={() => setMobileNavOpen(true)}
@@ -436,7 +436,7 @@ export default function CommunityDashboard() {
           );
         }
         return (
-          <div className="fixed top-20 left-3 z-30 flex flex-col items-center gap-4">
+          <div className="fixed top-20 left-3 z-30 hidden lg:flex flex-col items-center gap-4">
             {isMobile && view === "map" && (
               <button
                 type="button"
@@ -645,10 +645,52 @@ export default function CommunityDashboard() {
         );
       })()}
 
+      <div className="lg:hidden container mx-auto px-4 pt-3">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2" aria-label="Community tools">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label="Filter community members"
+                className="relative min-h-11 min-w-11 shrink-0 rounded-full flex items-center justify-center bg-card/80 border-2 border-gold"
+              >
+                <SlidersHorizontal className="h-5 w-5 text-gold" strokeWidth={2.25} />
+                {filterMode !== "month" && <span aria-hidden className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-gold" />}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" side="bottom" className="w-[min(16rem,calc(100vw-2rem))] p-3 space-y-3">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">Filter by</p>
+              <div className="grid grid-cols-2 gap-1.5" role="group" aria-label="Filter by">
+                {(["month", "family", "element", "role", "type", "all"] as FilterMode[]).map((mode) => (
+                  <Button key={mode} type="button" size="sm" variant={filterMode === mode ? "default" : "outline"} onClick={() => setFilterMode(mode)} className="min-h-11 capitalize">
+                    {mode}
+                  </Button>
+                ))}
+              </div>
+              {filterOptions.length > 0 && (
+                <select value={filterValue} onChange={(event) => setFilterValue(event.target.value)} aria-label="Choose filter value" className="min-h-11 w-full rounded-md border border-input bg-background px-2 text-sm text-foreground">
+                  {filterOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                </select>
+              )}
+            </PopoverContent>
+          </Popover>
+          {[
+            { label: "Events", img: eventsIcon.url, onClick: () => navigate("/community/events") },
+            { label: "Connections", Icon: MessageCircle, onClick: () => navigate("/community/connections") },
+            { label: "Dashboard", img: memberMatchIcon.url, onClick: () => navigate("/dashboard") },
+            { label: "Shop", img: shopIcon.url, onClick: () => window.open("https://creatortypes.gumroad.com/l/Creatorblueprint", "_blank", "noopener,noreferrer") },
+          ].map(({ label, Icon, img, onClick }) => (
+            <button key={label} type="button" onClick={onClick} aria-label={label} className="min-h-11 min-w-11 shrink-0 rounded-full border-2 border-gold bg-card/80 flex items-center justify-center">
+              {img ? <img src={img} alt="" aria-hidden className="h-6 w-6 object-contain" style={{ filter: "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)" }} /> : Icon ? <Icon className="h-5 w-5 text-gold" /> : null}
+            </button>
+          ))}
+        </div>
+      </div>
+
 
       {/* Top-right: Face/Map toggle + Settings */}
       <TooltipProvider delayDuration={150}>
-        <div className="fixed top-20 right-4 z-30 flex items-center gap-3">
+        <div className="container mx-auto px-4 pt-1 lg:pt-0 lg:px-0 lg:fixed lg:top-20 lg:right-4 lg:z-30 lg:w-auto flex items-center justify-end gap-3">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -689,10 +731,10 @@ export default function CommunityDashboard() {
 
       <main
         className={cn(
-          "container mx-auto py-6 space-y-4",
+          "container mx-auto py-4 sm:py-6 space-y-4",
           view === "map"
-            ? "max-w-none px-2 sm:px-4 sm:pl-20"
-            : "px-4 max-w-6xl pl-20"
+            ? "max-w-none px-2 sm:px-4 lg:pl-20"
+            : "px-4 max-w-6xl lg:pl-20"
         )}
       >
         <h1 className="font-display font-normal text-2xl sm:text-3xl md:text-4xl text-gold text-center drop-shadow-sm">

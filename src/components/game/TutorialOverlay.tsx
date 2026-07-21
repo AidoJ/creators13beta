@@ -72,16 +72,16 @@ export function TutorialOverlay() {
             />
           ))}
         </div>
-        <DialogFooter className="flex sm:justify-between gap-2">
-          <Button variant="ghost" size="sm" onClick={close}>Skip tutorial</Button>
-          <div className="flex gap-2">
+        <DialogFooter className="flex flex-col sm:flex-row sm:justify-between gap-2">
+          <Button variant="ghost" size="sm" className="min-h-11 w-full sm:w-auto" onClick={close}>Skip tutorial</Button>
+          <div className="flex flex-col min-[340px]:flex-row gap-2 w-full sm:w-auto">
             {step > 0 && (
-              <Button variant="outline" size="sm" onClick={() => setStep((s) => s - 1)}>Back</Button>
+              <Button variant="outline" size="sm" className="min-h-11 flex-1" onClick={() => setStep((s) => s - 1)}>Back</Button>
             )}
             {isLast ? (
-              <Button size="sm" onClick={close}>Start playing</Button>
+              <Button size="sm" className="min-h-11 flex-1" onClick={close}>Start playing</Button>
             ) : (
-              <Button size="sm" onClick={() => setStep((s) => s + 1)}>Next</Button>
+              <Button size="sm" className="min-h-11 flex-1" onClick={() => setStep((s) => s + 1)}>Next</Button>
             )}
           </div>
         </DialogFooter>

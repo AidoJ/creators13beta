@@ -249,7 +249,7 @@ export default function CaseStudyPipeline({ onSelectClient, onStartCaseStudy, on
         </div>
 
         {/* Stage counts */}
-        <div className="grid grid-cols-5 gap-2 mt-4">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-4">
           {PIPELINE_STAGES.map(stage => {
             const count = stage.key === "not_started"
               ? clientsWithoutStudy.length
