@@ -57,7 +57,7 @@ export function EventCover({
   return (
     <div className="w-full">
       <div
-        className={`relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br ${gradient}`}
+        className="relative aspect-[16/10] w-full overflow-hidden"
       >
         {img ? (
           <img
