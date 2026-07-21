@@ -369,7 +369,8 @@ export default function AdminDashboard() {
             <BarChart3 className="h-4 w-4 text-primary" />
             <h3 className="text-sm font-semibold text-foreground">Enrollment Pipeline</h3>
           </div>
-          <div className="grid grid-cols-7 gap-2 text-center">
+          <div className="overflow-x-auto pb-2">
+          <div className="grid grid-cols-7 gap-2 text-center min-w-[42rem]">
             {["plan_selected", "signed_up", "payment_complete", "photos_uploaded", "booking_made", "awaiting_profiling", "complete"].map(step => (
               <div key={step} className="space-y-1">
                 <div className="text-lg font-bold text-foreground">{byStep[step] || 0}</div>
@@ -382,6 +383,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
             ))}
+          </div>
           </div>
         </div>
 

@@ -315,7 +315,7 @@ export default function CommunitySettings() {
             {hideAvatar && (
               <div className="space-y-2">
                 <p className="text-sm font-medium">Choose the avatar other members see</p>
-                <div className="grid grid-cols-5 sm:grid-cols-7 gap-2">
+                <div className="grid grid-cols-4 min-[420px]:grid-cols-5 sm:grid-cols-7 gap-2">
                   <button
                     type="button"
                     onClick={() => setStockAvatar(null)}
@@ -393,14 +393,14 @@ export default function CommunitySettings() {
         </section>
 
         {!creatorTypeLocked && (
-        <section className="bg-card border border-border rounded-2xl p-6 space-y-4">
+        <section className="bg-card border border-border rounded-2xl p-4 sm:p-6 space-y-4">
           <div>
             <h2 className="font-display font-semibold text-lg">Guess your Creator Type</h2>
             <p className="text-xs text-muted-foreground mt-1">
               A fun, unverified guess — tap <Info className="inline h-3 w-3 mx-0.5" /> to explore each type, then tick the one you feel closest to. Others will see this as a greyed symbol on your lotus (a practitioner-assigned type replaces it in full colour).
             </p>
           </div>
-          <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+          <div className="grid grid-cols-3 min-[420px]:grid-cols-4 sm:grid-cols-5 gap-2">
             {CREATOR_TYPE_NAMES.map((name) => {
               const key = name.toLowerCase();
               const selected = primaryType === key;

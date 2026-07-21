@@ -706,7 +706,7 @@ function JoinByCodeRow() {
   return (
     <Card className="p-4">
       <form className="flex items-center gap-2 flex-wrap" onSubmit={submit}>
-        <div className="flex-1 min-w-[180px]">
+        <div className="flex-1 min-w-0 basis-full sm:basis-auto">
           <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold block mb-1">
             Got an invite code?
           </label>
@@ -720,7 +720,7 @@ function JoinByCodeRow() {
             autoComplete="off"
           />
         </div>
-        <Button type="submit" disabled={busy} size="sm" className="mt-5">
+        <Button type="submit" disabled={busy} size="sm" className="min-h-11 w-full sm:w-auto sm:mt-5">
           {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
           Join
         </Button>

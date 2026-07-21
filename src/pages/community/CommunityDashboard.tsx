@@ -401,7 +401,7 @@ export default function CommunityDashboard() {
         const collapsed = isMobile && view === "map" && !mobileNavOpen;
         if (collapsed) {
           return (
-            <div className="fixed top-20 left-3 z-30 flex items-center gap-2">
+            <div className="hidden lg:flex fixed top-20 left-3 z-30 items-center gap-2">
               <button
                 type="button"
                 onClick={() => setMobileNavOpen(true)}
