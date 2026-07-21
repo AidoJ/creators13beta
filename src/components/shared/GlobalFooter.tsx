@@ -10,29 +10,29 @@ export default function GlobalFooter() {
 
   return (
     <footer className="border-t border-border bg-card">
-      <div className="container mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <Link to="/" className="flex items-center gap-2">
-          <img src={logo} alt="13Creators" className="h-7 w-auto" loading="lazy" decoding="async" />
+      <div className="container mx-auto px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+        <Link to="/" className="flex items-center gap-2 shrink-0">
+          <img src={logo} alt="13Creators" className="h-6 w-auto" loading="lazy" decoding="async" />
         </Link>
 
-        <div className="flex items-center gap-6 text-sm text-muted-foreground">
-          <Link to="/privacy-policy" className="hover:text-foreground transition-colors">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs sm:text-sm text-muted-foreground">
+          <Link to="/privacy-policy" className="hover:text-foreground transition-colors whitespace-nowrap">
             Privacy Policy
           </Link>
-          <Link to="/terms-of-service" className="hover:text-foreground transition-colors">
+          <Link to="/terms-of-service" className="hover:text-foreground transition-colors whitespace-nowrap">
             Terms of Service
           </Link>
           <a
             href="https://www.13creators.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-foreground transition-colors"
+            className="hover:text-foreground transition-colors whitespace-nowrap"
           >
             www.13creators.com
           </a>
         </div>
 
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground whitespace-nowrap">
           © {new Date().getFullYear()} 13Creators
         </p>
       </div>
