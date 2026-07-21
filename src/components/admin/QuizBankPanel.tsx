@@ -102,24 +102,24 @@ export default function QuizBankPanel() {
         <Badge variant="outline" className="border-amber-500/50 text-amber-700 dark:text-amber-400">{counts.pending} pending review</Badge>
         <Badge variant="outline">{counts.active} active</Badge>
         <div className="ml-auto">
-          <Button size="sm" onClick={() => setNewOpen(true)}><Plus className="h-3.5 w-3.5 mr-1" />New question</Button>
+          <Button size="sm" className="min-h-11" onClick={() => setNewOpen(true)}><Plus className="h-3.5 w-3.5 mr-1" />New question</Button>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1 min-w-0 basis-full sm:basis-auto">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search text…" className="pl-8" />
         </div>
         <Select value={fCat} onValueChange={v => setFCat(v as any)}>
-          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Category" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[160px] min-h-11"><SelectValue placeholder="Category" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All categories</SelectItem>
             {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c.replace(/_/g, " ")}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={fCreator} onValueChange={setFCreator}>
-          <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[140px] min-h-11"><SelectValue /></SelectTrigger>
           <SelectContent position="popper" className="max-h-[320px]">
             <SelectItem value="all">All Creators</SelectItem>
             <SelectItem value="ALL">Non-specific</SelectItem>
@@ -127,7 +127,7 @@ export default function QuizBankPanel() {
           </SelectContent>
         </Select>
         <Select value={fReview} onValueChange={v => setFReview(v as any)}>
-          <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[140px] min-h-11"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Any review</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>

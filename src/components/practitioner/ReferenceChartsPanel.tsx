@@ -35,13 +35,13 @@ const CHARTS = [
 
 export default function ReferenceChartsPanel() {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5">
+    <div className="rounded-2xl border border-border bg-card p-3 sm:p-5">
       <h2 className="text-lg font-display font-bold text-foreground mb-4">Practitioner Reference Charts</h2>
 
       <Tabs defaultValue="summary">
-        <TabsList className="grid grid-cols-5 w-full h-auto">
+        <TabsList className="grid grid-cols-2 sm:grid-cols-5 w-full h-auto">
           {CHARTS.map((c) => (
-            <TabsTrigger key={c.id} value={c.id} className="text-xs px-1">
+            <TabsTrigger key={c.id} value={c.id} className="text-xs px-1 min-h-11">
               {c.label}
             </TabsTrigger>
           ))}
