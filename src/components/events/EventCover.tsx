@@ -50,8 +50,8 @@ export function EventCover({
 
   const img = coverImageUrl || extractFirstImage(descriptionHtml);
   const gradient = TIER_GRADIENTS[(tier || "wren").toLowerCase()] ?? TIER_GRADIENTS.wren;
-  // Default to "contain" so uploaded flyers/posters are fully visible and never crop.
-  const fit = coverImageFit === "cover" ? "object-cover" : "object-contain";
+  // Always contain so uploaded flyers/posters are fully visible and never crop.
+  const fit = "object-contain";
   const position = coverImagePosition || "center";
 
   return (
