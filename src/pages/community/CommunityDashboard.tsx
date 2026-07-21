@@ -737,7 +737,7 @@ export default function CommunityDashboard() {
             : "px-4 max-w-6xl lg:pl-20"
         )}
       >
-        <h1 className="font-display font-normal text-2xl sm:text-3xl md:text-4xl text-gold text-center drop-shadow-sm">
+        <h1 className="font-display font-normal text-2xl sm:text-3xl md:text-4xl text-gold text-center drop-shadow-sm lg:px-32">
           {featured?.creator_type
             ? `Who's your ${capitaliseTypeName(featured.creator_type)} Match?`
             : "Who's your Creator Match?"}
