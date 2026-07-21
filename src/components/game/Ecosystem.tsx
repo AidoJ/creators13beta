@@ -295,7 +295,7 @@ export function Ecosystem({
           type="button"
           onClick={() => bumpZoom(0.4)}
           aria-label="Zoom in on board"
-          className="h-8 w-8 rounded-full bg-background/85 border border-border shadow flex items-center justify-center active:scale-95"
+          className="h-11 w-11 rounded-full bg-background/85 border border-border shadow flex items-center justify-center active:scale-95"
         >
           <ZoomIn className="w-4 h-4" />
         </button>
@@ -303,7 +303,7 @@ export function Ecosystem({
           type="button"
           onClick={() => bumpZoom(-0.4)}
           aria-label="Zoom out on board"
-          className="h-8 w-8 rounded-full bg-background/85 border border-border shadow flex items-center justify-center active:scale-95"
+          className="h-11 w-11 rounded-full bg-background/85 border border-border shadow flex items-center justify-center active:scale-95"
           disabled={userZoom <= MIN_ZOOM}
         >
           <ZoomOut className="w-4 h-4" />
@@ -313,7 +313,7 @@ export function Ecosystem({
             type="button"
             onClick={resetZoom}
             aria-label="Reset zoom"
-            className="h-8 w-8 rounded-full bg-background/85 border border-border shadow flex items-center justify-center active:scale-95"
+            className="h-11 w-11 rounded-full bg-background/85 border border-border shadow flex items-center justify-center active:scale-95"
           >
             <Maximize className="w-4 h-4" />
           </button>

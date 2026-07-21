@@ -89,12 +89,12 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
       </Tooltip>
 
       <Dialog open={open} onOpenChange={(o) => { if (!o) close(); }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[85dvh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex flex-wrap items-center gap-2 pr-10">
               <HelpCircle className="h-5 w-5 text-primary" />
               Creator Quiz
-              <span className="ml-auto text-xs font-normal text-muted-foreground tabular-nums">
+              <span className="w-full sm:w-auto sm:ml-auto text-xs font-normal text-muted-foreground tabular-nums">
                 {correct}/{cap} correct · {wrong} wrong{bonusPts > 0 ? ` · +${bonusPts} pts` : ""}
               </span>
             </DialogTitle>

@@ -183,7 +183,7 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
             <Label className="text-sm font-semibold">Bot difficulty</Label>
             <span className="text-[11px] text-muted-foreground ml-auto">Bot games don't earn Points or affect ELO.</span>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {(["easy", "medium", "hard"] as const).map((d) => {
               const enabled = d === "easy" ? settings.bot_easy_enabled : d === "medium" ? settings.bot_medium_enabled : settings.bot_hard_enabled;
               if (!enabled) return null;
@@ -196,7 +196,7 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
                   type="button"
                   onClick={() => setDifficulty(d)}
                   className={
-                    "rounded-md border p-2 text-left transition-all " +
+                    "min-h-11 rounded-md border p-2 text-left transition-all " +
                     (active ? "border-primary bg-primary/10 ring-2 ring-primary/40" : "border-border hover:border-primary/50 bg-background")
                   }
                 >
