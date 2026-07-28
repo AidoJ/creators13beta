@@ -321,7 +321,7 @@ export default function Lobby() {
           )}
 
           {/* Action row */}
-          <footer className="flex items-center justify-between gap-2 pt-4 border-t border-border">
+          <footer className="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-border">
             {isHost ? (
               <>
                 <Button
