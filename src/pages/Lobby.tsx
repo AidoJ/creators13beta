@@ -209,9 +209,10 @@ export default function Lobby() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 flex items-start justify-center p-4 sm:p-8">
+    <div className="min-h-[100dvh] overflow-y-auto bg-gradient-to-b from-background via-background to-primary/5 flex items-start justify-center p-4 sm:p-8">
       <div className="w-full max-w-xl">
-        <Card className="p-5 sm:p-6">
+        <Card className="p-5 sm:p-6 overflow-hidden">
+
           <header className="mb-5">
             <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">
               <Users className="h-3.5 w-3.5" /> Multiplayer lobby
@@ -289,8 +290,8 @@ export default function Lobby() {
                   Invite link
                 </label>
                 <div className="flex gap-2">
-                  <Input value={link} readOnly onFocus={(e) => e.currentTarget.select()} />
-                  <Button size="icon" variant="outline" onClick={handleCopyLink} aria-label="Copy invite link">
+                  <Input value={link} readOnly onFocus={(e) => e.currentTarget.select()} className="min-w-0" />
+                  <Button size="icon" variant="outline" className="shrink-0" onClick={handleCopyLink} aria-label="Copy invite link">
                     <Copy className="w-4 h-4" />
                   </Button>
                 </div>
@@ -307,7 +308,7 @@ export default function Lobby() {
                       onFocus={(e) => e.currentTarget.select()}
                       className="font-mono text-lg tracking-[0.3em] uppercase text-center"
                     />
-                    <Button size="icon" variant="outline" onClick={handleCopyCode} aria-label="Copy invite code">
+                    <Button size="icon" variant="outline" className="shrink-0" onClick={handleCopyCode} aria-label="Copy invite code">
                       <Copy className="w-4 h-4" />
                     </Button>
                   </div>
@@ -320,7 +321,7 @@ export default function Lobby() {
           )}
 
           {/* Action row */}
-          <footer className="flex items-center justify-between gap-2 pt-4 border-t border-border">
+          <footer className="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-border">
             {isHost ? (
               <>
                 <Button
