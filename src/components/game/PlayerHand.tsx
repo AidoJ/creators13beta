@@ -117,13 +117,34 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
     };
   }, []);
 
+  // A hand never exceeds 5 cards, so always size tiles to fit 5 across the
+  // available width (never larger than the requested `size`).
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [fitSize, setFitSize] = useState(size);
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el) return;
+    const measure = () => {
+      const w = el.clientWidth;
+      if (!w) return;
+      const gap = window.innerWidth >= 640 ? 12 : 8;
+      const per = Math.floor((w - gap * 4) / 5);
+      setFitSize(Math.max(40, Math.min(size, per)));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [size]);
+  const tileSize = fitSize;
 
   return (
     <div
       className="shrink-0 border-t border-border/40 bg-card/40 backdrop-blur p-2 sm:p-3"
       style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
     >
-      <div className="flex flex-nowrap items-end gap-2 sm:gap-3 justify-start sm:justify-center overflow-x-auto overflow-y-hidden scrollbar-thin">
+      <div ref={rowRef} className="flex flex-nowrap items-end gap-2 sm:gap-3 justify-start sm:justify-center overflow-x-auto overflow-y-hidden scrollbar-thin">
+
 
 
         {hand.map((card, idx) => {
