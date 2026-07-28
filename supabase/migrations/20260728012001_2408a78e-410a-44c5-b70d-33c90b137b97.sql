@@ -1,0 +1,1 @@
+UPDATE public.game_cards SET art_path = 'cards/animal-lynx.png' WHERE slug = 'lynx';
