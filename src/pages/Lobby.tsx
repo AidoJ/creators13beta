@@ -290,8 +290,8 @@ export default function Lobby() {
                   Invite link
                 </label>
                 <div className="flex gap-2">
-                  <Input value={link} readOnly onFocus={(e) => e.currentTarget.select()} />
-                  <Button size="icon" variant="outline" onClick={handleCopyLink} aria-label="Copy invite link">
+                  <Input value={link} readOnly onFocus={(e) => e.currentTarget.select()} className="min-w-0" />
+                  <Button size="icon" variant="outline" className="shrink-0" onClick={handleCopyLink} aria-label="Copy invite link">
                     <Copy className="w-4 h-4" />
                   </Button>
                 </div>
@@ -308,7 +308,7 @@ export default function Lobby() {
                       onFocus={(e) => e.currentTarget.select()}
                       className="font-mono text-lg tracking-[0.3em] uppercase text-center"
                     />
-                    <Button size="icon" variant="outline" onClick={handleCopyCode} aria-label="Copy invite code">
+                    <Button size="icon" variant="outline" className="shrink-0" onClick={handleCopyCode} aria-label="Copy invite code">
                       <Copy className="w-4 h-4" />
                     </Button>
                   </div>
