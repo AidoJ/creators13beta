@@ -160,7 +160,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
           const animIdx = animatingUids.indexOf(card.uid);
           const stagger = animIdx >= 0 ? animIdx * 140 : 0;
 
-          const height = size * 1.35;
+          const height = tileSize * 1.35;
           const stuck = !!stuckUids?.has(card.uid);
 
           return (
@@ -277,7 +277,7 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
               {isAnimating ? (
                 <div
                   className="relative"
-                  style={{ width: size, height, perspective: 1200 }}
+                  style={{ width: tileSize, height, perspective: 1200 }}
                   aria-label={card.name}
                 >
                   <div
@@ -312,32 +312,32 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                         transform: "rotateY(180deg)",
                       }}
                     >
-                      <HandTile card={card} size={size} selected={selected} dimmed={disabled} />
+                      <HandTile card={card} size={tileSize} selected={selected} dimmed={disabled} />
                     </div>
                   </div>
                 </div>
               ) : (
-                <HandTile card={card} size={size} selected={selected} dimmed={disabled} />
+                <HandTile card={card} size={tileSize} selected={selected} dimmed={disabled} />
               )}
             </div>
           );
         })}
         {(pending ?? []).map((p) => {
-          const height = size * 1.35;
+          const height = tileSize * 1.35;
           return (
             <div
               key={p.id}
               aria-label={p.source === "deck" ? "Drawing from deck…" : `Drawing ${p.card?.name ?? "card"}…`}
               className="select-none pointer-events-none"
               style={{
-                width: size,
+                width: tileSize,
                 height,
                 animation: "handDrop 320ms cubic-bezier(0.2, 0.85, 0.35, 1.1) both",
               }}
             >
               {p.source === "discard" && p.card ? (
                 <div className="relative w-full h-full">
-                  <HandTile card={p.card} size={size} selected={false} dimmed />
+                  <HandTile card={p.card} size={tileSize} selected={false} dimmed />
                   <div
                     className="absolute inset-0 rounded-2xl ring-2 ring-primary/60 pointer-events-none"
                     style={{ animation: "pendingPulse 1200ms ease-in-out infinite" }}
