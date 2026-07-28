@@ -39,7 +39,7 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
       if (!res) return;
       setAnswered({ correct: res.correct, correct_option: res.correct_option, explanation: res.explanation });
       if (res.bonus_gained && res.bonus_gained > 0) {
-        toast.success(`+${res.bonus_gained} bonus point${res.bonus_gained === 1 ? "" : "s"} earned!`, { duration: 4000 });
+        toast.success(`+${res.bonus_gained} bonus point${res.bonus_gained === 1 ? "" : "s"} added to your match score!`, { duration: 4000 });
       }
     } catch (e: any) {
       toast.error(e?.message ?? "Submit failed");
@@ -81,10 +81,10 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
 
         <TooltipContent side="bottom" className="max-w-[240px] text-xs">
           {hasOpen
-            ? "A quiz question is waiting — answer for bonus points"
+            ? "A quiz question is waiting — answer correctly to add bonus points to your match score"
             : capReached
-              ? `All ${cap} questions used this match. Bonus earned: +${bonusPts}.`
-              : `${toNextTier} more correct = +${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"}. Cap: ${cap}/match.`}
+              ? `All ${cap} questions used this match. +${bonusPts} bonus point${bonusPts === 1 ? "" : "s"} added to your match score.`
+              : `${toNextTier} more correct = +${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"} added to your match score. Up to ${cap} questions per match.`}
         </TooltipContent>
       </Tooltip>
 
@@ -100,8 +100,8 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
             </DialogTitle>
             <DialogDescription className="text-xs">
               {capReached
-                ? `All ${cap} questions used this match. Earned +${bonusPts} bonus points.`
-                : `Every 4 correct answers = +${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"}. Up to ${cap} questions per match.`}
+                ? `All ${cap} questions used this match — +${bonusPts} bonus point${bonusPts === 1 ? "" : "s"} added to your match score.`
+                : `Every 4 correct answers adds +${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"} to your match score. Up to ${cap} questions this match.`}
             </DialogDescription>
           </DialogHeader>
 
@@ -120,7 +120,7 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
               )}
               <div className="text-xs text-muted-foreground">
                 {answered.correct
-                  ? "Mastered — this question won't come back."
+                  ? `Mastered — this question won't come back. ${4 - (correct % 4) === 4 ? `+${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"} just added to your match score.` : `${4 - (correct % 4)} more correct adds +${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"} to your match score.`}`
                   : "You'll see this one again in a future match."}
               </div>
               <div className="flex justify-end">
