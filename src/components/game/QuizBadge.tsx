@@ -54,7 +54,7 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
 
   const close = () => {
     setOpen(false);
-    setTimeout(() => setAnswered(null), 300);
+    setTimeout(() => { setAnswered(null); setHasNext(false); }, 300);
   };
 
   return (
