@@ -1786,6 +1786,7 @@ export type Database = {
           match_id: string
           open_question_id: string | null
           open_question_turn: number | null
+          pending_creator_types: string[]
           updated_at: string
           user_id: string
           wrong_count: number
@@ -1799,6 +1800,7 @@ export type Database = {
           match_id: string
           open_question_id?: string | null
           open_question_turn?: number | null
+          pending_creator_types?: string[]
           updated_at?: string
           user_id: string
           wrong_count?: number
@@ -1812,6 +1814,7 @@ export type Database = {
           match_id?: string
           open_question_id?: string | null
           open_question_turn?: number | null
+          pending_creator_types?: string[]
           updated_at?: string
           user_id?: string
           wrong_count?: number
@@ -2445,6 +2448,10 @@ export type Database = {
       _bump_enrollment_activity: {
         Args: { _user_id: string }
         Returns: undefined
+      }
+      _pick_quiz_question: {
+        Args: { _creator_types: string[]; _user_id: string }
+        Returns: string
       }
       accept_game_invite: {
         Args: { _guest_name: string; _token: string }
