@@ -16,7 +16,9 @@ interface Props {
 export function QuizBadge({ progress, question, settings, submit }: Props) {
   const [open, setOpen] = useState(false);
   const [answered, setAnswered] = useState<null | { correct: boolean; correct_option: string; explanation: string | null }>(null);
+  const [hasNext, setHasNext] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
 
   const correct = progress?.correct_count ?? 0;
   const wrong = progress?.wrong_count ?? 0;
