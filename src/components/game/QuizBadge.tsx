@@ -40,6 +40,8 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
       const res = await submit(choice);
       if (!res) return;
       setAnswered({ correct: res.correct, correct_option: res.correct_option, explanation: res.explanation });
+      setHasNext(!!res.next_question_id);
+
       if (res.bonus_gained && res.bonus_gained > 0) {
         toast.success(`+${res.bonus_gained} bonus point${res.bonus_gained === 1 ? "" : "s"} added to your match score!`, { duration: 4000 });
       }
