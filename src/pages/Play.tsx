@@ -606,7 +606,7 @@ export default function Play() {
   const canTakeTurn = isYourTurn && !idleTurnExpired;
   // Rearranging your OWN placed hexes (move + rotate) only affects your board,
   // so it stays available while other players are taking their turn.
-  const canRearrange = !state?.finished && matchRow?.status !== "complete";
+  const canRearrange = !state?.finished;
   const idleStrikesLimit = Math.max(1, Number(gameSettings.idle_turn_strikes_limit ?? 3));
   const disconnectGraceSec = Math.max(15, Number(gameSettings.disconnect_grace_seconds ?? 300));
 
