@@ -258,16 +258,27 @@ export function Ecosystem({
     p.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (p.pointers.size !== 2) return;
     e.preventDefault();
+    const el = wrapRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
     const [a, b] = Array.from(p.pointers.values());
     const dist = Math.hypot(b.x - a.x, b.y - a.y) || 1;
     const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
     const nextZoom = clampZoom(p.startZoom * (dist / p.startDist));
+    // Anchor the pinch midpoint: the board point under the fingers stays put,
+    // so you can zoom into a specific corner rather than always the centre.
+    const ratio = nextZoom / p.startZoom;
+    const anchorX = (p.startMid.x - cx) - p.startPan.x;
+    const anchorY = (p.startMid.y - cy) - p.startPan.y;
     setUserZoom(nextZoom);
     setPan(clampPanForZoom({
-      x: p.startPan.x + (mid.x - p.startMid.x),
-      y: p.startPan.y + (mid.y - p.startMid.y),
+      x: (mid.x - cx) - ratio * anchorX,
+      y: (mid.y - cy) - ratio * anchorY,
     }, nextZoom));
   };
+
   const endPointer = (e: React.PointerEvent<HTMLDivElement>) => {
     const p = pinchRef.current;
     if (!p) return;

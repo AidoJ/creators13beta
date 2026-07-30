@@ -16,7 +16,9 @@ interface Props {
 export function QuizBadge({ progress, question, settings, submit }: Props) {
   const [open, setOpen] = useState(false);
   const [answered, setAnswered] = useState<null | { correct: boolean; correct_option: string; explanation: string | null }>(null);
+  const [hasNext, setHasNext] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
 
   const correct = progress?.correct_count ?? 0;
   const wrong = progress?.wrong_count ?? 0;
@@ -38,6 +40,8 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
       const res = await submit(choice);
       if (!res) return;
       setAnswered({ correct: res.correct, correct_option: res.correct_option, explanation: res.explanation });
+      setHasNext(!!res.next_question_id);
+
       if (res.bonus_gained && res.bonus_gained > 0) {
         toast.success(`+${res.bonus_gained} bonus point${res.bonus_gained === 1 ? "" : "s"} added to your match score!`, { duration: 4000 });
       }
@@ -50,7 +54,7 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
 
   const close = () => {
     setOpen(false);
-    setTimeout(() => setAnswered(null), 300);
+    setTimeout(() => { setAnswered(null); setHasNext(false); }, 300);
   };
 
   return (
@@ -123,9 +127,15 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
                   ? `Mastered — this question won't come back. ${4 - (correct % 4) === 4 ? `+${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"} just added to your match score.` : `${4 - (correct % 4)} more correct adds +${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"} to your match score.`}`
                   : "You'll see this one again in a future match."}
               </div>
-              <div className="flex justify-end">
-                <Button size="sm" onClick={close}>Back to game</Button>
+              <div className="flex justify-end gap-2">
+                {hasNext && (
+                  <Button size="sm" onClick={() => { setAnswered(null); setHasNext(false); }}>
+                    Next question
+                  </Button>
+                )}
+                <Button size="sm" variant={hasNext ? "outline" : "default"} onClick={close}>Back to game</Button>
               </div>
+
             </div>
           ) : (
             <div className="space-y-3">

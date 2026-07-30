@@ -76,16 +76,28 @@ export function useQuizProgress(matchId: string | null, userId: string | null, r
     });
     if (error) throw error;
     const res = data as any;
+    const nextId: string | null = res?.next_question_id ?? null;
     setProgress(pr => pr ? {
       ...pr,
       correct_count: res.correct_count ?? pr.correct_count,
       wrong_count: res.wrong_count ?? pr.wrong_count,
       bonus_awarded: res.bonus_awarded ?? pr.bonus_awarded,
       bonus_points_awarded: res.bonus_points_awarded ?? pr.bonus_points_awarded,
-      open_question_id: null,
+      open_question_id: nextId,
     } : pr);
-    return res as { correct: boolean; correct_option: "a"|"b"|"c"|"d"; explanation: string | null; correct_count: number; wrong_count: number; bonus_awarded: boolean; bonus_points_awarded: number; bonus_just_awarded: boolean; bonus_gained: number; questions_per_match: number; answered: number; cap_reached: boolean };
+    // A second Creator card played in the same turn queues a follow-up
+    // question server-side — pull it in so it can be answered immediately.
+    if (nextId) {
+      const { data: q } = await supabase.from("quiz_questions")
+        .select("id, creator_type, category, prompt, option_a, option_b, option_c, option_d, explanation")
+        .eq("id", nextId).maybeSingle();
+      setQuestion((q as any) ?? null);
+    } else {
+      setQuestion(null);
+    }
+    return res as { correct: boolean; correct_option: "a"|"b"|"c"|"d"; explanation: string | null; correct_count: number; wrong_count: number; bonus_awarded: boolean; bonus_points_awarded: number; bonus_just_awarded: boolean; bonus_gained: number; questions_per_match: number; answered: number; cap_reached: boolean; next_question_id: string | null };
   }, [matchId, question]);
+
 
   return { progress, question, settings, submit };
 }
