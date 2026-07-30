@@ -127,9 +127,15 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
                   ? `Mastered — this question won't come back. ${4 - (correct % 4) === 4 ? `+${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"} just added to your match score.` : `${4 - (correct % 4)} more correct adds +${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"} to your match score.`}`
                   : "You'll see this one again in a future match."}
               </div>
-              <div className="flex justify-end">
-                <Button size="sm" onClick={close}>Back to game</Button>
+              <div className="flex justify-end gap-2">
+                {hasNext && (
+                  <Button size="sm" onClick={() => { setAnswered(null); setHasNext(false); }}>
+                    Next question
+                  </Button>
+                )}
+                <Button size="sm" variant={hasNext ? "outline" : "default"} onClick={close}>Back to game</Button>
               </div>
+
             </div>
           ) : (
             <div className="space-y-3">
