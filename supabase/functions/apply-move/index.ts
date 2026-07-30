@@ -763,12 +763,10 @@ Deno.serve(async (req) => {
   //     Creator's displayType. Sky Creator is a wildcard with no single
   //     type — treat it as "any of the 13 types" so it still fires a
   //     question rather than being silently skipped.
-  //   • open_quiz_if_needed is a no-op if a question is already open.
+  //   • If a question is already open, the extra trigger is queued and
+  //     served right after the current one is answered.
   // ────────────────────────────────────────────────────────────────
-  const ALL_CREATOR_TYPES = [
-    "Lava","Fire","Whirlwind","Snow","Lightning","Sun",
-    "Lake","Ocean","Tree","Mountain","Soil","River","Sky",
-  ];
+
   try {
     const drawTypes = new Set(["pickup_from_draw", "pickup_from_used", "skip_draws"]);
     if (userId && drawTypes.has(body.move.type)) {
