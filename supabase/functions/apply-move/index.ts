@@ -779,9 +779,11 @@ Deno.serve(async (req) => {
       const placedUid = (body.move as any).uid as string | undefined;
       const preHand = state.players[callerSlot]?.hand ?? [];
       const placedCard = preHand.find((c: any) => c?.uid === placedUid);
-      if (placedCard && placedCard.kind === "creator") {
+      const kind = placedCard?.kind;
+      if (kind === "creator" || kind === "sky_creator") {
         const dt = (placedCard as any).displayType as string | undefined;
-        const types = dt ? [dt] : ALL_CREATOR_TYPES;
+        // Sky Creator is a wildcard → 'ANY' lets the picker use any type.
+        const types = kind === "creator" && dt ? [dt] : ["ANY"];
         await svc.rpc("open_quiz_if_needed", {
           _match_id: body.match_id,
           _user_id: userId,
@@ -789,6 +791,7 @@ Deno.serve(async (req) => {
         });
       }
     }
+
   } catch (quizErr) {
     // Never let quiz plumbing block a game move.
     console.warn("[apply-move] quiz hook failed (non-fatal)", quizErr);
