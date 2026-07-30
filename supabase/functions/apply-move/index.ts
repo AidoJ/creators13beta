@@ -780,14 +780,18 @@ Deno.serve(async (req) => {
       const kind = placedCard?.kind;
       if (kind === "creator" || kind === "sky_creator") {
         const dt = (placedCard as any).displayType as string | undefined;
-        // Sky Creator is a wildcard → 'ANY' lets the picker use any type.
-        const types = kind === "creator" && dt ? [dt] : ["ANY"];
-        await svc.rpc("open_quiz_if_needed", {
-          _match_id: body.match_id,
-          _user_id: userId,
-          _creator_types: types,
-        });
+        // Sky Creator behaves like any other Creator card: it draws from the
+        // "Sky" question bank.
+        const type = kind === "sky_creator" ? "Sky" : dt;
+        if (type) {
+          await svc.rpc("open_quiz_if_needed", {
+            _match_id: body.match_id,
+            _user_id: userId,
+            _creator_types: [type],
+          });
+        }
       }
+
     }
 
   } catch (quizErr) {
