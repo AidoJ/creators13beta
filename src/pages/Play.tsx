@@ -604,6 +604,9 @@ export default function Play() {
     : 0;
   const idleTurnExpired = showIdleWarning && idleSecondsLeft <= 0;
   const canTakeTurn = isYourTurn && !idleTurnExpired;
+  // Rearranging your OWN placed hexes (move + rotate) only affects your board,
+  // so it stays available while other players are taking their turn.
+  const canRearrange = !state?.finished && matchRow?.status !== "complete";
   const idleStrikesLimit = Math.max(1, Number(gameSettings.idle_turn_strikes_limit ?? 3));
   const disconnectGraceSec = Math.max(15, Number(gameSettings.disconnect_grace_seconds ?? 300));
 
@@ -1006,6 +1009,10 @@ export default function Play() {
     }
     const cardUid = draggedUid ?? selectedUid;
     if (!cardUid) return;
+    if (!canTakeTurn) {
+      toast.error("You can rearrange your own board any time, but you can only play cards on your turn.");
+      return;
+    }
     guarded(() => placeOnEcosystem(state, cardUid, pos), {
       type: "place",
       uid: cardUid,
@@ -1889,12 +1896,12 @@ export default function Play() {
               eco={selfPlayer.ecosystem}
               size={72}
               autoFit
-              selectable={canTakeTurn || canUseBoard}
+              selectable={canTakeTurn || canUseBoard || canRearrange}
               onPlace={onPlace}
               showEmpties
-              onRotateClick={canTakeTurn ? onPlacedHexClick : undefined}
-              onMoveDragStart={canTakeTurn ? (posKey) => setMoveFromKey(posKey) : undefined}
-              onMoveDragEnd={canTakeTurn ? () => setMoveFromKey(null) : undefined}
+              onRotateClick={canRearrange ? onPlacedHexClick : undefined}
+              onMoveDragStart={canRearrange ? (posKey) => setMoveFromKey(posKey) : undefined}
+              onMoveDragEnd={canRearrange ? () => setMoveFromKey(null) : undefined}
               minHeight={0}
               moveFromKey={moveFromKey}
               legalForCard={
@@ -2092,12 +2099,12 @@ export default function Play() {
                   eco={selfPlayer.ecosystem}
                   size={110}
                   autoFit
-                  selectable={canTakeTurn || canUseBoard}
+                  selectable={canTakeTurn || canUseBoard || canRearrange}
                   onPlace={onPlace}
                   showEmpties
-                  onRotateClick={canTakeTurn ? onPlacedHexClick : undefined}
-                  onMoveDragStart={canTakeTurn ? (posKey) => setMoveFromKey(posKey) : undefined}
-                  onMoveDragEnd={canTakeTurn ? () => setMoveFromKey(null) : undefined}
+                  onRotateClick={canRearrange ? onPlacedHexClick : undefined}
+                  onMoveDragStart={canRearrange ? (posKey) => setMoveFromKey(posKey) : undefined}
+                  onMoveDragEnd={canRearrange ? () => setMoveFromKey(null) : undefined}
                   minHeight={0}
                   moveFromKey={moveFromKey}
                   legalForCard={

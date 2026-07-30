@@ -392,12 +392,14 @@ Deno.serve(async (req) => {
   );
 
   // Turn check (skipped for non-turn-bound actions).
-  // rotate_hex is purely presentational on the caller's own ecosystem, so
+  // rotate_hex/move_hex only touch the caller's own ecosystem, so
   // we allow it any time. Everything else requires it to be the caller's turn.
   const NON_TURN_MOVES = new Set<Move["type"]>([
     "resolve_disaster",
     "concede",
     "rotate_hex",
+    // move_hex only rearranges the caller's OWN ecosystem — allowed off-turn.
+    "move_hex",
     "finalise_by_score",
     "start_lobby_match",
   ]);
