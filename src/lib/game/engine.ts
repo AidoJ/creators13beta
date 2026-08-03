@@ -495,11 +495,12 @@ function adjacencyError(
   card: DeckCard,
   pos: Axial,
 ): string | null {
-  const myIsWildcard = cardWildcardForAdjacency(card);
+  const myIsWildcard = placementWildcard(card);
   const myTypes = myIsWildcard ? [] : cardAdjacencyTypes(card);
 
   let neighbourCount = 0;
   let anchorMatches = 0;
+  const neighbourDescs: string[] = [];
 
   for (let dir = 0; dir < 6; dir++) {
     const d = NEIGHBOUR_DIRS[dir];
@@ -507,6 +508,7 @@ function adjacencyError(
     const pc = eco.placed.get(nKey);
     if (!pc) continue;
     neighbourCount += 1;
+    neighbourDescs.push(describeNeighbour(pc.card));
 
     if (myIsWildcard || cardWildcardForAdjacency(pc.card)) {
       anchorMatches += 1;
@@ -529,7 +531,7 @@ function adjacencyError(
   if (neighbourCount === 0) return null;
   if (anchorMatches === 0) {
     const typeList = myTypes.length ? myTypes.join(" or ") : "any Creator Type";
-    return `Can't place ${card.name} here — none of the touching neighbours share ${typeList}.`;
+    return `Can't place ${card.name} here — none of the touching neighbours share ${typeList}. Touching: ${neighbourDescs.join(", ")}.`;
   }
   return null;
 }
