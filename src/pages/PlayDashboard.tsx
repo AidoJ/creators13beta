@@ -68,6 +68,10 @@ export default function PlayDashboard() {
           tierLabel={data.tierLabel}
           isPaidTier={data.isPaidTier}
         />
+        <BuildStamp
+          diagnostics={{ user: user.id, tier: data.tierLabel }}
+          className="pt-2 border-t border-border"
+        />
       </main>
     </div>
   );
