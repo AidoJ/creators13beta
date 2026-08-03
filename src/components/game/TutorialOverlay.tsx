@@ -15,7 +15,7 @@ const STEPS: { title: string; body: string }[] = [
   },
   {
     title: "Step 2 — Play 2",
-    body: "You MUST take 2 placement actions every turn: place a card on a glowing hex next to your ecosystem, or drag a card onto the Used Pile to discard it. The rule is simple — at least one neighbour must share a Creator Type with the card you're placing. Non-matching neighbours are ignored. Sky Creator and Golden Body are wildcards. Hover any hex to see why a placement is legal or illegal. Cards with no legal play this turn show muted in your hand — discard is your only option for those.",
+    body: "You MUST take 2 placement actions every turn: place a card on a glowing hex next to your ecosystem, or drag a card onto the Used Pile to discard it. The rule is simple — at least one neighbour must share a Creator Type with the card you're placing. Non-matching neighbours are ignored. Golden Body is a wildcard; a Sky Creator must still touch another Creator or a Sky-type card. Hover any hex to see why a placement is legal or illegal. Cards with no legal play this turn show muted in your hand — discard is your only option for those.",
   },
   {
     title: "Disasters & specials",
