@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import GameDashboardSection from "@/components/dashboard/game/GameDashboardSection";
 import { Skeleton } from "@/components/ui/skeleton";
+import BuildStamp from "@/components/game/BuildStamp";
 
 interface Loaded {
   firstName: string | null;
