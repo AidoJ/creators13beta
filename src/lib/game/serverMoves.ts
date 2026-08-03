@@ -103,6 +103,14 @@ export async function applyMoveServer(
       if (status === 501) {
         return { ok: false, rejected: true, reason: "not_implemented", message };
       }
+      if (isTransportFailure(error)) {
+        return {
+          ok: false,
+          rejected: true,
+          reason: "network",
+          message: "Connection dropped — your move didn't reach the table. Resyncing…",
+        };
+      }
       return { ok: false, rejected: true, reason: "server", message };
     }
     if (!data?.ok) {
