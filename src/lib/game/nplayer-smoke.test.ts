@@ -207,7 +207,7 @@ describe("stalemate backstop — Hive-only hand is correctly detected as stuck",
 
 
 describe("A.3 — pile/hand exhaustion finalises N>2 by score", () => {
-  it("N=3 pure-stalemate end_of_days → empty-placements draw (existing rule preserved)", () => {
+  it("N=3 pile exhaustion → ranked by score, not a blanket draw", () => {
     const players = makePlayers(3);
     players[0].score = 4;
     players[1].score = 9;
@@ -215,12 +215,14 @@ describe("A.3 — pile/hand exhaustion finalises N>2 by score", () => {
     const state = baseState(players);
     const s1 = endTurnEarly({ ...state, placedThisTurn: 2 });
     expect(s1.finished).toBe(true);
-    // Per the existing engine rule, end_of_days with no mid-match completer
-    // is a stalemate-draw (winnerId=null, placements=[]). The score-based
-    // middle-band ranking only kicks in once at least one player has
-    // partially finalised mid-match.
-    expect(s1.winnerId).toBeNull();
-    expect(s1.placements).toEqual([]);
+    // A pile-exhaustion end is still ranked by score — only an actual tie on
+    // the top score is a draw. p1 (9) leads p2 (7) leads p0 (4).
+    expect(s1.winnerId).toBe(players[1].id);
+    expect(s1.placements).toEqual([
+      { playerId: players[1].id, rank: 1 },
+      { playerId: players[2].id, rank: 2 },
+      { playerId: players[0].id, rank: 3 },
+    ]);
   });
 
   it("N=4 finaliseByScore with a quitter preserved at bottom rank", () => {

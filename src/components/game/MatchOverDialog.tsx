@@ -225,9 +225,10 @@ export function MatchOverDialog({ state, onPlayAgain, playerUserIds, onDismissed
             <DialogDescription className="text-xs leading-snug">
               {isDraw ? (
                 <span>
-                  <span className="font-semibold text-foreground">Both piles emptied before anyone completed a valid ecosystem.</span>{" "}
-                  Each player earns half points toward their profile.
+                  <span className="font-semibold text-foreground">The match ended with the top players tied on score.</span>{" "}
+                  A tie splits the points — each player earns half.
                 </span>
+
               ) : endedByDisconnect ? (
                 <span>
                   <span className="font-semibold text-foreground">

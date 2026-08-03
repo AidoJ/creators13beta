@@ -359,15 +359,19 @@ describe("A.2 — pile exhaustion in N=4 ranks remaining actives by score", () =
     // using imported endTurnEarly
     const next = endTurnEarly(state);
     expect(next.finished).toBe(true);
-    // Pure-stalemate (no prior completer) end_of_days draws with empty
-    // placements per the rule book — half points all round.
-    expect(next.winnerId).toBeNull();
-    expect(next.placements).toEqual([]);
+    // Ranked by score: p2 (12) > p0 (8) > p1 (5) > p3 (3).
+    expect(next.winnerId).toBe(players[2].id);
+    expect(next.placements).toEqual([
+      { playerId: players[2].id, rank: 1 },
+      { playerId: players[0].id, rank: 2 },
+      { playerId: players[1].id, rank: 3 },
+      { playerId: players[3].id, rank: 4 },
+    ]);
   });
 });
 
 describe("A.2 — 2-player stalemate behaviour preserved", () => {
-  it("ends in a draw with winnerId=null when both hands and piles empty", () => {
+  it("ends in a genuine draw (both on 0) with winnerId=null and shared rank 1", () => {
     const players = makePlayers(2);
     const state = baseState(players);
     state.gameMode = "end_of_days";
@@ -376,7 +380,11 @@ describe("A.2 — 2-player stalemate behaviour preserved", () => {
     // using imported endTurnEarly
     const next = endTurnEarly(state);
     expect(next.finished).toBe(true);
+    // Both players tied on score → shared rank 1, no outright winner.
     expect(next.winnerId).toBeNull();
-    expect(next.placements).toEqual([]);
+    expect(next.placements).toEqual([
+      { playerId: players[0].id, rank: 1 },
+      { playerId: players[1].id, rank: 1 },
+    ]);
   });
 });
