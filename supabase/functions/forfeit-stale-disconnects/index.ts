@@ -731,11 +731,11 @@ Deno.serve(async (req) => {
       }
 
       const finished = !!nextState.finished;
-      // If the match ended THIS tick because of a past-grace disconnect, treat
-      // it as a no-contest — no ranked points, no ELO. This covers the 3/4-
-      // player case where one or more players go past-grace and the survivors'
-      // ≤1-active check trips finalise. Rage-quitting a bad match must not
-      // feed wins to whoever happened to still be connected.
+      // If the match ended THIS tick because of a past-grace disconnect it is
+      // still a RANKED result — the connected players are ranked by the
+      // engine's normal finalise, the departed seats take the bottom ranks.
+      // Identical to what apply-move records when a connected player's move
+      // happens to trip the same ≤1-active finalise.
       if (finished) {
         nextState.endedByDisconnect = true;
       }
@@ -750,8 +750,8 @@ Deno.serve(async (req) => {
 
       const serialisedNext = serialise(nextState);
       if (finished) {
-        // Pre-mark __finalised so finalise_ranked_match short-circuits.
-        (serialisedNext as any).__finalised = true;
+        // Do NOT pre-mark __finalised — finalise_ranked_match owns that flag
+        // and sets it after the payout lands.
         (serialisedNext as any).endedByDisconnect = true;
       }
       const playerStates: Array<{ user_id: string; state: any }> = [];
