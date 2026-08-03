@@ -74,6 +74,7 @@ import { GameModeSelector } from "@/components/game/GameModeSelector";
 import { QuizBadge } from "@/components/game/QuizBadge";
 import { useQuizProgress } from "@/hooks/useQuizProgress";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { fetchBuildManifest, forceUpdateReload } from "@/hooks/useBuildFreshness";
 import { toast } from "sonner";
 import { fetchPlayerShortName } from "@/lib/playerName";
 import { NamePrompt } from "@/components/game/NamePrompt";
@@ -1183,6 +1184,17 @@ export default function Play() {
       return;
     }
     try {
+      // Hard gate at the match boundary: a host on a stale bundle would seat
+      // everyone else into a match their client can't agree with.
+      const manifest = await fetchBuildManifest();
+      if (manifest.stale) {
+        toast.error("A new version is available — refresh to play", {
+          duration: 10000,
+          action: { label: "Refresh", onClick: () => void forceUpdateReload() },
+        });
+        return;
+      }
+
       // Tier lookup — gates capacity. Only the host's tier matters.
       const { data: sub } = await supabase
         .from("subscriptions")

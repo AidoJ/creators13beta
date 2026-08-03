@@ -6,12 +6,15 @@ import { acceptInvite, loadMatch } from "@/lib/game/persistence";
 import { fetchPlayerDisplayName } from "@/lib/playerName";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import BuildGate from "@/components/game/BuildGate";
+import { fetchBuildManifest } from "@/hooks/useBuildFreshness";
 
 export default function JoinMatch() {
   const { token } = useParams<{ token: string }>();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [stale, setStale] = useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -26,6 +29,14 @@ export default function JoinMatch() {
     }
     (async () => {
       try {
+        // Hard gate: joining on an old bundle is exactly how two players end
+        // up in one match on different builds. Check before we consume the
+        // invite, so a stale client never takes a seat.
+        const manifest = await fetchBuildManifest();
+        if (manifest.stale) {
+          setStale(true);
+          return;
+        }
         const guestName = await fetchPlayerDisplayName(user);
         const matchId = await acceptInvite(token, guestName);
 
@@ -58,6 +69,14 @@ export default function JoinMatch() {
       }
     })();
   }, [token, user, loading, navigate]);
+
+  if (stale) {
+    return (
+      <BuildGate reason="You can't join a match on an older version — the two boards would disagree mid-game.">
+        <div />
+      </BuildGate>
+    );
+  }
 
   if (error) {
     return (

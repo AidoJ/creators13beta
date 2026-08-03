@@ -14,6 +14,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { APP_BUILD_HASH } from "@/lib/buildInfo";
 
 export type PresenceStatus = "connected" | "reconnecting" | "disconnected";
 
@@ -24,6 +25,10 @@ export interface PresencePayload {
   last_seen_at: string;
   /** Reserved for B's lobby — A.4 never sets this. */
   ready?: boolean;
+  /** Bundle this device is running. Absent = a client older than the
+   *  version gate, which is itself proof of a stale build. Used by the
+   *  lobby to guarantee a single-build match before start. */
+  build_id?: string;
 }
 
 /** State surfaced to consumers. Keyed by `user_id` (not seat) because the
@@ -177,6 +182,7 @@ export function useMatchPresence({
           seat,
           status: "connected",
           last_seen_at: new Date().toISOString(),
+          build_id: APP_BUILD_HASH,
         };
         await channel.track(payload);
         setState((prev) => ({ ...prev, selfConnected: true }));
@@ -250,6 +256,10 @@ export function useMatchPresence({
       if (slot == null) return null;
       return Object.values(state.rosterByUser).find((row) => row.slot === slot)?.user_id ?? null;
     };
+    const buildFor = (uid: string | null | undefined): string | null => {
+      if (!uid) return null;
+      return state.byUser[uid]?.build_id ?? null;
+    };
     const strikesFor = (uid: string | null | undefined): number => {
       if (!uid) return 0;
       return Number(state.rosterByUser[uid]?.idle_strikes ?? 0);
@@ -265,7 +275,7 @@ export function useMatchPresence({
       const t = Date.parse(raw);
       return Number.isFinite(t) ? t : null;
     };
-    return { statusFor, userIdForSlot, isConnected, isReconnecting, isDisconnected, isMissing, strikesFor, isDeparted, disconnectedAtFor };
+    return { statusFor, buildFor, userIdForSlot, isConnected, isReconnecting, isDisconnected, isMissing, strikesFor, isDeparted, disconnectedAtFor };
   }, [state.byUser, state.presenceSynced, state.rosterByUser]);
 
 

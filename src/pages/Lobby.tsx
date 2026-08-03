@@ -29,6 +29,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import BuildStamp from "@/components/game/BuildStamp";
+import BuildGate from "@/components/game/BuildGate";
+import { APP_BUILD_HASH } from "@/lib/buildInfo";
+import { fetchBuildManifest, forceUpdateReload } from "@/hooks/useBuildFreshness";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
@@ -144,6 +147,16 @@ export default function Lobby() {
     if (!row || !matchId) return;
     setStarting(true);
     try {
+      // Last-moment host check — a publish can land while the lobby sits open.
+      const manifest = await fetchBuildManifest();
+      if (manifest.stale) {
+        toast.error("A new version is available — refresh to play", {
+          duration: 10000,
+          action: { label: "Refresh", onClick: () => void forceUpdateReload() },
+        });
+        setStarting(false);
+        return;
+      }
       const result = await applyMoveServer(matchId, row.seq, { type: "start_lobby_match" });
       if (result.ok !== true) {
         const msg = (result as { message?: string }).message;
@@ -198,7 +211,19 @@ export default function Lobby() {
   // Host-start-with-2+: lobby is startable as soon as 2 players are present.
   // Empty slots are trimmed away at start by the server (commit_start_lobby),
   // so a paid host doesn't have to wait for a full 4-slot lobby to fill.
-  const canStart = filled >= 2;
+  // Single-build match check. One mismatched client is what produced the
+  // desync, so the host verifies the whole table, not just their own entry.
+  // A joined player whose presence carries no build_id is running a bundle
+  // older than the version gate itself — also stale.
+  const staleSeats = roster.filter((r) => {
+    if (r.user_id === user?.id) return false;
+    const status = presence.statusFor(r.user_id);
+    if (status !== "connected") return false; // unknown ≠ stale; don't block on a blip
+    const build = presence.buildFor(r.user_id);
+    return APP_BUILD_HASH !== "dev-local" && build !== APP_BUILD_HASH;
+  });
+  const tableOnOneBuild = staleSeats.length === 0;
+  const canStart = filled >= 2 && tableOnOneBuild;
   const link = row.invite_token ? inviteUrl(row.invite_token) : "";
 
   // Render a fixed-size roster: filled slots show name + connection dot,
@@ -210,6 +235,7 @@ export default function Lobby() {
   });
 
   return (
+    <BuildGate>
     <div className="min-h-[100dvh] overflow-y-auto bg-gradient-to-b from-background via-background to-primary/5 flex items-start justify-center p-4 sm:p-8">
       <div className="w-full max-w-xl">
         <Card className="p-5 sm:p-6 overflow-hidden">
@@ -277,6 +303,11 @@ export default function Lobby() {
                         you
                       </span>
                     )}
+                    {staleSeats.some((s2) => s2.user_id === occupant.user_id) && (
+                      <span className="ml-auto text-[10px] uppercase tracking-wider text-amber-500 font-semibold">
+                        needs refresh
+                      </span>
+                    )}
                   </li>
                 );
               })}
@@ -321,6 +352,14 @@ export default function Lobby() {
             </section>
           )}
 
+          {isHost && !tableOnOneBuild && filled >= 2 && (
+            <div className="mb-4 rounded-lg border border-amber-500/60 bg-amber-500/10 px-3 py-2 text-[13px] text-amber-200">
+              {staleSeats.map((s2) => s2.display_name).join(", ")}{" "}
+              {staleSeats.length === 1 ? "is" : "are"} on an older version. They need to
+              refresh before the match can start — everyone must be on the same build.
+            </div>
+          )}
+
           {/* Action row */}
           <footer className="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-border">
             {isHost ? (
@@ -337,11 +376,13 @@ export default function Lobby() {
                 <Button onClick={handleStart} disabled={!canStart || starting}>
                   {starting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                   <PlayIcon className="w-4 h-4 mr-2" />
-                  {canStart
-                    ? isFull
-                      ? "Begin match"
-                      : `Begin with ${filled}`
-                    : `Need ${2 - filled} more`}
+                  {filled < 2
+                    ? `Need ${2 - filled} more`
+                    : !tableOnOneBuild
+                      ? "Waiting for refresh"
+                      : isFull
+                        ? "Begin match"
+                        : `Begin with ${filled}`}
                 </Button>
 
               </>
@@ -365,5 +406,6 @@ export default function Lobby() {
         </Card>
       </div>
     </div>
+    </BuildGate>
   );
 }
