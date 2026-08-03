@@ -10,6 +10,71 @@ export interface BuildFreshness {
   /** Force-refresh: clears caches and reloads from the network. */
   update: () => Promise<void>;
   checking: boolean;
+  /** Fetch `/build.json` right now (used by hard gates before a match). */
+  recheck: () => Promise<void>;
+}
+
+export interface BuildManifest {
+  buildId: string | null;
+  builtAt: string | null;
+  /** True only when we positively know the deployed build differs. */
+  stale: boolean;
+}
+
+/** Build ids are only meaningful in a real deploy — dev bundles never gate. */
+export const BUILD_CHECKS_ENABLED = APP_BUILD_HASH !== "dev-local";
+
+/**
+ * One-shot manifest read. Exported so imperative flows (creating a lobby,
+ * accepting an invite) can hard-gate on the freshest possible answer instead
+ * of whatever a background poll last saw.
+ *
+ * Never throws: offline / blocked / no manifest all resolve to
+ * `stale: false`, because refusing to let someone play when we simply
+ * couldn't reach the manifest is worse than the skew risk.
+ */
+export async function fetchBuildManifest(): Promise<BuildManifest> {
+  if (!BUILD_CHECKS_ENABLED) return { buildId: null, builtAt: null, stale: false };
+  try {
+    const res = await fetch(`/build.json?t=${Date.now()}`, { cache: "no-store" });
+    if (!res.ok) return { buildId: null, builtAt: null, stale: false };
+    const body = await res.json();
+    const buildId = typeof body?.buildId === "string" ? body.buildId : null;
+    return {
+      buildId,
+      builtAt: typeof body?.builtAt === "string" ? body.builtAt : null,
+      stale: !!buildId && buildId !== APP_BUILD_HASH,
+    };
+  } catch {
+    return { buildId: null, builtAt: null, stale: false };
+  }
+}
+
+/** Clear caches and reload from the network on a cache-busted URL. */
+export async function forceUpdateReload(): Promise<void> {
+  try {
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.allSettled(keys.map((k) => caches.delete(k)));
+    }
+  } catch {
+    /* best effort */
+  }
+  // Cache-busted URL so iOS Safari can't serve the stale document again.
+  const url = new URL(window.location.href);
+  url.searchParams.set("v", Date.now().toString(36));
+  window.location.replace(url.toString());
+}
+
+interface Options {
+  /** Re-check when the tab regains focus and on a slow interval. */
+  pollOnFocus?: boolean;
+  /**
+   * When false the hook goes completely quiet — no fetches, never stale.
+   * Used mid-match: a player already in a live game must not be nudged, let
+   * alone reloaded, because dropping them trips disconnect handling.
+   */
+  enabled?: boolean;
 }
 
 /**
@@ -21,7 +86,11 @@ export interface BuildFreshness {
  * time the tab regains focus, so a phone that sat on an old cached bundle
  * finds out as soon as the player comes back to it.
  */
-export function useBuildFreshness(pollOnFocus = true): BuildFreshness {
+export function useBuildFreshness(options: Options | boolean = {}): BuildFreshness {
+  const opts: Options = typeof options === "boolean" ? { pollOnFocus: options } : options;
+  const pollOnFocus = opts.pollOnFocus ?? true;
+  const enabled = opts.enabled ?? true;
+
   const [latestBuildId, setLatestBuildId] = useState<string | null>(null);
   const [latestBuiltAt, setLatestBuiltAt] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
@@ -32,15 +101,11 @@ export function useBuildFreshness(pollOnFocus = true): BuildFreshness {
     inFlight.current = true;
     setChecking(true);
     try {
-      const res = await fetch(`/build.json?t=${Date.now()}`, { cache: "no-store" });
-      if (!res.ok) return; // dev server / older deploy without the manifest
-      const body = await res.json();
-      if (typeof body?.buildId === "string") {
-        setLatestBuildId(body.buildId);
-        setLatestBuiltAt(typeof body.builtAt === "string" ? body.builtAt : null);
+      const m = await fetchBuildManifest();
+      if (m.buildId) {
+        setLatestBuildId(m.buildId);
+        setLatestBuiltAt(m.builtAt);
       }
-    } catch {
-      // Offline or blocked — silently keep the last known value.
     } finally {
       inFlight.current = false;
       setChecking(false);
@@ -48,6 +113,7 @@ export function useBuildFreshness(pollOnFocus = true): BuildFreshness {
   }, []);
 
   useEffect(() => {
+    if (!enabled) return;
     void check();
     if (!pollOnFocus) return;
     const onFocus = () => { if (document.visibilityState === "visible") void check(); };
@@ -62,26 +128,20 @@ export function useBuildFreshness(pollOnFocus = true): BuildFreshness {
       document.removeEventListener("visibilitychange", onFocus);
       window.clearInterval(timer);
     };
-  }, [check, pollOnFocus]);
-
-
-  const update = useCallback(async () => {
-    try {
-      if ("caches" in window) {
-        const keys = await caches.keys();
-        await Promise.allSettled(keys.map(k => caches.delete(k)));
-      }
-    } catch { /* best effort */ }
-    // Cache-busted URL so iOS Safari can't serve the stale document again.
-    const url = new URL(window.location.href);
-    url.searchParams.set("v", Date.now().toString(36));
-    window.location.replace(url.toString());
-  }, []);
+  }, [check, pollOnFocus, enabled]);
 
   const stale =
+    enabled &&
     !!latestBuildId &&
-    APP_BUILD_HASH !== "dev-local" &&
+    BUILD_CHECKS_ENABLED &&
     latestBuildId !== APP_BUILD_HASH;
 
-  return { latestBuildId, latestBuiltAt, stale, update, checking };
+  return {
+    latestBuildId,
+    latestBuiltAt,
+    stale,
+    update: forceUpdateReload,
+    checking,
+    recheck: check,
+  };
 }
