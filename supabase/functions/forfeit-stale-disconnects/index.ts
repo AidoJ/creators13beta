@@ -653,9 +653,18 @@ Deno.serve(async (req) => {
           throw commitErr;
         }
 
-        // NO-CONTEST: intentionally NOT calling finalise_ranked_match here.
-        // Disconnect-ended matches must not award ELO or ranked points to
-        // either seat (otherwise rage-quitting feeds wins to opponents).
+        // SURVIVOR WINS, RANKED. Same payout path apply-move uses when a
+        // connected player's move trips the ≤1-active finalise — the two
+        // paths must not disagree on whether a disconnect-ended match pays.
+        if (match.is_ranked) {
+          const { error: finErr } = await svc.rpc("finalise_ranked_match", {
+            _match_id: match.id,
+            _reason: "disconnect",
+            _placements: placementsSnapshot.length > 0 ? (placementsSnapshot as any) : null,
+          });
+          if (finErr) console.error("[sweep] 2p finalise_ranked_match failed", finErr);
+        }
+
 
 
         summary.past_grace_forfeited += 1;
