@@ -74,6 +74,7 @@ import { GameModeSelector } from "@/components/game/GameModeSelector";
 import { QuizBadge } from "@/components/game/QuizBadge";
 import { useQuizProgress } from "@/hooks/useQuizProgress";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { fetchBuildManifest, forceUpdateReload } from "@/hooks/useBuildFreshness";
 import { toast } from "sonner";
 import { fetchPlayerShortName } from "@/lib/playerName";
 import { NamePrompt } from "@/components/game/NamePrompt";
