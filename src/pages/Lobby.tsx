@@ -31,6 +31,7 @@ import { Card } from "@/components/ui/card";
 import BuildStamp from "@/components/game/BuildStamp";
 import BuildGate from "@/components/game/BuildGate";
 import { APP_BUILD_HASH } from "@/lib/buildInfo";
+import { fetchBuildManifest, forceUpdateReload } from "@/hooks/useBuildFreshness";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
@@ -146,6 +147,16 @@ export default function Lobby() {
     if (!row || !matchId) return;
     setStarting(true);
     try {
+      // Last-moment host check — a publish can land while the lobby sits open.
+      const manifest = await fetchBuildManifest();
+      if (manifest.stale) {
+        toast.error("A new version is available — refresh to play", {
+          duration: 10000,
+          action: { label: "Refresh", onClick: () => void forceUpdateReload() },
+        });
+        setStarting(false);
+        return;
+      }
       const result = await applyMoveServer(matchId, row.seq, { type: "start_lobby_match" });
       if (result.ok !== true) {
         const msg = (result as { message?: string }).message;
