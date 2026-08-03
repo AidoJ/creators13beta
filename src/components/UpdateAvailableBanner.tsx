@@ -1,5 +1,6 @@
 import { RefreshCw, X } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useBuildFreshness } from "@/hooks/useBuildFreshness";
 import { formatBuildDate } from "@/lib/buildInfo";
@@ -14,10 +15,15 @@ import { formatBuildDate } from "@/lib/buildInfo";
  * and gives a one-tap refresh.
  */
 export default function UpdateAvailableBanner() {
-  const { stale, latestBuiltAt, update } = useBuildFreshness();
+  const { pathname } = useLocation();
+  // Never nudge a player who is inside a live match. A new publish must not
+  // pull them out of a game in progress — that reads as a disconnect to
+  // everyone else at the table. Their build check applies to the NEXT match.
+  const inActiveMatch = /^\/play\/m\//.test(pathname);
+  const { stale, latestBuiltAt, update } = useBuildFreshness({ enabled: !inActiveMatch });
   const [dismissed, setDismissed] = useState(false);
 
-  if (!stale || dismissed) return null;
+  if (inActiveMatch || !stale || dismissed) return null;
 
   return (
     <div

@@ -1183,6 +1183,17 @@ export default function Play() {
       return;
     }
     try {
+      // Hard gate at the match boundary: a host on a stale bundle would seat
+      // everyone else into a match their client can't agree with.
+      const manifest = await fetchBuildManifest();
+      if (manifest.stale) {
+        toast.error("A new version is available — refresh to play", {
+          duration: 10000,
+          action: { label: "Refresh", onClick: () => void forceUpdateReload() },
+        });
+        return;
+      }
+
       // Tier lookup — gates capacity. Only the host's tier matters.
       const { data: sub } = await supabase
         .from("subscriptions")
