@@ -591,7 +591,10 @@ Deno.serve(async (req) => {
         // Belt-and-braces: whatever finalise path ran inside the engine, this
         // sweep only fires because at least one seat is past-grace. Flag the
         // match state so the MatchOverDialog shows the "opponent left"
-        // framing, and treat it as a no-contest (no ELO / no ranked points).
+        // framing. The result IS ranked: survivor wins, points + ELO awarded
+        // (see the finalise_ranked_match call below). Anti-exploit is handled
+        // in the engine — the survivor wins by STAYING, never by score — so
+        // leaving while ahead can never buy a win.
         nextState.endedByDisconnect = true;
 
         const userIdForSlot = (slot: number): string | null =>
@@ -604,11 +607,10 @@ Deno.serve(async (req) => {
         }
 
         const serialisedNext = serialise(nextState);
-        // Pre-mark __finalised in the persisted state so finalise_ranked_match
-        // is a no-op even if some other code path invokes it later. This is
-        // the mechanism that makes disconnect-wins a NO-CONTEST: no points,
-        // no ELO, no wins/losses recorded.
-        (serialisedNext as any).__finalised = true;
+        // NOTE: do NOT pre-mark __finalised here — that flag is what makes
+        // finalise_ranked_match short-circuit, and it was the source of the
+        // no-contest/survivor-wins split. finalise_ranked_match sets it
+        // itself once the payout has actually been written.
         (serialisedNext as any).endedByDisconnect = true;
         const playerStates: Array<{ user_id: string; state: any }> = [];
         for (let slot = 0; slot < nextState.players.length; slot++) {
