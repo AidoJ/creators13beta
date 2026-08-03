@@ -582,7 +582,7 @@ export function placementReason(
     return { legal: false, text: "This hex already has a card." };
   }
 
-  const myIsWildcard = cardWildcardForAdjacency(card);
+  const myIsWildcard = placementWildcard(card);
   const myTypes = myIsWildcard ? [] : cardAdjacencyTypes(card);
 
   let neighbourCount = 0;
