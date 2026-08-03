@@ -451,7 +451,17 @@ function cardWildcardForAdjacency(card: DeckCard): boolean {
   );
 }
 
+/** Wildcard-ness when the card is the one BEING PLACED.
+ *  A Sky Creator is a wildcard *element* (for ecosystem completion) and a
+ *  wildcard *anchor* for its neighbours, but it may not be dropped anywhere
+ *  on the board: like every other Creator it must touch another Creator or a
+ *  neighbour carrying the Sky type. */
+function placementWildcard(card: DeckCard): boolean {
+  return card.kind === "golden_body" || card.kind === "golden_hive";
+}
+
 function cardAdjacencyTypes(card: DeckCard): string[] {
+  if (card.kind === "sky_creator") return ["Sky"];
   if (card.kind === "creator") {
     if (card.displayType) return [card.displayType as string];
     if (card.element) {
@@ -465,6 +475,13 @@ function cardAdjacencyTypes(card: DeckCard): string[] {
     return ((card.types ?? []) as string[]).filter(Boolean);
   }
   return [];
+}
+
+/** "Lion (Mountain/Sun)" — used to make illegal-placement toasts diagnosable
+ *  instead of leaving the player guessing which neighbour was checked. */
+function describeNeighbour(card: DeckCard): string {
+  const types = cardAdjacencyTypes(card);
+  return types.length ? `${card.name} (${types.join("/")})` : card.name;
 }
 
 function typeSetsOverlap(a: string[], b: string[]): boolean {
