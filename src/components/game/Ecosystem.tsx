@@ -212,6 +212,10 @@ export function Ecosystem({
       toast.error("No legal spots on your board for this action right now.");
       return;
     }
+    // The board is rendered inside a `translate(pan) scale(effectiveScale)`
+    // wrapper with `transform-origin: center center`, so undo BOTH the pan and
+    // the centre-anchored scale before comparing against un-transformed hex
+    // pixel coords. Ignoring the pan made zoomed drops snap to the wrong hex.
     const rect = e.currentTarget.getBoundingClientRect();
     const effectiveScale = (autoFit ? scale : 1) * userZoom;
     const px = (e.clientX - rect.left) / effectiveScale;
