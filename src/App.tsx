@@ -1,5 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
+import UpdateAvailableBanner from "@/components/UpdateAvailableBanner";
+
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -57,9 +59,11 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <UpdateAvailableBanner />
       <BrowserRouter>
         <AuthProvider>
           <RecoveryRedirect />
+
           <div className="flex flex-col min-h-screen">
             <div className="flex-1">
               <Routes>

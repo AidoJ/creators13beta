@@ -53,11 +53,17 @@ export function useBuildFreshness(pollOnFocus = true): BuildFreshness {
     const onFocus = () => { if (document.visibilityState === "visible") void check(); };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onFocus);
+    // Long-lived tabs (the phone-beta norm) never fire focus — poll slowly too.
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void check();
+    }, 5 * 60 * 1000);
     return () => {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onFocus);
+      window.clearInterval(timer);
     };
   }, [check, pollOnFocus]);
+
 
   const update = useCallback(async () => {
     try {
