@@ -114,6 +114,10 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
         }
         if (rejected.reason === "stale") {
           toast.message("Catching up to opponent…");
+        } else if (rejected.reason === "network") {
+          // Transport failure after retries — the board below is refetched
+          // straight after, so frame it as a reconnect, not a game error.
+          toast.message("Connection dropped — resyncing the board…");
         } else {
           toast.error(rejected.message ?? "Move rejected by server");
         }

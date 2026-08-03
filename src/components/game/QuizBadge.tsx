@@ -109,11 +109,7 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
             </DialogDescription>
           </DialogHeader>
 
-          {!question ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              No open question. Play a card to get one.
-            </div>
-          ) : answered ? (
+          {answered ? (
             <div className="space-y-3">
               <div className={"flex items-center gap-2 font-medium " + (answered.correct ? "text-green-600" : "text-destructive")}>
                 {answered.correct ? <Check className="h-5 w-5" /> : <X className="h-5 w-5" />}
@@ -136,6 +132,10 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
                 <Button size="sm" variant={hasNext ? "outline" : "default"} onClick={close}>Back to game</Button>
               </div>
 
+            </div>
+          ) : !question ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              No open question. Play a card to get one.
             </div>
           ) : (
             <div className="space-y-3">

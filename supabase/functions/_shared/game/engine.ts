@@ -453,7 +453,17 @@ function cardWildcardForAdjacency(card: DeckCard): boolean {
   );
 }
 
+/** Wildcard-ness when the card is the one BEING PLACED.
+ *  A Sky Creator is a wildcard *element* (for ecosystem completion) and a
+ *  wildcard *anchor* for its neighbours, but it may not be dropped anywhere
+ *  on the board: like every other Creator it must touch another Creator or a
+ *  neighbour carrying the Sky type. */
+function placementWildcard(card: DeckCard): boolean {
+  return card.kind === "golden_body" || card.kind === "golden_hive";
+}
+
 function cardAdjacencyTypes(card: DeckCard): string[] {
+  if (card.kind === "sky_creator") return ["Sky"];
   if (card.kind === "creator") {
     if (card.displayType) return [card.displayType as string];
     if (card.element) {
@@ -469,6 +479,13 @@ function cardAdjacencyTypes(card: DeckCard): string[] {
   return [];
 }
 
+/** "Lion (Mountain/Sun)" — used to make illegal-placement toasts diagnosable
+ *  instead of leaving the player guessing which neighbour was checked. */
+function describeNeighbour(card: DeckCard): string {
+  const types = cardAdjacencyTypes(card);
+  return types.length ? `${card.name} (${types.join("/")})` : card.name;
+}
+
 function typeSetsOverlap(a: string[], b: string[]): boolean {
   if (a.length === 0 || b.length === 0) return false;
   const setB = new Set(b.map((t) => t.toLowerCase()));
@@ -480,11 +497,12 @@ function adjacencyError(
   card: DeckCard,
   pos: Axial,
 ): string | null {
-  const myIsWildcard = cardWildcardForAdjacency(card);
+  const myIsWildcard = placementWildcard(card);
   const myTypes = myIsWildcard ? [] : cardAdjacencyTypes(card);
 
   let neighbourCount = 0;
   let anchorMatches = 0;
+  const neighbourDescs: string[] = [];
 
   for (let dir = 0; dir < 6; dir++) {
     const d = NEIGHBOUR_DIRS[dir];
@@ -492,6 +510,7 @@ function adjacencyError(
     const pc = eco.placed.get(nKey);
     if (!pc) continue;
     neighbourCount += 1;
+    neighbourDescs.push(describeNeighbour(pc.card));
 
     if (myIsWildcard || cardWildcardForAdjacency(pc.card)) {
       anchorMatches += 1;
@@ -514,7 +533,7 @@ function adjacencyError(
   if (neighbourCount === 0) return null;
   if (anchorMatches === 0) {
     const typeList = myTypes.length ? myTypes.join(" or ") : "any Creator Type";
-    return `Can't place ${card.name} here — none of the touching neighbours share ${typeList}.`;
+    return `Can't place ${card.name} here — none of the touching neighbours share ${typeList}. Touching: ${neighbourDescs.join(", ")}.`;
   }
   return null;
 }
@@ -565,7 +584,7 @@ export function placementReason(
     return { legal: false, text: "This hex already has a card." };
   }
 
-  const myIsWildcard = cardWildcardForAdjacency(card);
+  const myIsWildcard = placementWildcard(card);
   const myTypes = myIsWildcard ? [] : cardAdjacencyTypes(card);
 
   let neighbourCount = 0;

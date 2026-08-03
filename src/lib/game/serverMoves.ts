@@ -37,7 +37,26 @@ export type ServerMove =
 
 export type ApplyMoveResult =
   | { ok: true; seq: number; publicState: any; finished: boolean; turnStartedAt?: string | null }
-  | { ok: false; rejected: true; reason: "stale" | "not_implemented" | "auth" | "server"; currentSeq?: number; message?: string };
+  | { ok: false; rejected: true; reason: "stale" | "not_implemented" | "auth" | "server" | "network"; currentSeq?: number; message?: string };
+
+const NETWORK_RETRIES = 2;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** True for transport-level failures ("Failed to send a request to the Edge
+ *  Function") — the request never reached the server, so retrying is safe.
+ *  If a retry races an earlier attempt that DID land, the server answers 409
+ *  stale and the caller reconciles. */
+function isTransportFailure(error: any): boolean {
+  const status = error?.context?.status;
+  if (typeof status === "number" && status > 0) return false;
+  const name = String(error?.name ?? "");
+  const msg = String(error?.message ?? "");
+  return (
+    name === "FunctionsFetchError" ||
+    /failed to (send|fetch)/i.test(msg) ||
+    /network|load failed/i.test(msg)
+  );
+}
 
 export async function applyMoveServer(
   matchId: string,
@@ -45,9 +64,16 @@ export async function applyMoveServer(
   move: ServerMove,
 ): Promise<ApplyMoveResult> {
   try {
-    const { data, error } = await supabase.functions.invoke("apply-move", {
-      body: { match_id: matchId, expected_seq: expectedSeq, move },
-    });
+    let data: any = null;
+    let error: any = null;
+    for (let attempt = 0; attempt <= NETWORK_RETRIES; attempt++) {
+      ({ data, error } = await supabase.functions.invoke("apply-move", {
+        body: { match_id: matchId, expected_seq: expectedSeq, move },
+      }));
+      if (!error || !isTransportFailure(error)) break;
+      console.warn("[apply-move] transport failure — retrying", { attempt, moveType: move.type });
+      await sleep(400 * (attempt + 1));
+    }
     if (error) {
       const ctx: any = (error as any)?.context;
       const status = ctx?.status ?? 0;
@@ -76,6 +102,14 @@ export async function applyMoveServer(
       }
       if (status === 501) {
         return { ok: false, rejected: true, reason: "not_implemented", message };
+      }
+      if (isTransportFailure(error)) {
+        return {
+          ok: false,
+          rejected: true,
+          reason: "network",
+          message: "Connection dropped — your move didn't reach the table. Resyncing…",
+        };
       }
       return { ok: false, rejected: true, reason: "server", message };
     }
