@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import GameDashboardSection from "@/components/dashboard/game/GameDashboardSection";
 import { Skeleton } from "@/components/ui/skeleton";
+import BuildStamp from "@/components/game/BuildStamp";
 
 interface Loaded {
   firstName: string | null;
@@ -67,6 +68,10 @@ export default function PlayDashboard() {
           firstName={data.firstName}
           tierLabel={data.tierLabel}
           isPaidTier={data.isPaidTier}
+        />
+        <BuildStamp
+          diagnostics={{ user: user.id, tier: data.tierLabel }}
+          className="pt-2 border-t border-border"
         />
       </main>
     </div>

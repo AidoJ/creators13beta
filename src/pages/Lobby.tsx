@@ -28,6 +28,7 @@ import { Copy, Loader2, LogOut, Play as PlayIcon, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import BuildStamp from "@/components/game/BuildStamp";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
@@ -359,6 +360,8 @@ export default function Lobby() {
               </>
             )}
           </footer>
+
+          <BuildStamp diagnostics={{ match: matchId ?? null }} className="pt-3" />
         </Card>
       </div>
     </div>
