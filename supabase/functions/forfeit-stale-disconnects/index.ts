@@ -798,8 +798,16 @@ Deno.serve(async (req) => {
         throw commitErr;
       }
 
-      // NO-CONTEST: disconnect-ended matches never call finalise_ranked_match.
-      // (Pre-set __finalised above is a second belt on the same braces.)
+      // Ranked payout on the same terms as apply-move's finalise.
+      if (finished && match.is_ranked) {
+        const { error: finErr } = await svc.rpc("finalise_ranked_match", {
+          _match_id: match.id,
+          _reason: "disconnect",
+          _placements: placementsSnapshot.length > 0 ? (placementsSnapshot as any) : null,
+        });
+        if (finErr) console.error("[sweep] past-grace finalise_ranked_match failed", finErr);
+      }
+
 
 
       summary.past_grace_forfeited += 1;
