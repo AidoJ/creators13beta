@@ -2457,6 +2457,10 @@ export type Database = {
         Args: { _guest_name: string; _token: string }
         Returns: string
       }
+      acquire_sweep_lease: {
+        Args: { _key: string; _ttl_seconds: number }
+        Returns: boolean
+      }
       admin_reset_player_progress: {
         Args: { _user_id: string }
         Returns: undefined
@@ -2527,7 +2531,9 @@ export type Database = {
       }
       commit_move: {
         Args: {
+          _activate?: boolean
           _actor: string
+          _bump_turn?: boolean
           _expected_seq: number
           _finished?: boolean
           _match_id: string

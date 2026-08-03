@@ -603,7 +603,12 @@ export default function Play() {
     ? Math.max(0, Math.ceil((effectiveTurnStartedMs + idleWindowSec * 1000 - Date.now()) / 1000))
     : 0;
   const idleTurnExpired = showIdleWarning && idleSecondsLeft <= 0;
-  const canTakeTurn = isYourTurn && !idleTurnExpired;
+  // AUTHORITY RULE: the client's idle clock WARNS, it never BLOCKS. Only the
+  // server decides whether a turn has passed — if the client pre-empts that
+  // decision it can strand a legal move (the 03 Aug blocked-discard bug)
+  // whenever the server's auto-pass hasn't landed yet. Submit the move; the
+  // server rejects it cleanly if the turn really has moved on.
+  const canTakeTurn = isYourTurn;
   // Rearranging your OWN placed hexes (move + rotate) only affects your board,
   // so it stays available while other players are taking their turn.
   const canRearrange = !state?.finished;
@@ -810,13 +815,21 @@ export default function Play() {
   // Draw has its own `beginDraw()` ref for the deck-count invariant; this
   // lock is the general one for all other move controls. */
   const guardedInFlightRef = useRef(false);
+  /** Throttled "your turn may have passed" notice. Warn-only by design. */
+  const idleWarnedAtRef = useRef(0);
+  const warnIdleOnce = () => {
+    const now = Date.now();
+    if (now - idleWarnedAtRef.current < 8000) return;
+    idleWarnedAtRef.current = now;
+    toast.message("Your turn may have timed out — sending anyway…");
+  };
   const guarded = (fn: () => MatchState, move?: ServerMove) => {
     const isTurnBoundMove =
       !!move &&
       !["resolve_disaster", "concede", "rotate_hex", "finalise_by_score", "start_lobby_match"].includes(move.type);
     if (isPvp && idleTurnExpired && isTurnBoundMove) {
-      toast.error("Time ran out — waiting for auto-pass.");
-      return;
+      // Warn only — the move still goes to the server, which is authoritative.
+      warnIdleOnce();
     }
     if (guardedInFlightRef.current) return;
     guardedInFlightRef.current = true;
@@ -886,7 +899,7 @@ export default function Play() {
     if (effectiveHandLen >= 5) { toast.error("Hand full — max 5 cards."); return; }
     // 2-draws-per-turn cap (already-drawn + queued pending).
     if (effectiveDrawnThisTurn >= 2) return;
-    if (isPvp && idleTurnExpired) { toast.error("Time ran out — waiting for auto-pass."); return; }
+    if (isPvp && idleTurnExpired) warnIdleOnce();
     const pid = `pd-${++pendingIdRef.current}`;
     setPendingDraws((pd) => [...pd, { id: pid, source: "discard", card: top }]);
     setState((s) => {
@@ -941,7 +954,7 @@ export default function Play() {
     if (!state || !selfPlayer) return;
     if (effectiveHandLen >= 5) { toast.error("Hand full — max 5 cards."); return; }
     if (effectiveDrawnThisTurn >= 2) return;
-    if (isPvp && idleTurnExpired) { toast.error("Time ran out — waiting for auto-pass."); return; }
+    if (isPvp && idleTurnExpired) warnIdleOnce();
     const pid = `pd-${++pendingIdRef.current}`;
     setPendingDraws((pd) => [...pd, { id: pid, source: "deck", card: null }]);
     setState((s) => {
@@ -1253,7 +1266,7 @@ export default function Play() {
       phaseHint = `${turnPlayer.name} is ${isPvp ? "thinking" : "thinking…"}`;
     }
   } else if (idleTurnExpired) {
-    phaseHint = "Time ran out — waiting for auto-pass…";
+    phaseHint = "Time's up — your turn may auto-pass at any moment.";
   } else if (state.phase === "draw") {
     const myHand = state.players[state.turn]?.hand.length ?? 0;
     phaseHint = myHand >= 5
@@ -1563,7 +1576,7 @@ export default function Play() {
             {idleTurnExpired && isYourTurn ? (
               <span className="inline-flex items-center gap-1.5 text-red-500 font-semibold">
                 <Clock className="w-4 h-4" />
-                Time ran out — waiting for auto-pass…
+                Time's up — your turn may auto-pass at any moment.
               </span>
             ) : (
               phaseHint
