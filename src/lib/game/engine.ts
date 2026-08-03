@@ -1302,21 +1302,16 @@ function matchIsStalemated(state: MatchState): boolean {
 
 /** If every active player is stuck, end the match through the standard
  *  finalisation path (the same one used by finaliseByScore / pile exhaustion).
- *  Pure-stalemate end_of_days with no prior completer remains a draw, matching
- *  the existing pile-exhaustion behaviour. Returns true if it fired. */
+ *  Ranked by score in every mode — only a genuine tie on score is a draw.
+ *  Returns true if it fired. */
 function checkStalemateBackstop(state: MatchState): boolean {
   if (state.finished) return false;
   if (!matchIsStalemated(state)) return false;
-  if ((state.gameMode ?? "end_of_days") === "end_of_days") {
-    if ((state.placements?.length ?? 0) === 0) {
-      state.finished = true;
-      state.winnerId = null;
-      state.placements = [];
-      state.lastEvent =
-        "No legal moves remain for any player — match ended.";
-      return true;
-    }
-  }
+  // A pile-exhaustion / stalemate end is NOT automatically a draw: it is still
+  // ranked by score, and only an actual tie on score is a draw. The old
+  // special case here forced winnerId=null whenever nobody had completed an
+  // ecosystem, which showed "It's a draw" for matches one player had clearly
+  // won on points.
   finalise(state);
   state.lastEvent =
     "No legal moves remain — remaining players ranked by score.";
@@ -1929,8 +1924,11 @@ function finalise(state: MatchState, winnerId?: string): void {
   }
 
   state.placements = placements;
-  const top = placements.find((pl) => pl.rank === 1);
-  state.winnerId = top?.playerId ?? null;
+  const topPlacements = placements.filter((pl) => pl.rank === 1);
+  const top = topPlacements[0];
+  // Two or more players sharing rank 1 is a genuine draw; a single rank-1
+  // player is an outright winner even if the match ended on pile exhaustion.
+  state.winnerId = topPlacements.length === 1 ? top.playerId : null;
   const topName = top
     ? state.players.find((p) => p.id === top.playerId)?.name ?? "—"
     : "—";
