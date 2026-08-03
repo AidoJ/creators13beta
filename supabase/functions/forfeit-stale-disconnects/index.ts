@@ -1,5 +1,5 @@
 /**
-// engine-mirror-hash: f378baa12c94b168
+// engine-mirror-hash: c01f6c012ace99fa
  * forfeit-stale-disconnects — A.4 disconnect sweep.
  *
  * Cron-invoked every 30s (see migration). Three responsibilities, run in
@@ -591,7 +591,10 @@ Deno.serve(async (req) => {
         // Belt-and-braces: whatever finalise path ran inside the engine, this
         // sweep only fires because at least one seat is past-grace. Flag the
         // match state so the MatchOverDialog shows the "opponent left"
-        // framing, and treat it as a no-contest (no ELO / no ranked points).
+        // framing. The result IS ranked: survivor wins, points + ELO awarded
+        // (see the finalise_ranked_match call below). Anti-exploit is handled
+        // in the engine — the survivor wins by STAYING, never by score — so
+        // leaving while ahead can never buy a win.
         nextState.endedByDisconnect = true;
 
         const userIdForSlot = (slot: number): string | null =>
@@ -604,11 +607,10 @@ Deno.serve(async (req) => {
         }
 
         const serialisedNext = serialise(nextState);
-        // Pre-mark __finalised in the persisted state so finalise_ranked_match
-        // is a no-op even if some other code path invokes it later. This is
-        // the mechanism that makes disconnect-wins a NO-CONTEST: no points,
-        // no ELO, no wins/losses recorded.
-        (serialisedNext as any).__finalised = true;
+        // NOTE: do NOT pre-mark __finalised here — that flag is what makes
+        // finalise_ranked_match short-circuit, and it was the source of the
+        // no-contest/survivor-wins split. finalise_ranked_match sets it
+        // itself once the payout has actually been written.
         (serialisedNext as any).endedByDisconnect = true;
         const playerStates: Array<{ user_id: string; state: any }> = [];
         for (let slot = 0; slot < nextState.players.length; slot++) {
@@ -651,9 +653,18 @@ Deno.serve(async (req) => {
           throw commitErr;
         }
 
-        // NO-CONTEST: intentionally NOT calling finalise_ranked_match here.
-        // Disconnect-ended matches must not award ELO or ranked points to
-        // either seat (otherwise rage-quitting feeds wins to opponents).
+        // SURVIVOR WINS, RANKED. Same payout path apply-move uses when a
+        // connected player's move trips the ≤1-active finalise — the two
+        // paths must not disagree on whether a disconnect-ended match pays.
+        if (match.is_ranked) {
+          const { error: finErr } = await svc.rpc("finalise_ranked_match", {
+            _match_id: match.id,
+            _reason: "disconnect",
+            _placements: placementsSnapshot.length > 0 ? (placementsSnapshot as any) : null,
+          });
+          if (finErr) console.error("[sweep] 2p finalise_ranked_match failed", finErr);
+        }
+
 
 
         summary.past_grace_forfeited += 1;
@@ -720,11 +731,11 @@ Deno.serve(async (req) => {
       }
 
       const finished = !!nextState.finished;
-      // If the match ended THIS tick because of a past-grace disconnect, treat
-      // it as a no-contest — no ranked points, no ELO. This covers the 3/4-
-      // player case where one or more players go past-grace and the survivors'
-      // ≤1-active check trips finalise. Rage-quitting a bad match must not
-      // feed wins to whoever happened to still be connected.
+      // If the match ended THIS tick because of a past-grace disconnect it is
+      // still a RANKED result — the connected players are ranked by the
+      // engine's normal finalise, the departed seats take the bottom ranks.
+      // Identical to what apply-move records when a connected player's move
+      // happens to trip the same ≤1-active finalise.
       if (finished) {
         nextState.endedByDisconnect = true;
       }
@@ -739,8 +750,8 @@ Deno.serve(async (req) => {
 
       const serialisedNext = serialise(nextState);
       if (finished) {
-        // Pre-mark __finalised so finalise_ranked_match short-circuits.
-        (serialisedNext as any).__finalised = true;
+        // Do NOT pre-mark __finalised — finalise_ranked_match owns that flag
+        // and sets it after the payout lands.
         (serialisedNext as any).endedByDisconnect = true;
       }
       const playerStates: Array<{ user_id: string; state: any }> = [];
@@ -787,8 +798,16 @@ Deno.serve(async (req) => {
         throw commitErr;
       }
 
-      // NO-CONTEST: disconnect-ended matches never call finalise_ranked_match.
-      // (Pre-set __finalised above is a second belt on the same braces.)
+      // Ranked payout on the same terms as apply-move's finalise.
+      if (finished && match.is_ranked) {
+        const { error: finErr } = await svc.rpc("finalise_ranked_match", {
+          _match_id: match.id,
+          _reason: "disconnect",
+          _placements: placementsSnapshot.length > 0 ? (placementsSnapshot as any) : null,
+        });
+        if (finErr) console.error("[sweep] past-grace finalise_ranked_match failed", finErr);
+      }
+
 
 
       summary.past_grace_forfeited += 1;
