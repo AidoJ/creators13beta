@@ -682,7 +682,13 @@ Deno.serve(async (req) => {
     })
     .filter((x): x is { user_id: string; rank: number; status: string } => !!x);
 
-  const { error: commitErr } = await svc.rpc("commit_move", {
+  // ATOMIC COMMIT: state + seq + turn stopwatch + strike reset + lobby
+  // activation all happen inside commit_move's single transaction. The old
+  // pattern (commit, then a separate turn_started_at UPDATE) could leave a
+  // turn "already expired" if the follow-up write failed — that is the flaw
+  // the 03 Aug pool outage exposed.
+  const bumpTurn = !finished && !lobbyJustStarted && isTurnBoundMove;
+  const { data: commitData, error: commitErr } = await svc.rpc("commit_move", {
     _match_id: body.match_id,
     _expected_seq: body.expected_seq,
     _actor: userId,
@@ -692,7 +698,10 @@ Deno.serve(async (req) => {
     _winner: winnerUserId,
     _finished: finished,
     _placements: placementsSnapshot.length > 0 ? (placementsSnapshot as any) : null,
+    _bump_turn: bumpTurn,
+    _activate: lobbyJustStarted,
   });
+
   if (commitErr) {
     const code = (commitErr as any).code ?? "";
     const msg = String(commitErr.message ?? "");
@@ -714,47 +723,14 @@ Deno.serve(async (req) => {
     if (finErr) console.error("[apply-move] finalise_ranked_match failed", finErr);
   }
 
-  // Per-turn idle stopwatch + strike reset.
-  //   - turn_started_at doubles as the active seat's last valid game-action
-  //     timestamp. Reset it after every committed turn-bound action so the
-  //     idle sweep only appears when the player has truly gone idle, not while
-  //     they are actively drawing/placing during a long turn.
-  //   - Caller's consecutive idle strikes reset on ANY real action by that
-  //     player (strikes are consecutive, per existing behaviour).
-  // Skipped on finished matches (no more turns) and lobby start (handled
-  // alongside the lobby flip below).
-  let committedTurnStartedAt: string | null = null;
-  if (!finished && !lobbyJustStarted && isTurnBoundMove) {
-    const nowIso = new Date().toISOString();
-    committedTurnStartedAt = nowIso;
-    const { error: bumpErr } = await svc
-      .from("game_matches")
-      .update({ turn_started_at: nowIso })
-      .eq("id", body.match_id);
-    if (bumpErr) console.warn("[apply-move] turn_started_at bump failed", bumpErr);
-    if (callerRosterRow) {
-      const { error: strikeErr } = await svc
-        .from("game_match_players")
-        .update({ idle_strikes: 0 })
-        .eq("match_id", body.match_id)
-        .eq("user_id", userId)
-        .gt("idle_strikes", 0);
-      if (strikeErr) console.warn("[apply-move] idle_strikes reset failed", strikeErr);
-    }
-  }
+  // Turn stopwatch, strike reset and lobby activation are now performed
+  // INSIDE commit_move (single transaction). We only read back the stamp it
+  // returned so the response carries the authoritative deadline origin.
+  const committedTurnStartedAt: string | null =
+    bumpTurn || lobbyJustStarted
+      ? ((commitData as any)?.turn_started_at ?? new Date().toISOString())
+      : null;
 
-  // B — flip lobby match to 'active' once the host has triggered start.
-  // commit_move preserves status for non-finished moves, so we do it here.
-  if (lobbyJustStarted) {
-    const nowIso = new Date().toISOString();
-    committedTurnStartedAt = nowIso;
-    const { error: statusErr } = await svc
-      .from("game_matches")
-      .update({ status: "active", turn_started_at: nowIso, updated_at: nowIso })
-      .eq("id", body.match_id)
-      .eq("status", "waiting");
-    if (statusErr) console.error("[apply-move] lobby status flip failed", statusErr);
-  }
 
   // ────────────────────────────────────────────────────────────────
   // Creator Quiz Layer — best-effort side effects.

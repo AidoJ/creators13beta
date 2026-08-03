@@ -132,6 +132,37 @@ Deno.serve(async (req) => {
   // not require a user JWT here (service-role internal action).
   const svc = createClient(SUPABASE_URL, SERVICE_KEY);
 
+  // SINGLE-FLIGHT GUARD. pg_cron fires every 30s and pg_net gives up on the
+  // response after 5s, so a slow tick used to overlap the next one — each
+  // overlapping tick holding its own set of PostgREST requests. Under any
+  // slowdown that compounds until the connection pool is exhausted (the
+  // 03 Aug outage). A short DB lease means at most one sweep runs at a time
+  // and late ticks exit immediately instead of piling on.
+  const LEASE_SECONDS = 55;
+  try {
+    const { data: gotLease, error: leaseErr } = await svc.rpc("acquire_sweep_lease", {
+      _key: "forfeit-stale-disconnects",
+      _ttl_seconds: LEASE_SECONDS,
+    });
+    if (leaseErr) {
+      console.warn("[sweep] lease acquisition errored; skipping tick", leaseErr);
+      return jsonResponse({ ok: true, skipped: "lease_error" });
+    }
+    if (!gotLease) {
+      return jsonResponse({ ok: true, skipped: "another_sweep_running" });
+    }
+  } catch (e) {
+    console.warn("[sweep] lease acquisition threw; skipping tick", e);
+    return jsonResponse({ ok: true, skipped: "lease_throw" });
+  }
+
+  // Hard wall-clock budget: never let one tick run long enough to overlap
+  // the lease window.
+  const startedAtMs = Date.now();
+  const BUDGET_MS = 20_000;
+  const outOfBudget = () => Date.now() - startedAtMs > BUDGET_MS;
+
+
   // 1. Load tunables.
   let debounceSec = 15;
   let graceSec = 300;
@@ -272,6 +303,7 @@ Deno.serve(async (req) => {
       .not("turn_started_at", "is", null);
 
     for (const m of (idleMatches ?? []) as MatchSweepRow[]) {
+      if (outOfBudget()) { console.warn("[sweep] idle loop out of budget — deferring rest"); break; }
       if (startupGraceMatchIds.has(m.id)) continue;
       const ms = (m.state ?? {}) as any;
       // Skip Beat-the-Clock — its own turn timer is the strategic mechanism.
@@ -414,6 +446,11 @@ Deno.serve(async (req) => {
           _winner: null,
           _finished: false,
           _placements: null,
+          // ATOMIC: the new turn's stopwatch is stamped inside the same
+          // transaction as the auto-pass. Previously this was a follow-up
+          // UPDATE that could fail on its own, leaving the next turn born
+          // already-expired and the sweep auto-passing forever.
+          _bump_turn: true,
         });
         if (commitErr) {
           const code = (commitErr as any).code ?? "";
@@ -427,8 +464,8 @@ Deno.serve(async (req) => {
           throw commitErr;
         }
 
-        // Bump idle_strikes + refresh turn_started_at AFTER commit so the
-        // next sweep tick measures from now.
+        // Record the strike for the seat we just passed (commit_move zeroed
+        // it as part of the turn bump, so this must come after).
         if (!skipStrike) {
           await svc
             .from("game_match_players")
@@ -436,11 +473,7 @@ Deno.serve(async (req) => {
             .eq("match_id", m.id)
             .eq("user_id", rrow.user_id);
         }
-        await svc
 
-          .from("game_matches")
-          .update({ turn_started_at: new Date().toISOString() })
-          .eq("id", m.id);
 
         summary.idle_auto_passed += 1;
         console.log(
@@ -494,6 +527,7 @@ Deno.serve(async (req) => {
   const graceMs = graceSec * 1000;
 
   for (const match of (matches ?? []) as MatchSweepRow[]) {
+    if (outOfBudget()) { console.warn("[sweep] match loop out of budget — deferring rest"); break; }
     // Startup grace: don't end (or auto-skip in) a match whose clients
     // may not have established presence on /play yet.
     if (match.started_at) {
@@ -739,7 +773,10 @@ Deno.serve(async (req) => {
         _winner: winnerUserId,
         _finished: finished,
         _placements: placementsSnapshot.length > 0 ? (placementsSnapshot as any) : null,
+        // Atomic turn stopwatch for the seat that now holds the turn.
+        _bump_turn: !finished,
       });
+
       if (commitErr) {
         const code = (commitErr as any).code ?? "";
         const msg = String(commitErr.message ?? "");

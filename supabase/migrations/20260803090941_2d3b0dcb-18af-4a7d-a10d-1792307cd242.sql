@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.commit_move(uuid, bigint, uuid, jsonb, jsonb, jsonb, uuid, boolean, jsonb);
