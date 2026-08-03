@@ -359,6 +359,8 @@ export default function Lobby() {
               </>
             )}
           </footer>
+
+          <BuildStamp diagnostics={{ match: matchId ?? null }} className="pt-3" />
         </Card>
       </div>
     </div>
