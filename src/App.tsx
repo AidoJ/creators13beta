@@ -185,9 +185,11 @@ const App = () => (
             <GlobalFooter />
           </div>
         </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
+
 
 export default App;
