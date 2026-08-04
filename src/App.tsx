@@ -59,8 +59,8 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <UpdateAvailableBanner />
       <BrowserRouter>
+        <UpdateAvailableBanner />
         <AuthProvider>
           <RecoveryRedirect />
 
