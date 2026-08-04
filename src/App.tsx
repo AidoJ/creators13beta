@@ -54,12 +54,31 @@ const LotusPreview = import.meta.env.DEV
 
 const queryClient = new QueryClient();
 
+const RootCrashFallback = (
+  <div className="min-h-screen flex items-center justify-center p-6">
+    <div className="max-w-md text-center space-y-4">
+      <h1 className="text-2xl font-display">Something went wrong</h1>
+      <p className="text-sm text-muted-foreground">
+        The app hit an unexpected error while loading. Refreshing usually clears it.
+      </p>
+      <button
+        onClick={() => window.location.reload()}
+        className="px-4 py-2 rounded-md bg-primary text-primary-foreground"
+      >
+        Reload app
+      </button>
+    </div>
+  </div>
+);
+
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+  <ErrorBoundary fallback={RootCrashFallback}>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+
         <UpdateAvailableBanner />
         <AuthProvider>
           <RecoveryRedirect />
@@ -166,9 +185,11 @@ const App = () => (
             <GlobalFooter />
           </div>
         </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
+
 
 export default App;
