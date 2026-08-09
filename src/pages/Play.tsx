@@ -1271,7 +1271,9 @@ export default function Play() {
     const turnPlayer = state.players[state.turn] ?? opponent;
     const turnPresence = getPresenceStatusForPlayer(turnPlayer?.id);
     if (turnPresence === "reconnecting") {
-      phaseHint = `${turnPlayer.name} is reconnecting…`;
+      // Softer copy for a recovering blip — "disconnected" is reserved for a
+      // genuinely past-debounce absence with a forfeit clock running.
+      phaseHint = `${turnPlayer.name} has a connection issue — waiting…`;
     } else if (turnPresence === "disconnected") {
       phaseHint = `${turnPlayer.name} disconnected — waiting to reconnect…`;
     } else {
@@ -1840,7 +1842,7 @@ export default function Play() {
                         </span>
                       ) : opReconnecting ? (
                         <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide">
-                          <Loader2 className="w-2.5 h-2.5 animate-spin" /> Reconnecting
+                          <Loader2 className="w-2.5 h-2.5 animate-spin" /> Connection issue
                         </span>
                       ) : oppCount > 1 ? (
                         <span className="mt-0.5 block text-[9px] text-muted-foreground/80 uppercase tracking-wide">
@@ -2078,9 +2080,9 @@ export default function Play() {
                         ) : isReconnecting ? (
                           <span
                             className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide border border-amber-500/50 bg-amber-500/15 text-amber-300 shrink-0"
-                            title="Player is reconnecting"
+                            title="Brief connection issue — waiting for them to come back"
                           >
-                            <Loader2 className="w-2.5 h-2.5 animate-spin" /> Reconnecting
+                            <Loader2 className="w-2.5 h-2.5 animate-spin" /> Connection issue
                           </span>
                         ) : null}
                       </span>

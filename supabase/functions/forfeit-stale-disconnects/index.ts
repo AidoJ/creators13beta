@@ -315,7 +315,7 @@ Deno.serve(async (req) => {
 
       const { data: rrow } = await svc
         .from("game_match_players")
-        .select("user_id, slot, status, idle_strikes, disconnected_at, disconnect_stamped_at")
+        .select("user_id, slot, status, idle_strikes, disconnected_at, disconnect_stamped_at, last_presence_gap_at")
         .eq("match_id", m.id)
         .eq("slot", slot)
         .maybeSingle();
@@ -346,6 +346,24 @@ Deno.serve(async (req) => {
       // Absent current-turn player → skip seat with no strike penalty.
       // Idle current-turn player → strike logic below.
       let skipStrike = isAbsent;
+
+      // FLAKY-BUT-PRESENT FAIRNESS GUARD (train / bus case).
+      // A player bouncing through cellular handoffs keeps returning inside
+      // the debounce, so `disconnected_at` is never stamped and they look
+      // "idle" to the check above. Striking them — and eventually marking
+      // them idle_departed — punishes bad signal, not bad behaviour. If any
+      // presence gap was recorded during THIS turn, auto-pass the seat but
+      // record no strike.
+      if (!skipStrike && rrow.last_presence_gap_at && m.turn_started_at) {
+        const gapMs = Date.parse(rrow.last_presence_gap_at);
+        const turnStartMs = Date.parse(m.turn_started_at);
+        if (Number.isFinite(gapMs) && Number.isFinite(turnStartMs) && gapMs >= turnStartMs) {
+          skipStrike = true;
+          console.log(
+            `[sweep] flaky-connection guard: no strike match=${m.id} slot=${slot} gap_at=${rrow.last_presence_gap_at}`,
+          );
+        }
+      }
 
       // Fairness guard: never strike a player who had NO legal action.
       // Concrete wedge: phase==="draw" but hand.length >= HAND_LIMIT — engine

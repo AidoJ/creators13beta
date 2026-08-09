@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
   // Verify caller is a roster member of the match.
   const { data: rosterRow, error: rosterErr } = await svc
     .from("game_match_players")
-    .select("user_id")
+    .select("user_id, last_seen_at")
     .eq("match_id", body.match_id)
     .eq("user_id", userId)
     .maybeSingle();
@@ -90,7 +90,33 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "not a player in this match" }, 403);
   }
 
+  // Single shared source of truth for the "how long is a blip" threshold:
+  // game_settings.presence_debounce_seconds. The sweep reads it, the client's
+  // silent-ride-through window reads it, and gap detection here reads it.
+  let debounceSec = 15;
+  try {
+    const { data: settings } = await svc
+      .from("game_settings")
+      .select("presence_debounce_seconds")
+      .eq("id", "global")
+      .maybeSingle();
+    const d = Number((settings as { presence_debounce_seconds?: number } | null)?.presence_debounce_seconds);
+    if (Number.isFinite(d) && d > 0) debounceSec = d;
+  } catch { /* defaults */ }
+
   const nowIso = new Date().toISOString();
+
+  // Detect a presence GAP: this ping arrives after a silence longer than the
+  // debounce, i.e. the player really was off-signal for a while even though
+  // the sweep may never have stamped them disconnected. Recording it lets the
+  // idle-strike logic tell "flaky on a train" apart from "sat there ignoring
+  // their turn" — a flaky-but-present player must never accrue strikes.
+  const prevSeenMs = rosterRow.last_seen_at ? Date.parse(rosterRow.last_seen_at) : NaN;
+  const hadGap =
+    body.event !== "leave" &&
+    Number.isFinite(prevSeenMs) &&
+    Date.now() - prevSeenMs > debounceSec * 1000;
+
   const update: Record<string, unknown> =
     body.event === "leave"
       ? {
@@ -98,16 +124,24 @@ Deno.serve(async (req) => {
           // sweep decides whether enough time has passed to stamp
           // disconnected_at. We do NOT stamp it here — that's the entire
           // point of the server-side debounce.
+          //
+          // We deliberately do NOT write disconnect_reason here either: a
+          // reason is durable evidence that other clients poll, and writing
+          // it on every brief leave made a 2-second cellular handoff show
+          // "Reconnecting…" to the opponent instantly, defeating the
+          // server-side debounce.
           last_seen_at: nowIso,
-          disconnect_reason: body.reason ?? "presence_leave",
         }
       : {
           // Join or heartbeat: clear any stale disconnect markers, including
-          // the stamp used by the active-turn-skip grace.
+          // the stamp used by the active-turn-skip grace. This is what makes
+          // repeated brief drops non-cumulative — every return zeroes the
+          // forfeit clock.
           last_seen_at: nowIso,
           disconnected_at: null,
           disconnect_stamped_at: null,
           disconnect_reason: null,
+          ...(hadGap ? { last_presence_gap_at: nowIso } : {}),
         };
 
   const { error: updErr } = await svc

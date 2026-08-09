@@ -15,6 +15,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { APP_BUILD_HASH } from "@/lib/buildInfo";
+import { fetchGameSettings, DEFAULT_GAME_SETTINGS } from "@/lib/game/settings";
 
 export type PresenceStatus = "connected" | "reconnecting" | "disconnected";
 
@@ -42,6 +43,12 @@ export interface MatchPresenceState {
   rosterByUser: Record<string, RosterPresence>;
   /** Tracking own user as "connected" once the channel has joined. */
   selfConnected: boolean;
+  /** user_id → epoch ms when we first stopped seeing them. Drives the silent
+   *  ride-through window: a gap shorter than the shared debounce is NOT
+   *  surfaced as "reconnecting" to anyone. */
+  missingSince: Record<string, number>;
+  /** Shared silent-window length in ms (game_settings.presence_debounce_seconds). */
+  quietWindowMs: number;
 }
 
 interface RosterPresence {
@@ -74,8 +81,21 @@ export function useMatchPresence({
     presenceSynced: false,
     rosterByUser: {},
     selfConnected: false,
+    missingSince: {},
+    quietWindowMs: DEFAULT_GAME_SETTINGS.presence_debounce_seconds * 1000,
   });
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  // Clock tick so the time-sensitive quiet window expires on its own, even
+  // when no presence event arrives. Only runs while a gap is open, so an
+  // all-connected table costs nothing.
+  const [tick, setTick] = useState(0);
+  const hasOpenGap = Object.keys(state.missingSince).length > 0;
+  useEffect(() => {
+    if (!hasOpenGap) return;
+    const id = window.setInterval(() => setTick((t) => t + 1), 1000);
+    return () => window.clearInterval(id);
+  }, [hasOpenGap]);
 
   const reportPresence = useCallback(
     async (event: "join" | "leave" | "heartbeat", reason?: string) => {
@@ -91,6 +111,22 @@ export function useMatchPresence({
     },
     [matchId],
   );
+
+  // ONE shared source of truth for the blip threshold: the same
+  // game_settings.presence_debounce_seconds the sweep reads. No local
+  // constant — the client window and the server debounce cannot drift.
+  useEffect(() => {
+    let alive = true;
+    void fetchGameSettings().then((s) => {
+      const sec = Number(s.presence_debounce_seconds);
+      if (alive && Number.isFinite(sec) && sec > 0) {
+        setState((prev) => ({ ...prev, quietWindowMs: sec * 1000 }));
+      }
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!enabled || !matchId || !userId) return;
@@ -147,31 +183,45 @@ export function useMatchPresence({
           string,
           Array<PresencePayload>
         >;
-        setState((prev) => ({
-          ...prev,
-          byUser: projectByUser(raw),
-          presenceSynced: true,
-        }));
+        setState((prev) => {
+          const byUser = projectByUser(raw);
+          const now = Date.now();
+          const missingSince = { ...prev.missingSince };
+          // Anyone visible now has no gap in progress.
+          for (const uid of Object.keys(byUser)) delete missingSince[uid];
+          // Anyone rostered but absent starts (or continues) a quiet timer.
+          for (const uid of Object.keys(prev.rosterByUser)) {
+            if (!byUser[uid] && missingSince[uid] == null) missingSince[uid] = now;
+          }
+          return { ...prev, byUser, presenceSynced: true, missingSince };
+        });
       })
       .on("presence", { event: "join" }, ({ newPresences }) => {
         // Optimistic local merge; sync will overwrite shortly.
         setState((prev) => {
           const next = { ...prev.byUser };
+          const missingSince = { ...prev.missingSince };
           for (const p of newPresences as unknown as PresencePayload[]) {
             next[p.user_id] = { ...p, status: "connected" };
+            delete missingSince[p.user_id];
           }
-          return { ...prev, byUser: next };
+          return { ...prev, byUser: next, missingSince };
         });
       })
       .on("presence", { event: "leave" }, ({ leftPresences }) => {
         setState((prev) => {
           const next = { ...prev.byUser };
+          const missingSince = { ...prev.missingSince };
+          const now = Date.now();
           for (const p of leftPresences as unknown as PresencePayload[]) {
             if (next[p.user_id]) {
               next[p.user_id] = { ...next[p.user_id], status: "reconnecting" };
             }
+            // Start the quiet timer. statusFor() keeps reporting "connected"
+            // until it exceeds the shared debounce window.
+            if (missingSince[p.user_id] == null) missingSince[p.user_id] = now;
           }
-          return { ...prev, byUser: next };
+          return { ...prev, byUser: next, missingSince };
         });
       });
 
@@ -198,6 +248,24 @@ export function useMatchPresence({
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
+    // Signal came back: re-report presence and re-read the roster immediately
+    // instead of waiting for the next 10s heartbeat / 5s poll. The realtime
+    // socket reconnects itself; this makes the DB-side evidence catch up in
+    // the same beat so no player action is ever required.
+    const handleOnline = () => {
+      void reportPresence("heartbeat");
+      void fetchRoster();
+      // Re-track presence on the (possibly rebuilt) socket.
+      void channel.track({
+        user_id: userId,
+        seat,
+        status: "connected",
+        last_seen_at: new Date().toISOString(),
+        build_id: APP_BUILD_HASH,
+      } satisfies PresencePayload);
+    };
+    window.addEventListener("online", handleOnline);
+
     // Heartbeat every 10s — MUST be well under presence_debounce_seconds
     // (default 15s) or the sweep's stamp step will false-positive a
     // connected idle player as disconnected between heartbeats. 10s gives
@@ -216,6 +284,7 @@ export function useMatchPresence({
       window.clearInterval(heartbeat);
       window.clearInterval(rosterPoll);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("online", handleOnline);
       void reportPresence("leave", "unmount");
       supabase.removeChannel(channel);
       channelRef.current = null;
@@ -223,6 +292,17 @@ export function useMatchPresence({
   }, [matchId, userId, seat, enabled, reportPresence]);
 
   const helpers = useMemo(() => {
+    const quiet = state.quietWindowMs;
+
+    /** True while a gap is still inside the shared silent-window: most
+     *  cellular handoffs resolve here and must be a complete no-op — no
+     *  spinner, no copy change, nothing for either player. */
+    const inQuietWindow = (uid: string): boolean => {
+      const since = state.missingSince[uid];
+      if (since == null) return false;
+      return Date.now() - since < quiet;
+    };
+
     const statusFor = (uid: string | null | undefined): PresenceStatus | "missing" | null => {
       if (!uid) return null;
       const live = state.byUser[uid]?.status;
@@ -230,6 +310,11 @@ export function useMatchPresence({
 
       if (roster?.disconnected_at) return "disconnected";
       if (live === "connected") return "connected";
+
+      // SILENT RIDE-THROUGH: within the quiet window a rostered player who
+      // has briefly vanished still reads as connected.
+      if (roster && inQuietWindow(uid)) return "connected";
+
       if (live === "reconnecting") return "reconnecting";
       if (roster?.disconnect_reason) return "reconnecting";
 
@@ -240,10 +325,12 @@ export function useMatchPresence({
       // away/reconnecting even while disconnected_at is still null.
       if (state.presenceSynced && roster && !live) return "reconnecting";
 
-      // Heartbeat is every 20s. If DB evidence is stale but the sweep has not
-      // stamped disconnected_at yet, show reconnecting rather than silence.
+      // If DB evidence is stale but the sweep has not stamped
+      // disconnected_at yet, show reconnecting rather than silence. The
+      // threshold is derived from the shared debounce (2x) rather than a
+      // second hard-coded constant.
       const lastSeen = roster?.last_seen_at ? Date.parse(roster.last_seen_at) : NaN;
-      if (Number.isFinite(lastSeen) && Date.now() - lastSeen > 30_000) return "reconnecting";
+      if (Number.isFinite(lastSeen) && Date.now() - lastSeen > quiet * 2) return "reconnecting";
 
       if (live) return live;
       return "missing";
@@ -276,7 +363,10 @@ export function useMatchPresence({
       return Number.isFinite(t) ? t : null;
     };
     return { statusFor, buildFor, userIdForSlot, isConnected, isReconnecting, isDisconnected, isMissing, strikesFor, isDeparted, disconnectedAtFor };
-  }, [state.byUser, state.presenceSynced, state.rosterByUser]);
+    // `tick` is a deliberate dependency: statusFor is time-sensitive (the
+    // quiet window expires on the clock, not on an event), so the memo must
+    // be recomputed periodically while a gap is open.
+  }, [state.byUser, state.presenceSynced, state.rosterByUser, state.missingSince, state.quietWindowMs, tick]);
 
 
   return { ...state, ...helpers };

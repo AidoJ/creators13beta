@@ -31,6 +31,12 @@ export interface GameSettings {
   /** Grace seconds after a player's disconnect is stamped before the match
    *  is auto-ended. In 2-player matches the survivor wins once this elapses. */
   disconnect_grace_seconds: number;
+  /** THE single shared "how long is a blip" threshold. The server sweep uses
+   *  it to decide when silence becomes a stamped disconnect; the client uses
+   *  the same value as its silent ride-through window, so brief cellular
+   *  handoffs are invisible on both sides. Never hard-code a second constant
+   *  for this — the two must not be able to drift apart. */
+  presence_debounce_seconds: number;
   /** Grace seconds after a mid-turn disconnect is NOTICED (stamped) before
    *  the sweep auto-skips that seat's turn. Measured from
    *  `disconnect_stamped_at`, not last_seen_at, so the debounce window is
@@ -108,6 +114,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   idle_turn_seconds: 90,
   idle_turn_strikes_limit: 3,
   disconnect_grace_seconds: 300,
+  presence_debounce_seconds: 15,
   active_turn_skip_grace_seconds: 45,
 
   mode_end_of_days_enabled: true,

@@ -142,9 +142,9 @@ export function useMatchRealtime(
         console.log(`[match-realtime] ${matchId} status:`, status);
       });
 
-    // Polling fallback.
+    // Polling fallback + connectivity-return resync.
     let lastUpdatedAt = "";
-    const poll = setInterval(async () => {
+    const runPoll = async (force = false) => {
       if (cancelled) return;
       const [rowRes, stateRes] = await Promise.all([
         supabase.from("game_matches").select(ROW_COLS).eq("id", matchId).maybeSingle(),
@@ -159,7 +159,7 @@ export function useMatchRealtime(
       const row = rowRes.data as unknown as GameMatchRow;
       const prevStatus = lastRow?.status;
       lastRow = row;
-      if (row.updated_at === lastUpdatedAt) return;
+      if (!force && row.updated_at === lastUpdatedAt) return;
       lastUpdatedAt = row.updated_at;
       const stateRow = stateRes.data as { state: any } | null;
       // Status flipped to 'finished' since last poll — synthesise a finished
@@ -193,11 +193,40 @@ export function useMatchRealtime(
       } catch (e) {
         console.error("[match-realtime] poll deserialize failed", e);
       }
-    }, 4000);
+    };
+
+    const poll = setInterval(() => void runPoll(), 4000);
+
+    // AUTO-RESYNC ON SIGNAL RETURN — no player action required.
+    // The websocket reconnects itself, but its replay can lag; this pulls the
+    // authoritative row + redacted state immediately so a player coming out
+    // of a tunnel sees the true board within a beat instead of waiting for
+    // the next 4s poll. `force` bypasses the updated_at short-circuit because
+    // the row may not have changed while we were away — we still need to
+    // reconcile our own possibly-stale local copy.
+    let burstTimers: number[] = [];
+    const resyncNow = () => {
+      void runPoll(true);
+      // Short burst: cellular reconnects often deliver the first request
+      // before the socket is fully back, so re-check a couple of times.
+      burstTimers.forEach((t) => window.clearTimeout(t));
+      burstTimers = [1500, 4000].map((ms) =>
+        window.setTimeout(() => void runPoll(true), ms),
+      );
+    };
+    const handleOnline = () => resyncNow();
+    const handleVisible = () => {
+      if (document.visibilityState === "visible") resyncNow();
+    };
+    window.addEventListener("online", handleOnline);
+    document.addEventListener("visibilitychange", handleVisible);
 
     return () => {
       cancelled = true;
       clearInterval(poll);
+      burstTimers.forEach((t) => window.clearTimeout(t));
+      window.removeEventListener("online", handleOnline);
+      document.removeEventListener("visibilitychange", handleVisible);
       supabase.removeChannel(channel);
     };
   }, [matchId, selfUserId, onRemoteUpdate]);
