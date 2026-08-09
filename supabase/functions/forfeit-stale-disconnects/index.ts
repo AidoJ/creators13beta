@@ -315,7 +315,7 @@ Deno.serve(async (req) => {
 
       const { data: rrow } = await svc
         .from("game_match_players")
-        .select("user_id, slot, status, idle_strikes, disconnected_at, disconnect_stamped_at")
+        .select("user_id, slot, status, idle_strikes, disconnected_at, disconnect_stamped_at, last_presence_gap_at")
         .eq("match_id", m.id)
         .eq("slot", slot)
         .maybeSingle();
