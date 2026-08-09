@@ -352,7 +352,10 @@ export function useMatchPresence({
       return Number.isFinite(t) ? t : null;
     };
     return { statusFor, buildFor, userIdForSlot, isConnected, isReconnecting, isDisconnected, isMissing, strikesFor, isDeparted, disconnectedAtFor };
-  }, [state.byUser, state.presenceSynced, state.rosterByUser]);
+    // `tick` is a deliberate dependency: statusFor is time-sensitive (the
+    // quiet window expires on the clock, not on an event), so the memo must
+    // be recomputed periodically while a gap is open.
+  }, [state.byUser, state.presenceSynced, state.rosterByUser, state.missingSince, state.quietWindowMs, tick]);
 
 
   return { ...state, ...helpers };
