@@ -826,6 +826,7 @@ export type Database = {
           finalised_at: string | null
           idle_strikes: number
           joined_at: string
+          last_presence_gap_at: string | null
           last_seen_at: string | null
           match_id: string
           rank: number | null
@@ -841,6 +842,7 @@ export type Database = {
           finalised_at?: string | null
           idle_strikes?: number
           joined_at?: string
+          last_presence_gap_at?: string | null
           last_seen_at?: string | null
           match_id: string
           rank?: number | null
@@ -856,6 +858,7 @@ export type Database = {
           finalised_at?: string | null
           idle_strikes?: number
           joined_at?: string
+          last_presence_gap_at?: string | null
           last_seen_at?: string | null
           match_id?: string
           rank?: number | null
