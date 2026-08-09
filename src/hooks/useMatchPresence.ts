@@ -86,6 +86,17 @@ export function useMatchPresence({
   });
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
+  // Clock tick so the time-sensitive quiet window expires on its own, even
+  // when no presence event arrives. Only runs while a gap is open, so an
+  // all-connected table costs nothing.
+  const [tick, setTick] = useState(0);
+  const hasOpenGap = Object.keys(state.missingSince).length > 0;
+  useEffect(() => {
+    if (!hasOpenGap) return;
+    const id = window.setInterval(() => setTick((t) => t + 1), 1000);
+    return () => window.clearInterval(id);
+  }, [hasOpenGap]);
+
   const reportPresence = useCallback(
     async (event: "join" | "leave" | "heartbeat", reason?: string) => {
       if (!matchId) return;
