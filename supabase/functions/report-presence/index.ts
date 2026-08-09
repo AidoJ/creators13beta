@@ -134,11 +134,14 @@ Deno.serve(async (req) => {
         }
       : {
           // Join or heartbeat: clear any stale disconnect markers, including
-          // the stamp used by the active-turn-skip grace.
+          // the stamp used by the active-turn-skip grace. This is what makes
+          // repeated brief drops non-cumulative — every return zeroes the
+          // forfeit clock.
           last_seen_at: nowIso,
           disconnected_at: null,
           disconnect_stamped_at: null,
           disconnect_reason: null,
+          ...(hadGap ? { last_presence_gap_at: nowIso } : {}),
         };
 
   const { error: updErr } = await svc
