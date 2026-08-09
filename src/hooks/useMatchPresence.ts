@@ -281,6 +281,17 @@ export function useMatchPresence({
   }, [matchId, userId, seat, enabled, reportPresence]);
 
   const helpers = useMemo(() => {
+    const quiet = state.quietWindowMs;
+
+    /** True while a gap is still inside the shared silent-window: most
+     *  cellular handoffs resolve here and must be a complete no-op — no
+     *  spinner, no copy change, nothing for either player. */
+    const inQuietWindow = (uid: string): boolean => {
+      const since = state.missingSince[uid];
+      if (since == null) return false;
+      return Date.now() - since < quiet;
+    };
+
     const statusFor = (uid: string | null | undefined): PresenceStatus | "missing" | null => {
       if (!uid) return null;
       const live = state.byUser[uid]?.status;
@@ -288,6 +299,11 @@ export function useMatchPresence({
 
       if (roster?.disconnected_at) return "disconnected";
       if (live === "connected") return "connected";
+
+      // SILENT RIDE-THROUGH: within the quiet window a rostered player who
+      // has briefly vanished still reads as connected.
+      if (roster && inQuietWindow(uid)) return "connected";
+
       if (live === "reconnecting") return "reconnecting";
       if (roster?.disconnect_reason) return "reconnecting";
 
@@ -298,10 +314,12 @@ export function useMatchPresence({
       // away/reconnecting even while disconnected_at is still null.
       if (state.presenceSynced && roster && !live) return "reconnecting";
 
-      // Heartbeat is every 20s. If DB evidence is stale but the sweep has not
-      // stamped disconnected_at yet, show reconnecting rather than silence.
+      // If DB evidence is stale but the sweep has not stamped
+      // disconnected_at yet, show reconnecting rather than silence. The
+      // threshold is derived from the shared debounce (2x) rather than a
+      // second hard-coded constant.
       const lastSeen = roster?.last_seen_at ? Date.parse(roster.last_seen_at) : NaN;
-      if (Number.isFinite(lastSeen) && Date.now() - lastSeen > 30_000) return "reconnecting";
+      if (Number.isFinite(lastSeen) && Date.now() - lastSeen > quiet * 2) return "reconnecting";
 
       if (live) return live;
       return "missing";
