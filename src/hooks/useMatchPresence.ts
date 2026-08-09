@@ -15,6 +15,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { APP_BUILD_HASH } from "@/lib/buildInfo";
+import { fetchGameSettings, DEFAULT_GAME_SETTINGS } from "@/lib/game/settings";
 
 export type PresenceStatus = "connected" | "reconnecting" | "disconnected";
 
@@ -42,6 +43,12 @@ export interface MatchPresenceState {
   rosterByUser: Record<string, RosterPresence>;
   /** Tracking own user as "connected" once the channel has joined. */
   selfConnected: boolean;
+  /** user_id → epoch ms when we first stopped seeing them. Drives the silent
+   *  ride-through window: a gap shorter than the shared debounce is NOT
+   *  surfaced as "reconnecting" to anyone. */
+  missingSince: Record<string, number>;
+  /** Shared silent-window length in ms (game_settings.presence_debounce_seconds). */
+  quietWindowMs: number;
 }
 
 interface RosterPresence {
@@ -74,6 +81,8 @@ export function useMatchPresence({
     presenceSynced: false,
     rosterByUser: {},
     selfConnected: false,
+    missingSince: {},
+    quietWindowMs: DEFAULT_GAME_SETTINGS.presence_debounce_seconds * 1000,
   });
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
@@ -91,6 +100,22 @@ export function useMatchPresence({
     },
     [matchId],
   );
+
+  // ONE shared source of truth for the blip threshold: the same
+  // game_settings.presence_debounce_seconds the sweep reads. No local
+  // constant — the client window and the server debounce cannot drift.
+  useEffect(() => {
+    let alive = true;
+    void fetchGameSettings().then((s) => {
+      const sec = Number(s.presence_debounce_seconds);
+      if (alive && Number.isFinite(sec) && sec > 0) {
+        setState((prev) => ({ ...prev, quietWindowMs: sec * 1000 }));
+      }
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!enabled || !matchId || !userId) return;
@@ -147,31 +172,45 @@ export function useMatchPresence({
           string,
           Array<PresencePayload>
         >;
-        setState((prev) => ({
-          ...prev,
-          byUser: projectByUser(raw),
-          presenceSynced: true,
-        }));
+        setState((prev) => {
+          const byUser = projectByUser(raw);
+          const now = Date.now();
+          const missingSince = { ...prev.missingSince };
+          // Anyone visible now has no gap in progress.
+          for (const uid of Object.keys(byUser)) delete missingSince[uid];
+          // Anyone rostered but absent starts (or continues) a quiet timer.
+          for (const uid of Object.keys(prev.rosterByUser)) {
+            if (!byUser[uid] && missingSince[uid] == null) missingSince[uid] = now;
+          }
+          return { ...prev, byUser, presenceSynced: true, missingSince };
+        });
       })
       .on("presence", { event: "join" }, ({ newPresences }) => {
         // Optimistic local merge; sync will overwrite shortly.
         setState((prev) => {
           const next = { ...prev.byUser };
+          const missingSince = { ...prev.missingSince };
           for (const p of newPresences as unknown as PresencePayload[]) {
             next[p.user_id] = { ...p, status: "connected" };
+            delete missingSince[p.user_id];
           }
-          return { ...prev, byUser: next };
+          return { ...prev, byUser: next, missingSince };
         });
       })
       .on("presence", { event: "leave" }, ({ leftPresences }) => {
         setState((prev) => {
           const next = { ...prev.byUser };
+          const missingSince = { ...prev.missingSince };
+          const now = Date.now();
           for (const p of leftPresences as unknown as PresencePayload[]) {
             if (next[p.user_id]) {
               next[p.user_id] = { ...next[p.user_id], status: "reconnecting" };
             }
+            // Start the quiet timer. statusFor() keeps reporting "connected"
+            // until it exceeds the shared debounce window.
+            if (missingSince[p.user_id] == null) missingSince[p.user_id] = now;
           }
-          return { ...prev, byUser: next };
+          return { ...prev, byUser: next, missingSince };
         });
       });
 
@@ -198,6 +237,24 @@ export function useMatchPresence({
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
+    // Signal came back: re-report presence and re-read the roster immediately
+    // instead of waiting for the next 10s heartbeat / 5s poll. The realtime
+    // socket reconnects itself; this makes the DB-side evidence catch up in
+    // the same beat so no player action is ever required.
+    const handleOnline = () => {
+      void reportPresence("heartbeat");
+      void fetchRoster();
+      // Re-track presence on the (possibly rebuilt) socket.
+      void channel.track({
+        user_id: userId,
+        seat,
+        status: "connected",
+        last_seen_at: new Date().toISOString(),
+        build_id: APP_BUILD_HASH,
+      } satisfies PresencePayload);
+    };
+    window.addEventListener("online", handleOnline);
+
     // Heartbeat every 10s — MUST be well under presence_debounce_seconds
     // (default 15s) or the sweep's stamp step will false-positive a
     // connected idle player as disconnected between heartbeats. 10s gives
@@ -216,6 +273,7 @@ export function useMatchPresence({
       window.clearInterval(heartbeat);
       window.clearInterval(rosterPoll);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("online", handleOnline);
       void reportPresence("leave", "unmount");
       supabase.removeChannel(channel);
       channelRef.current = null;
