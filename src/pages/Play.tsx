@@ -1478,7 +1478,19 @@ export default function Play() {
   return (
     <div className="h-[100dvh] flex flex-col bg-background overflow-hidden overscroll-contain">
 
+      {/* Offline move queue marker — a move made during a signal blip is held
+          and delivered on reconnect, so show "Sending…" rather than an error. */}
+      {pendingMoveCount > 0 && (
+        <div className="fixed left-1/2 -translate-x-1/2 top-2 z-50 pointer-events-none">
+          <div className="flex items-center gap-2 rounded-full border border-amber-400/60 bg-background/95 px-3 py-1 text-[11px] text-amber-300 shadow-lg">
+            <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+            Sending your move…{pendingMoveCount > 1 ? ` (${pendingMoveCount})` : ""}
+          </div>
+        </div>
+      )}
+
       {user && <PlayerProfileDiscountCTA userId={user.id} />}
+
 
 
       {gameSettings.maintenance_banner_enabled && gameSettings.maintenance_banner_text && (
