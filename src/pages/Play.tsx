@@ -323,7 +323,7 @@ export default function Play() {
   }, [allCards, routeMatchId, user]);
 
   /* ----------- PvP server reconcile (seq + submit) ----------- */
-  const { serverSeqRef, submitServerMove } = usePvpReconcile({
+  const { serverSeqRef, submitServerMove, pendingMoveCount } = usePvpReconcile({
     matchRow,
     setMatchRow,
     setState,
