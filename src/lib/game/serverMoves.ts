@@ -37,7 +37,7 @@ export type ServerMove =
 
 export type ApplyMoveResult =
   | { ok: true; seq: number; publicState: any; finished: boolean; turnStartedAt?: string | null }
-  | { ok: false; rejected: true; reason: "stale" | "not_implemented" | "auth" | "server" | "network"; currentSeq?: number; message?: string };
+  | { ok: false; rejected: true; reason: "stale" | "finished" | "not_implemented" | "auth" | "server" | "network"; currentSeq?: number; message?: string };
 
 const NETWORK_RETRIES = 2;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -94,6 +94,10 @@ export async function applyMoveServer(
       }
       const message = serverMessage || error.message;
       console.warn("[apply-move] rejected", { status, message, moveType: move.type });
+      if (status === 410) {
+        // Terminal — the match is over. Never retry, never queue.
+        return { ok: false, rejected: true, reason: "finished", message };
+      }
       if (status === 409) {
         return { ok: false, rejected: true, reason: "stale", message };
       }

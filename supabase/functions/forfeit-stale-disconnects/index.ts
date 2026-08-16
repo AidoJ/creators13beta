@@ -163,6 +163,19 @@ Deno.serve(async (req) => {
   const outOfBudget = () => Date.now() - startedAtMs > BUDGET_MS;
 
 
+  // 0. Reap abandoned matches: waiting lobbies idle > 15 min, active matches
+  // idle > 30 min. Closed with no winner and an audit move row.
+  try {
+    const { data: reaped, error: reapErr } = await svc.rpc("reap_abandoned_matches", {
+      _lobby_idle_minutes: 15,
+      _active_idle_minutes: 30,
+    });
+    if (reapErr) console.warn("[sweep] reap_abandoned_matches failed", reapErr);
+    else if (reaped) console.log("[sweep] reaped", reaped);
+  } catch (e) {
+    console.warn("[sweep] reap threw", e);
+  }
+
   // 1. Load tunables.
   let debounceSec = 15;
   let graceSec = 300;

@@ -257,6 +257,16 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (matchErr || !match) return jsonResponse({ error: "match not found" }, 404);
 
+  // TERMINAL: a finished match never accepts another move. 410 (not 409) so
+  // clients treat it as final and stop retrying — an endless retry loop
+  // against a finished match once flooded the database for days.
+  if (match.status === "finished") {
+    return jsonResponse(
+      { error: "finished", message: "match already finished", current_seq: Number(match.seq ?? 0) },
+      410,
+    );
+  }
+
   // A.1: roster lookup. PvP membership now comes from game_match_players.
   // Solo bot matches (is_ranked=false) have no roster row for the bot — fall
   // back to the legacy host_user_id check for the human side.
@@ -556,6 +566,9 @@ Deno.serve(async (req) => {
     if (startErr) {
       const code = (startErr as any).code ?? "";
       const msg = String(startErr.message ?? "");
+      if (code === "P0004" || msg.includes("match already finished")) {
+        return jsonResponse({ error: "finished", message: msg }, 410);
+      }
       if (code === "40001" || msg.includes("stale seq")) {
         return jsonResponse({ error: "stale", message: msg }, 409);
       }
@@ -705,6 +718,9 @@ Deno.serve(async (req) => {
   if (commitErr) {
     const code = (commitErr as any).code ?? "";
     const msg = String(commitErr.message ?? "");
+    if (code === "P0004" || msg.includes("match already finished")) {
+      return jsonResponse({ error: "finished", message: msg }, 410);
+    }
     if (code === "40001" || msg.includes("stale seq")) {
       return jsonResponse({ error: "stale", message: msg }, 409);
     }

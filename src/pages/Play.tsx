@@ -126,7 +126,9 @@ export default function Play() {
     matchId: matchRow?.id ?? null,
     userId: user?.id ?? null,
     seat: rosterSlot ?? undefined,
-    enabled: matchRow?.mode === "pvp",
+    // Stop heartbeats the moment the match is over — a finalised match
+    // should generate no further presence traffic.
+    enabled: matchRow?.mode === "pvp" && matchRow?.status !== "finished",
   });
 
   // Fire an immediate report-presence "join" the instant the board mounts

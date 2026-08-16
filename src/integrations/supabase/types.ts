@@ -2819,6 +2819,10 @@ export type Database = {
             }
             Returns: string
           }
+      reap_abandoned_matches: {
+        Args: { _active_idle_minutes?: number; _lobby_idle_minutes?: number }
+        Returns: Json
+      }
       recompute_match_scores_for_user: {
         Args: { _user_id: string }
         Returns: undefined
