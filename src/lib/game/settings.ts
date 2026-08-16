@@ -94,8 +94,9 @@ export interface GameSettings {
 
   // Creator Quiz
   quiz_enabled: boolean;
-  quiz_bonus_points: number;         // Points awarded per 4 correct answers (1–5)
-  quiz_questions_per_match: 4 | 8 | 12; // Max questions any player is served per match
+  quiz_bonus_points: number;         // Points awarded each time the player hits another bonus tier (1–20)
+  quiz_bonus_threshold: number;      // Correct answers needed per bonus award (1–20)
+  quiz_questions_per_match: number;  // Max questions any player is served per match (1–20)
 }
 
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
@@ -163,6 +164,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   profile_discount_percent_3: 50,
   quiz_enabled: true,
   quiz_bonus_points: 1,
+  quiz_bonus_threshold: 4,
   quiz_questions_per_match: 4,
 };
 
