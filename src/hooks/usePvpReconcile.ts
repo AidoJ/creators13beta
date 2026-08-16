@@ -149,6 +149,15 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
           break;
         }
 
+        if (result.reason === "finished") {
+          // Terminal — the match ended. Drop everything queued; never retry.
+          clearQueue(matchId);
+          syncPending(matchId);
+          toast.message("This match has ended");
+          await reconcile(matchId);
+          break;
+        }
+
         if (result.reason === "stale") {
           // THE critical safety path: the match advanced while we were
           // offline. Nothing in the queue is valid any more.
@@ -278,6 +287,13 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
           // error; the drain loop delivers it when signal returns.
           enqueueMove(matchId, move, expected);
           syncPending(matchId);
+          return;
+        }
+        if (rejected.reason === "finished") {
+          clearQueue(matchId);
+          syncPending(matchId);
+          toast.message("This match has ended");
+          await reconcile(matchId);
           return;
         }
         if (rejected.reason === "stale") {
