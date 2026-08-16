@@ -20,6 +20,7 @@ export interface QuizProgress {
 export interface QuizSettings {
   enabled: boolean;
   bonus_points: number;
+  bonus_threshold: number;
   questions_per_match: number;
 }
 
@@ -30,18 +31,19 @@ export interface QuizSettings {
 export function useQuizProgress(matchId: string | null, userId: string | null, refreshKey: number) {
   const [progress, setProgress] = useState<QuizProgress | null>(null);
   const [question, setQuestion] = useState<QuizQuestion | null>(null);
-  const [settings, setSettings] = useState<QuizSettings>({ enabled: true, bonus_points: 1, questions_per_match: 4 });
+  const [settings, setSettings] = useState<QuizSettings>({ enabled: true, bonus_points: 1, bonus_threshold: 4, questions_per_match: 4 });
   const settingsLoaded = useRef(false);
 
   useEffect(() => {
     if (settingsLoaded.current) return;
     settingsLoaded.current = true;
-    void supabase.from("game_settings").select("quiz_enabled, quiz_bonus_points, quiz_questions_per_match").limit(1).maybeSingle()
+    void supabase.from("game_settings").select("quiz_enabled, quiz_bonus_points, quiz_bonus_threshold, quiz_questions_per_match").limit(1).maybeSingle()
       .then(({ data }) => {
         if (!data) return;
         setSettings({
           enabled: (data as any).quiz_enabled ?? true,
           bonus_points: (data as any).quiz_bonus_points ?? 1,
+          bonus_threshold: Math.max(1, (data as any).quiz_bonus_threshold ?? 4),
           questions_per_match: (data as any).quiz_questions_per_match ?? 4,
         });
       });
