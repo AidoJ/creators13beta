@@ -27,7 +27,8 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
   const answeredCount = correct + wrong;
   const capReached = answeredCount >= cap;
   const hasOpen = !!question && !!progress?.open_question_id;
-  const toNextTier = 4 - (correct % 4);
+  const tier = Math.max(1, settings.bonus_threshold || 4);
+  const toNextTier = tier - (correct % tier);
 
   if (!settings.enabled) return null;
 
@@ -105,7 +106,7 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
             <DialogDescription className="text-xs">
               {capReached
                 ? `All ${cap} questions used this match — +${bonusPts} bonus point${bonusPts === 1 ? "" : "s"} added to your match score.`
-                : `Every 4 correct answers adds +${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"} to your match score. Up to ${cap} questions this match.`}
+                : `Every ${tier} correct answers adds +${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"} to your match score. Up to ${cap} questions this match.`}
             </DialogDescription>
           </DialogHeader>
 
@@ -120,7 +121,7 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
               )}
               <div className="text-xs text-muted-foreground">
                 {answered.correct
-                  ? `Mastered — this question won't come back. ${4 - (correct % 4) === 4 ? `+${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"} just added to your match score.` : `${4 - (correct % 4)} more correct adds +${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"} to your match score.`}`
+                  ? `Mastered — this question won't come back. ${tier - (correct % tier) === tier ? `+${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"} just added to your match score.` : `${tier - (correct % tier)} more correct adds +${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"} to your match score.`}`
                   : "You'll see this one again in a future match."}
               </div>
               <div className="flex justify-end gap-2">
