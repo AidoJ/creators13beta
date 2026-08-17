@@ -20,9 +20,11 @@ interface Props {
   dimmed?: boolean;
   /** Forces the descriptor side to be visible (e.g. for the right-rail preview). */
   forceFlipped?: boolean;
+  /** Fired when the player opens the card-info popup (coach tracks this). */
+  onInfoOpen?: () => void;
 }
 
-function HandTileImpl({ card, size = 96, selected = false, dimmed = false, forceFlipped }: Props) {
+function HandTileImpl({ card, size = 96, selected = false, dimmed = false, forceFlipped, onInfoOpen }: Props) {
   const [zoomed, setZoomed] = useState(false);
   const [flipped, setFlipped] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -100,6 +102,7 @@ function HandTileImpl({ card, size = 96, selected = false, dimmed = false, force
                 e.preventDefault();
                 if (isCreatorLike && !isGolden) {
                   setInfoOpen(true);
+                  onInfoOpen?.();
                 } else {
                   setZoomed(true);
                 }

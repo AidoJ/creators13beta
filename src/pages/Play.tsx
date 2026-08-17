@@ -65,7 +65,8 @@ import ProfilingPromptDialog from "@/components/game/ProfilingPromptDialog";
 import { CoachBar } from "@/components/game/CoachBar";
 import LearnPanel from "@/components/game/LearnPanel";
 import { useCoach, resetCoach } from "@/hooks/useCoach";
-import { seedOpeningHand, stackForWant } from "@/lib/game/coachScript";
+import { seedOpeningHand, stackForWant, type CoachSnapshot } from "@/lib/game/coachScript";
+import { coachBotStep } from "@/lib/game/coachBotScript";
 // (legacy MultiplayerLobby dialog removed in Batch B — multiplayer now flows
 // through the route-based /play/lobby/:matchId page.)
 import { HandTile } from "@/components/game/cards/HandTile";
@@ -418,11 +419,30 @@ export default function Play() {
     }
     if (state.pendingDisaster) return; // waiting on human player
     if (state.players[state.turn].id !== "bot") return;
+    // Coached matches use a SCRIPTED bot: deterministic, readable moves so the
+    // narration ("watch it match a colour") is always true. Its moves still go
+    // through the real engine — the script only chooses, never bends rules.
+    // Coached bot turns are also slowed so the learner can watch them land.
     const t = setTimeout(() => {
       try {
         setState((s) => {
           if (!s) return s;
-          let next = botStep(s, botDifficultyRef.current);
+          let next = s;
+          if (coachEnabled) {
+            const res = coachBotStep(s);
+            next = res.next;
+            if (res.kind !== "none") {
+              queueMicrotask(() => {
+                setCoachCounters((c) => ({
+                  ...c,
+                  botMoves: c.botMoves + 1,
+                  botPlacements: c.botPlacements + (res.kind === "place" ? 1 : 0),
+                }));
+              });
+            }
+          } else {
+            next = botStep(s, botDifficultyRef.current);
+          }
           // Safety net: if the bot couldn't make any progress, force-end its
           // turn so the game doesn't deadlock.
           if (next === s) {
@@ -434,10 +454,11 @@ export default function Play() {
       } catch {
         /* skip */
       }
-    }, 750);
+    }, coachEnabled ? 1500 : 750);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, isPvp]);
+  }, [state, isPvp, coachEnabled]);
+
 
   /* ----------- Persistence helpers ----------- */
 
@@ -594,7 +615,7 @@ export default function Play() {
     if (mode !== "steal" || stealVictimKey) return;
     if (opponents.length === 0) return;
     if (!expandedOpponentId) setExpandedOpponentId(opponents[0].id);
-    setOpponentPanelOpen(true);
+    setOpponentPanelOpen(true); bumpCoach("opponentViews");
   }, [isMobile, mode, stealVictimKey, expandedOpponentId, opponents]);
   const isYourTurn =
     !!state && !state.finished && state.players[state.turn].id === selfSlot && !waitingForGuest;
@@ -835,10 +856,61 @@ export default function Play() {
   // Draw has its own `beginDraw()` ref for the deck-count invariant; this
   // lock is the general one for all other move controls. */
   /* ── Coached first match ─────────────────────────────────────────────
-   * The coach observes moves through `guarded()` below. It never blocks a
-   * move: off-script taps still execute and the coach simply redirects. */
+   * The coach is snapshot-driven: we rebuild a live read of the match every
+   * render and it judges step completion from that, never from move events.
+   * It also gates moves through `coach.checkMove` (the action envelope), so a
+   * wrong-but-legal move is refused with a nudge instead of desyncing the
+   * script. */
   const coachIsMyTurn = !!state && !state.finished && state.players[state.turn]?.id === selfPlayer?.id;
-  const coach = useCoach({ enabled: coachEnabled, isMyTurn: coachIsMyTurn, phase: state?.phase });
+  /** Monotonic interaction counters the coach compares against its step base. */
+  const [coachCounters, setCoachCounters] = useState({
+    pickups: 0, placements: 0, discards: 0, rotations: 0, repositions: 0,
+    disasters: 0, steals: 0, botMoves: 0, botPlacements: 0,
+    cardInfoOpens: 0, opponentViews: 0, hiveBlocks: 0,
+  });
+  const bumpCoach = useCallback((k: keyof typeof coachCounters, n = 1) => {
+    setCoachCounters((c) => ({ ...c, [k]: c[k] + n }));
+  }, []);
+  /** Maps an engine move type onto the counter it advances. */
+  const countMove = useCallback((type?: string) => {
+    if (!type) return;
+    if (type === "place") bumpCoach("placements");
+    else if (type === "discard") bumpCoach("discards");
+    else if (type === "rotate_hex") bumpCoach("rotations");
+    else if (type === "move_hex") bumpCoach("repositions");
+    else if (type === "play_disaster" || type === "resolve_disaster") bumpCoach("disasters");
+    else if (type === "play_sky_steal") bumpCoach("steals");
+    else if (type.startsWith("pickup_") || type === "draw_initial_5") bumpCoach("pickups");
+  }, [bumpCoach]);
+
+  const coachSnapshot = useMemo<CoachSnapshot>(() => {
+    const opp = state?.players.find((p) => p.id !== selfPlayer?.id) ?? null;
+    const hand = selfPlayer?.hand ?? [];
+    const has = (k: string) => hand.some((c) => c.kind === k);
+    return {
+      isMyTurn: coachIsMyTurn,
+      phase: state?.phase ?? "draw",
+      firstPickupDone: !!selfPlayer?.firstPickupDone,
+      drawnThisTurn: state?.drawnThisTurn ?? 0,
+      actionsUsed: state?.placedThisTurn ?? 0,
+      actionsMax: 2,
+      handSize: hand.length,
+      handHasCreator: hand.some((c) => c.kind === "creator" || c.kind === "sky_creator"),
+      handHasGoldenBody: has("golden_body"),
+      handHasGoldenHive: has("golden_hive"),
+      handHasSkyCreature: has("sky_creature"),
+      myPlaced: selfPlayer?.ecosystem?.placed.size ?? 0,
+      myCreatorsDown: [...(selfPlayer?.ecosystem?.placed.values() ?? [])].filter(
+        (h: any) => h?.card?.kind === "creator" || h?.card?.kind === "sky_creator",
+      ).length,
+      oppPlaced: opp?.ecosystem?.placed.size ?? 0,
+      turnNumber: state?.turnNumber ?? 0,
+      counters: coachCounters,
+    };
+  }, [state, selfPlayer, coachIsMyTurn, coachCounters]);
+
+  const coach = useCoach({ enabled: coachEnabled, snapshot: coachSnapshot });
+
   /** Tags a UI zone so the coach can spotlight it (see `.coach-dim` in index.css). */
   const spot = useCallback(
     (zone: "deck" | "hand" | "board" | "quiz" | "discard") =>
@@ -888,6 +960,11 @@ export default function Play() {
       // Warn only — the move still goes to the server, which is authoritative.
       warnIdleOnce();
     }
+    if (coachEnabled && move) {
+      // ACTION ENVELOPE — only the action this lesson teaches gets through.
+      const card = state?.players.flatMap((p) => p.hand).find((c) => c.uid === (move as any).uid) ?? null;
+      if (coach.checkMove({ type: move.type, card })) return;
+    }
     if (guardedInFlightRef.current) return;
     guardedInFlightRef.current = true;
     try {
@@ -902,7 +979,7 @@ export default function Play() {
       setStealVictimKey(null);
       // Coach observes AFTER the move has been accepted by the engine, so it
       // can only ever react to legal moves — it never gates one.
-      if (coachEnabled) coach.notifyMove(move?.type);
+      if (coachEnabled) countMove(move?.type);
     } catch (e: any) {
       toast.error(e?.message ?? "Illegal move");
     } finally {
@@ -972,7 +1049,7 @@ export default function Play() {
         setMode("place");
         setStealVictimKey(null);
         // Coach observes draws too — this path bypasses guarded().
-        if (coachEnabled) queueMicrotask(() => coach.notifyMove("pickup_from_used"));
+        if (coachEnabled) queueMicrotask(() => bumpCoach("pickups"));
         return next;
       } catch (e: any) {
         setPendingDraws((pd) => pd.filter((p) => p.id !== pid));
@@ -1029,7 +1106,7 @@ export default function Play() {
         setMode("place");
         setStealVictimKey(null);
         // Coach observes draws too — this path bypasses guarded().
-        if (coachEnabled) queueMicrotask(() => coach.notifyMove("pickup_from_draw"));
+        if (coachEnabled) queueMicrotask(() => bumpCoach("pickups"));
         return next;
       } catch (e: any) {
         setPendingDraws((pd) => pd.filter((p) => p.id !== pid));
@@ -1078,7 +1155,7 @@ export default function Play() {
         const next = moveMyPlacedHex(state, selfSlot, fromKey, pos);
         setLoggedState(next, "optimistic_engine");
         schedulePersist(next, { type: "move_hex", from_key: fromKey, to_pos: pos });
-        if (coachEnabled) coach.notifyMove("move_hex");
+        if (coachEnabled) bumpCoach("repositions");
         setMoveFromKey(null);
       } catch (e: any) {
         toast.error(e?.message ?? "Cannot move here");
@@ -1130,7 +1207,7 @@ export default function Play() {
       if (isPvp) logClientStateChange("optimistic_engine", serverSeqRef.current, next);
       schedulePersist(next, { type: "rotate_hex", pos_key: posKey });
       // Coach observes rotation — this path bypasses guarded().
-      if (coachEnabled) queueMicrotask(() => coach.notifyMove("rotate_hex"));
+      if (coachEnabled) queueMicrotask(() => bumpCoach("rotations"));
       return next;
     });
   }
@@ -1924,7 +2001,7 @@ export default function Play() {
                   <button
                     type="button"
                     className="flex-1 min-w-0 min-h-7 px-2 py-1 text-left"
-                    onClick={() => { setExpandedOpponentId(mobileOpp.id); setOpponentPanelOpen(true); }}
+                    onClick={() => { setExpandedOpponentId(mobileOpp.id); setOpponentPanelOpen(true); bumpCoach("opponentViews"); }}
                     aria-label={`View ${mobileOpp.name}'s ecosystem`}
                   >
                     <span className="min-w-0 flex-1 text-left block">
@@ -2105,6 +2182,7 @@ export default function Play() {
           {/* Bottom hand dock */}
           <div className="shrink-0" {...spot("hand")}>
           <PlayerHand
+            onCardInfoOpen={() => bumpCoach("cardInfoOpens")}
             hand={selfPlayer.hand}
             selectedUid={selectedUid}
             onSelect={(uid) => setSelectedUid(uid)}
@@ -2159,7 +2237,7 @@ export default function Play() {
                   >
                     <button
                       type="button"
-                      onClick={() => { setExpandedOpponentId(op.id); setOpponentPanelOpen(true); }}
+                      onClick={() => { setExpandedOpponentId(op.id); setOpponentPanelOpen(true); bumpCoach("opponentViews"); }}
                       className="w-full flex items-center justify-between gap-2 mb-1 group text-left"
                       aria-label={`Pop out ${op.name}'s ecosystem`}
                     >
@@ -2211,7 +2289,7 @@ export default function Play() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setExpandedOpponentId(op.id); setOpponentPanelOpen(true); }}
+                      onClick={() => { setExpandedOpponentId(op.id); setOpponentPanelOpen(true); bumpCoach("opponentViews"); }}
                       className="flex-1 min-h-0 rounded-md hover:ring-2 hover:ring-primary/40 transition-all flex items-center justify-center overflow-hidden"
                       aria-label={`Expand ${op.name}'s ecosystem`}
                     >
@@ -2302,6 +2380,7 @@ export default function Play() {
             <div className="flex items-stretch gap-2 min-w-0">
               <div className="flex-1 min-w-0 rounded-lg border border-border/40 bg-card/40 backdrop-blur overflow-x-auto self-end" {...spot("hand")}>
                 <PlayerHand
+            onCardInfoOpen={() => bumpCoach("cardInfoOpens")}
                   hand={selfPlayer.hand}
                   selectedUid={selectedUid}
                   onSelect={(uid) => setSelectedUid(uid)}

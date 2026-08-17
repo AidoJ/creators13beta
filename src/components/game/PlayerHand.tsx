@@ -30,6 +30,8 @@ interface Props {
   onTouchDropDiscard?: (uid: string) => void;
   /** Optimistic draw placeholders rendered after the real hand. */
   pending?: PendingDraw[];
+  /** Fired when a card's info popup is opened (coach tracks this). */
+  onCardInfoOpen?: () => void;
 }
 
 
@@ -46,7 +48,7 @@ interface PointerTrack {
   suppressClick: boolean;
 }
 
-export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd, disabled, size = 104, stuckUids, onTouchDropDiscard, pending }: Props) {
+export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd, disabled, size = 104, stuckUids, onTouchDropDiscard, pending, onCardInfoOpen }: Props) {
   const coarse = useCoarsePointer();
   // Track which card uids have completed their draw-in animation.
   const revealedRef = useRef<Set<string>>(new Set());
@@ -312,7 +314,8 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
                         transform: "rotateY(180deg)",
                       }}
                     >
-                      <HandTile card={card} size={tileSize} selected={selected} dimmed={disabled} />
+                      <HandTile
+              onInfoOpen={onCardInfoOpen} card={card} size={tileSize} selected={selected} dimmed={disabled} />
                     </div>
                   </div>
                 </div>
