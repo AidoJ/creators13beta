@@ -225,6 +225,15 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
       const matchId = row.id;
       const expected = serverSeqRef.current;
 
+      // Circuit breaker: the server already told us this seq is dead. Sending
+      // against it again can only produce another 409 — resync instead.
+      if (staleSeqRef.current !== null && expected === staleSeqRef.current) {
+        console.warn("[apply-move SUPPRESSED — known stale seq]", { seq: expected, moveType: move.type });
+        await reconcile(matchId);
+        return;
+      }
+
+
       // Offline, or something already on the wire / queued: park it durably
       // and let the drain loop deliver it in order.
       const offline = typeof navigator !== "undefined" && navigator.onLine === false;
