@@ -50,6 +50,12 @@ type IdleSweepMove = { type: "sweep_idle_autopass" | "sweep_idle_departed"; slot
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+/** How long a client-reported server stall pauses the idle clock for that
+ *  seat. Comfortably longer than the client's 20s apply-move ceiling plus
+ *  its queued replay, short enough that a genuinely absent player still
+ *  gets swept soon after. */
+const SERVER_STALL_PAUSE_SEC = 120;
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
