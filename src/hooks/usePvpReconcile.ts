@@ -54,7 +54,12 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
   /** HARD in-flight guard. While true, any further submit/replay is deferred
    *  so exactly one request is on the wire at a time. Cleared in finally{}. */
   const inFlightRef = useRef(false);
+  /** Last seq the server rejected as stale. Never send against it again —
+   *  that is exactly the loop that once flooded the server with hundreds of
+   *  "stale seq: expected 20 got 8" rejections per second. */
+  const staleSeqRef = useRef<number | null>(null);
   const [pendingMoveCount, setPendingMoveCount] = useState(0);
+
 
   // Latest values behind refs so the drain loop (driven by timers/events)
   // never runs against a stale closure.
