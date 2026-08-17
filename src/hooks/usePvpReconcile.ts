@@ -54,7 +54,12 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
   /** HARD in-flight guard. While true, any further submit/replay is deferred
    *  so exactly one request is on the wire at a time. Cleared in finally{}. */
   const inFlightRef = useRef(false);
+  /** Last seq the server rejected as stale. Never send against it again —
+   *  that is exactly the loop that once flooded the server with hundreds of
+   *  "stale seq: expected 20 got 8" rejections per second. */
+  const staleSeqRef = useRef<number | null>(null);
   const [pendingMoveCount, setPendingMoveCount] = useState(0);
+
 
   // Latest values behind refs so the drain loop (driven by timers/events)
   // never runs against a stale closure.
@@ -83,6 +88,8 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
       logClientStateChange("move_response", Number(row.seq ?? 0), canonical);
       setStateRef.current(canonical);
       serverSeqRef.current = Number(row.seq ?? 0);
+      staleSeqRef.current = null;
+
     } catch (e) {
       console.error("[apply-move] reconcile failed", e);
     }
@@ -165,7 +172,9 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
             moveType: entry.move.type,
             expectedSeq: entry.expectedSeq,
           });
+          staleSeqRef.current = entry.expectedSeq;
           clearQueue(matchId);
+
           syncPending(matchId);
           toast.message("Your turn passed while you were offline", {
             description: "That move was discarded — catching up to the table.",
@@ -215,6 +224,15 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
       if (!row) return;
       const matchId = row.id;
       const expected = serverSeqRef.current;
+
+      // Circuit breaker: the server already told us this seq is dead. Sending
+      // against it again can only produce another 409 — resync instead.
+      if (staleSeqRef.current !== null && expected === staleSeqRef.current) {
+        console.warn("[apply-move SUPPRESSED — known stale seq]", { seq: expected, moveType: move.type });
+        await reconcile(matchId);
+        return;
+      }
+
 
       // Offline, or something already on the wire / queued: park it durably
       // and let the drain loop deliver it in order.
@@ -297,7 +315,9 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
           return;
         }
         if (rejected.reason === "stale") {
+          staleSeqRef.current = expected;
           toast.message("Catching up to opponent…");
+
         } else {
           toast.error(rejected.message ?? "Move rejected by server");
         }
