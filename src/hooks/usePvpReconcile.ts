@@ -88,6 +88,8 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
       logClientStateChange("move_response", Number(row.seq ?? 0), canonical);
       setStateRef.current(canonical);
       serverSeqRef.current = Number(row.seq ?? 0);
+      staleSeqRef.current = null;
+
     } catch (e) {
       console.error("[apply-move] reconcile failed", e);
     }
