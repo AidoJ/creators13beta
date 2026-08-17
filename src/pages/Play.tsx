@@ -1164,7 +1164,7 @@ export default function Play() {
     const youName = user ? await fetchPlayerShortName(user) : "You";
     const deck = buildDeck(allCards, specialCards);
     const botLabel = difficulty === "easy" ? "Bot · Easy" : difficulty === "hard" ? "Bot · Hard" : "Bot · Medium";
-    const fresh = createMatch({
+    let fresh = createMatch({
       deck,
       players: [
         { id: "you", name: youName },
@@ -1173,6 +1173,10 @@ export default function Play() {
       gameMode: mode,
       gameConfig: config,
     });
+    // Coached match: stack the top of the draw pile so the lesson's card is
+    // always the one you draw. createMatch shuffles internally, so this must
+    // happen after creation.
+    if (coachEnabled) fresh = seedOpeningHand(fresh);
     botDifficultyRef.current = difficulty;
     botStatsRecordedRef.current = false;
     setState(fresh);
