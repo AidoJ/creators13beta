@@ -78,11 +78,22 @@ export async function applyMoveServer(
     for (let attempt = 0; attempt <= NETWORK_RETRIES; attempt++) {
       ({ data, error } = await supabase.functions.invoke("apply-move", {
         body: { match_id: matchId, expected_seq: expectedSeq, move },
+        // @ts-expect-error — `timeout` is supported by functions-js at runtime
+        timeout: REQUEST_TIMEOUT_MS,
       }));
       if (!error || !isTransportFailure(error)) break;
+      // A timeout means the request MAY have landed. Don't hammer it in a
+      // tight loop — hand it to the durable queue, which replays it once
+      // with a fresh seq check.
+      const timedOut = /abort|timed? ?out/i.test(String(error?.name ?? "") + String(error?.message ?? ""));
+      if (timedOut) {
+        console.warn("[apply-move] request timed out — deferring to queue", { moveType: move.type });
+        break;
+      }
       console.warn("[apply-move] transport failure — retrying", { attempt, moveType: move.type });
       await sleep(400 * (attempt + 1));
     }
+
     if (error) {
       const ctx: any = (error as any)?.context;
       const status = ctx?.status ?? 0;
