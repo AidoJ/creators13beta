@@ -828,6 +828,7 @@ export type Database = {
           joined_at: string
           last_presence_gap_at: string | null
           last_seen_at: string | null
+          last_server_stall_at: string | null
           match_id: string
           rank: number | null
           slot: number
@@ -844,6 +845,7 @@ export type Database = {
           joined_at?: string
           last_presence_gap_at?: string | null
           last_seen_at?: string | null
+          last_server_stall_at?: string | null
           match_id: string
           rank?: number | null
           slot: number
@@ -860,6 +862,7 @@ export type Database = {
           joined_at?: string
           last_presence_gap_at?: string | null
           last_seen_at?: string | null
+          last_server_stall_at?: string | null
           match_id?: string
           rank?: number | null
           slot?: number

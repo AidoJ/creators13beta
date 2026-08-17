@@ -1,0 +1,1 @@
+ALTER TABLE public.game_match_players ADD COLUMN IF NOT EXISTS last_server_stall_at timestamptz;

@@ -66,6 +66,21 @@ function isTransportFailure(error: any): boolean {
   );
 }
 
+/** Tell the server "my move request hung / never landed" so the disconnect
+ *  sweep pauses this seat's idle clock instead of auto-passing a player
+ *  whose only fault is that our pipeline stalled. Fire-and-forget: it must
+ *  never delay or fail the move path. Throttled so a burst of retries
+ *  doesn't spam the function. */
+let lastStallReportAt = 0;
+function reportServerStall(matchId: string) {
+  const now = Date.now();
+  if (now - lastStallReportAt < 10_000) return;
+  lastStallReportAt = now;
+  void supabase.functions
+    .invoke("report-presence", { body: { match_id: matchId, event: "server_stall" } })
+    .catch(() => { /* best-effort */ });
+}
+
 
 export async function applyMoveServer(
   matchId: string,
@@ -88,6 +103,7 @@ export async function applyMoveServer(
       const timedOut = /abort|timed? ?out/i.test(String(error?.name ?? "") + String(error?.message ?? ""));
       if (timedOut) {
         console.warn("[apply-move] request timed out — deferring to queue", { moveType: move.type });
+        reportServerStall(matchId);
         break;
       }
       console.warn("[apply-move] transport failure — retrying", { attempt, moveType: move.type });
@@ -127,7 +143,10 @@ export async function applyMoveServer(
       if (status === 501) {
         return { ok: false, rejected: true, reason: "not_implemented", message };
       }
-      if (isTransportFailure(error)) {
+      // Gateway-level stalls (upstream request timeout / bad gateway) are
+      // server faults, not player inaction — report + treat as transport.
+      if (isTransportFailure(error) || status === 408 || status === 502 || status === 504) {
+        reportServerStall(matchId);
         return {
           ok: false,
           rejected: true,

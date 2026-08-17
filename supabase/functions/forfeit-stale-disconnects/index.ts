@@ -50,6 +50,12 @@ type IdleSweepMove = { type: "sweep_idle_autopass" | "sweep_idle_departed"; slot
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+/** How long a client-reported server stall pauses the idle clock for that
+ *  seat. Comfortably longer than the client's 20s apply-move ceiling plus
+ *  its queued replay, short enough that a genuinely absent player still
+ *  gets swept soon after. */
+const SERVER_STALL_PAUSE_SEC = 120;
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -220,6 +226,7 @@ Deno.serve(async (req) => {
     matches_skipped_startup_grace: 0,
     idle_auto_passed: 0,
     idle_departed: 0,
+    paused_server_stall: 0,
     debounce_sec: debounceSec,
     grace_sec: graceSec,
     startup_grace_sec: startupGraceSec,
@@ -328,7 +335,7 @@ Deno.serve(async (req) => {
 
       const { data: rrow } = await svc
         .from("game_match_players")
-        .select("user_id, slot, status, idle_strikes, disconnected_at, disconnect_stamped_at, last_presence_gap_at")
+        .select("user_id, slot, status, idle_strikes, disconnected_at, disconnect_stamped_at, last_presence_gap_at, last_server_stall_at")
         .eq("match_id", m.id)
         .eq("slot", slot)
         .maybeSingle();
@@ -356,6 +363,21 @@ Deno.serve(async (req) => {
         !!rrow.disconnected_at && stampedAgeMs > activeTurnSkipGraceSec * 1000;
       const isIdle = !rrow.disconnected_at && turnAgeMs > idleSec * 1000;
       if (!isAbsent && !isIdle) continue;
+
+      // SERVER-STALL GUARD. If this seat reported an apply-move that hung or
+      // died in transport within the last SERVER_STALL_PAUSE_SEC, the player
+      // IS trying to move — our own pipeline is what's stuck. Auto-passing
+      // (or striking) them here punishes the seat for a server fault and is
+      // exactly what made matches feel like they "skipped my turn for no
+      // reason". Pause the idle clock instead and re-evaluate next tick.
+      const stallMs = rrow.last_server_stall_at ? Date.parse(rrow.last_server_stall_at) : NaN;
+      if (Number.isFinite(stallMs) && Date.now() - stallMs < SERVER_STALL_PAUSE_SEC * 1000) {
+        summary.paused_server_stall += 1;
+        console.log(
+          `[sweep] server-stall pause match=${m.id} slot=${slot} stall_at=${rrow.last_server_stall_at}`,
+        );
+        continue;
+      }
       // Absent current-turn player → skip seat with no strike penalty.
       // Idle current-turn player → strike logic below.
       let skipStrike = isAbsent;

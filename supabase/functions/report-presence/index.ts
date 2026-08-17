@@ -31,7 +31,11 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-type Event = "join" | "leave" | "heartbeat";
+// `server_stall` is reported by the client when an apply-move request hangs
+// or dies in transport. It means "the player is here and trying, the server
+// side is the thing that's stuck" — the sweep uses it to pause the idle
+// clock instead of auto-passing/striking a seat we ourselves wedged.
+type Event = "join" | "leave" | "heartbeat" | "server_stall";
 
 interface Body {
   match_id: string;
@@ -70,7 +74,12 @@ Deno.serve(async (req) => {
   if (!body?.match_id || !body?.event) {
     return jsonResponse({ error: "missing fields" }, 400);
   }
-  if (body.event !== "join" && body.event !== "leave" && body.event !== "heartbeat") {
+  if (
+    body.event !== "join" &&
+    body.event !== "leave" &&
+    body.event !== "heartbeat" &&
+    body.event !== "server_stall"
+  ) {
     return jsonResponse({ error: "invalid event" }, 400);
   }
   if (typeof body.reason === "string" && body.reason.length > 200) {
@@ -142,6 +151,9 @@ Deno.serve(async (req) => {
           disconnect_stamped_at: null,
           disconnect_reason: null,
           ...(hadGap ? { last_presence_gap_at: nowIso } : {}),
+          // The player is present and actively trying to move; the server
+          // side hung. Stamp it so the sweep pauses their idle clock.
+          ...(body.event === "server_stall" ? { last_server_stall_at: nowIso } : {}),
         };
 
   const { error: updErr } = await svc
