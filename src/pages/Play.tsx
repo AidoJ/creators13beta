@@ -1185,7 +1185,9 @@ export default function Play() {
     setModeSelectorOpen(true);
   }
 
-  async function startSoloMatch(mode: GameMode, config: GameConfig, difficulty: BotDifficulty) {
+  async function startSoloMatch(mode: GameMode, config: GameConfig, difficulty: BotDifficulty, coachOn?: boolean) {
+    const wantCoach = coachOn ?? coachEnabled;
+    if (wantCoach !== coachEnabled) setCoachEnabled(wantCoach);
     if (!allCards) return;
     const youName = user ? await fetchPlayerShortName(user) : "You";
     const deck = buildDeck(allCards, specialCards);
