@@ -835,10 +835,61 @@ export default function Play() {
   // Draw has its own `beginDraw()` ref for the deck-count invariant; this
   // lock is the general one for all other move controls. */
   /* ── Coached first match ─────────────────────────────────────────────
-   * The coach observes moves through `guarded()` below. It never blocks a
-   * move: off-script taps still execute and the coach simply redirects. */
+   * The coach is snapshot-driven: we rebuild a live read of the match every
+   * render and it judges step completion from that, never from move events.
+   * It also gates moves through `coach.checkMove` (the action envelope), so a
+   * wrong-but-legal move is refused with a nudge instead of desyncing the
+   * script. */
   const coachIsMyTurn = !!state && !state.finished && state.players[state.turn]?.id === selfPlayer?.id;
-  const coach = useCoach({ enabled: coachEnabled, isMyTurn: coachIsMyTurn, phase: state?.phase });
+  /** Monotonic interaction counters the coach compares against its step base. */
+  const [coachCounters, setCoachCounters] = useState({
+    pickups: 0, placements: 0, discards: 0, rotations: 0, repositions: 0,
+    disasters: 0, steals: 0, botMoves: 0, botPlacements: 0,
+    cardInfoOpens: 0, opponentViews: 0, hiveBlocks: 0,
+  });
+  const bumpCoach = useCallback((k: keyof typeof coachCounters, n = 1) => {
+    setCoachCounters((c) => ({ ...c, [k]: c[k] + n }));
+  }, []);
+  /** Maps an engine move type onto the counter it advances. */
+  const countMove = useCallback((type?: string) => {
+    if (!type) return;
+    if (type === "place") bumpCoach("placements");
+    else if (type === "discard") bumpCoach("discards");
+    else if (type === "rotate_hex") bumpCoach("rotations");
+    else if (type === "move_hex") bumpCoach("repositions");
+    else if (type === "play_disaster" || type === "resolve_disaster") bumpCoach("disasters");
+    else if (type === "play_sky_steal") bumpCoach("steals");
+    else if (type.startsWith("pickup_") || type === "draw_initial_5") bumpCoach("pickups");
+  }, [bumpCoach]);
+
+  const coachSnapshot = useMemo<CoachSnapshot>(() => {
+    const opp = state?.players.find((p) => p.id !== selfPlayer?.id) ?? null;
+    const hand = selfPlayer?.hand ?? [];
+    const has = (k: string) => hand.some((c) => c.kind === k);
+    return {
+      isMyTurn: coachIsMyTurn,
+      phase: state?.phase ?? "draw",
+      firstPickupDone: !!selfPlayer?.firstPickupDone,
+      drawnThisTurn: state?.drawnThisTurn ?? 0,
+      actionsUsed: state?.actionsUsed ?? 0,
+      actionsMax: 2,
+      handSize: hand.length,
+      handHasCreator: hand.some((c) => c.kind === "creator" || c.kind === "sky_creator"),
+      handHasGoldenBody: has("golden_body"),
+      handHasGoldenHive: has("golden_hive"),
+      handHasSkyCreature: has("sky_creature"),
+      myPlaced: selfPlayer?.ecosystem?.length ?? 0,
+      myCreatorsDown: (selfPlayer?.ecosystem ?? []).filter(
+        (h: any) => h.card?.kind === "creator" || h.card?.kind === "sky_creator",
+      ).length,
+      oppPlaced: opp?.ecosystem?.length ?? 0,
+      turnNumber: state?.turnNumber ?? 0,
+      counters: coachCounters,
+    };
+  }, [state, selfPlayer, coachIsMyTurn, coachCounters]);
+
+  const coach = useCoach({ enabled: coachEnabled, snapshot: coachSnapshot });
+
   /** Tags a UI zone so the coach can spotlight it (see `.coach-dim` in index.css). */
   const spot = useCallback(
     (zone: "deck" | "hand" | "board" | "quiz" | "discard") =>
