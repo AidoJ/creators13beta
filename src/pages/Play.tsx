@@ -1071,6 +1071,7 @@ export default function Play() {
         const next = moveMyPlacedHex(state, selfSlot, fromKey, pos);
         setLoggedState(next, "optimistic_engine");
         schedulePersist(next, { type: "move_hex", from_key: fromKey, to_pos: pos });
+        if (coachEnabled) coach.notifyMove("move_hex");
         setMoveFromKey(null);
       } catch (e: any) {
         toast.error(e?.message ?? "Cannot move here");
