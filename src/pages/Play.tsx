@@ -1305,6 +1305,7 @@ export default function Play() {
           <GameModeSelector
             open
             onCancel={() => { setModeSelectorOpen(false); navigate("/dashboard"); }}
+            defaultCoach={coachEnabled}
             onChoose={(m, c, d, coachOn) => startSoloMatch(m, c, d, coachOn)}
             onChooseMultiplayer={(m, c) => createMultiplayerLobby(m, c)}
           />
@@ -2380,7 +2381,8 @@ export default function Play() {
         <GameModeSelector
           open
           onCancel={() => setModeSelectorOpen(false)}
-          onChoose={(m, c, d, coachOn) => startSoloMatch(m, c, d, coachOn)}
+          defaultCoach={coachEnabled}
+            onChoose={(m, c, d, coachOn) => startSoloMatch(m, c, d, coachOn)}
           onChooseMultiplayer={(m, c) => createMultiplayerLobby(m, c)}
         />
       )}
