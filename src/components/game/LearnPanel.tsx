@@ -105,7 +105,7 @@ export default function LearnPanel({ open, onOpenChange, firstRun = false }: Pro
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 [&>div]:!block">
           <div className="px-5 py-4 space-y-3">
             {/* ── Topic reader ───────────────────────────────────────── */}
             {topic && (
@@ -124,10 +124,10 @@ export default function LearnPanel({ open, onOpenChange, firstRun = false }: Pro
             {/* ── First-run direct offer ─────────────────────────────── */}
             {!topic && firstRun && !door && (
               <div className="space-y-3">
-                <Button size="lg" className="w-full min-h-12" onClick={startGuided}>
+                <Button size="lg" className="w-full min-h-12 whitespace-normal h-auto py-3" onClick={startGuided}>
                   <GraduationCap className="mr-2 h-5 w-5" /> Yes — teach me as I play
                 </Button>
-                <Button variant="outline" size="lg" className="w-full min-h-12" onClick={close}>
+                <Button variant="outline" size="lg" className="w-full min-h-12 whitespace-normal h-auto py-3" onClick={close}>
                   <Gamepad2 className="mr-2 h-5 w-5" /> I'll explore myself
                 </Button>
                 <button
