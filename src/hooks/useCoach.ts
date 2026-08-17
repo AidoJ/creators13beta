@@ -7,6 +7,9 @@
  * later one (skip it rather than re-teach it), or is off-script (gentle
  * redirect, stay put).
  *
+ * Rhythm: prompt → the player acts → an explicit success state that HOLDS
+ * until they tap Next → the next lesson. Nothing auto-advances on a timer.
+ *
  * Position survives a mid-match reload via sessionStorage.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -14,6 +17,7 @@ import { COACH_STEPS, type CoachStep, type CoachWant } from "@/lib/game/coachScr
 
 const POS_KEY = "creators13.coach.position.v1";
 const DONE_KEY = "creators13.coach.completed.v1";
+const EXIT_KEY = "creators13.coach.exited.v1";
 
 interface Args {
   enabled: boolean;
@@ -22,22 +26,31 @@ interface Args {
 }
 
 export interface CoachApi {
+  /** Coach is running (not exited, not finished). */
   active: boolean;
   step: CoachStep | null;
   index: number;
   total: number;
-  /** Transient confirmation copy shown after a step completes. */
-  confirmText: string | null;
+  /** Success copy shown after a step completes — HOLDS until `next()`. */
+  successText: string | null;
+  /** True while waiting for the player to tap Next. */
+  awaitingNext: boolean;
   /** Transient redirect copy shown after an off-script action. */
   redirectText: string | null;
-  /** True once the coach has retired and the player is flying solo. */
+  /** True once the coach has retired or been exited. */
   retired: boolean;
+  /** Collapsed to a slim strip — still one tap from resuming. */
+  collapsed: boolean;
   /** Element the UI should spotlight right now. */
   spotlight: CoachStep["target"] | null;
   /** Card the draw pile should be stacked with before this step. */
   want: CoachWant;
   ack: () => void;
+  next: () => void;
   skipStep: () => void;
+  collapse: () => void;
+  resume: () => void;
+  restart: () => void;
   exit: () => void;
   notifyMove: (moveType: string | undefined) => void;
   /** Re-pulse the current target without doing anything for the player. */
@@ -64,10 +77,19 @@ function loadCompleted(): Set<string> {
   }
 }
 
+function loadExited(): boolean {
+  try {
+    return sessionStorage.getItem(EXIT_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function useCoach({ enabled, isMyTurn }: Args): CoachApi {
   const [index, setIndex] = useState<number>(() => (enabled ? loadPosition() : 0));
-  const [exited, setExited] = useState(false);
-  const [confirmText, setConfirmText] = useState<string | null>(null);
+  const [exited, setExited] = useState<boolean>(() => (enabled ? loadExited() : false));
+  const [collapsed, setCollapsed] = useState(false);
+  const [successText, setSuccessText] = useState<string | null>(null);
   const [redirectText, setRedirectText] = useState<string | null>(null);
   const [pulseTick, setPulseTick] = useState(0);
   const progressRef = useRef(0);
@@ -75,18 +97,21 @@ export function useCoach({ enabled, isMyTurn }: Args): CoachApi {
   const redirectAtRef = useRef(0);
 
   const total = COACH_STEPS.length;
-  const retired = exited || index >= total;
+  const finished = index >= total;
+  const retired = exited || finished;
   const active = enabled && !retired;
   const step = active ? COACH_STEPS[index] ?? null : null;
+  const awaitingNext = active && successText !== null;
 
   useEffect(() => {
     if (!enabled) return;
     try {
       sessionStorage.setItem(POS_KEY, String(index));
+      sessionStorage.setItem(EXIT_KEY, exited ? "1" : "0");
     } catch {
       /* ignore */
     }
-  }, [index, enabled]);
+  }, [index, exited, enabled]);
 
   const persistCompleted = useCallback(() => {
     try {
@@ -104,21 +129,9 @@ export function useCoach({ enabled, isMyTurn }: Args): CoachApi {
     }
     progressRef.current = 0;
     setRedirectText(null);
+    setSuccessText(null);
     setIndex(next);
   }, []);
-
-  const completeCurrent = useCallback(
-    (current: CoachStep, at: number) => {
-      completedRef.current.add(current.id);
-      persistCompleted();
-      if (current.confirm) {
-        setConfirmText(current.confirm);
-        window.setTimeout(() => setConfirmText(null), 4500);
-      }
-      advance(at);
-    },
-    [advance, persistCompleted],
-  );
 
   const notifyMove = useCallback(
     (moveType: string | undefined) => {
@@ -135,10 +148,16 @@ export function useCoach({ enabled, isMyTurn }: Args): CoachApi {
       }
       persistCompleted();
 
+      // Already celebrating — the player just needs to tap Next.
+      if (successText !== null) return;
+
       if (current.completedBy?.includes(moveType)) {
         progressRef.current += 1;
         if (progressRef.current >= (current.count ?? 1)) {
-          completeCurrent(current, index);
+          completedRef.current.add(current.id);
+          persistCompleted();
+          setRedirectText(null);
+          setSuccessText(current.confirm || "Yes — you've got it.");
         }
         return;
       }
@@ -154,7 +173,7 @@ export function useCoach({ enabled, isMyTurn }: Args): CoachApi {
         }
       }
     },
-    [enabled, retired, index, completeCurrent, persistCompleted],
+    [enabled, retired, index, persistCompleted, successText],
   );
 
   const ack = useCallback(() => {
@@ -165,6 +184,8 @@ export function useCoach({ enabled, isMyTurn }: Args): CoachApi {
     advance(index);
   }, [index, advance, persistCompleted]);
 
+  const next = useCallback(() => advance(index), [advance, index]);
+
   const skipStep = useCallback(() => {
     const current = COACH_STEPS[index];
     if (current) {
@@ -174,10 +195,28 @@ export function useCoach({ enabled, isMyTurn }: Args): CoachApi {
     advance(index);
   }, [index, advance, persistCompleted]);
 
+  const collapse = useCallback(() => setCollapsed(true), []);
+  const resume = useCallback(() => {
+    setCollapsed(false);
+    setExited(false);
+    setPulseTick((t) => t + 1);
+  }, []);
+
+  const restart = useCallback(() => {
+    completedRef.current = new Set();
+    persistCompleted();
+    progressRef.current = 0;
+    setSuccessText(null);
+    setRedirectText(null);
+    setExited(false);
+    setCollapsed(false);
+    setIndex(0);
+  }, [persistCompleted]);
+
   const exit = useCallback(() => {
     setExited(true);
-    setIndex(COACH_STEPS.length);
-    setConfirmText(null);
+    setCollapsed(false);
+    setSuccessText(null);
     setRedirectText(null);
   }, []);
 
@@ -186,29 +225,36 @@ export function useCoach({ enabled, isMyTurn }: Args): CoachApi {
   // Idle nudge: if the player sits on an action step without acting, re-pulse
   // the target so they know where to look.
   useEffect(() => {
-    if (!active || !step || step.ack || !isMyTurn) return;
+    if (!active || collapsed || !step || step.ack || awaitingNext || !isMyTurn) return;
     const id = window.setTimeout(() => setPulseTick((t) => t + 1), 20000);
     return () => window.clearTimeout(id);
-  }, [active, step?.id, isMyTurn, pulseTick]);
+  }, [active, collapsed, step?.id, isMyTurn, pulseTick, awaitingNext]);
 
   const spotlight = useMemo(() => {
-    if (!active || !step) return null;
+    if (!active || !step || collapsed || awaitingNext) return null;
     if (step.scaffold === "light") return null;
+    if (step.target === "none") return null;
     return step.target;
-  }, [active, step]);
+  }, [active, step, collapsed, awaitingNext]);
 
   return {
     active,
     step,
     index,
     total,
-    confirmText,
+    successText,
+    awaitingNext,
     redirectText,
     retired,
+    collapsed,
     spotlight,
-    want: active ? step?.want ?? null : null,
+    want: active && !awaitingNext ? step?.want ?? null : null,
     ack,
+    next,
     skipStep,
+    collapse,
+    resume,
+    restart,
     exit,
     notifyMove,
     showMe,
@@ -221,6 +267,7 @@ export function resetCoach() {
   try {
     sessionStorage.removeItem(POS_KEY);
     sessionStorage.removeItem(DONE_KEY);
+    sessionStorage.removeItem(EXIT_KEY);
   } catch {
     /* ignore */
   }
