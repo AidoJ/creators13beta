@@ -185,6 +185,13 @@ export default function Play() {
   }, []);
 
   const [ruleBookOpen, setRuleBookOpen] = useState(false);
+  const [ruleBookTopic, setRuleBookTopic] = useState<string | null>(null);
+  const [learnOpen, setLearnOpen] = useState(false);
+  /** Coached first match — /play/new?practice=1&coach=1. Presentation only:
+   *  the engine and every legal move behave exactly as in a normal practice
+   *  game; the coach just watches and prompts. */
+  const coachEnabled = searchParams.get("coach") === "1";
+  
   
   const [waitingForGuest, setWaitingForGuest] = useState(false);
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
