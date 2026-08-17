@@ -7,7 +7,6 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { LEARN_TOPICS, topicById } from "@/lib/game/learnContent";
 import { TopicBody, TopicCard } from "@/components/game/TopicView";
