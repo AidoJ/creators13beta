@@ -295,6 +295,9 @@ export default function AdminDashboard() {
     }
   }
 
+  // Is the signed-in caller an admin (vs a trainer)?
+  const isCallerAdmin = !!users.find(x => x.user_id === user?.id)?.roles.includes("admin");
+
   // Compute unique cohort options
   const cohortOptions = Array.from(new Set(
     users.filter(u => u.training_started_at).map(u => {
@@ -443,7 +446,7 @@ export default function AdminDashboard() {
 
           {/* ======= ALL USERS TAB ======= */}
           <TabsContent value="users" className="space-y-4">
-            <CreateUserForm onCreated={fetchUsers} />
+            <CreateUserForm onCreated={fetchUsers} isCallerAdmin={isCallerAdmin} />
             <div className="flex gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -493,6 +496,7 @@ export default function AdminDashboard() {
                         assignedPracCode={assignedPracCodeMap[u.user_id] || null}
                         practitioners={practitioners}
                         currentPracId={assignments.find(a => a.client_id === u.user_id && a.active)?.practitioner_id || null}
+                        isCallerAdmin={isCallerAdmin}
                         onViewFile={(userId) => { setViewingClientId(userId); setViewingClientName(`${u.first_name || ""} ${u.last_name || ""}`.trim() || "Client"); }}
                         onAssignPractitioner={async (clientId, pracId) => {
                           // Deactivate existing active assignments
@@ -554,7 +558,7 @@ export default function AdminDashboard() {
 }
 
 
-function UserTableRow({ user: u, isExpanded, onToggle, onAddRole, onRemoveRole, addingRole, stepLabel, onStatusChange, onRefresh, assignedPractitioner, assignedPracCode, practitioners, currentPracId, onViewFile, onAssignPractitioner }: {
+function UserTableRow({ user: u, isExpanded, onToggle, onAddRole, onRemoveRole, addingRole, stepLabel, onStatusChange, onRefresh, assignedPractitioner, assignedPracCode, practitioners, currentPracId, onViewFile, onAssignPractitioner, isCallerAdmin }: {
   user: UserRow; isExpanded: boolean; onToggle: () => void;
   onAddRole: (userId: string, role: AppRole) => void;
   onRemoveRole: (userId: string, role: AppRole) => void;
@@ -568,10 +572,15 @@ function UserTableRow({ user: u, isExpanded, onToggle, onAddRole, onRemoveRole, 
   currentPracId: string | null;
   onViewFile: (userId: string) => void;
   onAssignPractitioner: (clientId: string, pracId: string) => Promise<void>;
+  isCallerAdmin: boolean;
 }) {
   const [selectedRole, setSelectedRole] = useState<AppRole | "">("");
   const [trainingDate, setTrainingDate] = useState(u.training_started_at || "");
-  const availableRoles = ALL_ROLES.filter(r => !u.roles.includes(r));
+  const PRIVILEGED_ROLES: AppRole[] = ["admin", "trainer"];
+  const targetIsPrivileged = u.roles.some(r => PRIVILEGED_ROLES.includes(r));
+  // Trainers may not create/modify admin or trainer accounts (server enforces this too).
+  const lockedByPrivilege = !isCallerAdmin && targetIsPrivileged;
+  const availableRoles = ALL_ROLES.filter(r => !u.roles.includes(r) && (isCallerAdmin || !PRIVILEGED_ROLES.includes(r)));
   const isPractitioner = u.roles.includes("practitioner") || u.roles.includes("trainee");
 
   // Editable profile fields
@@ -713,13 +722,16 @@ function UserTableRow({ user: u, isExpanded, onToggle, onAddRole, onRemoveRole, 
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button size="sm" className="h-7 text-xs" disabled={savingProfile} onClick={e => { e.stopPropagation(); handleSaveProfile(); }}>
+                  <Button size="sm" className="h-7 text-xs" disabled={savingProfile || lockedByPrivilege} onClick={e => { e.stopPropagation(); handleSaveProfile(); }}>
                     <Save className="h-3 w-3 mr-1" />{savingProfile ? "Saving…" : "Save Profile"}
                   </Button>
                   <Button size="sm" variant="outline" className="h-7 text-xs" onClick={e => { e.stopPropagation(); onViewFile(u.user_id); }}>
                     <ExternalLink className="h-3 w-3 mr-1" />View File
                   </Button>
                 </div>
+                {lockedByPrivilege && (
+                  <p className="text-[10px] text-muted-foreground">Only an admin can edit admin or trainer accounts.</p>
+                )}
               </div>
 
               {/* Password Reset */}
@@ -743,10 +755,13 @@ function UserTableRow({ user: u, isExpanded, onToggle, onAddRole, onRemoveRole, 
                       {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                     </button>
                   </div>
-                  <Button size="sm" variant="destructive" className="h-8 text-xs" disabled={savingPassword || !newPassword} onClick={e => { e.stopPropagation(); handleResetPassword(); }}>
+                  <Button size="sm" variant="destructive" className="h-8 text-xs" disabled={savingPassword || !newPassword || lockedByPrivilege} onClick={e => { e.stopPropagation(); handleResetPassword(); }}>
                     {savingPassword ? "Resetting…" : "Reset Password"}
                   </Button>
                 </div>
+                {lockedByPrivilege && (
+                  <p className="text-[10px] text-muted-foreground">Only an admin can reset the password of an admin or trainer account.</p>
+                )}
               </div>
 
               {/* Manage Roles */}
@@ -755,6 +770,7 @@ function UserTableRow({ user: u, isExpanded, onToggle, onAddRole, onRemoveRole, 
                 <div className="flex flex-wrap gap-2">
                   {u.roles.map(role => (
                     <Button key={role} variant="outline" size="sm" className="text-xs h-7 capitalize"
+                      disabled={!isCallerAdmin && PRIVILEGED_ROLES.includes(role)}
                       onClick={e => { e.stopPropagation(); onRemoveRole(u.user_id, role); }}>
                       ✕ {role.replace(/_/g, " ")}
                     </Button>
