@@ -62,7 +62,10 @@ import { BoardHexPiece } from "@/components/game/BoardHexPiece";
 import { MatchOverDialog } from "@/components/game/MatchOverDialog";
 import ProfilingPromptDialog from "@/components/game/ProfilingPromptDialog";
 
-import { TutorialOverlay, resetTutorial } from "@/components/game/TutorialOverlay";
+import { CoachBar } from "@/components/game/CoachBar";
+import LearnPanel from "@/components/game/LearnPanel";
+import { useCoach } from "@/hooks/useCoach";
+import { seedOpeningHand, stackForWant } from "@/lib/game/coachScript";
 // (legacy MultiplayerLobby dialog removed in Batch B — multiplayer now flows
 // through the route-based /play/lobby/:matchId page.)
 import { HandTile } from "@/components/game/cards/HandTile";
