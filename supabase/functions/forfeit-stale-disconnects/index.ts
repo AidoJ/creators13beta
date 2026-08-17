@@ -220,6 +220,7 @@ Deno.serve(async (req) => {
     matches_skipped_startup_grace: 0,
     idle_auto_passed: 0,
     idle_departed: 0,
+    paused_server_stall: 0,
     debounce_sec: debounceSec,
     grace_sec: graceSec,
     startup_grace_sec: startupGraceSec,
