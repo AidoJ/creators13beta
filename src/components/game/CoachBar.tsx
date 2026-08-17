@@ -142,6 +142,16 @@ export function CoachBar({ coach, onOpenTopic, onRestartMatch }: Props) {
                 <Rich text={step.prompt} />
               )}
             </p>
+            {!success && coach.progressText && (
+              <p className="mt-1 text-[0.72rem] sm:text-sm font-medium tabular-nums text-foreground/80 leading-snug">
+                {coach.progressText}
+              </p>
+            )}
+            {!success && coach.watching && (
+              <p className="mt-1 text-[0.72rem] sm:text-sm text-primary leading-snug">
+                Watching the bot…
+              </p>
+            )}
             {!success && coach.drawFirst && (
               <p className="mt-1 text-[0.72rem] sm:text-sm text-primary font-medium leading-snug">
                 First — tap the Draw Pile and pick up 2 cards to open your turn.
@@ -151,6 +161,7 @@ export function CoachBar({ coach, onOpenTopic, onRestartMatch }: Props) {
               <p className="mt-1 text-[0.72rem] sm:text-sm text-primary leading-snug">{coach.redirectText}</p>
             )}
           </div>
+
 
           <div className="flex shrink-0 items-center gap-0.5">
             <span className="hidden sm:inline text-[0.65rem] text-muted-foreground tabular-nums px-1">
