@@ -1425,6 +1425,25 @@ export function forceFinaliseDisconnect2p(
 }
 
 function advanceTurn(state: MatchState, now: number = Date.now()): void {
+  // TURN-START WIN CHECK (pre-draw snapshot).
+  //
+  // Runs BEFORE any phase/turn assignment, so the hand it judges is the
+  // turn-start hand — the mandatory draw has not happened yet and therefore
+  // cannot void a win that was already valid when the turn began. This is
+  // the path that catches wins created by an OPPONENT's action (a Sky
+  // Creature steal removing your last held Creator, a Disaster changing
+  // coverage) rather than by your own.
+  //
+  // It grants nothing extra: `validateEcosystemWin` already requires BOTH
+  // (a) a validly complete board and (b) zero Creator/Sky-Creator cards in
+  // hand. A player whose board is complete but who still holds a Creator is
+  // NOT valid here and simply takes a normal turn (draw, then place or
+  // discard the Creator). No phantom wins.
+  if (!state.finished) {
+    checkWin(state);
+    if (state.finished) return;
+  }
+
   // Clear pickedUpThisTurn flags so cards picked up last turn become
   // Disaster-eligible again from this point onward.
   for (const p of state.players) {

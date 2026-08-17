@@ -1,5 +1,5 @@
 /**
-// engine-mirror-hash: c01f6c012ace99fa
+// engine-mirror-hash: 52a692786ebd3056
  * apply-move — server-authoritative move processor.
  *
  * Step 3 of the server-authoritative migration (see
