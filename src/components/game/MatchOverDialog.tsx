@@ -266,6 +266,7 @@ export function MatchOverDialog({ state, onPlayAgain, playerUserIds, onDismissed
             <Button size="sm" variant="outline" onClick={() => setReviewOpen(true)}>
               <Eye className="w-4 h-4 mr-1.5" /> Review boards
             </Button>
+            <Button size="sm" variant="outline" onClick={() => setLearnOpen(true)}>How to play</Button>
             <Button size="sm" onClick={onPlayAgain}>Play again</Button>
           </div>
         </DialogContent>

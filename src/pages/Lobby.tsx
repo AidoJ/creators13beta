@@ -30,6 +30,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import BuildStamp from "@/components/game/BuildStamp";
 import BuildGate from "@/components/game/BuildGate";
+import LearnPanel from "@/components/game/LearnPanel";
+import { BookOpen } from "lucide-react";
 import { APP_BUILD_HASH } from "@/lib/buildInfo";
 import { fetchBuildManifest, forceUpdateReload } from "@/hooks/useBuildFreshness";
 import { Input } from "@/components/ui/input";
@@ -384,6 +386,9 @@ export default function Lobby() {
                         ? "Begin match"
                         : `Begin with ${filled}`}
                 </Button>
+                <Button variant="ghost" size="sm" className="min-h-11" onClick={() => setLearnOpen(true)}>
+                  <BookOpen className="w-4 h-4 mr-2" /> How to play
+                </Button>
 
               </>
             ) : (
@@ -394,6 +399,9 @@ export default function Lobby() {
                   onClick={() => navigate("/play")}
                 >
                   <LogOut className="w-4 h-4 mr-2" /> Leave
+                </Button>
+                <Button variant="ghost" size="sm" className="min-h-11" onClick={() => setLearnOpen(true)}>
+                  <BookOpen className="w-4 h-4 mr-2" /> How to play
                 </Button>
                 <span className="text-sm text-muted-foreground">
                   Waiting for host to begin…
@@ -406,6 +414,7 @@ export default function Lobby() {
         </Card>
       </div>
     </div>
+      <LearnPanel open={learnOpen} onOpenChange={setLearnOpen} />
     </BuildGate>
   );
 }
