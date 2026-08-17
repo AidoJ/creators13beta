@@ -1122,6 +1122,8 @@ export default function Play() {
       const next = rotateMyPlacedHex(s, selfSlot, posKey);
       if (isPvp) logClientStateChange("optimistic_engine", serverSeqRef.current, next);
       schedulePersist(next, { type: "rotate_hex", pos_key: posKey });
+      // Coach observes rotation — this path bypasses guarded().
+      if (coachEnabled) queueMicrotask(() => coach.notifyMove("rotate_hex"));
       return next;
     });
   }
