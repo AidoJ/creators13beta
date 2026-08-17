@@ -23,19 +23,21 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const isServiceRole = apiKey === serviceKey;
 
+    let callerIsAdmin = isServiceRole;
+
     if (!isServiceRole && authHeader) {
       const token = authHeader.replace("Bearer ", "");
       const { data: { user: caller } } = await supabaseAdmin.auth.getUser(token);
       if (!caller) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
       }
-      const { data: hasAccess } = await supabaseAdmin
+      const { data: callerRoles } = await supabaseAdmin
         .from("user_roles")
-        .select("id")
-        .eq("user_id", caller.id)
-        .in("role", ["trainer", "admin"])
-        .limit(1)
-        .maybeSingle();
+        .select("role")
+        .eq("user_id", caller.id);
+      const roleList = (callerRoles || []).map((r: { role: string }) => r.role);
+      callerIsAdmin = roleList.includes("admin");
+      const hasAccess = callerIsAdmin || roleList.includes("trainer");
       if (!hasAccess) {
         return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: corsHeaders });
       }
@@ -47,6 +49,15 @@ serve(async (req) => {
 
     if (!email || !password) {
       return new Response(JSON.stringify({ error: "email and password required" }), { status: 400, headers: corsHeaders });
+    }
+
+    // Privilege-escalation guard: only admins may create admin/trainer accounts.
+    // Checked BEFORE creating the auth user so a rejection leaves no orphan.
+    if (!callerIsAdmin && Array.isArray(roles) && roles.some((r: string) => r === "admin" || r === "trainer")) {
+      return new Response(
+        JSON.stringify({ error: "Only admins can create admin or trainer accounts." }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({

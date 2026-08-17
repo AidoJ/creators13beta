@@ -24,17 +24,39 @@ serve(async (req) => {
     const { data: callerData, error: callerError } = await supabaseAdmin.auth.getUser(token);
     if (callerError || !callerData.user) throw new Error("Not authenticated");
 
-    const { data: roleCheck } = await supabaseAdmin
+    const { data: callerRoles } = await supabaseAdmin
       .from("user_roles")
       .select("role")
-      .eq("user_id", callerData.user.id)
-      .in("role", ["trainer", "admin"])
-      .limit(1)
-      .maybeSingle();
-    if (!roleCheck) throw new Error("Unauthorized: trainer or admin role required");
+      .eq("user_id", callerData.user.id);
+    const callerRoleList = (callerRoles || []).map((r: { role: string }) => r.role);
+    const callerIsAdmin = callerRoleList.includes("admin");
+    if (!callerIsAdmin && !callerRoleList.includes("trainer")) {
+      throw new Error("Unauthorized: trainer or admin role required");
+    }
 
     const { target_user_id, new_password, updates } = await req.json();
     if (!target_user_id) throw new Error("target_user_id is required");
+
+    // Non-admin callers may never touch admin/trainer accounts.
+    if (!callerIsAdmin) {
+      const { data: targetRoles } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", target_user_id);
+      const targetRoleList = (targetRoles || []).map((r: { role: string }) => r.role);
+      if (targetRoleList.includes("admin") || targetRoleList.includes("trainer")) {
+        throw new Error("Trainers cannot modify admin or trainer accounts. Ask an admin.");
+      }
+    }
+
+    // Whitelist the fields that may be written to profiles.
+    const ALLOWED_UPDATE_FIELDS = ["first_name", "last_name", "email"];
+    if (updates && typeof updates === "object") {
+      const invalid = Object.keys(updates).filter(k => !ALLOWED_UPDATE_FIELDS.includes(k));
+      if (invalid.length > 0) {
+        throw new Error(`Unsupported update field(s): ${invalid.join(", ")}`);
+      }
+    }
 
     const result: Record<string, any> = {};
 
