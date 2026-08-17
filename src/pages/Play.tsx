@@ -2182,6 +2182,7 @@ export default function Play() {
           {/* Bottom hand dock */}
           <div className="shrink-0" {...spot("hand")}>
           <PlayerHand
+            onCardInfoOpen={() => bumpCoach("cardInfoOpens")}
             hand={selfPlayer.hand}
             selectedUid={selectedUid}
             onSelect={(uid) => setSelectedUid(uid)}
@@ -2379,6 +2380,7 @@ export default function Play() {
             <div className="flex items-stretch gap-2 min-w-0">
               <div className="flex-1 min-w-0 rounded-lg border border-border/40 bg-card/40 backdrop-blur overflow-x-auto self-end" {...spot("hand")}>
                 <PlayerHand
+            onCardInfoOpen={() => bumpCoach("cardInfoOpens")}
                   hand={selfPlayer.hand}
                   selectedUid={selectedUid}
                   onSelect={(uid) => setSelectedUid(uid)}
