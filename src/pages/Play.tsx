@@ -64,7 +64,7 @@ import ProfilingPromptDialog from "@/components/game/ProfilingPromptDialog";
 
 import { CoachBar } from "@/components/game/CoachBar";
 import LearnPanel from "@/components/game/LearnPanel";
-import { useCoach } from "@/hooks/useCoach";
+import { useCoach, resetCoach } from "@/hooks/useCoach";
 import { seedOpeningHand, stackForWant } from "@/lib/game/coachScript";
 // (legacy MultiplayerLobby dialog removed in Batch B — multiplayer now flows
 // through the route-based /play/lobby/:matchId page.)
@@ -191,6 +191,13 @@ export default function Play() {
    *  the engine and every legal move behave exactly as in a normal practice
    *  game; the coach just watches and prompts. */
   const [coachEnabled, setCoachEnabled] = useState(searchParams.get("coach") === "1");
+  // Arriving fresh at /play/new?coach=1 always starts the lesson at step 1 —
+  // a previous (abandoned) coached match must not leak its position in.
+  const coachResetRef = useRef(false);
+  if (!coachResetRef.current) {
+    coachResetRef.current = true;
+    if (searchParams.get("coach") === "1") resetCoach();
+  }
   
   
   const [waitingForGuest, setWaitingForGuest] = useState(false);
@@ -1216,7 +1223,12 @@ export default function Play() {
     // Coached match: stack the top of the draw pile so the lesson's card is
     // always the one you draw. createMatch shuffles internally, so this must
     // happen after creation.
-    if (wantCoach) fresh = seedOpeningHand(fresh);
+    if (wantCoach) {
+      // Fresh coached match — the lesson restarts from the top.
+      resetCoach();
+      coach.restart();
+      fresh = seedOpeningHand(fresh);
+    }
     botDifficultyRef.current = difficulty;
     botStatsRecordedRef.current = false;
     setState(fresh);
@@ -1846,7 +1858,20 @@ export default function Play() {
       </button>
 
       {/* Coach docks in normal flow — it must never cover the deck or hand. */}
-      {coachEnabled && <CoachBar coach={coach} onOpenTopic={(id) => { setRuleBookTopic(id); setRuleBookOpen(true); }} />}
+      {coachEnabled && (
+        <CoachBar
+          coach={coach}
+          onOpenTopic={(id) => { setRuleBookTopic(id); setRuleBookOpen(true); }}
+          onRestartMatch={() => {
+            void startSoloMatch(
+              state?.gameMode ?? "classic",
+              (state?.gameConfig ?? {}) as GameConfig,
+              botDifficultyRef.current,
+              true,
+            );
+          }}
+        />
+      )}
 
 
       {/* ============ MOBILE LAYOUT ============ */}
