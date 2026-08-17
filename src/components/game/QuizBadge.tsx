@@ -11,9 +11,12 @@ interface Props {
   question: QuizQuestion | null;
   settings: QuizSettings;
   submit: (chosen: "a" | "b" | "c" | "d") => Promise<any>;
+  /** True while it's this player's turn and their actions aren't finished —
+   *  the badge is dimmed and unclickable so the quiz can't burn the turn clock. */
+  muted?: boolean;
 }
 
-export function QuizBadge({ progress, question, settings, submit }: Props) {
+export function QuizBadge({ progress, question, settings, submit, muted = false }: Props) {
   const [open, setOpen] = useState(false);
   const [answered, setAnswered] = useState<null | { correct: boolean; correct_option: string; explanation: string | null }>(null);
   const [hasNext, setHasNext] = useState(false);
@@ -26,7 +29,7 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
   const cap = settings.questions_per_match;
   const answeredCount = correct + wrong;
   const capReached = answeredCount >= cap;
-  const hasOpen = !!question && !!progress?.open_question_id;
+  const hasOpen = !!question && !!progress?.open_question_id && !muted;
   const tier = Math.max(1, settings.bonus_threshold || 4);
   const toNextTier = tier - (correct % tier);
 
