@@ -1021,6 +1021,8 @@ export default function Play() {
         setSelectedUid(null);
         setMode("place");
         setStealVictimKey(null);
+        // Coach observes draws too — this path bypasses guarded().
+        if (coachEnabled) queueMicrotask(() => coach.notifyMove("pickup_from_draw"));
         return next;
       } catch (e: any) {
         setPendingDraws((pd) => pd.filter((p) => p.id !== pid));
