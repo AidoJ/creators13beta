@@ -58,6 +58,7 @@ export default function Lobby() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [row, setRow] = useState<GameMatchRow | null>(null);
+  const [learnOpen, setLearnOpen] = useState(false);
   const [roster, setRoster] = useState<RosterEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);

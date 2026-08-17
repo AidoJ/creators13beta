@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import LearnPanel from "@/components/game/LearnPanel";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Trophy, Eye, Bot as BotIcon } from "lucide-react";
 import { CREATOR_TYPE_COLORS } from "@/data/cards";
@@ -171,6 +172,7 @@ interface Props {
 export function MatchOverDialog({ state, onPlayAgain, playerUserIds, onDismissed }: Props) {
   const navigate = useNavigate();
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [learnOpen, setLearnOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   // Client-side beat: when the match finalises (server is the source of
   // truth and writes `state.finished` immediately on first completion), we
