@@ -307,6 +307,8 @@ export function MatchOverDialog({ state, onPlayAgain, playerUserIds, onDismissed
           </div>
         </DialogContent>
       </Dialog>
+
+      <LearnPanel open={learnOpen} onOpenChange={setLearnOpen} />
     </>
   );
 }
