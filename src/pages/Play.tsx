@@ -871,18 +871,18 @@ export default function Play() {
       phase: state?.phase ?? "draw",
       firstPickupDone: !!selfPlayer?.firstPickupDone,
       drawnThisTurn: state?.drawnThisTurn ?? 0,
-      actionsUsed: state?.actionsUsed ?? 0,
+      actionsUsed: state?.placedThisTurn ?? 0,
       actionsMax: 2,
       handSize: hand.length,
       handHasCreator: hand.some((c) => c.kind === "creator" || c.kind === "sky_creator"),
       handHasGoldenBody: has("golden_body"),
       handHasGoldenHive: has("golden_hive"),
       handHasSkyCreature: has("sky_creature"),
-      myPlaced: selfPlayer?.ecosystem?.length ?? 0,
-      myCreatorsDown: (selfPlayer?.ecosystem ?? []).filter(
-        (h: any) => h.card?.kind === "creator" || h.card?.kind === "sky_creator",
+      myPlaced: selfPlayer?.ecosystem?.placed.size ?? 0,
+      myCreatorsDown: [...(selfPlayer?.ecosystem?.placed.values() ?? [])].filter(
+        (h: any) => h?.card?.kind === "creator" || h?.card?.kind === "sky_creator",
       ).length,
-      oppPlaced: opp?.ecosystem?.length ?? 0,
+      oppPlaced: opp?.ecosystem?.placed.size ?? 0,
       turnNumber: state?.turnNumber ?? 0,
       counters: coachCounters,
     };
@@ -939,6 +939,11 @@ export default function Play() {
       // Warn only — the move still goes to the server, which is authoritative.
       warnIdleOnce();
     }
+    if (coachEnabled && move) {
+      // ACTION ENVELOPE — only the action this lesson teaches gets through.
+      const card = state?.players.flatMap((p) => p.hand).find((c) => c.uid === (move as any).uid) ?? null;
+      if (coach.checkMove({ type: move.type, card })) return;
+    }
     if (guardedInFlightRef.current) return;
     guardedInFlightRef.current = true;
     try {
@@ -953,7 +958,7 @@ export default function Play() {
       setStealVictimKey(null);
       // Coach observes AFTER the move has been accepted by the engine, so it
       // can only ever react to legal moves — it never gates one.
-      if (coachEnabled) coach.notifyMove(move?.type);
+      if (coachEnabled) countMove(move?.type);
     } catch (e: any) {
       toast.error(e?.message ?? "Illegal move");
     } finally {
@@ -1023,7 +1028,7 @@ export default function Play() {
         setMode("place");
         setStealVictimKey(null);
         // Coach observes draws too — this path bypasses guarded().
-        if (coachEnabled) queueMicrotask(() => coach.notifyMove("pickup_from_used"));
+        if (coachEnabled) queueMicrotask(() => bumpCoach("pickups"));
         return next;
       } catch (e: any) {
         setPendingDraws((pd) => pd.filter((p) => p.id !== pid));
@@ -1080,7 +1085,7 @@ export default function Play() {
         setMode("place");
         setStealVictimKey(null);
         // Coach observes draws too — this path bypasses guarded().
-        if (coachEnabled) queueMicrotask(() => coach.notifyMove("pickup_from_draw"));
+        if (coachEnabled) queueMicrotask(() => bumpCoach("pickups"));
         return next;
       } catch (e: any) {
         setPendingDraws((pd) => pd.filter((p) => p.id !== pid));
@@ -1129,7 +1134,7 @@ export default function Play() {
         const next = moveMyPlacedHex(state, selfSlot, fromKey, pos);
         setLoggedState(next, "optimistic_engine");
         schedulePersist(next, { type: "move_hex", from_key: fromKey, to_pos: pos });
-        if (coachEnabled) coach.notifyMove("move_hex");
+        if (coachEnabled) bumpCoach("repositions");
         setMoveFromKey(null);
       } catch (e: any) {
         toast.error(e?.message ?? "Cannot move here");
@@ -1181,7 +1186,7 @@ export default function Play() {
       if (isPvp) logClientStateChange("optimistic_engine", serverSeqRef.current, next);
       schedulePersist(next, { type: "rotate_hex", pos_key: posKey });
       // Coach observes rotation — this path bypasses guarded().
-      if (coachEnabled) queueMicrotask(() => coach.notifyMove("rotate_hex"));
+      if (coachEnabled) queueMicrotask(() => bumpCoach("rotations"));
       return next;
     });
   }
