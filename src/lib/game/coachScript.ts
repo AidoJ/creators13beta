@@ -60,21 +60,11 @@ export interface CoachStep {
 
 export const COACH_STEPS: CoachStep[] = [
   {
-    id: "welcome",
-    topicId: "goal",
-    title: "Let's play one together",
-    prompt:
-      "I'll walk you through a real game against an easy bot — you'll learn by playing, not by reading. Nothing here counts against your record.",
-    confirm: "",
-    target: "none",
-    scaffold: "full",
-    ack: true,
-  },
-  {
     id: "draw-opening",
     topicId: "the-turn",
     title: "Take your opening hand",
-    prompt: "Tap the Draw Pile to take your opening 5 cards.",
+    prompt:
+      "Let's learn by playing — this is a real game against an easy bot and nothing counts against your record. Start by tapping the Draw Pile to take your opening 5 cards.",
     confirm: "That's your hand. From now on you pick up 2 cards at the start of every turn.",
     target: "deck",
     scaffold: "full",
