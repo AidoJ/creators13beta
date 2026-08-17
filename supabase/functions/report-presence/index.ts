@@ -151,6 +151,9 @@ Deno.serve(async (req) => {
           disconnect_stamped_at: null,
           disconnect_reason: null,
           ...(hadGap ? { last_presence_gap_at: nowIso } : {}),
+          // The player is present and actively trying to move; the server
+          // side hung. Stamp it so the sweep pauses their idle clock.
+          ...(body.event === "server_stall" ? { last_server_stall_at: nowIso } : {}),
         };
 
   const { error: updErr } = await svc
