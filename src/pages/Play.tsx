@@ -1864,7 +1864,7 @@ export default function Play() {
           onOpenTopic={(id) => { setRuleBookTopic(id); setRuleBookOpen(true); }}
           onRestartMatch={() => {
             void startSoloMatch(
-              state?.gameMode ?? "classic",
+              state?.gameMode ?? "end_of_days",
               (state?.gameConfig ?? {}) as GameConfig,
               botDifficultyRef.current,
               true,
