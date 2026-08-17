@@ -862,6 +862,9 @@ export default function Play() {
       setSelectedUid(null);
       setMode("place");
       setStealVictimKey(null);
+      // Coach observes AFTER the move has been accepted by the engine, so it
+      // can only ever react to legal moves — it never gates one.
+      if (coachEnabled) coach.notifyMove(move?.type);
     } catch (e: any) {
       toast.error(e?.message ?? "Illegal move");
     } finally {
