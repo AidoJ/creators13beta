@@ -74,7 +74,12 @@ Deno.serve(async (req) => {
   if (!body?.match_id || !body?.event) {
     return jsonResponse({ error: "missing fields" }, 400);
   }
-  if (body.event !== "join" && body.event !== "leave" && body.event !== "heartbeat") {
+  if (
+    body.event !== "join" &&
+    body.event !== "leave" &&
+    body.event !== "heartbeat" &&
+    body.event !== "server_stall"
+  ) {
     return jsonResponse({ error: "invalid event" }, 400);
   }
   if (typeof body.reason === "string" && body.reason.length > 200) {
