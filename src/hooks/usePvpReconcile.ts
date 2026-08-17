@@ -172,7 +172,9 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
             moveType: entry.move.type,
             expectedSeq: entry.expectedSeq,
           });
+          staleSeqRef.current = entry.expectedSeq;
           clearQueue(matchId);
+
           syncPending(matchId);
           toast.message("Your turn passed while you were offline", {
             description: "That move was discarded — catching up to the table.",
