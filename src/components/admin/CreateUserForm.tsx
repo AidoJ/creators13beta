@@ -13,9 +13,11 @@ const ALL_ROLES: AppRole[] = ["trainer", "admin", "practitioner", "trainee", "cl
 
 interface CreateUserFormProps {
   onCreated?: () => void;
+  isCallerAdmin?: boolean;
 }
 
-export default function CreateUserForm({ onCreated }: CreateUserFormProps) {
+export default function CreateUserForm({ onCreated, isCallerAdmin = false }: CreateUserFormProps) {
+  const visibleRoles = ALL_ROLES.filter(r => isCallerAdmin || (r !== "admin" && r !== "trainer"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -98,7 +100,7 @@ export default function CreateUserForm({ onCreated }: CreateUserFormProps) {
       <div>
         <label className="text-xs font-medium text-muted-foreground">Assign Roles</label>
         <div className="flex flex-wrap gap-3 mt-2">
-          {ALL_ROLES.map(role => (
+          {visibleRoles.map(role => (
             <label key={role} className="flex items-center gap-2 cursor-pointer">
               <Checkbox
                 checked={selectedRoles.includes(role)}
