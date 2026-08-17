@@ -315,7 +315,9 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
           return;
         }
         if (rejected.reason === "stale") {
+          staleSeqRef.current = expected;
           toast.message("Catching up to opponent…");
+
         } else {
           toast.error(rejected.message ?? "Move rejected by server");
         }
