@@ -831,14 +831,19 @@ export default function Play() {
    * The coach observes moves through `guarded()` below. It never blocks a
    * move: off-script taps still execute and the coach simply redirects. */
   const coachIsMyTurn = !!state && !state.finished && state.players[state.turn]?.id === selfPlayer?.id;
-  const coach = useCoach({ enabled: coachEnabled, isMyTurn: coachIsMyTurn });
+  const coach = useCoach({ enabled: coachEnabled, isMyTurn: coachIsMyTurn, phase: state?.phase });
   /** Tags a UI zone so the coach can spotlight it (see `.coach-dim` in index.css). */
   const spot = useCallback(
     (zone: "deck" | "hand" | "board" | "quiz" | "discard") =>
       coachEnabled
-        ? { "data-coach-zone": zone, "data-coach-active": coach.spotlight === zone ? "true" : "false" }
+        ? {
+            "data-coach-zone": zone,
+            "data-coach-active": coach.spotlight === zone ? "true" : "false",
+            // Flips between two values so "Show me" restarts the flash animation.
+            "data-coach-flash": coach.spotlight === zone ? (coach.pulseTick % 2 === 0 ? "a" : "b") : undefined,
+          }
         : {},
-    [coachEnabled, coach.spotlight],
+    [coachEnabled, coach.spotlight, coach.pulseTick],
   );
 
   // Deterministic teaching draws (solo coached match only — never PvP).

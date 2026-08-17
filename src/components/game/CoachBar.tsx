@@ -14,6 +14,7 @@ import {
   GraduationCap,
   X,
   ChevronRight,
+  ChevronLeft,
   ChevronUp,
   CheckCircle2,
   MoreVertical,
@@ -138,6 +139,11 @@ export function CoachBar({ coach, onOpenTopic }: Props) {
                 <Rich text={step.prompt} />
               )}
             </p>
+            {!success && coach.drawFirst && (
+              <p className="mt-1 text-[0.72rem] sm:text-sm text-primary font-medium leading-snug">
+                First — tap the Draw Pile and pick up 2 cards to open your turn.
+              </p>
+            )}
             {!success && coach.redirectText && (
               <p className="mt-1 text-[0.72rem] sm:text-sm text-primary leading-snug">{coach.redirectText}</p>
             )}
@@ -192,6 +198,18 @@ export function CoachBar({ coach, onOpenTopic }: Props) {
             ))}
           </div>
 
+          {coach.canGoBack && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="min-h-9 text-xs px-2"
+              onClick={coach.back}
+              aria-label="Previous step"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline ml-0.5">Back</span>
+            </Button>
+          )}
           {success ? (
             <Button size="sm" className="min-h-9 text-xs" onClick={coach.next}>
               {isLast ? "Finish on my own" : "Next"}
