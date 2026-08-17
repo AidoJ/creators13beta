@@ -66,6 +66,21 @@ function isTransportFailure(error: any): boolean {
   );
 }
 
+/** Tell the server "my move request hung / never landed" so the disconnect
+ *  sweep pauses this seat's idle clock instead of auto-passing a player
+ *  whose only fault is that our pipeline stalled. Fire-and-forget: it must
+ *  never delay or fail the move path. Throttled so a burst of retries
+ *  doesn't spam the function. */
+let lastStallReportAt = 0;
+function reportServerStall(matchId: string) {
+  const now = Date.now();
+  if (now - lastStallReportAt < 10_000) return;
+  lastStallReportAt = now;
+  void supabase.functions
+    .invoke("report-presence", { body: { match_id: matchId, event: "server_stall" } })
+    .catch(() => { /* best-effort */ });
+}
+
 
 export async function applyMoveServer(
   matchId: string,
