@@ -78,8 +78,8 @@ export async function applyMoveServer(
     for (let attempt = 0; attempt <= NETWORK_RETRIES; attempt++) {
       ({ data, error } = await supabase.functions.invoke("apply-move", {
         body: { match_id: matchId, expected_seq: expectedSeq, move },
-        // @ts-expect-error — `timeout` is supported by functions-js at runtime
         timeout: REQUEST_TIMEOUT_MS,
+
       }));
       if (!error || !isTransportFailure(error)) break;
       // A timeout means the request MAY have landed. Don't hammer it in a
