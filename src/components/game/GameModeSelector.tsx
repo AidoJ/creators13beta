@@ -11,7 +11,9 @@ import type { BotDifficulty } from "@/lib/game/bot";
 interface Props {
   open: boolean;
   onCancel?: () => void;
-  onChoose: (mode: GameMode, config: GameConfig, difficulty: BotDifficulty) => void;
+  onChoose: (mode: GameMode, config: GameConfig, difficulty: BotDifficulty, coach: boolean) => void;
+  /** Pre-tick "coach me through it" (e.g. arriving with ?coach=1). */
+  defaultCoach?: boolean;
   /** B — fires when the user picks "Start multiplayer". The selected mode +
    *  config are passed through so the lobby's match carries the same rules. */
   onChooseMultiplayer?: (mode: GameMode, config: GameConfig) => void;
