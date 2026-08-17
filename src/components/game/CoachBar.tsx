@@ -241,7 +241,7 @@ export function CoachBar({ coach, onOpenTopic, onRestartMatch }: Props) {
                   Tell me more
                 </Button>
               )}
-              {!step.ack && (
+              {step.type !== "ack" && (
                 <>
                   <Button variant="ghost" size="sm" className="min-h-9 text-xs" onClick={coach.showMe}>
                     Show me
@@ -251,12 +251,13 @@ export function CoachBar({ coach, onOpenTopic, onRestartMatch }: Props) {
                   </Button>
                 </>
               )}
-              {step.ack && (
+              {step.type === "ack" && (
                 <Button size="sm" className="min-h-9 text-xs" onClick={coach.ack}>
                   {isLast ? "Finish on my own" : "Got it"}
                   <ChevronRight className="ml-1 h-3.5 w-3.5" />
                 </Button>
               )}
+
             </>
           )}
         </div>
