@@ -104,89 +104,87 @@ export default function LearnPanel({ open, onOpenChange, firstRun = false }: Pro
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 [&>div]:!block">
-          <div className="px-5 py-4 space-y-3">
-            {/* ── Topic reader ───────────────────────────────────────── */}
-            {topic && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setTopicId(null)}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground min-h-9 -ml-1"
-                >
-                  <ChevronLeft className="h-3.5 w-3.5" /> Back
-                </button>
-                <TopicBody topic={topic} />
-              </>
-            )}
+        <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-stable px-5 py-4 space-y-3">
+          {/* ── Topic reader ───────────────────────────────────────── */}
+          {topic && (
+            <>
+              <button
+                type="button"
+                onClick={() => setTopicId(null)}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground min-h-9 -ml-1"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" /> Back
+              </button>
+              <TopicBody topic={topic} />
+            </>
+          )}
 
-            {/* ── First-run direct offer ─────────────────────────────── */}
-            {!topic && firstRun && !door && (
-              <div className="space-y-3">
-                <Button size="lg" className="w-full min-h-12 whitespace-normal h-auto py-3" onClick={startGuided}>
-                  <GraduationCap className="mr-2 h-5 w-5" /> Yes — teach me as I play
-                </Button>
-                <Button variant="outline" size="lg" className="w-full min-h-12 whitespace-normal h-auto py-3" onClick={close}>
-                  <Gamepad2 className="mr-2 h-5 w-5" /> I'll explore myself
-                </Button>
-                <button
-                  type="button"
-                  onClick={() => setDoor("refresher")}
-                  className="w-full text-xs text-muted-foreground hover:text-foreground min-h-9"
-                >
-                  Just show me the rules
-                </button>
+          {/* ── First-run direct offer ─────────────────────────────── */}
+          {!topic && firstRun && !door && (
+            <div className="space-y-3">
+              <Button size="lg" className="w-full min-h-12 whitespace-normal h-auto py-3" onClick={startGuided}>
+                <GraduationCap className="mr-2 h-5 w-5" /> Yes — teach me as I play
+              </Button>
+              <Button variant="outline" size="lg" className="w-full min-h-12 whitespace-normal h-auto py-3" onClick={close}>
+                <Gamepad2 className="mr-2 h-5 w-5" /> I'll explore myself
+              </Button>
+              <button
+                type="button"
+                onClick={() => setDoor("refresher")}
+                className="w-full text-xs text-muted-foreground hover:text-foreground min-h-9"
+              >
+                Just show me the rules
+              </button>
+            </div>
+          )}
+
+          {/* ── Three doors ────────────────────────────────────────── */}
+          {!topic && (!firstRun || door) && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {(
+                  [
+                    { id: "guided", label: "I'm new", hint: "Guided game", icon: GraduationCap },
+                    { id: "refresher", label: "Refresher", hint: "Look it up", icon: BookOpen },
+                    { id: "tips", label: "Tips", hint: "Win more", icon: Lightbulb },
+                  ] as const
+                ).map((d) => {
+                  const Icon = d.icon;
+                  const selected = activeDoor === d.id;
+                  return (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => {
+                        if (d.id === "guided") {
+                          startGuided();
+                          return;
+                        }
+                        rememberDoor(d.id);
+                        setDoor(d.id);
+                      }}
+                      className={`min-h-16 rounded-xl border p-3 text-left transition-colors ${
+                        selected
+                          ? "border-primary bg-primary/10"
+                          : "border-border bg-card hover:border-primary/50 hover:bg-primary/5"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4 text-primary" />
+                      <p className="font-display text-sm mt-1.5 leading-tight">{d.label}</p>
+                      <p className="text-[0.7rem] text-muted-foreground leading-snug">{d.hint}</p>
+                    </button>
+                  );
+                })}
               </div>
-            )}
 
-            {/* ── Three doors ────────────────────────────────────────── */}
-            {!topic && (!firstRun || door) && (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  {(
-                    [
-                      { id: "guided", label: "I'm new", hint: "Guided game", icon: GraduationCap },
-                      { id: "refresher", label: "Refresher", hint: "Look it up", icon: BookOpen },
-                      { id: "tips", label: "Tips", hint: "Win more", icon: Lightbulb },
-                    ] as const
-                  ).map((d) => {
-                    const Icon = d.icon;
-                    const selected = activeDoor === d.id;
-                    return (
-                      <button
-                        key={d.id}
-                        type="button"
-                        onClick={() => {
-                          if (d.id === "guided") {
-                            startGuided();
-                            return;
-                          }
-                          rememberDoor(d.id);
-                          setDoor(d.id);
-                        }}
-                        className={`min-h-16 rounded-xl border p-3 text-left transition-colors ${
-                          selected
-                            ? "border-primary bg-primary/10"
-                            : "border-border bg-card hover:border-primary/50 hover:bg-primary/5"
-                        }`}
-                      >
-                        <Icon className="h-4 w-4 text-primary" />
-                        <p className="font-display text-sm mt-1.5 leading-tight">{d.label}</p>
-                        <p className="text-[0.7rem] text-muted-foreground leading-snug">{d.hint}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="space-y-2 pt-1">
-                  {topicsFor(activeDoor === "tips" ? "tips" : "refresher").map((t) => (
-                    <TopicCard key={t.id} topic={t} onClick={() => setTopicId(t.id)} />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        </ScrollArea>
+              <div className="space-y-2 pt-1">
+                {topicsFor(activeDoor === "tips" ? "tips" : "refresher").map((t) => (
+                  <TopicCard key={t.id} topic={t} onClick={() => setTopicId(t.id)} />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
