@@ -190,7 +190,7 @@ export default function Play() {
   /** Coached first match — /play/new?practice=1&coach=1. Presentation only:
    *  the engine and every legal move behave exactly as in a normal practice
    *  game; the coach just watches and prompts. */
-  const coachEnabled = searchParams.get("coach") === "1";
+  const [coachEnabled, setCoachEnabled] = useState(searchParams.get("coach") === "1");
   
   
   const [waitingForGuest, setWaitingForGuest] = useState(false);
@@ -1185,7 +1185,9 @@ export default function Play() {
     setModeSelectorOpen(true);
   }
 
-  async function startSoloMatch(mode: GameMode, config: GameConfig, difficulty: BotDifficulty) {
+  async function startSoloMatch(mode: GameMode, config: GameConfig, difficulty: BotDifficulty, coachOn?: boolean) {
+    const wantCoach = coachOn ?? coachEnabled;
+    if (wantCoach !== coachEnabled) setCoachEnabled(wantCoach);
     if (!allCards) return;
     const youName = user ? await fetchPlayerShortName(user) : "You";
     const deck = buildDeck(allCards, specialCards);
@@ -1202,7 +1204,7 @@ export default function Play() {
     // Coached match: stack the top of the draw pile so the lesson's card is
     // always the one you draw. createMatch shuffles internally, so this must
     // happen after creation.
-    if (coachEnabled) fresh = seedOpeningHand(fresh);
+    if (wantCoach) fresh = seedOpeningHand(fresh);
     botDifficultyRef.current = difficulty;
     botStatsRecordedRef.current = false;
     setState(fresh);
@@ -1303,7 +1305,8 @@ export default function Play() {
           <GameModeSelector
             open
             onCancel={() => { setModeSelectorOpen(false); navigate("/dashboard"); }}
-            onChoose={(m, c, d) => startSoloMatch(m, c, d)}
+            defaultCoach={coachEnabled}
+            onChoose={(m, c, d, coachOn) => startSoloMatch(m, c, d, coachOn)}
             onChooseMultiplayer={(m, c) => createMultiplayerLobby(m, c)}
           />
         ) : (
@@ -2378,7 +2381,8 @@ export default function Play() {
         <GameModeSelector
           open
           onCancel={() => setModeSelectorOpen(false)}
-          onChoose={(m, c, d) => startSoloMatch(m, c, d)}
+          defaultCoach={coachEnabled}
+            onChoose={(m, c, d, coachOn) => startSoloMatch(m, c, d, coachOn)}
           onChooseMultiplayer={(m, c) => createMultiplayerLobby(m, c)}
         />
       )}
