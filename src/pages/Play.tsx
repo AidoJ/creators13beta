@@ -1373,6 +1373,16 @@ export default function Play() {
     && selectedCard.kind === "sky_creature";
 
   const handAtLimit = effectiveHandLen >= 5; // HAND_LIMIT (hand + optimistic pending)
+  /* Quiz vs turn clock: the quiz badge is MUTED while it's your turn and your
+   * actions for that turn aren't finished yet (draw phase, or plays still
+   * available). It activates the moment your actions are complete — regardless
+   * of how many cards you actually played (2 plays used, or nothing left to
+   * play/discard) — and stays active through the opponents' turns until you
+   * start acting again. Answering can never burn the turn clock because the
+   * clock is timing actions that are already done. */
+  const quizMuted = !!canTakeTurn && !state.finished && !(
+    state.phase === "place" && (state.placedThisTurn >= 2 || selfPlayer.hand.length === 0)
+  );
   const needsOpeningDraw = !selfPlayer.firstPickupDone && state.phase === "draw" && canTakeTurn && !drawInFlight;
   const canDrawOne = canTakeTurn && state.phase === "draw" && selfPlayer.firstPickupDone && (state.draw.length > 0 || state.used.length > 0) && effectiveDrawnThisTurn < 2 && !handAtLimit;
 
@@ -1472,7 +1482,7 @@ export default function Play() {
         </Button>
         {isPvp && !state.finished && quiz.settings.enabled && (
           <div className="flex justify-center pt-0.5">
-            <QuizBadge progress={quiz.progress} question={quiz.question} settings={quiz.settings} submit={quiz.submit} />
+            <QuizBadge progress={quiz.progress} question={quiz.question} settings={quiz.settings} submit={quiz.submit} muted={quizMuted} />
           </div>
         )}
       </div>
@@ -2053,7 +2063,7 @@ export default function Play() {
             </div>
             {isPvp && !state.finished && quiz.settings.enabled && (
               <div className="shrink-0 pr-3 py-3" style={{ overflow: "visible" }} {...spot("quiz")}>
-                <QuizBadge progress={quiz.progress} question={quiz.question} settings={quiz.settings} submit={quiz.submit} />
+                <QuizBadge progress={quiz.progress} question={quiz.question} settings={quiz.settings} submit={quiz.submit} muted={quizMuted} />
               </div>
             )}
           </div>

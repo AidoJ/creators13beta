@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { HelpCircle, Sparkles, Check, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -11,9 +11,12 @@ interface Props {
   question: QuizQuestion | null;
   settings: QuizSettings;
   submit: (chosen: "a" | "b" | "c" | "d") => Promise<any>;
+  /** True while it's this player's turn and their actions aren't finished —
+   *  the badge is dimmed and unclickable so the quiz can't burn the turn clock. */
+  muted?: boolean;
 }
 
-export function QuizBadge({ progress, question, settings, submit }: Props) {
+export function QuizBadge({ progress, question, settings, submit, muted = false }: Props) {
   const [open, setOpen] = useState(false);
   const [answered, setAnswered] = useState<null | { correct: boolean; correct_option: string; explanation: string | null }>(null);
   const [hasNext, setHasNext] = useState(false);
@@ -26,9 +29,15 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
   const cap = settings.questions_per_match;
   const answeredCount = correct + wrong;
   const capReached = answeredCount >= cap;
-  const hasOpen = !!question && !!progress?.open_question_id;
+  const hasOpen = !!question && !!progress?.open_question_id && !muted;
   const tier = Math.max(1, settings.bonus_threshold || 4);
   const toNextTier = tier - (correct % tier);
+
+  // If a new turn starts while the quiz dialog is open, close it so the player
+  // is looking at the board, not a question, when their clock starts.
+  useEffect(() => {
+    if (muted) { setOpen(false); setAnswered(null); setHasNext(false); }
+  }, [muted]);
 
   if (!settings.enabled) return null;
 
@@ -64,20 +73,23 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
         <TooltipTrigger asChild>
           <button
             type="button"
-            onClick={() => setOpen(true)}
-            aria-label={hasOpen ? "Answer quiz question for bonus points" : `Quiz progress: ${correct} of ${cap}`}
+            disabled={muted}
+            onClick={() => { if (!muted) setOpen(true); }}
+            aria-label={muted ? "Quiz paused until your turn actions are complete" : hasOpen ? "Answer quiz question for bonus points" : `Quiz progress: ${correct} of ${cap}`}
             style={hasOpen ? { zIndex: 50, position: "relative", transformOrigin: "center", willChange: "transform" } : undefined}
             className={
               "relative inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 min-h-11 text-sm font-medium border transition origin-center " +
-              (bonusPts > 0
-                ? "bg-amber-500/15 border-amber-500/60 text-amber-700 dark:text-amber-300"
-                : hasOpen
-                  ? "bg-primary border-primary text-primary-foreground shadow-lg animate-quiz-pop ring-2 ring-primary/50"
-                  : "bg-muted/50 border-border text-muted-foreground hover:bg-muted")
+              (muted
+                ? "bg-muted/30 border-border/50 text-muted-foreground/50 opacity-50 cursor-not-allowed"
+                : bonusPts > 0
+                  ? "bg-amber-500/15 border-amber-500/60 text-amber-700 dark:text-amber-300"
+                  : hasOpen
+                    ? "bg-primary border-primary text-primary-foreground shadow-lg animate-quiz-pop ring-2 ring-primary/50"
+                    : "bg-muted/50 border-border text-muted-foreground hover:bg-muted")
             }
           >
 
-            {bonusPts > 0 ? <Sparkles className="h-4 w-4" /> : <HelpCircle className={"h-4 w-4" + (hasOpen ? " animate-quiz-bounce" : "")} />}
+            {bonusPts > 0 && !muted ? <Sparkles className="h-4 w-4" /> : <HelpCircle className={"h-4 w-4" + (hasOpen ? " animate-quiz-bounce" : "")} />}
             <span className="tabular-nums">{correct}/{cap}</span>
             {bonusPts > 0 && <span className="ml-0.5 tabular-nums font-semibold">+{bonusPts}</span>}
             {hasOpen && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-background animate-quiz-bounce" />}
@@ -85,11 +97,13 @@ export function QuizBadge({ progress, question, settings, submit }: Props) {
         </TooltipTrigger>
 
         <TooltipContent side="bottom" className="max-w-[240px] text-xs">
-          {hasOpen
-            ? "A quiz question is waiting — answer correctly to add bonus points to your match score"
-            : capReached
-              ? `All ${cap} questions used this match. +${bonusPts} bonus point${bonusPts === 1 ? "" : "s"} added to your match score.`
-              : `${toNextTier} more correct = +${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"} added to your match score. Up to ${cap} questions per match.`}
+          {muted
+            ? "Quiz is paused while you're taking your turn — it unlocks as soon as your actions are done, so it never eats your turn clock."
+            : hasOpen
+              ? "A quiz question is waiting — answer correctly to add bonus points to your match score"
+              : capReached
+                ? `All ${cap} questions used this match. +${bonusPts} bonus point${bonusPts === 1 ? "" : "s"} added to your match score.`
+                : `${toNextTier} more correct = +${settings.bonus_points} bonus point${settings.bonus_points === 1 ? "" : "s"} added to your match score. Up to ${cap} questions per match.`}
         </TooltipContent>
       </Tooltip>
 
