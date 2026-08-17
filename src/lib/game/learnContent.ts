@@ -244,7 +244,7 @@ export const LEARN_TOPICS: LearnTopic[] = [
     blocks: [
       {
         kind: "text",
-        text: "Every time you play a Creator card, a pulsing **Quiz badge** appears. Tap it to answer a short question about that Creator Type.",
+        text: "In matches against other players, playing a Creator card can unlock a pulsing **Quiz badge** (there's a set limit per match). Tap it to answer a short question about that Creator Type. Quizzes don't run in bot practice matches.",
       },
       {
         kind: "bullets",
@@ -252,6 +252,7 @@ export const LEARN_TOPICS: LearnTopic[] = [
           "Correct answers earn **bonus points** on top of your match score.",
           "Bonuses come in tiers — every set number of correct answers awards another bonus.",
           "You can skip a quiz and keep playing, but you'll miss the bonus.",
+          "You can answer a waiting question at any time — even when it's not your turn.",
         ],
       },
       {

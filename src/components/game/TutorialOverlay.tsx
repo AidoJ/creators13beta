@@ -23,7 +23,7 @@ const STEPS: { title: string; body: string }[] = [
   },
   {
     title: "Quiz bonuses",
-    body: "Every time you play a Creator card, a pulsing Quiz badge pops out — tap it to answer a short question about that Creator Type. Correct answers earn bonus points and speed up your mastery. You can skip a quiz and keep playing, but you'll miss the bonus. Quizzes are optional but they're the fastest way to climb the score.",
+    body: "In matches against other players, playing a Creator card can unlock a pulsing Quiz badge — there's a set limit per match, and quizzes don't run in bot practice games. Tap the badge any time, even when it's not your turn, to answer a question about that Creator Type. Every set number of correct answers earns a bonus; skipping is fine, you just miss the bonus.",
   },
   {
     title: "Free actions & tips",

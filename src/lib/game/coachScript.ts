@@ -175,7 +175,7 @@ export const COACH_STEPS: CoachStep[] = [
     topicId: "quiz",
     title: "Quiz bonuses",
     prompt:
-      "Every time you play a Creator card a pulsing Quiz badge appears. Tap it and answer a question about that Creator Type — correct answers add bonus points to your score. Skipping is fine, but you lose the bonus.",
+      "Quizzes run in matches against other players — not in bot practice, so you won't see one here. In a live match, playing a Creator card can unlock a pulsing Quiz badge (there's a set limit per match). Tap it any time — even when it's not your turn — and answer a question about that Creator Type. Every set number of correct answers earns a bonus on top of your score; skipping is fine, you just miss the bonus.",
     confirm: "",
     target: "quiz",
     scaffold: "medium",
