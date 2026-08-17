@@ -34,6 +34,8 @@ interface Props {
   coach: CoachApi;
   /** Opens the Rule Book at the step's related topic. */
   onOpenTopic: (topicId: string) => void;
+  /** Restart the whole coached practice match (fresh board + step 1). */
+  onRestartMatch?: () => void;
 }
 
 function Rich({ text }: { text: string }) {
@@ -74,14 +76,15 @@ function CoachStrip({
   );
 }
 
-export function CoachBar({ coach, onOpenTopic }: Props) {
+export function CoachBar({ coach, onOpenTopic, onRestartMatch }: Props) {
+  const restartAll = onRestartMatch ?? coach.restart;
   if (coach.retired) {
     return (
       <CoachStrip
         label="Coaching is off — you're playing solo."
         action="Resume coaching"
         onAction={coach.resume}
-        onRestart={coach.restart}
+        onRestart={restartAll}
       />
     );
   }
@@ -94,7 +97,7 @@ export function CoachBar({ coach, onOpenTopic }: Props) {
         label={`Coach · step ${coach.index + 1} of ${coach.total} — ${coach.step.title}`}
         action="Show coach"
         onAction={coach.resume}
-        onRestart={coach.restart}
+        onRestart={restartAll}
       />
     );
   }
@@ -160,7 +163,7 @@ export function CoachBar({ coach, onOpenTopic }: Props) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="z-50 bg-popover">
-                <DropdownMenuItem onClick={coach.restart}>
+                <DropdownMenuItem onClick={restartAll}>
                   <RotateCcw className="mr-2 h-4 w-4" />
                   Start coaching over
                 </DropdownMenuItem>
