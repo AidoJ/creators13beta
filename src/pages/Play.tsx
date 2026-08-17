@@ -66,6 +66,7 @@ import { CoachBar } from "@/components/game/CoachBar";
 import LearnPanel from "@/components/game/LearnPanel";
 import { useCoach, resetCoach } from "@/hooks/useCoach";
 import { seedOpeningHand, stackForWant, type CoachSnapshot } from "@/lib/game/coachScript";
+import { coachBotStep } from "@/lib/game/coachBotScript";
 // (legacy MultiplayerLobby dialog removed in Batch B — multiplayer now flows
 // through the route-based /play/lobby/:matchId page.)
 import { HandTile } from "@/components/game/cards/HandTile";
@@ -614,7 +615,7 @@ export default function Play() {
     if (mode !== "steal" || stealVictimKey) return;
     if (opponents.length === 0) return;
     if (!expandedOpponentId) setExpandedOpponentId(opponents[0].id);
-    setOpponentPanelOpen(true);
+    setOpponentPanelOpen(true); bumpCoach("opponentViews");
   }, [isMobile, mode, stealVictimKey, expandedOpponentId, opponents]);
   const isYourTurn =
     !!state && !state.finished && state.players[state.turn].id === selfSlot && !waitingForGuest;
@@ -2000,7 +2001,7 @@ export default function Play() {
                   <button
                     type="button"
                     className="flex-1 min-w-0 min-h-7 px-2 py-1 text-left"
-                    onClick={() => { setExpandedOpponentId(mobileOpp.id); setOpponentPanelOpen(true); }}
+                    onClick={() => { setExpandedOpponentId(mobileOpp.id); setOpponentPanelOpen(true); bumpCoach("opponentViews"); }}
                     aria-label={`View ${mobileOpp.name}'s ecosystem`}
                   >
                     <span className="min-w-0 flex-1 text-left block">
@@ -2235,7 +2236,7 @@ export default function Play() {
                   >
                     <button
                       type="button"
-                      onClick={() => { setExpandedOpponentId(op.id); setOpponentPanelOpen(true); }}
+                      onClick={() => { setExpandedOpponentId(op.id); setOpponentPanelOpen(true); bumpCoach("opponentViews"); }}
                       className="w-full flex items-center justify-between gap-2 mb-1 group text-left"
                       aria-label={`Pop out ${op.name}'s ecosystem`}
                     >
@@ -2287,7 +2288,7 @@ export default function Play() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setExpandedOpponentId(op.id); setOpponentPanelOpen(true); }}
+                      onClick={() => { setExpandedOpponentId(op.id); setOpponentPanelOpen(true); bumpCoach("opponentViews"); }}
                       className="flex-1 min-h-0 rounded-md hover:ring-2 hover:ring-primary/40 transition-all flex items-center justify-center overflow-hidden"
                       aria-label={`Expand ${op.name}'s ecosystem`}
                     >
