@@ -31,7 +31,11 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-type Event = "join" | "leave" | "heartbeat";
+// `server_stall` is reported by the client when an apply-move request hangs
+// or dies in transport. It means "the player is here and trying, the server
+// side is the thing that's stuck" — the sweep uses it to pause the idle
+// clock instead of auto-passing/striking a seat we ourselves wedged.
+type Event = "join" | "leave" | "heartbeat" | "server_stall";
 
 interface Body {
   match_id: string;
