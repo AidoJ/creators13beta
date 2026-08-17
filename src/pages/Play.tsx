@@ -1482,7 +1482,7 @@ export default function Play() {
         </Button>
         {isPvp && !state.finished && quiz.settings.enabled && (
           <div className="flex justify-center pt-0.5">
-            <QuizBadge progress={quiz.progress} question={quiz.question} settings={quiz.settings} submit={quiz.submit} />
+            <QuizBadge progress={quiz.progress} question={quiz.question} settings={quiz.settings} submit={quiz.submit} muted={quizMuted} />
           </div>
         )}
       </div>
@@ -2063,7 +2063,7 @@ export default function Play() {
             </div>
             {isPvp && !state.finished && quiz.settings.enabled && (
               <div className="shrink-0 pr-3 py-3" style={{ overflow: "visible" }} {...spot("quiz")}>
-                <QuizBadge progress={quiz.progress} question={quiz.question} settings={quiz.settings} submit={quiz.submit} />
+                <QuizBadge progress={quiz.progress} question={quiz.question} settings={quiz.settings} submit={quiz.submit} muted={quizMuted} />
               </div>
             )}
           </div>
