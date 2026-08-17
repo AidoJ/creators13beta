@@ -1,84 +1,82 @@
-# Learn to Play: coached first match + rules reference
+# Coaching v2 — a turn-by-turn instructor, not a checklist
 
-Two surfaces, one content source. The coached match is the priority; the reference is a straightforward render of the same data.
+## What's wrong today (from reading the code, not guessing)
 
-Canonical framing confirmed against the engine (`src/lib/game/elements.ts`): **3 Creator Types per element × 4 elements + Sky wildcard = 13** — Fire (Lava, Fire, Sun), Air (Whirlwind, Lightning, Snow), Water (Lake, Ocean, River), Earth (Tree, Mountain, Soil), Sky (wildcard). Content will state this exactly.
+The coach is a **list of 15 lessons advanced by move events**. Three consequences produce exactly what you saw:
 
----
+1. **The "play your second card" prompt gets silently deleted.** In `useCoach.notifyMove`, after any move the hook scans *later* steps and marks any whose `completedBy` includes that move type as already done. Placing your first card therefore ticks off `place-adjacent` before it's ever taught. The lesson you expected ("now your second card") is skipped, not shown.
+2. **The coach has no idea where you are in the turn.** It only receives a move *type* string. It never sees actions used (1 of 2), whose turn it is, or that the turn just ended. So it cannot say "one action left", "your turn is over", or "the bot is playing now".
+3. **The bot doesn't exist in the script.** No step mentions the opponent rail (desktop) or the peek dots (mobile), so a new player never learns to read anyone else's ecosystem — which is also why Disaster and Steal feel abstract.
 
-## Report: the three questions you asked
+Plus: Disaster, Steal, Rotate and Golden are `optional` or `ack`-only, so on most runs they're read-about, never done.
 
-### (a) Can practice/bot mode host a coaching overlay? Yes — cleanly.
+## The change in one line
 
-Practice mode (`/play/new?practice=1`) runs the **real engine locally in the browser**, no server round-trip. Two properties make a coaching layer cheap:
-
-1. **Every player action funnels through one function** — `guarded(fn, move)` in `Play.tsx`. It already receives a typed `move` descriptor (`pickup_from_draw`, `place_card`, `discard`, `disaster`, `steal`, `rotate_hex`, …) and the resulting state. That is the single hook point: the coach subscribes to "a move of type X just succeeded" without touching any game logic.
-2. **The deck is built and shuffled client-side** before `initMatch`, so the coached match can be dealt from a **stacked deck** — guaranteeing the player is holding the cards each lesson needs (a placeable animal early, a Creator for the disaster lesson, a Sky Creature for the steal lesson) instead of hoping RNG cooperates.
-
-What's needed, and it's all additive presentation code:
-- A `useCoach` hook holding the script position, driven by the `guarded` callback plus state snapshots.
-- A coach bar component (bottom sheet on phones, side card on desktop) with the current prompt, a progress dot row, and Skip.
-- A **spotlight** mechanism: the coach names a target (deck, a hand card, valid hexes, the quiz badge) and the existing highlight props already on `Ecosystem`/`PlayerHand` (`highlight_valid_placements`, `stuckUids`) are driven from it. No new highlight system.
-- Bot difficulty forced to easy and bot think-time slightly raised during the coached match so prompts are readable.
-
-Explicitly NOT built: a separate tutorial engine. The coached match is the real game with a script watching it.
-
-### (b) Proposed guided-move sequence
-
-Each step: prompt → wait for that specific action → confirm ("see how the sides connected?") → advance. Scaffolding fades as listed.
-
-| # | Lesson | Player does | Guidance level |
-|---|---|---|---|
-| 1 | Welcome / the goal in one line | Tap Start | Full |
-| 2 | Draw | Taps the deck twice | Full — deck spotlit, everything else dimmed |
-| 3 | Read a card | Taps ⓘ on the card just drawn | Full — points at the halves, glyph, descriptor flip |
-| 4 | Elements & the 13 | Reads a compact 4-column panel + Sky | Full (the one read-only step) |
-| 5 | First placement & adjacency | Places the animal on a valid hex | Full — valid hexes pulse, invalid dimmed; confirm explains the shared type |
-| 6 | Second action & discard | Places or discards to complete "play 2" | Medium — no pulsing, prompt only |
-| 7 | Rotate / reposition (free actions) | Rotates a placed hex | Light — offered, skippable |
-| 8 | Quiz | Answers one quiz question via the badge | Medium — badge spotlit once |
-| 9 | Disaster | Plays a Creator as a Disaster (deck-stacked so all 4 Creators are down) | Medium — explains what it wipes and where the animals land |
-| 10 | Sky & stealing | Plays one Sky Creature steal | Medium |
-| 11 | Golden Body / Golden Hive | Meets whichever appears; Hive explained when a Disaster targets them | Light, contextual |
-| 12 | Winning | Prompt recaps 16 cards / 4 Creators / no Creators in hand | Light |
-| 13 | Fly solo | Coach retires to a small "Tips" pill; player finishes the match unaided | None |
-
-If a lesson's trigger can't happen (no Sky Creature reachable, no Disaster legal), the coach **teaches it as a one-card explainer and moves on** rather than stalling — a stacked deck makes this rare but it must never hang.
-
-### (c) Off-script taps — how they're handled
-
-Design rule: **the coach never blocks the engine.** Every legal move stays legal at all times; the coach only observes.
-
-- **Wrong-but-legal action** (places when the prompt said draw): the move goes through normally, the coach shows a gentle redirect ("Nice — we'll come back to placing. Draw first: tap the deck") and stays on the step.
-- **Action that satisfies a later step**: the coach marks that step complete and skips it rather than re-teaching it.
-- **Illegal move**: the engine's existing toast fires unchanged; the coach adds one plain-English line about why.
-- **Idle / lost**: after ~20s of no action on a step the prompt escalates to a stronger hint and re-pulses the target.
-- **Stuck-state escape hatch**: a "Show me" link performs nothing automatic but re-spotlights the exact target; "Skip this bit" advances one step; "Exit coaching" drops to free play instantly and the match continues as a normal practice game.
-- Coach state lives in `sessionStorage` so a mid-match reload resumes at the same step.
+Stop advancing on move events alone. Feed the coach a **turn snapshot** every render (whose turn, phase, actions used/remaining, hand contents, board counts) and let each lesson declare a **predicate over that snapshot**. Lessons then match the actual rhythm of a turn and can never be pre-ticked out of existence.
 
 ---
 
-## Build scope
+## 1. Snapshot-driven coach core
 
-### 1. Shared content module (first)
-`src/lib/game/learnContent.ts` — typed topics: id, title, one-line summary, body blocks, audience tag (`new` / `refresher` / `tips`). Covers elements & the 13 Creators, reading a card, placement & adjacency, the turn, disasters, Sky Creator & stealing, Golden Body & Golden Hive, quiz & bonus points, winning & scoring, strategy tips. Coach prompts reference topic ids so a rule edit updates both surfaces.
+`useCoach` gains a `snapshot` argument from `Play.tsx`:
 
-### 2. Coached first match (priority)
-- `src/lib/game/coachScript.ts` — the step list: id, topic ref, prompt copy, target, completion predicate, fallback.
-- `src/hooks/useCoach.ts` — script position, completion detection off `guarded`, redirect logic, sessionStorage persistence.
-- `src/components/game/CoachBar.tsx` + spotlight styling.
-- `Play.tsx` — mount the coach when `?coach=1`, feed it moves, drive existing highlight props. Coached deck stacking behind the same flag.
-- Auto-offered to players with no completed practice game (`player_progress.practice_games_played = 0`); always skippable.
+```
+{ isMyTurn, phase, actionsUsed, actionsMax, cardsPickedThisTurn,
+  handKinds, myPlacedCount, myCreatorsDown, oppPlacedCount, turnNumber }
+```
 
-### 3. Rules reference
-- `LearnPanel.tsx` — three doors: **I'm new** (launches the coached match), **Refresher** (topic grid), **Tips** (strategy cards).
-- `RuleBookSheet.tsx` reworked to a topic grid with breadcrumb, rendering the content module (same in-match help icon).
-- Permanent "How to play" entry points: Play dashboard, Lobby, match-over dialog.
-- Versioned first-visit flag so the panel re-shows after major rule changes; `show_tutorial_overlay` keeps A'Hara's on/off lever.
-- Retire the 6-slide `TutorialOverlay`.
+- A step completes when its `done(snapshot, lastMove)` returns true — so "second action" is `actionsUsed >= 2`, regardless of place/discard mix, and cannot be satisfied early.
+- Remove the "mark later steps complete" look-ahead entirely. A lesson is only completed by being lived.
+- Add `waitFor: "my-turn" | "opponent-turn" | "any"` so a step can hold quietly until the right moment instead of nagging.
+- Live counters in the bar: **"Action 1 of 2 used"**, **"2 cards to pick up — 1 done"**.
 
-## Out of scope
-Animated/simulated mini-boards outside the real game; admin-editable rules content; video/voiceover; any engine, database or edge function change.
+## 2. The full turn cycle is taught, twice
+
+Script restructured around **coached turns** rather than isolated topics:
+
+**Turn 1 (heavy scaffolding)**
+1. Draw 5 — opening hand
+2. Read a card (ⓘ flip, halves, glyph)
+3. The 13 Creators / 4 elements + Sky wildcard
+4. Place card 1 — anywhere (anchor)
+5. **Action 1 of 2 done → "one action left. Place a second card, or discard one."** — holds until `actionsUsed === 2`
+6. **"Your turn's over — watch the bot."** Spotlights the opponent rail on desktop; on mobile explicitly says *tap the dots at the top to open the bot's ecosystem*, and waits for the panel to be opened (or Next). Bot think-time slowed while coached.
+7. Bot's move narrated: "the bot placed a card — see the colour it matched."
+
+**Turn 2 (medium)**
+8. Pick up 2 (Draw or Used pile), with a live 1-of-2 counter
+9. Adjacency taught for real: valid hexes pulse, "at least one neighbour must share a Creator Type"
+10. Second action → discard onto the Used Pile (taught as the escape hatch)
+11. Rotate/reposition as free actions — still offered, but now shown as part of the turn, not a footnote
+
+**Turns 3+ (contextual, light)** — the coach stops narrating every beat and only fires when a teachable card is in hand.
+
+## 3. The special mechanics get *played*, not just read
+
+The draw pile is already deterministically stackable (`stackForWant`). Extend it so each of these is guaranteed reachable, and each becomes a real do-it step with a worked example:
+
+- **Golden Body** — stacked into hand; step: "place it against a hex that shares nothing — it matches anything."
+- **Golden Hive** — stacked; explained as unplayable/undiscardable, and the coach waits for the Hive prompt when a Disaster hits you, narrating the block.
+- **Disaster** — coach first ensures all 4 of your Creators are down (stacking Creators as needed), then prompts the Disaster, and *after* it fires points at the opponent rail: "those Animals just left the bot's board and landed on yours."
+- **Sky Creature steal** — stacked; on mobile the coach first tells you to open the bot's board via the dots, then pick the animal, then pick your own hex. Currently this is one prompt for a three-tap flow.
+- **Quiz** — copy stays accurate (not in bot practice), but the badge is spotlit and the muting rule is explained: it wakes up once your actions are done.
+- **Winning** — recap plus a live readout of your own board against the target (Creators 2/4, Animals 5/12).
+
+If a stacked card genuinely can't arrive (deck exhausted), the step degrades to a one-card explainer and moves on — never a stall.
+
+## 4. Off-script handling, unchanged in spirit, better in words
+
+Still constrain-don't-correct: every legal move stays legal. But redirects become snapshot-aware — "you've used both actions, the turn's ending" instead of a generic "place or discard one more card".
+
+## Technical notes
+
+- `src/lib/game/coachScript.ts` — steps gain `done(snapshot, move)`, `waitFor`, `narrate`; step list rewritten to the turn-cycle order above; `stackForWant` extended with `golden_body`, `golden_hive`, `creator_set`.
+- `src/hooks/useCoach.ts` — snapshot prop, predicate evaluation, look-ahead completion removed, per-step live counters exposed.
+- `src/pages/Play.tsx` — build and pass the snapshot; add `opponent` / `opponent-dots` to the spotlight zones; slow bot think-time while coached.
+- `src/components/game/CoachBar.tsx` — counter line and bot-turn ("watching") state.
+- `src/lib/game/learnContent.ts` — Golden Hive block, Sky steal step-by-step, quiz muting rule.
+- No engine, database or edge-function change. Practice-only; live matches untouched.
 
 ## Verification
-Typecheck + full test suite; coached run-through on iPhone and Galaxy S24 widths and on iPad; deliberate off-script taps at every step to confirm nothing strands.
+
+Typecheck + test suite, then a full coached run on desktop and at iPhone/Galaxy S24 widths: confirm the second-action prompt appears every turn, the bot-turn step fires, and Disaster, Steal, Golden Body and Golden Hive are each actually performed once.
