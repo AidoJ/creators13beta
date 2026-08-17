@@ -56,6 +56,8 @@ export interface CoachStep {
   want?: CoachWant;
   /** Optional steps auto-skip if they can't happen. */
   optional?: boolean;
+  /** Never pre-satisfied by an earlier move — the player must do it here. */
+  alwaysTeach?: boolean;
 }
 
 export const COACH_STEPS: CoachStep[] = [
@@ -128,6 +130,7 @@ export const COACH_STEPS: CoachStep[] = [
     target: "hand",
     scaffold: "full",
     completedBy: ["place", "discard"],
+    alwaysTeach: true,
     redirect: "Place or discard one more card to use your second action.",
   },
   {

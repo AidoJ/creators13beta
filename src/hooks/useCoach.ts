@@ -150,7 +150,7 @@ export function useCoach({ enabled, isMyTurn, phase }: Args): CoachApi {
       // Did this satisfy a LATER lesson? Mark it so we don't re-teach it.
       for (let i = index + 1; i < COACH_STEPS.length; i++) {
         const s = COACH_STEPS[i];
-        if (!s.ack && (s.count ?? 1) === 1 && s.completedBy?.includes(moveType)) {
+        if (!s.ack && !s.alwaysTeach && (s.count ?? 1) === 1 && s.completedBy?.includes(moveType)) {
           completedRef.current.add(s.id);
         }
       }
