@@ -833,6 +833,20 @@ export default function Play() {
   const coachIsMyTurn = !!state && !state.finished && state.players[state.turn]?.id === selfPlayer?.id;
   const coach = useCoach({ enabled: coachEnabled, isMyTurn: coachIsMyTurn });
 
+  // Deterministic teaching draws (solo coached match only — never PvP).
+  // Before your draw, move the card the current lesson needs to the top of
+  // the pile so the taught move is always possible.
+  const stackedForRef = useRef<string>("");
+  useEffect(() => {
+    if (!coachEnabled || isPvp || !state || state.finished) return;
+    if (!coach.want || !coachIsMyTurn || state.phase !== "draw") return;
+    const key = `${state.turn}:${coach.want}`;
+    if (stackedForRef.current === key) return;
+    stackedForRef.current = key;
+    setState((prev) => (prev ? stackForWant(prev, coach.want, selfSlot) : prev));
+  }, [coachEnabled, isPvp, state, coach.want, coachIsMyTurn, selfSlot]);
+
+
   const guardedInFlightRef = useRef(false);
   /** Throttled "your turn may have passed" notice. Warn-only by design. */
   const idleWarnedAtRef = useRef(0);
