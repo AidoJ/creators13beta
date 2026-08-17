@@ -143,7 +143,9 @@ export async function applyMoveServer(
       if (status === 501) {
         return { ok: false, rejected: true, reason: "not_implemented", message };
       }
-      if (isTransportFailure(error)) {
+      // Gateway-level stalls (upstream request timeout / bad gateway) are
+      // server faults, not player inaction — report + treat as transport.
+      if (isTransportFailure(error) || status === 408 || status === 502 || status === 504) {
         reportServerStall(matchId);
         return {
           ok: false,
