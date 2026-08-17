@@ -1,62 +1,66 @@
-# Quiz bonuses, caps, and mastery dashboards
+# Learn & Rules: intro panel + restructured Rule Book
 
-## 1. Admin-tunable rules (Game Settings)
+Goal: players can reach rules and learning material **before** a match, not just from a small icon mid-game, and get content matched to their experience level.
 
-Two new controls on the Admin → Game Settings panel:
+Canonical fact confirmed: **3 Creator Types per element** — Fire (Lava, Fire, Sun), Air (Whirlwind, Lightning, Snow), Water (Lake, Ocean, River), Earth (Tree, Mountain, Soil), plus **Sky** as the wildcard = 13.
 
-- **Questions per match**: 4, 8, or 12 (max questions the game will serve any single player).
-- **Bonus points per 4 correct**: 1–5 (points added to match score each time a player accumulates another 4 correct answers).
+## 1. Single content source
 
-Example: `Questions per match = 8`, `Bonus = 2` ⇒ a player who gets 8/8 correct earns +4 bonus points (2 at the 4-correct mark, 2 more at 8-correct).
+All rules/learning text moves into one data module with typed topics:
 
-## 2. Bonus accrual becomes tiered / repeating
+- Elements & the 13 Creators
+- Reading a card (halves, glyphs, descriptor flip)
+- Placement & adjacency
+- Your turn (draw 2, play 2, discard)
+- Disasters
+- Sky Creator & stealing
+- Golden Body & Golden Hive
+- The Quiz & bonus points
+- Winning & scoring
+- Strategy tips (experienced tier)
 
-Server-side change to `submit_quiz_answer`:
+Each topic: id, title, one-line summary, body blocks, audience tag (`new` / `refresher` / `tips`). The intro panel, the Rule Book sheet and the first-run tutorial all render from this module, so A'Hara's rule edits land in one place.
 
-- Track `bonus_points_awarded` (integer) instead of a single `bonus_awarded` flag.
-- Each time `correct_count` crosses a multiple of 4 (4, 8, 12…), add another `bonus_points` to the player's ledger.
-- Stop offering new questions once `correct_count + wrong_count` reaches `questions_per_match`.
+## 2. Intro panel ("How to play")
 
-Match finalisation (`apply-move`) reads `bonus_points_awarded` and adds it to the winner/finisher's score, instead of the current one-shot flag.
+New component with the three doors:
 
-## 3. Player Dashboard – new "Game & Quiz" card
+- **I'm new** — guided walkthrough of the `new` topics in order, ending with a "Play a practice match vs a bot" button.
+- **Refresher** — topic grid; tap a topic, read just that one, back to grid.
+- **Tips** — strategy cards for experienced players.
 
-Shows for the signed-in player, lifetime across all matches:
+Behaviour:
+- Auto-opens **once** on first ever visit to `/play` (localStorage flag, versioned so we can re-show after major rule changes).
+- Remembers the last door chosen, so returning players land on Refresher.
+- Fully dismissible; never auto-opens again.
 
-- **Wins** (from `game_matches` where they are the winner).
-- **Quiz bonus points earned** (sum of `bonus_points_awarded`).
-- **Questions answered** (correct + wrong).
-- **Overall accuracy** (%).
-- **Mastery by Creator Type** — one row per of the 13 types in canonical order, showing `correct ÷ answered` as a % and a coloured bar in that Creator's palette colour.
+## 3. Entry points
 
-Types with zero answered show a muted "—".
+Permanent **How to play** button added at the three moments people want it:
 
-## 4. Admin per-user view
+- `/play` (Play dashboard) — prominent.
+- Lobby — secondary button while waiting.
+- Match-over dialog — "Brush up before the next game".
+- In-match help icon stays exactly as-is, but now opens the restructured Rule Book.
 
-On the Admin → Users page, each user's detail drawer/panel gets the same "Game & Quiz" card, powered by a security-definer RPC `get_player_quiz_stats(_user_id)` so admins can read any user's numbers without loosening RLS on `quiz_player_mastery`.
+## 4. Rule Book restructure
 
-## Technical details
+`RuleBookSheet` becomes a topic grid instead of one long scroll: tap a topic to open it, breadcrumb back. Same sheet, same trigger, driven by the shared content module. Content gets the currently-missing detail: element grouping, steal rules (who/when), Golden Body wildcard vs Golden Hive shield, quiz bonus maths.
 
-**Migration:**
+## 5. Tutorial overlay
 
-- `ALTER TABLE game_settings ADD COLUMN quiz_questions_per_match int NOT NULL DEFAULT 4 CHECK (quiz_questions_per_match IN (4,8,12))`.
-- Widen `quiz_bonus_points` CHECK to `BETWEEN 1 AND 5` (already in place).
-- `ALTER TABLE quiz_match_progress ADD COLUMN bonus_points_awarded int NOT NULL DEFAULT 0`.
-- Rewrite `submit_quiz_answer` to award tiered bonuses and refuse to answer past the cap.
-- Update `open_quiz_if_needed` to no-op once `correct + wrong >= questions_per_match`.
-- New RPC `get_player_quiz_stats(_user_id uuid)` returning JSONB `{ wins, bonus_points, correct, wrong, accuracy, by_type: [{ type, correct, wrong, pct }] }`. Callable by the user themselves or by any user with the `admin` role via `has_role`.
+The existing 6-slide overlay is retired in favour of the intro panel's "I'm new" path (same first-run trigger, richer content). `show_tutorial_overlay` in game settings now controls whether the intro panel auto-opens, so A'Hara keeps the on/off lever.
 
-**Frontend:**
+## Out of scope for this batch
 
-- `src/lib/game/settings.ts` — add `quiz_questions_per_match`, extend defaults.
-- `src/components/admin/GameSettingsPanel.tsx` — add the two selects under a "Creator Quiz" subsection (or extend if already present).
-- `src/hooks/useQuizProgress.ts` — surface `bonus_points_awarded` and `questions_per_match`, hide the question card once cap reached.
-- `src/components/game/QuizBadge.tsx` — show `correct/total` and running bonus.
-- `src/components/dashboard/QuizStatsCard.tsx` — new component using `get_player_quiz_stats` RPC; used on both player dashboard and admin per-user drawer.
+- Animated/interactive mini-board demos (Layer 2 from the earlier brainstorm).
+- Admin editing of rules content from the dashboard — content stays in code for now.
+- Video or voiceover.
 
-**Data left in place:** `quiz_bonus_threshold` column is deprecated but retained (defaults to 4) to keep existing rows valid; new logic uses fixed block size of 4 with `quiz_bonus_points` controlling the reward, per the requested UX.
+## Technical notes
 
-## Out of scope
-
-- No leaderboard page (can add later).
-- No changes to question bank UI (Lava/Fire dropdown fix already shipped).
+- New: `src/lib/game/learnContent.ts`, `src/components/game/LearnPanel.tsx`.
+- Modified: `RuleBookSheet.tsx`, `PlayDashboard.tsx`, `Lobby.tsx`, `MatchOverDialog.tsx`, `Play.tsx`.
+- Removed: `TutorialOverlay.tsx` (its trigger logic moves into `LearnPanel`).
+- Presentation only — no engine, database, or edge function changes.
+- Mobile-first: sheet on phones, dialog on desktop; 44px tap targets; tested against iPhone and Galaxy S24 widths.
