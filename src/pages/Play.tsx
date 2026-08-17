@@ -843,7 +843,11 @@ export default function Play() {
     const key = `${state.turn}:${coach.want}`;
     if (stackedForRef.current === key) return;
     stackedForRef.current = key;
-    setState((prev) => (prev ? stackForWant(prev, coach.want, selfSlot) : prev));
+    setState((prev) => {
+      if (!prev) return prev;
+      const idx = prev.players.findIndex((p) => p.id === selfSlot);
+      return idx < 0 ? prev : stackForWant(prev, coach.want, idx);
+    });
   }, [coachEnabled, isPvp, state, coach.want, coachIsMyTurn, selfSlot]);
 
 
