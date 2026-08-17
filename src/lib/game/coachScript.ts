@@ -119,6 +119,18 @@ export const COACH_STEPS: CoachStep[] = [
     redirect: "Choose a card, then tap one of the glowing hexes.",
   },
   {
+    id: "two-actions",
+    topicId: "the-turn",
+    title: "Two actions a turn",
+    prompt:
+      "Every turn is exactly two actions: place a card, or discard one — in any combination. Play one more card now to finish this turn.",
+    confirm: "That's your second action — your turn ends and the bot plays.",
+    target: "hand",
+    scaffold: "full",
+    completedBy: ["place", "discard"],
+    redirect: "Place or discard one more card to use your second action.",
+  },
+  {
     id: "draw-two",
     topicId: "the-turn",
     title: "A normal turn: pick up 2",
