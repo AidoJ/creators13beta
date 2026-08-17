@@ -190,7 +190,7 @@ export default function Play() {
   /** Coached first match — /play/new?practice=1&coach=1. Presentation only:
    *  the engine and every legal move behave exactly as in a normal practice
    *  game; the coach just watches and prompts. */
-  const coachEnabled = searchParams.get("coach") === "1";
+  const [coachEnabled, setCoachEnabled] = useState(searchParams.get("coach") === "1");
   
   
   const [waitingForGuest, setWaitingForGuest] = useState(false);
