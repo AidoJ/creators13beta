@@ -7,7 +7,6 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { LEARN_TOPICS, topicById } from "@/lib/game/learnContent";
 import { TopicBody, TopicCard } from "@/components/game/TopicView";
@@ -54,32 +53,30 @@ export function RuleBookSheet({ open, onOpenChange, initialTopicId }: RuleBookSh
           )}
         </SheetHeader>
 
-        <ScrollArea className="flex-1">
-          <div className="px-5 py-4">
-            {topic ? (
-              <>
-                <TopicBody topic={topic} />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-5 min-h-11 w-full"
-                  onClick={() => setTopicId(null)}
-                >
-                  Back to all topics
-                </Button>
-              </>
-            ) : (
-              <div className="space-y-2">
-                {LEARN_TOPICS.map((t) => (
-                  <TopicCard key={t.id} topic={t} onClick={() => setTopicId(t.id)} />
-                ))}
-                <p className="text-[11px] text-muted-foreground italic pt-3">
-                  Ages 8–80+ · 2–4 players · 13Creators presents
-                </p>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
+        <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-stable px-5 py-4">
+          {topic ? (
+            <>
+              <TopicBody topic={topic} />
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-5 min-h-11 w-full"
+                onClick={() => setTopicId(null)}
+              >
+                Back to all topics
+              </Button>
+            </>
+          ) : (
+            <div className="space-y-2">
+              {LEARN_TOPICS.map((t) => (
+                <TopicCard key={t.id} topic={t} onClick={() => setTopicId(t.id)} />
+              ))}
+              <p className="text-[11px] text-muted-foreground italic pt-3">
+                Ages 8–80+ · 2–4 players · 13Creators presents
+              </p>
+            </div>
+          )}
+        </div>
       </SheetContent>
     </Sheet>
   );
