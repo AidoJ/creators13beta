@@ -12,6 +12,9 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import GameDashboardSection from "@/components/dashboard/game/GameDashboardSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import BuildStamp from "@/components/game/BuildStamp";
+import { Button } from "@/components/ui/button";
+import { GraduationCap } from "lucide-react";
+import LearnPanel, { hasSeenLearnPanel } from "@/components/game/LearnPanel";
 
 interface Loaded {
   firstName: string | null;
