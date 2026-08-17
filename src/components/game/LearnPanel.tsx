@@ -13,7 +13,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, GraduationCap, BookOpen, Lightbulb, Gamepad2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { topicsFor, topicById } from "@/lib/game/learnContent";
 import { TopicBody, TopicCard } from "@/components/game/TopicView";
