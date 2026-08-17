@@ -103,6 +103,7 @@ export async function applyMoveServer(
       const timedOut = /abort|timed? ?out/i.test(String(error?.name ?? "") + String(error?.message ?? ""));
       if (timedOut) {
         console.warn("[apply-move] request timed out — deferring to queue", { moveType: move.type });
+        reportServerStall(matchId);
         break;
       }
       console.warn("[apply-move] transport failure — retrying", { attempt, moveType: move.type });
