@@ -40,6 +40,12 @@ export type ApplyMoveResult =
   | { ok: false; rejected: true; reason: "stale" | "finished" | "not_implemented" | "auth" | "server" | "network"; currentSeq?: number; message?: string };
 
 const NETWORK_RETRIES = 2;
+/** Hard ceiling on a single apply-move request. Without this, a wedged
+ *  edge invocation (we saw one run 125s before the platform killed it with
+ *  "upstream request timeout") holds the client's in-flight lock open, so
+ *  the UI sits on "Sending your move…" forever and every later move piles
+ *  up behind it. Aborting turns that into a normal queued retry. */
+const REQUEST_TIMEOUT_MS = 20_000;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** True for transport-level failures ("Failed to send a request to the Edge
@@ -53,10 +59,13 @@ function isTransportFailure(error: any): boolean {
   const msg = String(error?.message ?? "");
   return (
     name === "FunctionsFetchError" ||
+    name === "AbortError" ||
+    /abort|timed? ?out/i.test(msg) ||
     /failed to (send|fetch)/i.test(msg) ||
     /network|load failed/i.test(msg)
   );
 }
+
 
 export async function applyMoveServer(
   matchId: string,
