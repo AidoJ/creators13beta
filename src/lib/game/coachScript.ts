@@ -64,7 +64,7 @@ export const COACH_STEPS: CoachStep[] = [
     topicId: "the-turn",
     title: "Take your opening hand",
     prompt:
-      "Let's learn by playing — this is a real game against an easy bot and nothing counts against your record. Start by tapping the Draw Pile to take your opening 5 cards.",
+      "Learn by playing — a real game against an easy bot, nothing at stake. Tap **Draw 5** to take your opening hand.",
     confirm: "That's your hand. From now on you pick up 2 cards at the start of every turn.",
     target: "deck",
     scaffold: "full",
