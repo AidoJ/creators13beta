@@ -827,6 +827,12 @@ export default function Play() {
   // as soon as the optimistic state commit + schedulePersist() run below.
   // Draw has its own `beginDraw()` ref for the deck-count invariant; this
   // lock is the general one for all other move controls. */
+  /* ── Coached first match ─────────────────────────────────────────────
+   * The coach observes moves through `guarded()` below. It never blocks a
+   * move: off-script taps still execute and the coach simply redirects. */
+  const coachIsMyTurn = !!state && !state.finished && state.players[state.turn]?.id === selfPlayer?.id;
+  const coach = useCoach({ enabled: coachEnabled, isMyTurn: coachIsMyTurn });
+
   const guardedInFlightRef = useRef(false);
   /** Throttled "your turn may have passed" notice. Warn-only by design. */
   const idleWarnedAtRef = useRef(0);
