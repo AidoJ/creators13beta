@@ -33,6 +33,12 @@ export function QuizBadge({ progress, question, settings, submit, muted = false 
   const tier = Math.max(1, settings.bonus_threshold || 4);
   const toNextTier = tier - (correct % tier);
 
+  // If a new turn starts while the quiz dialog is open, close it so the player
+  // is looking at the board, not a question, when their clock starts.
+  useEffect(() => {
+    if (muted) { setOpen(false); setAnswered(null); setHasNext(false); }
+  }, [muted]);
+
   if (!settings.enabled) return null;
 
 
