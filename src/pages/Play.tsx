@@ -62,7 +62,10 @@ import { BoardHexPiece } from "@/components/game/BoardHexPiece";
 import { MatchOverDialog } from "@/components/game/MatchOverDialog";
 import ProfilingPromptDialog from "@/components/game/ProfilingPromptDialog";
 
-import { TutorialOverlay, resetTutorial } from "@/components/game/TutorialOverlay";
+import { CoachBar } from "@/components/game/CoachBar";
+import LearnPanel from "@/components/game/LearnPanel";
+import { useCoach } from "@/hooks/useCoach";
+import { seedOpeningHand, stackForWant } from "@/lib/game/coachScript";
 // (legacy MultiplayerLobby dialog removed in Batch B — multiplayer now flows
 // through the route-based /play/lobby/:matchId page.)
 import { HandTile } from "@/components/game/cards/HandTile";
@@ -182,6 +185,13 @@ export default function Play() {
   }, []);
 
   const [ruleBookOpen, setRuleBookOpen] = useState(false);
+  const [ruleBookTopic, setRuleBookTopic] = useState<string | null>(null);
+  const [learnOpen, setLearnOpen] = useState(false);
+  /** Coached first match — /play/new?practice=1&coach=1. Presentation only:
+   *  the engine and every legal move behave exactly as in a normal practice
+   *  game; the coach just watches and prompts. */
+  const coachEnabled = searchParams.get("coach") === "1";
+  
   
   const [waitingForGuest, setWaitingForGuest] = useState(false);
   const [moveFromKey, setMoveFromKey] = useState<string | null>(null);
@@ -817,6 +827,30 @@ export default function Play() {
   // as soon as the optimistic state commit + schedulePersist() run below.
   // Draw has its own `beginDraw()` ref for the deck-count invariant; this
   // lock is the general one for all other move controls. */
+  /* ── Coached first match ─────────────────────────────────────────────
+   * The coach observes moves through `guarded()` below. It never blocks a
+   * move: off-script taps still execute and the coach simply redirects. */
+  const coachIsMyTurn = !!state && !state.finished && state.players[state.turn]?.id === selfPlayer?.id;
+  const coach = useCoach({ enabled: coachEnabled, isMyTurn: coachIsMyTurn });
+
+  // Deterministic teaching draws (solo coached match only — never PvP).
+  // Before your draw, move the card the current lesson needs to the top of
+  // the pile so the taught move is always possible.
+  const stackedForRef = useRef<string>("");
+  useEffect(() => {
+    if (!coachEnabled || isPvp || !state || state.finished) return;
+    if (!coach.want || !coachIsMyTurn || state.phase !== "draw") return;
+    const key = `${state.turn}:${coach.want}`;
+    if (stackedForRef.current === key) return;
+    stackedForRef.current = key;
+    setState((prev) => {
+      if (!prev) return prev;
+      const idx = prev.players.findIndex((p) => p.id === selfSlot);
+      return idx < 0 ? prev : stackForWant(prev, coach.want, idx);
+    });
+  }, [coachEnabled, isPvp, state, coach.want, coachIsMyTurn, selfSlot]);
+
+
   const guardedInFlightRef = useRef(false);
   /** Throttled "your turn may have passed" notice. Warn-only by design. */
   const idleWarnedAtRef = useRef(0);
@@ -846,6 +880,9 @@ export default function Play() {
       setSelectedUid(null);
       setMode("place");
       setStealVictimKey(null);
+      // Coach observes AFTER the move has been accepted by the engine, so it
+      // can only ever react to legal moves — it never gates one.
+      if (coachEnabled) coach.notifyMove(move?.type);
     } catch (e: any) {
       toast.error(e?.message ?? "Illegal move");
     } finally {
@@ -1145,7 +1182,7 @@ export default function Play() {
     const youName = user ? await fetchPlayerShortName(user) : "You";
     const deck = buildDeck(allCards, specialCards);
     const botLabel = difficulty === "easy" ? "Bot · Easy" : difficulty === "hard" ? "Bot · Hard" : "Bot · Medium";
-    const fresh = createMatch({
+    let fresh = createMatch({
       deck,
       players: [
         { id: "you", name: youName },
@@ -1154,6 +1191,10 @@ export default function Play() {
       gameMode: mode,
       gameConfig: config,
     });
+    // Coached match: stack the top of the draw pile so the lesson's card is
+    // always the one you draw. createMatch shuffles internally, so this must
+    // happen after creation.
+    if (coachEnabled) fresh = seedOpeningHand(fresh);
     botDifficultyRef.current = difficulty;
     botStatsRecordedRef.current = false;
     setState(fresh);
@@ -1736,11 +1777,11 @@ export default function Play() {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => { resetTutorial(); window.location.reload(); }} aria-label="Help">
+                <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setLearnOpen(true)} aria-label="How to play">
                   <HelpCircle className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Replay the tutorial</TooltipContent>
+              <TooltipContent>How to play</TooltipContent>
             </Tooltip>
 
             {/* Solo-only New game button. When state.finished is true the
@@ -2360,8 +2401,9 @@ export default function Play() {
         </div>
       )}
 
-      {gameSettings.show_tutorial_overlay && <TutorialOverlay />}
-      <RuleBookSheet open={ruleBookOpen} onOpenChange={setRuleBookOpen} />
+      {coachEnabled && <CoachBar coach={coach} onOpenTopic={(id) => { setRuleBookTopic(id); setRuleBookOpen(true); }} />}
+      <LearnPanel open={learnOpen} onOpenChange={setLearnOpen} />
+      <RuleBookSheet open={ruleBookOpen} onOpenChange={(o) => { setRuleBookOpen(o); if (!o) setRuleBookTopic(null); }} initialTopicId={ruleBookTopic} />
       <OpponentPanel
         open={opponentPanelOpen}
         onClose={() => setOpponentPanelOpen(false)}

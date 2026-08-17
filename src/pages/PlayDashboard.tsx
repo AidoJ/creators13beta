@@ -12,6 +12,9 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import GameDashboardSection from "@/components/dashboard/game/GameDashboardSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import BuildStamp from "@/components/game/BuildStamp";
+import { Button } from "@/components/ui/button";
+import { GraduationCap } from "lucide-react";
+import LearnPanel, { hasSeenLearnPanel } from "@/components/game/LearnPanel";
 
 interface Loaded {
   firstName: string | null;
@@ -22,6 +25,12 @@ interface Loaded {
 export default function PlayDashboard() {
   const { user, signOut } = useAuth();
   const [data, setData] = useState<Loaded | null>(null);
+  const [learnOpen, setLearnOpen] = useState(false);
+  // First visit to the game section: offer the coached game once, unprompted.
+  const [firstRun] = useState(() => !hasSeenLearnPanel());
+  useEffect(() => {
+    if (firstRun) setLearnOpen(true);
+  }, [firstRun]);
 
   useEffect(() => {
     if (!user) return;
@@ -63,6 +72,16 @@ export default function PlayDashboard() {
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
       <DashboardHeader email={user.email} onSignOut={signOut} />
       <main className="container mx-auto px-4 py-8 max-w-5xl space-y-5">
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            className="min-h-11"
+            onClick={() => setLearnOpen(true)}
+          >
+            <GraduationCap className="mr-2 h-4 w-4" /> How to play
+          </Button>
+        </div>
         <GameDashboardSection
           userId={user.id}
           firstName={data.firstName}
@@ -74,6 +93,7 @@ export default function PlayDashboard() {
           className="pt-2 border-t border-border"
         />
       </main>
+      <LearnPanel open={learnOpen} onOpenChange={setLearnOpen} firstRun={firstRun} />
     </div>
   );
 }
