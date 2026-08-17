@@ -23,6 +23,9 @@ interface Args {
   enabled: boolean;
   /** Whether the coached player can currently act (their turn). */
   isMyTurn: boolean;
+  /** Current engine phase — lets the coach always point at the deck when the
+   *  turn opens in the draw phase, whatever lesson is live. */
+  phase?: string;
 }
 
 export interface CoachApi {
@@ -55,7 +58,12 @@ export interface CoachApi {
   notifyMove: (moveType: string | undefined) => void;
   /** Re-pulse the current target without doing anything for the player. */
   showMe: () => void;
+  /** Step back to review the previous lesson. */
+  back: () => void;
+  canGoBack: boolean;
   pulseTick: number;
+  /** Shown when the turn has opened and 2 cards still need picking up. */
+  drawFirst: boolean;
 }
 
 function loadPosition(): number {
@@ -85,7 +93,7 @@ function loadExited(): boolean {
   }
 }
 
-export function useCoach({ enabled, isMyTurn }: Args): CoachApi {
+export function useCoach({ enabled, isMyTurn, phase }: Args): CoachApi {
   const [index, setIndex] = useState<number>(() => (enabled ? loadPosition() : 0));
   const [exited, setExited] = useState<boolean>(() => (enabled ? loadExited() : false));
   const [collapsed, setCollapsed] = useState(false);
@@ -220,7 +228,24 @@ export function useCoach({ enabled, isMyTurn }: Args): CoachApi {
     setRedirectText(null);
   }, []);
 
-  const showMe = useCallback(() => setPulseTick((t) => t + 1), []);
+  /** "Show me" — force the spotlight on for a few seconds even on light
+   *  steps, and restart the pulse animation so it visibly flashes. */
+  const [forceSpot, setForceSpot] = useState(false);
+  const forceTimerRef = useRef<number | null>(null);
+  const showMe = useCallback(() => {
+    setPulseTick((t) => t + 1);
+    setForceSpot(true);
+    if (forceTimerRef.current) window.clearTimeout(forceTimerRef.current);
+    forceTimerRef.current = window.setTimeout(() => setForceSpot(false), 6000);
+  }, []);
+
+  const canGoBack = active && index > 0;
+  const back = useCallback(() => {
+    progressRef.current = 0;
+    setSuccessText(null);
+    setRedirectText(null);
+    setIndex((i) => Math.max(0, i - 1));
+  }, []);
 
   // Idle nudge: if the player sits on an action step without acting, re-pulse
   // the target so they know where to look.
@@ -230,12 +255,18 @@ export function useCoach({ enabled, isMyTurn }: Args): CoachApi {
     return () => window.clearTimeout(id);
   }, [active, collapsed, step?.id, isMyTurn, pulseTick, awaitingNext]);
 
+  /** The turn always opens with a pickup — until that's done, the deck is the
+   *  only thing that matters, whatever lesson is live. */
+  const drawFirst = !!(active && !collapsed && isMyTurn && phase === "draw");
+
   const spotlight = useMemo(() => {
-    if (!active || !step || collapsed || awaitingNext) return null;
-    if (step.scaffold === "light") return null;
+    if (!active || !step || collapsed) return null;
+    if (drawFirst) return "deck" as const;
+    if (awaitingNext) return null;
+    if (step.scaffold === "light" && !forceSpot) return null;
     if (step.target === "none") return null;
     return step.target;
-  }, [active, step, collapsed, awaitingNext]);
+  }, [active, step, collapsed, awaitingNext, drawFirst, forceSpot]);
 
   return {
     active,
@@ -258,7 +289,10 @@ export function useCoach({ enabled, isMyTurn }: Args): CoachApi {
     exit,
     notifyMove,
     showMe,
+    back,
+    canGoBack,
     pulseTick,
+    drawFirst,
   };
 }
 
