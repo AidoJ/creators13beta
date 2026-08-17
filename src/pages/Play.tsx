@@ -2363,8 +2363,9 @@ export default function Play() {
         </div>
       )}
 
-      {gameSettings.show_tutorial_overlay && <TutorialOverlay />}
-      <RuleBookSheet open={ruleBookOpen} onOpenChange={setRuleBookOpen} />
+      {coachEnabled && <CoachBar coach={coach} onOpenTopic={(id) => { setRuleBookTopic(id); setRuleBookOpen(true); }} />}
+      <LearnPanel open={learnOpen} onOpenChange={setLearnOpen} />
+      <RuleBookSheet open={ruleBookOpen} onOpenChange={(o) => { setRuleBookOpen(o); if (!o) setRuleBookTopic(null); }} initialTopicId={ruleBookTopic} />
       <OpponentPanel
         open={opponentPanelOpen}
         onClose={() => setOpponentPanelOpen(false)}
