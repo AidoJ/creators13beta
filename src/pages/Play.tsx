@@ -964,6 +964,8 @@ export default function Play() {
         setSelectedUid(null);
         setMode("place");
         setStealVictimKey(null);
+        // Coach observes draws too — this path bypasses guarded().
+        if (coachEnabled) queueMicrotask(() => coach.notifyMove("pickup_from_used"));
         return next;
       } catch (e: any) {
         setPendingDraws((pd) => pd.filter((p) => p.id !== pid));
@@ -1019,6 +1021,8 @@ export default function Play() {
         setSelectedUid(null);
         setMode("place");
         setStealVictimKey(null);
+        // Coach observes draws too — this path bypasses guarded().
+        if (coachEnabled) queueMicrotask(() => coach.notifyMove("pickup_from_draw"));
         return next;
       } catch (e: any) {
         setPendingDraws((pd) => pd.filter((p) => p.id !== pid));
@@ -1067,6 +1071,7 @@ export default function Play() {
         const next = moveMyPlacedHex(state, selfSlot, fromKey, pos);
         setLoggedState(next, "optimistic_engine");
         schedulePersist(next, { type: "move_hex", from_key: fromKey, to_pos: pos });
+        if (coachEnabled) coach.notifyMove("move_hex");
         setMoveFromKey(null);
       } catch (e: any) {
         toast.error(e?.message ?? "Cannot move here");
@@ -1117,6 +1122,8 @@ export default function Play() {
       const next = rotateMyPlacedHex(s, selfSlot, posKey);
       if (isPvp) logClientStateChange("optimistic_engine", serverSeqRef.current, next);
       schedulePersist(next, { type: "rotate_hex", pos_key: posKey });
+      // Coach observes rotation — this path bypasses guarded().
+      if (coachEnabled) queueMicrotask(() => coach.notifyMove("rotate_hex"));
       return next;
     });
   }
