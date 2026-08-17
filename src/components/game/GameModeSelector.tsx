@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trophy, Timer, Infinity as InfinityIcon, Bot, Users } from "lucide-react";
+import { Trophy, Timer, Infinity as InfinityIcon, Bot, Users, GraduationCap } from "lucide-react";
 import type { GameConfig, GameMode } from "@/lib/game/types";
 import { useGameSettings } from "@/lib/game/settings";
 import type { BotDifficulty } from "@/lib/game/bot";
@@ -19,7 +19,7 @@ interface Props {
   onChooseMultiplayer?: (mode: GameMode, config: GameConfig) => void;
 }
 
-export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer }: Props) {
+export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer, defaultCoach }: Props) {
   const { settings } = useGameSettings();
   const [mode, setMode] = useState<GameMode>("end_of_days");
   const [targetScore, setTargetScore] = useState(50);
@@ -27,6 +27,9 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
   const [turnSeconds, setTurnSeconds] = useState(20);
   const [drawSeconds, setDrawSeconds] = useState(10);
   const [difficulty, setDifficulty] = useState<BotDifficulty>("medium");
+  const [coach, setCoach] = useState(!!defaultCoach);
+
+  useEffect(() => { setCoach(!!defaultCoach); }, [defaultCoach, open]);
 
   useEffect(() => {
     setMode(settings.default_mode as GameMode);
@@ -85,7 +88,7 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
       config.turnSeconds = turnSeconds;
       config.drawSeconds = drawSeconds;
     }
-    onChoose(mode, config, difficulty);
+    onChoose(mode, config, difficulty, coach);
   }
 
   return (
@@ -210,6 +213,24 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
           </div>
         </div>
 
+
+        {/* Tutorial support — available on every bot game, not just the first */}
+        <button
+          type="button"
+          onClick={() => setCoach((v) => !v)}
+          className={
+            "w-full text-left rounded-lg border p-3 mt-2 flex items-start gap-3 transition-all " +
+            (coach ? "border-primary bg-primary/10 ring-2 ring-primary/40" : "border-border hover:border-primary/50 bg-card/40")
+          }
+        >
+          <GraduationCap className="w-5 h-5 mt-0.5 text-muted-foreground flex-shrink-0" />
+          <span className="min-w-0">
+            <span className="block font-display text-sm">Tutorial support {coach ? "on" : "off"}</span>
+            <span className="block text-[11px] text-muted-foreground leading-snug">
+              A coach prompts you step by step through the game. Tap to turn {coach ? "off" : "on"} — you can collapse it any time mid-game.
+            </span>
+          </span>
+        </button>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
           {onCancel && (
