@@ -129,3 +129,35 @@ describe("mirror engine — instant-end on first completion (parity with source)
     }
   });
 });
+
+describe("mirror engine — turn-start win parity", () => {
+  it("wins at turn-start (pre-draw) for a complete board + Creator-free hand", async () => {
+    const { endTurnEarly } = await import(
+      "../../../supabase/functions/_shared/game/engine.ts"
+    );
+    const { winningEcoForMirror, mirrorCreator } = await import("./turnStartFixtures");
+    const players = makePlayers(2);
+    (players[1] as any).ecosystem = winningEcoForMirror();
+    const state = baseState(players);
+    state.draw = [mirrorCreator()] as any;
+    const next = endTurnEarly(state);
+    expect(next.finished).toBe(true);
+    expect(next.winnerId).toBe("p1");
+    expect(next.draw.length).toBe(1);
+  });
+
+  it("does NOT win at turn-start while holding a Creator", async () => {
+    const { endTurnEarly } = await import(
+      "../../../supabase/functions/_shared/game/engine.ts"
+    );
+    const { winningEcoForMirror, mirrorCreator } = await import("./turnStartFixtures");
+    const players = makePlayers(2);
+    (players[1] as any).ecosystem = winningEcoForMirror();
+    (players[1] as any).hand = [mirrorCreator()];
+    const state = baseState(players);
+    state.draw = [mirrorCreator()] as any;
+    const next = endTurnEarly(state);
+    expect(next.finished).toBe(false);
+    expect(next.phase).toBe("draw");
+  });
+});
