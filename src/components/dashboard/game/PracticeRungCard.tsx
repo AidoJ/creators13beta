@@ -82,11 +82,13 @@ export default function PracticeRungCard({ userId }: Props) {
           <div className="flex flex-wrap items-center gap-2 mt-3">
             <Button
               size="sm"
-              onClick={() => navigate("/play/new?practice=1")}
+              onClick={() =>
+                navigate(played === 0 ? "/play/new?practice=1&coach=1" : "/play/new?practice=1")
+              }
               className="bg-primary text-primary-foreground max-w-full whitespace-normal h-auto py-2 text-left"
             >
               <span className="break-words">
-                {played === 0 ? "Start practice" : `Continue practice (${remaining} left)`}
+                {played === 0 ? "Start guided practice" : `Continue practice (${remaining} left)`}
               </span>
               <ArrowRight className="ml-1.5 h-4 w-4 flex-shrink-0" />
             </Button>
