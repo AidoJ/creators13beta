@@ -1752,11 +1752,11 @@ export default function Play() {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => { resetTutorial(); window.location.reload(); }} aria-label="Help">
+                <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setLearnOpen(true)} aria-label="How to play">
                   <HelpCircle className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Replay the tutorial</TooltipContent>
+              <TooltipContent>How to play</TooltipContent>
             </Tooltip>
 
             {/* Solo-only New game button. When state.finished is true the
