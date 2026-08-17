@@ -144,6 +144,7 @@ export async function applyMoveServer(
         return { ok: false, rejected: true, reason: "not_implemented", message };
       }
       if (isTransportFailure(error)) {
+        reportServerStall(matchId);
         return {
           ok: false,
           rejected: true,
