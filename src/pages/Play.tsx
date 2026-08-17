@@ -832,6 +832,14 @@ export default function Play() {
    * move: off-script taps still execute and the coach simply redirects. */
   const coachIsMyTurn = !!state && !state.finished && state.players[state.turn]?.id === selfPlayer?.id;
   const coach = useCoach({ enabled: coachEnabled, isMyTurn: coachIsMyTurn });
+  /** Tags a UI zone so the coach can spotlight it (see `.coach-dim` in index.css). */
+  const spot = useCallback(
+    (zone: "deck" | "hand" | "board" | "quiz" | "discard") =>
+      coachEnabled
+        ? { "data-coach-zone": zone, "data-coach-active": coach.spotlight === zone ? "true" : "false" }
+        : {},
+    [coachEnabled, coach.spotlight],
+  );
 
   // Deterministic teaching draws (solo coached match only — never PvP).
   // Before your draw, move the card the current lesson needs to the top of
@@ -1519,7 +1527,7 @@ export default function Play() {
 
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-background overflow-hidden overscroll-contain">
+    <div className={"h-[100dvh] flex flex-col bg-background overflow-hidden overscroll-contain" + (coachEnabled && coach.spotlight ? " coach-dim" : "")}>
 
       {/* Offline move queue marker — a move made during a signal blip is held
           and delivered on reconnect, so show "Sending…" rather than an error. */}
@@ -1811,6 +1819,9 @@ export default function Play() {
         {ribbonHidden ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
         {ribbonHidden ? "Show ribbon" : "Hide ribbon"}
       </button>
+
+      {/* Coach docks in normal flow — it must never cover the deck or hand. */}
+      {coachEnabled && <CoachBar coach={coach} onOpenTopic={(id) => { setRuleBookTopic(id); setRuleBookOpen(true); }} />}
 
 
       {/* ============ MOBILE LAYOUT ============ */}
@@ -2401,7 +2412,6 @@ export default function Play() {
         </div>
       )}
 
-      {coachEnabled && <CoachBar coach={coach} onOpenTopic={(id) => { setRuleBookTopic(id); setRuleBookOpen(true); }} />}
       <LearnPanel open={learnOpen} onOpenChange={setLearnOpen} />
       <RuleBookSheet open={ruleBookOpen} onOpenChange={(o) => { setRuleBookOpen(o); if (!o) setRuleBookTopic(null); }} initialTopicId={ruleBookTopic} />
       <OpponentPanel
