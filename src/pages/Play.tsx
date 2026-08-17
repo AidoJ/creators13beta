@@ -418,11 +418,30 @@ export default function Play() {
     }
     if (state.pendingDisaster) return; // waiting on human player
     if (state.players[state.turn].id !== "bot") return;
+    // Coached matches use a SCRIPTED bot: deterministic, readable moves so the
+    // narration ("watch it match a colour") is always true. Its moves still go
+    // through the real engine — the script only chooses, never bends rules.
+    // Coached bot turns are also slowed so the learner can watch them land.
     const t = setTimeout(() => {
       try {
         setState((s) => {
           if (!s) return s;
-          let next = botStep(s, botDifficultyRef.current);
+          let next = s;
+          if (coachEnabled) {
+            const res = coachBotStep(s);
+            next = res.next;
+            if (res.kind !== "none") {
+              queueMicrotask(() => {
+                setCoachCounters((c) => ({
+                  ...c,
+                  botMoves: c.botMoves + 1,
+                  botPlacements: c.botPlacements + (res.kind === "place" ? 1 : 0),
+                }));
+              });
+            }
+          } else {
+            next = botStep(s, botDifficultyRef.current);
+          }
           // Safety net: if the bot couldn't make any progress, force-end its
           // turn so the game doesn't deadlock.
           if (next === s) {
@@ -434,10 +453,11 @@ export default function Play() {
       } catch {
         /* skip */
       }
-    }, 750);
+    }, coachEnabled ? 1500 : 750);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, isPvp]);
+  }, [state, isPvp, coachEnabled]);
+
 
   /* ----------- Persistence helpers ----------- */
 
