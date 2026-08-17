@@ -1950,12 +1950,13 @@ export default function Play() {
                   : "border-border/60 bg-card/60 text-muted-foreground opacity-70")
               }
               aria-label="Draw from deck"
+              {...spot("deck")}
             >
               {needsOpeningDraw ? "Draw 5" : canDrawOne ? `Draw 1 (${Math.max(0, 2 - state.drawnThisTurn)})` : `D ${state.draw.length}`}
             </button>
             <Collapsible open={showPiles} onOpenChange={setShowPiles}>
               <CollapsibleTrigger asChild>
-                <Button variant="outline" size="sm" className="min-h-11 px-3 text-[11px]">
+                <Button variant="outline" size="sm" className="min-h-11 px-3 text-[11px]" {...spot("discard")}>
                   Piles
                 </Button>
               </CollapsibleTrigger>
@@ -1982,7 +1983,7 @@ export default function Play() {
               add its own scroll layer — an outer `overflow-auto` combined
               with the inner scaled div's unscaled layout box creates
               phantom empty space that pushes the visual board off-centre. */}
-          <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center px-1 py-1">
+          <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center px-1 py-1" {...spot("board")}>
 
 
             <Ecosystem
@@ -2043,7 +2044,7 @@ export default function Play() {
               )}
             </div>
             {isPvp && !state.finished && quiz.settings.enabled && (
-              <div className="shrink-0 pr-3 py-3" style={{ overflow: "visible" }}>
+              <div className="shrink-0 pr-3 py-3" style={{ overflow: "visible" }} {...spot("quiz")}>
                 <QuizBadge progress={quiz.progress} question={quiz.question} settings={quiz.settings} submit={quiz.submit} />
               </div>
             )}
@@ -2052,6 +2053,7 @@ export default function Play() {
 
 
           {/* Bottom hand dock */}
+          <div className="shrink-0" {...spot("hand")}>
           <PlayerHand
             hand={selfPlayer.hand}
             selectedUid={selectedUid}
@@ -2062,6 +2064,7 @@ export default function Play() {
             onTouchDropDiscard={(uid) => { onDiscardUid(uid); setShowPiles(false); }}
             pending={pendingDraws}
           />
+          </div>
 
         </>
 
@@ -2187,7 +2190,7 @@ export default function Play() {
 
             <Card className="p-1 flex flex-col min-h-0 min-w-0 bg-transparent border-0 shadow-none">
               <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1">Your ecosystem</div>
-              <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center">
+              <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center" {...spot("board")}>
                 <Ecosystem
                   eco={selfPlayer.ecosystem}
                   size={110}
@@ -2247,7 +2250,7 @@ export default function Play() {
 
             {/* Dock-right: hand · piles · actions */}
             <div className="flex items-stretch gap-2 min-w-0">
-              <div className="flex-1 min-w-0 rounded-lg border border-border/40 bg-card/40 backdrop-blur overflow-x-auto self-end">
+              <div className="flex-1 min-w-0 rounded-lg border border-border/40 bg-card/40 backdrop-blur overflow-x-auto self-end" {...spot("hand")}>
                 <PlayerHand
                   hand={selfPlayer.hand}
                   selectedUid={selectedUid}
@@ -2262,7 +2265,7 @@ export default function Play() {
               </div>
 
               {/* Piles: Deck + Discard inline */}
-              <div className="flex items-end gap-1.5 shrink-0">
+              <div className="flex items-end gap-1.5 shrink-0" {...spot("deck")}>
                 {(() => {
                   const active = needsOpeningDraw || canDrawOne;
                   const picksLeft = Math.max(0, 2 - state.drawnThisTurn);
