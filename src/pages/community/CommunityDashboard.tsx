@@ -93,8 +93,9 @@ type CreatorOfMonth = {
   computed_at: string;
 };
 
-type FeaturedMeta = { family: string | null; team_role: string | null };
+type FeaturedMeta = { family: string | null; team_role: string | null; element?: string | null };
 type CreatorTypeMeta = FeaturedMeta & { name: string; element: string | null };
+
 type FilterMode = "month" | "family" | "element" | "role" | "type" | "all";
 
 // Tier order for size buckets. Compressed 2.5:1 range so smaller matches still
@@ -215,7 +216,7 @@ export default function CommunityDashboard() {
         setFeatured(f);
         const { data: metaRow } = await supabase
           .from("creator_types")
-          .select("family, team_role")
+          .select("family, team_role, element")
           .ilike("name", f.creator_type)
           .maybeSingle();
         if (!cancelled) setFeaturedMeta((metaRow as FeaturedMeta) ?? null);
@@ -487,11 +488,17 @@ export default function CommunityDashboard() {
                         <span className="font-semibold">Family:</span> {featuredMeta.family}
                       </p>
                     )}
+                    {featuredMeta?.element && (
+                      <p className="text-xs" style={{ color: "#c9a84c" }}>
+                        <span className="font-semibold">Element:</span> {featuredMeta.element}
+                      </p>
+                    )}
                     {featuredMeta?.team_role && (
                       <p className="text-xs" style={{ color: "#c9a84c" }}>
                         <span className="font-semibold">Team Role:</span> {featuredMeta.team_role}
                       </p>
                     )}
+
                     <p className="text-xs mt-1" style={{ color: "#c9a84c" }}>
                       <span className="font-semibold">Season:</span> {featured.cycle_position} of 13
                       {cycleLabel ? ` · ${cycleLabel}` : ""}
