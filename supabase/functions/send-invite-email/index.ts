@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 interface InviteEmailRequest {
-  to: string;
+  invitation_id: string;
   clientName: string;
   inviteLink: string;
   practitionerCode?: string;
