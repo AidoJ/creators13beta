@@ -106,7 +106,14 @@ serve(async (req) => {
       if (practitionerError) throw new Error(`Could not verify practitioner code: ${practitionerError.message}`);
 
       if (pracProfile) {
-        const { error: linkError } = await supabaseClient.rpc("assign_self_practitioner", {
+        // assign_self_practitioner relies on auth.uid(), so it must be called
+        // with the caller's JWT (a service-role client has no auth context).
+        const userScopedClient = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+          { auth: { persistSession: false }, global: { headers: { Authorization: `Bearer ${token}` } } }
+        );
+        const { error: linkError } = await userScopedClient.rpc("assign_self_practitioner", {
           _practitioner_id: pracProfile.user_id,
         });
         if (linkError) throw new Error(`Could not link client to practitioner: ${linkError.message}`);
