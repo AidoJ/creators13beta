@@ -512,12 +512,9 @@ Deno.serve(async (req) => {
         // remains the source of truth for real disconnects.
         nextState.players = nextState.players.map((p) => ({ ...p, disconnectedAt: null }));
 
-        const { data: rosterAll } = await svc
-          .from("game_match_players")
-          .select("user_id, slot")
-          .eq("match_id", m.id);
+        const rosterAll = idleRosterByMatch.get(m.id) ?? [];
         const userIdForSlot = (s: number): string | null =>
-          (rosterAll ?? []).find((x: any) => x.slot === s)?.user_id ?? null;
+          rosterAll.find((x) => x.slot === s)?.user_id ?? null;
 
         const serialisedNext = serialise(nextState);
         const playerStates: Array<{ user_id: string; state: any }> = [];
