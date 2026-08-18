@@ -249,18 +249,32 @@ export function Ecosystem({
   };
 
 
-  // Two-finger pinch + pan handlers. Single-touch is deliberately ignored
-  // so card drag (touchDrag) continues to work unchanged.
+  // Two-finger pinch + pan handlers. Single-finger drag pans the board only
+  // while zoomed in and only when the gesture doesn't start on a draggable
+  // piece, so card drag (touchDrag) continues to work unchanged.
   const onPointerDownCapture = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType !== "touch") return;
     const p = pinchRef.current ?? { startDist: 0, startZoom: userZoom, startMid: { x: 0, y: 0 }, startPan: pan, pointers: new Map() };
     p.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (p.pointers.size === 2) {
+      dragPanRef.current = null;
       const [a, b] = Array.from(p.pointers.values());
       p.startDist = Math.hypot(b.x - a.x, b.y - a.y) || 1;
       p.startZoom = userZoom;
       p.startMid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
       p.startPan = { ...pan };
+    } else if (p.pointers.size === 1 && userZoom > 1) {
+      const target = e.target as HTMLElement | null;
+      const onPiece = !!target?.closest?.('[draggable="true"]');
+      if (!onPiece) {
+        dragPanRef.current = {
+          pointerId: e.pointerId,
+          startX: e.clientX,
+          startY: e.clientY,
+          startPan: { ...pan },
+          active: false,
+        };
+      }
     }
     pinchRef.current = p;
   };
@@ -268,6 +282,18 @@ export function Ecosystem({
     const p = pinchRef.current;
     if (!p || !p.pointers.has(e.pointerId)) return;
     p.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (p.pointers.size === 1) {
+      const d = dragPanRef.current;
+      if (!d || d.pointerId !== e.pointerId) return;
+      const dx = e.clientX - d.startX;
+      const dy = e.clientY - d.startY;
+      if (!d.active && Math.hypot(dx, dy) < 6) return;
+      d.active = true;
+      e.preventDefault();
+      setPan(clampPanForZoom({ x: d.startPan.x + dx, y: d.startPan.y + dy }, userZoom));
+      return;
+    }
     if (p.pointers.size !== 2) return;
     e.preventDefault();
     const el = wrapRef.current;
@@ -292,12 +318,19 @@ export function Ecosystem({
   };
 
   const endPointer = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = dragPanRef.current;
+    if (d && d.pointerId === e.pointerId) {
+      // Swallow the tap that ends a real pan so it doesn't place a card.
+      if (d.active) { e.preventDefault(); e.stopPropagation(); }
+      dragPanRef.current = null;
+    }
     const p = pinchRef.current;
     if (!p) return;
     p.pointers.delete(e.pointerId);
     if (p.pointers.size === 0) pinchRef.current = null;
     if (userZoom <= 1) setPan({ x: 0, y: 0 });
   };
+
 
   return (
     <div
