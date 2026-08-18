@@ -127,17 +127,27 @@ export function PlayerHand({ hand, selectedUid, onSelect, onDragStart, onDragEnd
     const el = rowRef.current;
     if (!el) return;
     const measure = () => {
-      const w = el.clientWidth;
+      // Use the fractional rect width (clientWidth rounds up on some Android
+      // browsers, e.g. Samsung Internet, which made the 5th tile overflow).
+      const w = el.getBoundingClientRect().width || el.clientWidth;
       if (!w) return;
       const gap = window.innerWidth >= 640 ? 12 : 8;
-      const per = Math.floor((w - gap * 4) / 5);
+      // 2px safety margin for sub-pixel rounding + tile borders.
+      const per = Math.floor((w - gap * 4 - 2) / 5);
       setFitSize(Math.max(40, Math.min(size, per)));
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
-    return () => ro.disconnect();
+    window.addEventListener("resize", measure);
+    window.addEventListener("orientationchange", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("orientationchange", measure);
+    };
   }, [size]);
+
   const tileSize = fitSize;
 
   return (

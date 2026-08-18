@@ -49,7 +49,7 @@ const SIZE_PX: Record<NonNullable<LotusProfileProps["size"]>, number> = {
   xl: 240,
 };
 
-const SKY_NEUTRAL = "#edd58a";
+
 const GOLD = "#c9a04a";
 
 type CardinalKey = Extract<PetalKey, "top" | "right" | "bottom" | "left">;
@@ -71,9 +71,9 @@ const FILL_ORDER: CardinalKey[][] = [
 ];
 
 function petalColor(type: string): string {
-  if (type.toLowerCase() === "sky") return SKY_NEUTRAL;
   return getCreatorTypeColor(type);
 }
+
 
 export function LotusProfile({
   avatarUrl,
