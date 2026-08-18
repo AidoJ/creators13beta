@@ -358,16 +358,27 @@ export default function Play() {
 
   /* ----------- Realtime: opponent's moves ----------- */
 
+  // Realtime channel AND the 4s poll can deliver the same server state, so
+  // without a guard the board was being replaced with an identical snapshot
+  // several times a turn — every card/hex got new object identities, images
+  // and animations restarted, and the whole screen appeared to "refresh".
+  // Only apply a push that actually moves the match forward (or ends it).
+  const lastAppliedSeqRef = useRef(-1);
   const handleRemote = useCallback(
     (remoteState: MatchState, row: GameMatchRow) => {
-      logClientStateChange("realtime_push", Number(row.seq ?? 0), remoteState);
+      const seq = Number(row.seq ?? 0);
+      const isTerminal = row.status === "finished" || remoteState.finished;
+      if (!isTerminal && seq <= lastAppliedSeqRef.current) return;
+      lastAppliedSeqRef.current = seq;
+      logClientStateChange("realtime_push", seq, remoteState);
       setState(remoteState);
       setMatchRow(row);
-      serverSeqRef.current = Number(row.seq ?? 0);
+      serverSeqRef.current = seq;
       if (row.status === "active") setWaitingForGuest(false);
     },
     [serverSeqRef],
   );
+
   useMatchRealtime(
     isPvp ? matchRow?.id ?? null : null,
     user?.id ?? null,
