@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,11 @@ export default function Signup() {
   const isPlayer = params.get("path") === "player";
   const practitionerCode = params.get("practitioner_code") || "";
   const inviteToken = params.get("invite") || "";
+  // Threaded through the email-confirmation redirect URL (see handleSignup)
+  // so a returning page load can tell "the client who just confirmed their
+  // OWN new account" apart from "a different already-logged-in user (e.g.
+  // the inviting practitioner) opened this link."
+  const expectedEmail = (params.get("email") || "").toLowerCase();
   const tierInfo = TIERS[tier] || TIERS.wren;
   const authReturnParams = new URLSearchParams({ tier, billing });
   if (caseStudy) {
@@ -37,23 +42,36 @@ export default function Signup() {
       : `/enroll/payment?${authReturnParams.toString()}`;
 
   const [loading, setLoading] = useState(false);
+  // Guards the account-setup retry (see retryAccountSetupIfNeeded) so it
+  // only ever runs once per page load, however it gets triggered.
+  const retriedRef = useRef(false);
   const [createdUserId, setCreatedUserId] = useState("");
   const [createdEmail, setCreatedEmail] = useState("");
   const [showVerification, setShowVerification] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
   // If a practitioner (or any logged-in user) clicks a case-study invite link,
-  // sign them out so the new client can create a fresh account with blank details.
+  // sign them out so the new client can create a fresh account with blank
+  // details. Must NOT fire for the new client's own return trip after
+  // confirming their email (that session is the one we need for the retry
+  // below) — distinguish the two by comparing the session's email against
+  // the one this signup flow expects.
   useEffect(() => {
     if (!user || signingOut || showVerification || loading) return;
-    if (caseStudy) {
-      setSigningOut(true);
-      supabase.auth.signOut().then(() => setSigningOut(false));
-    }
-  }, [user, caseStudy, signingOut, showVerification, loading]);
+    if (!caseStudy) return;
+    if (expectedEmail && user.email?.toLowerCase() === expectedEmail) return;
+    setSigningOut(true);
+    supabase.auth.signOut().then(() => setSigningOut(false));
+  }, [user, caseStudy, signingOut, showVerification, loading, expectedEmail]);
 
-  // If user arrives already authenticated (e.g. after email verification redirect), show "I'm Verified"
-  const arrivedVerified = !!user && !showVerification && !loading && !caseStudy;
+  // True once a real session exists post-redirect (email verification link,
+  // including the case-study client's own return trip now that the sign-out
+  // effect above correctly excludes it). Must also check signingOut: without
+  // it, a case-study link with no email param opened by an unrelated
+  // logged-in user renders this screen (and fires the retry below) for that
+  // wrong user during the brief async gap before signOut() resolves.
+  const arrivedVerified = !!user && !showVerification && !loading && !signingOut
+    && (!expectedEmail || user.email?.toLowerCase() === expectedEmail);
 
   async function handleSignup(values: {
     firstName: string;
@@ -66,7 +84,7 @@ export default function Signup() {
 
     setLoading(true);
     const appOrigin = getAppOrigin();
-    const verifyParams = new URLSearchParams({ tier, billing });
+    const verifyParams = new URLSearchParams({ tier, billing, email: values.email });
     if (caseStudy) {
       verifyParams.set("case_study", "true");
       verifyParams.set("practitioner_code", practitionerCode);
@@ -174,7 +192,74 @@ export default function Signup() {
     setShowVerification(true);
   }
 
+  // Retry-on-return safety net. create-checkout requires a real session —
+  // signUp() doesn't grant one while email confirmation is pending, so the
+  // handleSignup call above silently 401s for any signup that isn't
+  // auto-confirmed, and the role/subscription/practitioner-link (and, for
+  // case-study, the welcome email) never get created. By the time the user
+  // is back here with arrivedVerified true (or clicks "I've Verified —
+  // Continue"), a real session exists, so re-running the same calls closes
+  // that gap. create-checkout's writes are upserts (idempotent), so this is
+  // safe to run even if the original call already succeeded.
+  async function retryAccountSetupIfNeeded() {
+    if (retriedRef.current) return;
+    if (!user?.email) return;
+    retriedRef.current = true;
+
+    const appOrigin = getAppOrigin();
+    const priceId = tierInfo.stripe?.price_id || null;
+    const signupPath = isPlayer ? "player" : caseStudy ? "case_study" : "paying";
+
+    const { error: fnError } = await supabase.functions.invoke("create-checkout", {
+      body: {
+        priceId,
+        email: user.email,
+        user_id: user.id,
+        tier,
+        billing,
+        practitioner_code: practitionerCode || null,
+        invite_token: inviteToken || null,
+        signup_path: signupPath,
+        successUrl: `${appOrigin}/enroll/practitioner?tier=${tier}&billing=${billing}&payment=skipped`,
+        cancelUrl: `${appOrigin}/enroll/payment?tier=${tier}&billing=${billing}&canceled=true`,
+      },
+    });
+    if (fnError) console.error("Retry create-checkout error:", fnError);
+
+    if (caseStudy) {
+      const returnToPath = `/enroll/practitioner?tier=${tier}&billing=${billing}&case_study=true&practitioner_code=${encodeURIComponent(practitionerCode)}${inviteToken ? `&invite=${encodeURIComponent(inviteToken)}` : ""}`;
+      const loginUrl = `${appOrigin}/auth?returnTo=${encodeURIComponent(returnToPath)}`;
+      const photosUrl = `${appOrigin}/enroll/photos?tier=${tier}&billing=${billing}&case_study=true&practitioner_code=${practitionerCode}`;
+      const firstName = (user.user_metadata as { first_name?: string } | undefined)?.first_name || user.email.split("@")[0];
+      supabase.functions.invoke("send-case-study-welcome", {
+        body: {
+          to: user.email,
+          clientName: firstName,
+          loginLink: loginUrl,
+          photosLink: photosUrl,
+          practitionerCode: practitionerCode || "",
+        },
+      }).then(({ error: emailErr }) => {
+        if (emailErr) console.error("Retry welcome email error:", emailErr);
+      });
+    }
+  }
+
+  // Fires the retry the moment a verified session is detected (the primary
+  // path: user clicks the confirmation link and lands back here directly).
+  useEffect(() => {
+    if (!arrivedVerified) return;
+    retryAccountSetupIfNeeded();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [arrivedVerified]);
+
   const handleContinue = () => {
+    // Secondary path: confirmed in another tab, clicking "I've Verified —
+    // Continue" back in the original tab (arrivedVerified may not have
+    // fired there if this tab's session only just became available).
+    if (user?.email && (!expectedEmail || user.email.toLowerCase() === expectedEmail)) {
+      retryAccountSetupIfNeeded();
+    }
     if (isPlayer) {
       navigate("/dashboard");
       return;
