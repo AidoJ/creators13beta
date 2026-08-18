@@ -745,10 +745,19 @@ export default function CommunityDashboard() {
         )}
       >
         <h1 className="font-display font-normal text-2xl sm:text-3xl md:text-4xl text-gold text-center drop-shadow-sm lg:px-32">
-          {featured?.creator_type
+          {filterMode === "family" && filterValue
+            ? `Who's your ${filterValue} Family Match?`
+            : filterMode === "element" && filterValue
+            ? `Who's your ${filterValue} Element Match?`
+            : filterMode === "role" && filterValue
+            ? `Who's your ${filterValue} Match?`
+            : filterMode === "type" && filterValue
+            ? `Who's your ${capitaliseTypeName(filterValue)} Match?`
+            : filterMode === "month" && featured?.creator_type
             ? `Who's your ${capitaliseTypeName(featured.creator_type)} Match?`
             : "Who's your Creator Match?"}
         </h1>
+
         {!loading && (
           <p className="text-center text-xs text-muted-foreground" aria-live="polite">
             Showing {filteredMatches.length} of {matches.length} members
