@@ -121,6 +121,7 @@ interface MatchSweepRow {
   seq: number | null;
   host_user_id: string | null;
   started_at: string | null;
+  turn_started_at: string | null;
 }
 
 interface RosterRow {
