@@ -2531,6 +2531,10 @@ export type Database = {
       }
       bump_types_seen: { Args: { _types: string[] }; Returns: undefined }
       cancel_lobby_match: { Args: { _match_id: string }; Returns: undefined }
+      claim_nominatim_slot: {
+        Args: { _min_interval_ms?: number }
+        Returns: number
+      }
       close_open_quiz: {
         Args: { _match_id: string; _user_id: string }
         Returns: undefined
