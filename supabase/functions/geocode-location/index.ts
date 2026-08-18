@@ -70,17 +70,55 @@ Deno.serve(async (req) => {
   }
 
   if (!authorised) {
-    // Fall back to "trigger-authenticated" mode: the supplied label must
-    // match the profile's current label.
+    // Fall back to "trigger-authenticated" mode. The DB trigger that's the
+    // real caller here (trigger_geocode_on_location_change) sends no
+    // Authorization header at all, so this fallback isn't a rarely-used
+    // edge case — it's the only mechanism the trigger actually has. Matching
+    // the label alone was guessable (often just a city name) with no time
+    // bound, so a caller who once observed a user's label could replay it
+    // at any later point. Now also require the profile to have been written
+    // within the last few seconds — i.e. this request is arriving right
+    // after the real DB write that fired the trigger, not a replay.
     const { data: profile, error: pErr } = await admin
       .from("profiles")
-      .select("location_label")
+      .select("location_label, updated_at")
       .eq("user_id", userId)
       .maybeSingle();
     if (pErr || !profile) return json({ error: "unauthorized" }, 401);
     if ((profile.location_label ?? "").trim() !== label) {
       return json({ error: "unauthorized" }, 401);
     }
+    const updatedAtMs = profile.updated_at ? Date.parse(profile.updated_at) : NaN;
+    const TRIGGER_WINDOW_MS = 15_000;
+    if (!Number.isFinite(updatedAtMs) || Date.now() - updatedAtMs > TRIGGER_WINDOW_MS) {
+      return json({ error: "unauthorized" }, 401);
+    }
+  }
+
+  // Distributed throttle: Nominatim's usage policy is <=1 req/sec. The DB
+  // trigger that's the real caller here fires once per profile write with
+  // no coalescing, so a bulk write (e.g. an admin import) can burst past
+  // that limit and get the shared User-Agent rate-limited/banned,
+  // degrading geocoding for every user. Claims a serialised slot via a DB
+  // row lock (correct across concurrent edge function instances, unlike an
+  // in-memory limiter) and waits for it; if the queue is backed up too far,
+  // backs off instead of holding this invocation open indefinitely.
+  const MAX_WAIT_MS = 10_000;
+  try {
+    const { data: waitMs, error: slotErr } = await admin.rpc("claim_nominatim_slot", { _min_interval_ms: 1100 });
+    if (slotErr) {
+      console.warn("[geocode] slot claim failed; proceeding without throttle", slotErr);
+    } else if (typeof waitMs === "number" && waitMs > 0) {
+      if (waitMs > MAX_WAIT_MS) {
+        console.warn(`[geocode] Nominatim queue backed up (${waitMs}ms) — deferring for user ${userId}`);
+        await markFailed(admin, userId, label);
+        return json({ ok: true, geocoded: false, error: "provider_busy" });
+      }
+      console.log(`[geocode] throttle wait ${waitMs}ms for user ${userId}`);
+      await new Promise((r) => setTimeout(r, waitMs));
+    }
+  } catch (e) {
+    console.warn("[geocode] slot claim threw; proceeding without throttle", e);
   }
 
   // Geocode via Nominatim
