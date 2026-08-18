@@ -73,6 +73,15 @@ export function Ecosystem({
     startPan: { x: number; y: number };
     pointers: Map<number, { x: number; y: number }>;
   } | null>(null);
+  // Single-finger drag-to-pan (only while zoomed in, and never when the touch
+  // starts on a draggable board piece so card-move drag keeps working).
+  const dragPanRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startPan: { x: number; y: number };
+    active: boolean;
+  } | null>(null);
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 3;
 
@@ -240,18 +249,32 @@ export function Ecosystem({
   };
 
 
-  // Two-finger pinch + pan handlers. Single-touch is deliberately ignored
-  // so card drag (touchDrag) continues to work unchanged.
+  // Two-finger pinch + pan handlers. Single-finger drag pans the board only
+  // while zoomed in and only when the gesture doesn't start on a draggable
+  // piece, so card drag (touchDrag) continues to work unchanged.
   const onPointerDownCapture = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType !== "touch") return;
     const p = pinchRef.current ?? { startDist: 0, startZoom: userZoom, startMid: { x: 0, y: 0 }, startPan: pan, pointers: new Map() };
     p.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (p.pointers.size === 2) {
+      dragPanRef.current = null;
       const [a, b] = Array.from(p.pointers.values());
       p.startDist = Math.hypot(b.x - a.x, b.y - a.y) || 1;
       p.startZoom = userZoom;
       p.startMid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
       p.startPan = { ...pan };
+    } else if (p.pointers.size === 1 && userZoom > 1) {
+      const target = e.target as HTMLElement | null;
+      const onPiece = !!target?.closest?.('[draggable="true"]');
+      if (!onPiece) {
+        dragPanRef.current = {
+          pointerId: e.pointerId,
+          startX: e.clientX,
+          startY: e.clientY,
+          startPan: { ...pan },
+          active: false,
+        };
+      }
     }
     pinchRef.current = p;
   };
@@ -259,6 +282,18 @@ export function Ecosystem({
     const p = pinchRef.current;
     if (!p || !p.pointers.has(e.pointerId)) return;
     p.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (p.pointers.size === 1) {
+      const d = dragPanRef.current;
+      if (!d || d.pointerId !== e.pointerId) return;
+      const dx = e.clientX - d.startX;
+      const dy = e.clientY - d.startY;
+      if (!d.active && Math.hypot(dx, dy) < 6) return;
+      d.active = true;
+      e.preventDefault();
+      setPan(clampPanForZoom({ x: d.startPan.x + dx, y: d.startPan.y + dy }, userZoom));
+      return;
+    }
     if (p.pointers.size !== 2) return;
     e.preventDefault();
     const el = wrapRef.current;
@@ -282,13 +317,22 @@ export function Ecosystem({
     }, nextZoom));
   };
 
+  const suppressClickRef = useRef(false);
   const endPointer = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = dragPanRef.current;
+    if (d && d.pointerId === e.pointerId) {
+      // Swallow the tap that ends a real pan so it doesn't place a card.
+      if (d.active) suppressClickRef.current = true;
+      dragPanRef.current = null;
+    }
+
     const p = pinchRef.current;
     if (!p) return;
     p.pointers.delete(e.pointerId);
     if (p.pointers.size === 0) pinchRef.current = null;
     if (userZoom <= 1) setPan({ x: 0, y: 0 });
   };
+
 
   return (
     <div
@@ -297,9 +341,16 @@ export function Ecosystem({
       style={autoFit ? { minHeight: 0, touchAction: "none" } : { minHeight, touchAction: userZoom > 1 ? "none" : undefined }}
       onPointerDownCapture={onPointerDownCapture}
       onPointerMoveCapture={onPointerMoveCapture}
-      onPointerUp={endPointer}
-      onPointerCancel={endPointer}
-      onPointerLeave={endPointer}
+      onPointerUpCapture={endPointer}
+      onPointerCancelCapture={endPointer}
+      onClickCapture={(e) => {
+        if (suppressClickRef.current) {
+          suppressClickRef.current = false;
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
+
     >
       {/* Zoom controls — always visible so mobile players can tap them
           when pinch is awkward. Positioned inside the wrap so they follow
