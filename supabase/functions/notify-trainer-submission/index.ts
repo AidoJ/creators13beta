@@ -114,7 +114,6 @@ serve(async (req) => {
 
         await new Promise(r => setTimeout(r, 600));
       } catch (e) {
-    if (e instanceof AuthError) return new Response(JSON.stringify({ error: e.message }), { status: e.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         results.push({ user_id: trainer.user_id, status: "error", error: (e as Error).message });
       }
     }
@@ -125,6 +124,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    if (e instanceof AuthError) return new Response(JSON.stringify({ error: e.message }), { status: e.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     console.error("notify-trainer-submission error:", e);
     return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500,

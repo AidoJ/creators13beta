@@ -1,4 +1,4 @@
-import { requireUser, rateLimit, AuthError } from "../_shared/auth.ts";
+import { requireRole, rateLimit, AuthError } from "../_shared/auth.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -15,7 +15,7 @@ serve(async (req) => {
 
   try {
     // Auth + rate limit (security remediation Tier 2 #5).
-    const __caller = await requireUser(req);
+    const __caller = await requireRole(req, ["trainer"]);
     if (!rateLimit(`email:${__caller.id}`, 20, 5 * 60 * 1000)) {
       return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
         status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },

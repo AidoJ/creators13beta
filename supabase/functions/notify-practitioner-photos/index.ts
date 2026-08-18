@@ -30,6 +30,9 @@ serve(async (req) => {
 
     const { client_user_id } = await req.json();
     if (!client_user_id) throw new Error("client_user_id is required");
+    if (client_user_id !== __caller.id) {
+      throw new AuthError("Forbidden: can only trigger this for your own account", 403);
+    }
 
     // Get client profile
     const { data: clientProfile } = await supabaseAdmin
