@@ -73,6 +73,15 @@ export function Ecosystem({
     startPan: { x: number; y: number };
     pointers: Map<number, { x: number; y: number }>;
   } | null>(null);
+  // Single-finger drag-to-pan (only while zoomed in, and never when the touch
+  // starts on a draggable board piece so card-move drag keeps working).
+  const dragPanRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startPan: { x: number; y: number };
+    active: boolean;
+  } | null>(null);
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 3;
 
