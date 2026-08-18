@@ -341,9 +341,16 @@ export function Ecosystem({
       style={autoFit ? { minHeight: 0, touchAction: "none" } : { minHeight, touchAction: userZoom > 1 ? "none" : undefined }}
       onPointerDownCapture={onPointerDownCapture}
       onPointerMoveCapture={onPointerMoveCapture}
-      onPointerUp={endPointer}
-      onPointerCancel={endPointer}
-      onPointerLeave={endPointer}
+      onPointerUpCapture={endPointer}
+      onPointerCancelCapture={endPointer}
+      onClickCapture={(e) => {
+        if (suppressClickRef.current) {
+          suppressClickRef.current = false;
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
+
     >
       {/* Zoom controls — always visible so mobile players can tap them
           when pinch is awkward. Positioned inside the wrap so they follow
