@@ -363,13 +363,19 @@ export default function Play() {
   // several times a turn — every card/hex got new object identities, images
   // and animations restarted, and the whole screen appeared to "refresh".
   // Only apply a push that actually moves the match forward (or ends it).
-  const lastAppliedSeqRef = useRef(-1);
+  //
+  // Dedupes against serverSeqRef itself rather than a separate ref: a
+  // standalone ref here would need its own per-match reset (matchRow?.id
+  // changing) to avoid comparing a new match's low starting seq against a
+  // stale high-water mark left over from a previous match played in the
+  // same mount — usePvpReconcile already keeps serverSeqRef correctly
+  // re-synced to the current match's seq on every matchRow change, so
+  // reusing it here gets that reset for free instead of duplicating it.
   const handleRemote = useCallback(
     (remoteState: MatchState, row: GameMatchRow) => {
       const seq = Number(row.seq ?? 0);
       const isTerminal = row.status === "finished" || remoteState.finished;
-      if (!isTerminal && seq <= lastAppliedSeqRef.current) return;
-      lastAppliedSeqRef.current = seq;
+      if (!isTerminal && seq <= serverSeqRef.current) return;
       logClientStateChange("realtime_push", seq, remoteState);
       setState(remoteState);
       setMatchRow(row);
