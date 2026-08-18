@@ -27,6 +27,7 @@
 
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { finaliseRankedMatchWithRetry } from "../_shared/finaliseRankedMatch.ts";
 
 import {
   drawInitialFive,
@@ -731,12 +732,12 @@ Deno.serve(async (req) => {
   // Server-vouched ranked match outcome. Idempotent — finalise_ranked_match
   // tags `state.__finalised` and short-circuits subsequent calls.
   if (finished && match.is_ranked) {
-    const { error: finErr } = await svc.rpc("finalise_ranked_match", {
-      _match_id: body.match_id,
-      _reason: "normal",
-      _placements: placementsSnapshot.length > 0 ? (placementsSnapshot as any) : null,
-    });
-    if (finErr) console.error("[apply-move] finalise_ranked_match failed", finErr);
+    await finaliseRankedMatchWithRetry(
+      svc,
+      body.match_id,
+      "normal",
+      placementsSnapshot.length > 0 ? placementsSnapshot : null,
+    );
   }
 
   // Turn stopwatch, strike reset and lobby activation are now performed
