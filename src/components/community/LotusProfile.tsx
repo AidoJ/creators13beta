@@ -71,9 +71,9 @@ const FILL_ORDER: CardinalKey[][] = [
 ];
 
 function petalColor(type: string): string {
-  if (type.toLowerCase() === "sky") return SKY_NEUTRAL;
   return getCreatorTypeColor(type);
 }
+
 
 export function LotusProfile({
   avatarUrl,
