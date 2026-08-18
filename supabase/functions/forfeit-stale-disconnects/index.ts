@@ -584,7 +584,11 @@ Deno.serve(async (req) => {
     .from("game_match_players")
     .select("match_id")
     .not("disconnected_at", "is", null)
-    .eq("status", "active");
+    .eq("status", "active")
+    .limit(5000);
+  if ((candidateRows ?? []).length >= 5000) {
+    console.warn("[sweep] disconnected-player candidate query hit row limit (5000); some matches may not be swept");
+  }
   if (candErr) {
     console.error("[sweep] candidate fetch failed", candErr);
     return jsonResponse({ error: "candidate fetch failed" }, 500);
