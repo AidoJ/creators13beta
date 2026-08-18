@@ -33,6 +33,9 @@ serve(async (req) => {
     if (!practitioner_id || !client_name || !case_study_title) {
       throw new Error("practitioner_id, client_name, and case_study_title are required");
     }
+    if (practitioner_id !== __caller.id) {
+      throw new AuthError("Forbidden: can only submit on your own behalf", 403);
+    }
 
     // Get practitioner name
     const { data: practProfile } = await supabaseAdmin
