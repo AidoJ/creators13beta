@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 interface InviteEmailRequest {
-  to: string;
+  invitation_id: string;
   clientName: string;
   inviteLink: string;
   practitionerCode?: string;
@@ -38,11 +38,23 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
     const resend = new Resend(apiKey);
-    const { to, clientName, inviteLink, practitionerCode }: InviteEmailRequest = await req.json();
+    const { invitation_id, clientName, inviteLink, practitionerCode }: InviteEmailRequest = await req.json();
 
-    if (!to || !clientName || !inviteLink) {
-      throw new Error("Missing required fields: to, clientName, inviteLink");
+    if (!invitation_id || !clientName || !inviteLink) {
+      throw new Error("Missing required fields: invitation_id, clientName, inviteLink");
     }
+
+    // Ownership: the invitation must belong to the calling practitioner.
+    const { data: invitation } = await supabase
+      .from("client_invitations")
+      .select("id, email")
+      .eq("id", invitation_id)
+      .eq("practitioner_id", __caller.id)
+      .maybeSingle();
+    if (!invitation?.email) {
+      throw new AuthError("Forbidden: not your invitation", 403);
+    }
+    const to = invitation.email;
 
     // Fetch template from database
     const { data: template, error: tplError } = await supabase
@@ -82,6 +94,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: unknown) {
+    if (err instanceof AuthError) return new Response(JSON.stringify({ error: err.message }), { status: err.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     console.error("send-invite-email error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     return new Response(JSON.stringify({ error: message }), {

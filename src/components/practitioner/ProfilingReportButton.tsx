@@ -128,7 +128,7 @@ export default function ProfilingReportButton({
 
       const { data, error } = await supabase.functions.invoke("send-profiling-report", {
         body: {
-          client_email: clientEmail,
+          client_id: clientId,
           client_name: clientName,
           practitioner_name: practitionerName,
           face_split_notes: faceSplitData?.notes || "",

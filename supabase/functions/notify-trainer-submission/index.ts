@@ -33,6 +33,9 @@ serve(async (req) => {
     if (!practitioner_id || !client_name || !case_study_title) {
       throw new Error("practitioner_id, client_name, and case_study_title are required");
     }
+    if (practitioner_id !== __caller.id) {
+      throw new AuthError("Forbidden: can only submit on your own behalf", 403);
+    }
 
     // Get practitioner name
     const { data: practProfile } = await supabaseAdmin
@@ -114,7 +117,6 @@ serve(async (req) => {
 
         await new Promise(r => setTimeout(r, 600));
       } catch (e) {
-    if (e instanceof AuthError) return new Response(JSON.stringify({ error: e.message }), { status: e.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         results.push({ user_id: trainer.user_id, status: "error", error: (e as Error).message });
       }
     }
@@ -125,6 +127,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    if (e instanceof AuthError) return new Response(JSON.stringify({ error: e.message }), { status: e.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     console.error("notify-trainer-submission error:", e);
     return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500,
