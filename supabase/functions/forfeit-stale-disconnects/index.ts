@@ -948,6 +948,18 @@ Deno.serve(async (req) => {
     console.warn("[sweep] ranked backstop threw", e);
   }
 
+  // Release the lease now rather than leaving it to expire via its TTL —
+  // without this, a tick that finishes quickly still holds the lease for
+  // the full LEASE_SECONDS, so the next scheduled tick 30s later always
+  // finds it unexpired and self-skips, roughly halving the sweep's real
+  // cadence. The TTL stays as a pure crash-safety fallback for a tick that
+  // never reaches this point.
+  try {
+    await svc.rpc("release_sweep_lease", { _key: "forfeit-stale-disconnects" });
+  } catch (e) {
+    console.warn("[sweep] lease release failed (will self-expire via TTL)", e);
+  }
+
   console.log("[sweep] done", summary);
   return jsonResponse({ ok: true, ...summary });
 });
