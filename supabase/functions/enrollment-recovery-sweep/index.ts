@@ -158,6 +158,32 @@ serve(async (req) => {
       });
     }
 
+    // Single-flight guard: prevent overlapping runs from re-reading the same
+    // "not yet sent" snapshot and double-sending recovery emails.
+    const LEASE_SECONDS = 600;
+    try {
+      const { data: gotLease, error: leaseErr } = await admin.rpc("acquire_sweep_lease", {
+        _key: "enrollment-recovery-sweep",
+        _ttl_seconds: LEASE_SECONDS,
+      });
+      if (leaseErr) {
+        console.warn("[enrollment-recovery-sweep] lease acquisition errored; skipping run", leaseErr);
+        return new Response(JSON.stringify({ ok: true, skipped: "lease_error" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!gotLease) {
+        return new Response(JSON.stringify({ ok: true, skipped: "another_run_in_progress" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } catch (e) {
+      console.warn("[enrollment-recovery-sweep] lease acquisition threw; skipping run", e);
+      return new Response(JSON.stringify({ ok: true, skipped: "lease_throw" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const resend = new Resend(resendKey);
 
     // Thresholds

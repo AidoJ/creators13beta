@@ -67,6 +67,32 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
     const resend = new Resend(apiKey);
 
+    // Single-flight guard (covers backfill mode too — it writes the same
+    // reminder_sent_at column).
+    const LEASE_SECONDS = 600;
+    try {
+      const { data: gotLease, error: leaseErr } = await supabase.rpc("acquire_sweep_lease", {
+        _key: "send-invite-reminders",
+        _ttl_seconds: LEASE_SECONDS,
+      });
+      if (leaseErr) {
+        console.warn("[send-invite-reminders] lease acquisition errored; skipping run", leaseErr);
+        return new Response(JSON.stringify({ ok: true, skipped: "lease_error" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!gotLease) {
+        return new Response(JSON.stringify({ ok: true, skipped: "another_run_in_progress" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } catch (e) {
+      console.warn("[send-invite-reminders] lease acquisition threw; skipping run", e);
+      return new Response(JSON.stringify({ ok: true, skipped: "lease_throw" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Optional backfill mode: ignore the 7-day age filter and reminder_sent_at,
     // and target ALL invitations whose status is anything other than "ready_for_profiling".
     let backfill = false;

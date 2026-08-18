@@ -104,6 +104,31 @@ serve(async (req) => {
     if (!supabaseUrl || !serviceRoleKey) throw new Error("Supabase config missing");
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
+    // Single-flight guard: prevent overlapping runs double-sending reminders.
+    const LEASE_SECONDS = 600;
+    try {
+      const { data: gotLease, error: leaseErr } = await supabase.rpc("acquire_sweep_lease", {
+        _key: "send-training-reminders",
+        _ttl_seconds: LEASE_SECONDS,
+      });
+      if (leaseErr) {
+        console.warn("[send-training-reminders] lease acquisition errored; skipping run", leaseErr);
+        return new Response(JSON.stringify({ ok: true, skipped: "lease_error" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!gotLease) {
+        return new Response(JSON.stringify({ ok: true, skipped: "another_run_in_progress" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } catch (e) {
+      console.warn("[send-training-reminders] lease acquisition threw; skipping run", e);
+      return new Response(JSON.stringify({ ok: true, skipped: "lease_throw" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const resend = new Resend(apiKey);
 
     // Find calls happening between 23 and 25 hours from now (to handle cron drift)
