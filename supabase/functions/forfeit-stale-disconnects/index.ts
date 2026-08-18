@@ -379,12 +379,7 @@ Deno.serve(async (req) => {
       const slot = Number(ms.turn);
       if (!Number.isFinite(slot)) continue;
 
-      const { data: rrow } = await svc
-        .from("game_match_players")
-        .select("user_id, slot, status, idle_strikes, disconnected_at, disconnect_stamped_at, last_presence_gap_at, last_server_stall_at")
-        .eq("match_id", m.id)
-        .eq("slot", slot)
-        .maybeSingle();
+      const rrow = (idleRosterByMatch.get(m.id) ?? []).find((x) => x.slot === slot);
       if (!rrow) continue;
       if ((rrow.status ?? "active") !== "active") continue;
 
