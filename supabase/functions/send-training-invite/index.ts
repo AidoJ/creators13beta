@@ -1,4 +1,4 @@
-import { requireUser, rateLimit, AuthError } from "../_shared/auth.ts";
+import { requireRole, rateLimit, AuthError } from "../_shared/auth.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
@@ -145,7 +145,7 @@ serve(async (req) => {
 
   try {
     // Auth + rate limit (security remediation Tier 2 #5).
-    const __caller = await requireUser(req);
+    const __caller = await requireRole(req, ["trainer"]);
     if (!rateLimit(`email:${__caller.id}`, 20, 5 * 60 * 1000)) {
       return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
         status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -176,6 +176,16 @@ serve(async (req) => {
 
     if (!title || !scheduledAt) {
       throw new Error("Missing required fields: title, scheduledAt");
+    }
+
+    // Existence check: never write invitee/event rows against an arbitrary UUID.
+    if (callId) {
+      const { data: callRow } = await supabase
+        .from("training_calls")
+        .select("id")
+        .eq("id", callId)
+        .maybeSingle();
+      if (!callRow) throw new Error("Training call not found");
     }
 
     // Fetch email template from database
@@ -351,7 +361,6 @@ serve(async (req) => {
           }
         }
       } catch (e) {
-    if (e instanceof AuthError) return new Response(JSON.stringify({ error: e.message }), { status: e.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         console.error(`Exception sending to ${recipient.email}:`, e);
         errors.push(`${recipient.email} (exception)`);
       }
@@ -393,6 +402,7 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: unknown) {
+    if (err instanceof AuthError) return new Response(JSON.stringify({ error: err.message }), { status: err.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     console.error("send-training-invite error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     return new Response(JSON.stringify({ error: message }), {

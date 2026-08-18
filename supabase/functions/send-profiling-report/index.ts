@@ -29,7 +29,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const {
-      client_email,
+      client_id,
       client_name,
       practitioner_name,
       face_split_notes,
@@ -38,7 +38,28 @@ serve(async (req) => {
       creator_types,
     } = await req.json();
 
-    if (!client_email) throw new Error("client_email is required");
+    if (!client_id) throw new Error("client_id is required");
+
+    // Ownership: caller must have an active practitioner relationship with this client.
+    const { data: rel } = await supabase
+      .from("client_practitioner")
+      .select("id")
+      .eq("practitioner_id", __caller.id)
+      .eq("client_id", client_id)
+      .eq("active", true)
+      .maybeSingle();
+    if (!rel) {
+      throw new AuthError("Forbidden: no active practitioner relationship with this client", 403);
+    }
+
+    // Recipient is resolved server-side, never trusted from the request body.
+    const { data: clientProfile } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("user_id", client_id)
+      .maybeSingle();
+    const client_email = clientProfile?.email;
+    if (!client_email) throw new Error("Client has no email address on file");
 
     const firstName = (client_name || "").split(" ")[0] || "there";
 
@@ -104,6 +125,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
+    if (err instanceof AuthError) return new Response(JSON.stringify({ error: err.message }), { status: err.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     console.error("send-profiling-report error:", err);
     return new Response(
       JSON.stringify({ error: err.message }),
