@@ -27,6 +27,7 @@
 
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { finaliseRankedMatchWithRetry } from "../_shared/finaliseRankedMatch.ts";
 
 import {
   drawInitialFive,

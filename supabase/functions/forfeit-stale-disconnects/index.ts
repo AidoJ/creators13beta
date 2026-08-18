@@ -38,6 +38,7 @@
  * changes → Lovable auto-redeploys this function.
  */
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { finaliseRankedMatchWithRetry } from "../_shared/finaliseRankedMatch.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 import { endTurnEarly, forceAdvanceTurn, forceFinaliseDisconnect2p } from "../_shared/game/engine.ts";
@@ -227,6 +228,7 @@ Deno.serve(async (req) => {
     idle_auto_passed: 0,
     idle_departed: 0,
     paused_server_stall: 0,
+    ranked_backstop_finalised: 0,
     debounce_sec: debounceSec,
     grace_sec: graceSec,
     startup_grace_sec: startupGraceSec,
@@ -710,12 +712,12 @@ Deno.serve(async (req) => {
         // connected player's move trips the ≤1-active finalise — the two
         // paths must not disagree on whether a disconnect-ended match pays.
         if (match.is_ranked) {
-          const { error: finErr } = await svc.rpc("finalise_ranked_match", {
-            _match_id: match.id,
-            _reason: "disconnect",
-            _placements: placementsSnapshot.length > 0 ? (placementsSnapshot as any) : null,
-          });
-          if (finErr) console.error("[sweep] 2p finalise_ranked_match failed", finErr);
+          await finaliseRankedMatchWithRetry(
+            svc,
+            match.id,
+            "disconnect",
+            placementsSnapshot.length > 0 ? placementsSnapshot : null,
+          );
         }
 
 
@@ -853,12 +855,12 @@ Deno.serve(async (req) => {
 
       // Ranked payout on the same terms as apply-move's finalise.
       if (finished && match.is_ranked) {
-        const { error: finErr } = await svc.rpc("finalise_ranked_match", {
-          _match_id: match.id,
-          _reason: "disconnect",
-          _placements: placementsSnapshot.length > 0 ? (placementsSnapshot as any) : null,
-        });
-        if (finErr) console.error("[sweep] past-grace finalise_ranked_match failed", finErr);
+        await finaliseRankedMatchWithRetry(
+          svc,
+          match.id,
+          "disconnect",
+          placementsSnapshot.length > 0 ? placementsSnapshot : null,
+        );
       }
 
 
@@ -872,6 +874,39 @@ Deno.serve(async (req) => {
     }
   }
 
+
+  // 4. RANKED PAYOUT BACKSTOP. A finished ranked match whose inline
+  // finalise_ranked_match call failed (timeout/pool blip) would otherwise
+  // never pay out. The RPC is idempotent, so re-running it for any recent
+  // finished ranked match missing `state.__finalised` is always safe.
+  try {
+    const backstopSinceIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: finishedRanked, error: frErr } = await svc
+      .from("game_matches")
+      .select("id, state")
+      .eq("status", "finished")
+      .eq("is_ranked", true)
+      .gte("updated_at", backstopSinceIso)
+      .limit(200);
+    if (frErr) {
+      console.warn("[sweep] ranked backstop query failed", frErr);
+    } else {
+      for (const row of finishedRanked ?? []) {
+        if (outOfBudget()) {
+          console.warn("[sweep] ranked backstop out of budget — deferring rest");
+          break;
+        }
+        if ((row as any)?.state?.__finalised === true) continue;
+        const res = await finaliseRankedMatchWithRetry(svc, (row as any).id, "backstop", null, 2);
+        if (res.ok) {
+          summary.ranked_backstop_finalised += 1;
+          console.log(`[sweep] ranked backstop finalised match=${(row as any).id}`);
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[sweep] ranked backstop threw", e);
+  }
 
   console.log("[sweep] done", summary);
   return jsonResponse({ ok: true, ...summary });
