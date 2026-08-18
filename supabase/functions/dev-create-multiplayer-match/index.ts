@@ -17,6 +17,8 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const DEV_TOOLS_ENABLED =
+  (Deno.env.get("ENABLE_DEV_MULTIPLAYER_TOOL") ?? "").toLowerCase() === "true";
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -35,6 +37,7 @@ function makeToken(): string {
 }
 
 Deno.serve(async (req) => {
+  if (!DEV_TOOLS_ENABLED) return jsonResponse({ error: "not found" }, 404);
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "method not allowed" }, 405);
 
