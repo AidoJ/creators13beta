@@ -2834,6 +2834,7 @@ export type Database = {
         Args: { _match_id: string }
         Returns: undefined
       }
+      release_sweep_lease: { Args: { _key: string }; Returns: undefined }
       resolve_effective_tier: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["subscription_tier"]
