@@ -323,7 +323,50 @@ Deno.serve(async (req) => {
       .from("game_matches")
       .select("id, state, seq, player_count, is_ranked, started_at, turn_started_at")
       .eq("status", "active")
-      .not("turn_started_at", "is", null);
+      .not("turn_started_at", "is", null)
+      .limit(2000);
+    if ((idleMatches ?? []).length >= 2000) {
+      console.warn("[sweep] idle-match candidate query hit row limit (2000); some matches may not be swept");
+    }
+
+    // Batch-fetch all roster rows for the candidate matches once, then look
+    // them up inside the loop. This avoids N+1 per-match queries against
+    // game_match_players on every 30-second tick.
+    const idleMatchIds = (idleMatches ?? []).map((m) => m.id);
+    const idleRosterByMatch = new Map<string, Array<{
+      match_id: string;
+      user_id: string;
+      slot: number;
+      status: string | null;
+      idle_strikes: number | null;
+      disconnected_at: string | null;
+      disconnect_stamped_at: string | null;
+      last_presence_gap_at: string | null;
+      last_server_stall_at: string | null;
+    }>>();
+    if (idleMatchIds.length > 0) {
+      const { data: idleRosters } = await svc
+        .from("game_match_players")
+        .select(
+          "match_id, user_id, slot, status, idle_strikes, disconnected_at, disconnect_stamped_at, last_presence_gap_at, last_server_stall_at",
+        )
+        .in("match_id", idleMatchIds);
+      for (const r of (idleRosters ?? []) as Array<{
+        match_id: string;
+        user_id: string;
+        slot: number;
+        status: string | null;
+        idle_strikes: number | null;
+        disconnected_at: string | null;
+        disconnect_stamped_at: string | null;
+        last_presence_gap_at: string | null;
+        last_server_stall_at: string | null;
+      }>) {
+        const list = idleRosterByMatch.get(r.match_id) ?? [];
+        list.push(r);
+        idleRosterByMatch.set(r.match_id, list);
+      }
+    }
 
     for (const m of (idleMatches ?? []) as MatchSweepRow[]) {
       if (outOfBudget()) { console.warn("[sweep] idle loop out of budget — deferring rest"); break; }
