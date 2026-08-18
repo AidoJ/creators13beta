@@ -317,13 +317,15 @@ export function Ecosystem({
     }, nextZoom));
   };
 
+  const suppressClickRef = useRef(false);
   const endPointer = (e: React.PointerEvent<HTMLDivElement>) => {
     const d = dragPanRef.current;
     if (d && d.pointerId === e.pointerId) {
       // Swallow the tap that ends a real pan so it doesn't place a card.
-      if (d.active) { e.preventDefault(); e.stopPropagation(); }
+      if (d.active) suppressClickRef.current = true;
       dragPanRef.current = null;
     }
+
     const p = pinchRef.current;
     if (!p) return;
     p.pointers.delete(e.pointerId);
