@@ -161,7 +161,17 @@ export function Ecosystem({
       if (cw <= 0 || ch <= 0 || bounds.width <= 0 || bounds.height <= 0) return;
       // Tiny breathing margin so edges don't touch the container.
       const s = Math.min(cw / bounds.width, ch / bounds.height) * 0.98;
-      setScale(Math.max(0.2, Math.min(1, s)));
+      const clamped = Math.max(0.2, Math.min(1, s));
+      setScale((prev) => {
+        // Every card placement changes the board's bounding box by a little
+        // (bounds.width/height are a dependency below), which used to
+        // recompute and re-apply a near-identical scale on every single
+        // placement — a real but visually negligible change still triggers
+        // a render + the transform's CSS transition, which reads as the
+        // whole board "refreshing" every move. Skip re-applying when the
+        // new value is imperceptibly close to what's already showing.
+        return Math.abs(clamped - prev) < 0.01 ? prev : clamped;
+      });
     };
     recalc();
     const ro = new ResizeObserver(recalc);
