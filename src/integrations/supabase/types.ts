@@ -322,6 +322,33 @@ export type Database = {
         }
         Relationships: []
       }
+      client_session_images: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          label: string | null
+          practitioner_id: string
+          storage_path: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          practitioner_id: string
+          storage_path: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          practitioner_id?: string
+          storage_path?: string
+        }
+        Relationships: []
+      }
       community_posts: {
         Row: {
           content: string | null
@@ -1559,6 +1586,7 @@ export type Database = {
           bio_superpower: string | null
           bio_where_i_live: string | null
           case_study_consent_at: string | null
+          certification_level: number
           city: string | null
           community_joined_at: string | null
           community_visible: boolean
@@ -1576,6 +1604,12 @@ export type Database = {
           enrollment_step: Database["public"]["Enums"]["enrollment_step"] | null
           first_name: string | null
           gender: string | null
+          guardian_consent: boolean | null
+          guardian_consent_at: string | null
+          guardian_email: string | null
+          guardian_first_name: string | null
+          guardian_last_name: string | null
+          guardian_phone: string | null
           height_cm: number | null
           hide_avatar: boolean
           id: string
@@ -1626,6 +1660,7 @@ export type Database = {
           bio_superpower?: string | null
           bio_where_i_live?: string | null
           case_study_consent_at?: string | null
+          certification_level?: number
           city?: string | null
           community_joined_at?: string | null
           community_visible?: boolean
@@ -1645,6 +1680,12 @@ export type Database = {
             | null
           first_name?: string | null
           gender?: string | null
+          guardian_consent?: boolean | null
+          guardian_consent_at?: string | null
+          guardian_email?: string | null
+          guardian_first_name?: string | null
+          guardian_last_name?: string | null
+          guardian_phone?: string | null
           height_cm?: number | null
           hide_avatar?: boolean
           id?: string
@@ -1695,6 +1736,7 @@ export type Database = {
           bio_superpower?: string | null
           bio_where_i_live?: string | null
           case_study_consent_at?: string | null
+          certification_level?: number
           city?: string | null
           community_joined_at?: string | null
           community_visible?: boolean
@@ -1714,6 +1756,12 @@ export type Database = {
             | null
           first_name?: string | null
           gender?: string | null
+          guardian_consent?: boolean | null
+          guardian_consent_at?: string | null
+          guardian_email?: string | null
+          guardian_first_name?: string | null
+          guardian_last_name?: string | null
+          guardian_phone?: string | null
           height_cm?: number | null
           hide_avatar?: boolean
           id?: string
