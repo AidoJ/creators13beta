@@ -171,22 +171,24 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
         if (result.ok === true) {
           removeQueued(matchId, entry.id);
           syncPending(matchId);
-          serverSeqRef.current = result.seq;
           const current = matchRowRef.current ?? row;
-          setMatchRowRef.current({
-            ...current,
-            seq: result.seq,
-            turn_started_at: result.turnStartedAt ?? current.turn_started_at,
-          });
+          let canonical: MatchState | null = null;
           if (result.publicState) {
             try {
-              const canonical = deserializeMatch(result.publicState as SerializedMatchState);
-              logClientStateChange("move_response", result.seq, canonical);
-              setStateRef.current(canonical);
+              canonical = deserializeMatch(result.publicState as SerializedMatchState);
             } catch (e) {
               console.error("[apply-move] could not hydrate publicState", e);
             }
           }
+          applyCanonical(
+            result.seq,
+            {
+              ...current,
+              seq: result.seq,
+              turn_started_at: result.turnStartedAt ?? current.turn_started_at,
+            },
+            canonical,
+          );
           continue;
         }
 
@@ -205,20 +207,29 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
         }
 
         if (result.reason === "stale") {
-          // THE critical safety path: the match advanced while we were
-          // offline. Nothing in the queue is valid any more.
-          console.warn("[apply-move REPLAY DROPPED — stale]", {
+          // The match advanced past the seq this move was composed against.
+          // That does NOT automatically mean the move was lost: a request
+          // that timed out or was retried very often DID land, and the 409 is
+          // just our own move coming back at us. Re-check the table before
+          // telling the player anything.
+          console.warn("[apply-move REPLAY REJECTED — stale]", {
             moveType: entry.move.type,
             expectedSeq: entry.expectedSeq,
           });
           staleSeqRef.current = entry.expectedSeq;
           clearQueue(matchId);
-
           syncPending(matchId);
-          toast.message("Your turn passed while you were offline", {
-            description: "That move was discarded — catching up to the table.",
-          });
-          await reconcile(matchId);
+          const canonical = await reconcile(matchId);
+          const landed = moveLanded(entry.move, canonical);
+          if (landed === false && wentOfflineRef.current) {
+            // Genuinely lost, and there really was a connectivity drop.
+            toast.message("Your turn passed while you were offline", {
+              description: "That move was discarded — catching up to the table.",
+            });
+          } else if (landed === false) {
+            toast.message("Catching up to the table…");
+          }
+          wentOfflineRef.current = false;
           break;
         }
 
