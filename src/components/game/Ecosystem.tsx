@@ -84,6 +84,9 @@ export function Ecosystem({
   } | null>(null);
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 3;
+  /** Auto-fit may enlarge the board (not just shrink it) so a wide desktop
+   *  window doesn't show a postage-stamp board in an empty viewport. */
+  const MAX_FIT_SCALE = 2.5;
 
   const clampZoom = (z: number) => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z));
   const resetZoom = useCallback(() => { setUserZoom(1); setPan({ x: 0, y: 0 }); }, []);
