@@ -378,12 +378,16 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
         }
         if (rejected.reason === "stale") {
           staleSeqRef.current = expected;
-          toast.message("Catching up to opponent…");
-
+          // Silent unless the move genuinely didn't land: a 409 here is very
+          // often our own retried move echoing back.
+          const canonical = await reconcile(matchId);
+          if (moveLanded(move, canonical) === false) {
+            toast.message("Catching up to opponent…");
+          }
         } else {
           toast.error(rejected.message ?? "Move rejected by server");
+          await reconcile(matchId);
         }
-        await reconcile(matchId);
       } finally {
         inFlightRef.current = false;
         syncPending(matchId);
@@ -391,7 +395,7 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
         void drainQueue();
       }
     },
-    [drainQueue, reconcile, syncPending],
+    [drainQueue, reconcile, syncPending, applyCanonical, moveLanded],
   );
 
   return { serverSeqRef, submitServerMove, pendingMoveCount };
