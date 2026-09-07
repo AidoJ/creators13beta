@@ -80,19 +80,58 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
     setPendingMoveCount(queueLength(matchId));
   }, []);
 
-  /** Pull the authoritative row + redacted state and push it into the page. */
-  const reconcile = useCallback(async (matchId: string) => {
+  /** Apply a canonical snapshot ONLY if it is at least as new as what is
+   *  already showing. Out-of-order snapshots (a slow reconcile fetch landing
+   *  after a newer realtime push, a replayed ack racing a poll) used to be
+   *  applied blindly, which rewound the board and could wipe a just-opened
+   *  results screen. */
+  const applyCanonical = useCallback(
+    (seq: number, row: GameMatchRow, canonical: MatchState | null) => {
+      if (seq < serverSeqRef.current) {
+        console.warn("[apply-move] ignoring stale snapshot", {
+          seq,
+          current: serverSeqRef.current,
+        });
+        return false;
+      }
+      setMatchRowRef.current(row);
+      if (canonical) {
+        logClientStateChange("move_response", seq, canonical);
+        setStateRef.current(canonical);
+      }
+      serverSeqRef.current = seq;
+      return true;
+    },
+    [],
+  );
+
+  /** Pull the authoritative row + redacted state and push it into the page.
+   *  Returns the canonical state so callers can inspect it (e.g. to check
+   *  whether a "lost" move actually landed). */
+  const reconcile = useCallback(async (matchId: string): Promise<MatchState | null> => {
     try {
       const { row, state: canonical } = await loadMatch(matchId);
-      setMatchRowRef.current(row);
-      logClientStateChange("move_response", Number(row.seq ?? 0), canonical);
-      setStateRef.current(canonical);
-      serverSeqRef.current = Number(row.seq ?? 0);
+      applyCanonical(Number(row.seq ?? 0), row, canonical);
       staleSeqRef.current = null;
-
+      return canonical;
     } catch (e) {
       console.error("[apply-move] reconcile failed", e);
+      return null;
     }
+  }, [applyCanonical]);
+
+  /** Best-effort: did this move already land on the table? Only positively
+   *  determinable for board moves (the hex is occupied in the canonical
+   *  state). Returns null when we can't tell. */
+  const moveLanded = useCallback((move: ServerMove, canonical: MatchState | null): boolean | null => {
+    if (!canonical) return null;
+    const occupied = (key: string) =>
+      canonical.players.some((p) => p.ecosystem?.placed?.has?.(key));
+    if (move.type === "place") return occupied(`${move.pos.q},${move.pos.r}`);
+    if (move.type === "move_hex") {
+      return occupied(`${move.to_pos.q},${move.to_pos.r}`) && !occupied(move.from_key);
+    }
+    return null;
   }, []);
 
   /**
