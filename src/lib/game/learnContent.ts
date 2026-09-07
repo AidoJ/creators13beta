@@ -213,7 +213,7 @@ export const LEARN_TOPICS: LearnTopic[] = [
       },
       {
         kind: "note",
-        text: "A Stealer that has been spent sits in the Used Pile and cannot be picked back up.",
+        text: "A Stealer that has been spent can be picked back up from the Used Pile, but only as a plain Animal — it can never steal again.",
       },
     ],
   },
