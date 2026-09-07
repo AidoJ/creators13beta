@@ -259,14 +259,20 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
     syncPending(matchRow.id);
     void drainQueue();
     const onOnline = () => void drainQueue();
+    const onOffline = () => { wentOfflineRef.current = true; };
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      wentOfflineRef.current = true;
+    }
     const onVisible = () => {
       if (document.visibilityState === "visible") void drainQueue();
     };
     window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
     document.addEventListener("visibilitychange", onVisible);
     const t = setInterval(() => void drainQueue(), RETRY_INTERVAL_MS);
     return () => {
       window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
       document.removeEventListener("visibilitychange", onVisible);
       clearInterval(t);
     };
