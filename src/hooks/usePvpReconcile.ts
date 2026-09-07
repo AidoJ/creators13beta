@@ -250,7 +250,7 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
       const id = matchRowRef.current?.id;
       if (id) syncPending(id);
     }
-  }, [reconcile, syncPending]);
+  }, [reconcile, syncPending, applyCanonical, moveLanded]);
 
   // Replay triggers: mount/restore (covers a mid-blip reload), signal return,
   // tab focus, and a slow retry tick while anything is still queued.
