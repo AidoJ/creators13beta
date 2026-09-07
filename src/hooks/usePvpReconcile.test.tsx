@@ -61,7 +61,14 @@ describe("offline move queue (Batch B)", () => {
     enqueueMove(MATCH_ID, { type: "end_turn" }, 7);
     applyMoveServer.mockResolvedValue({ ok: false, rejected: true, reason: "stale" });
 
+    // Real connectivity loss, then reconnect — that is what licenses the
+    // "you were offline" wording (a plain timeout/race must not).
+    setOnline(false);
     mount();
+    await act(async () => {
+      setOnline(true);
+      window.dispatchEvent(new Event("online"));
+    });
 
     await waitFor(() => expect(applyMoveServer).toHaveBeenCalled());
     // Replayed with its ORIGINAL seq, not the current one.

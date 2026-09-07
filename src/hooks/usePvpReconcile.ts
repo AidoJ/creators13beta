@@ -225,12 +225,12 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
           syncPending(matchId);
           const canonical = await reconcile(matchId);
           const landed = moveLanded(entry.move, canonical);
-          if (landed === false && wentOfflineRef.current) {
+          if (landed !== true && wentOfflineRef.current) {
             // Genuinely lost, and there really was a connectivity drop.
             toast.message("Your turn passed while you were offline", {
               description: "That move was discarded — catching up to the table.",
             });
-          } else if (landed === false) {
+          } else if (landed !== true) {
             toast.message("Catching up to the table…");
           }
           wentOfflineRef.current = false;
