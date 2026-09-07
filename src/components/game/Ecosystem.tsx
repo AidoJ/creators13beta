@@ -151,26 +151,34 @@ export function Ecosystem({
   }, [userZoom, clampPanForZoom]);
 
   // Auto-fit: observe parent container size and scale the board uniformly.
+  // Desktop-safe rules:
+  //  - fractional measurement (getBoundingClientRect), not clientWidth, so a
+  //    non-integer laptop viewport doesn't round us into an overflow;
+  //  - the board may scale UP as well as down, so a wide Windows Chrome
+  //    window no longer shows a tiny board floating in empty space;
+  //  - a "would overflow" result is ALWAYS applied, bypassing the
+  //    anti-flicker epsilon — the epsilon must never leave the board bigger
+  //    than its container (that was the off-screen board).
   useLayoutEffect(() => {
     if (!autoFit) { setScale(1); return; }
     const el = wrapRef.current;
     if (!el) return;
     const recalc = () => {
-      const cw = el.clientWidth;
-      const ch = el.clientHeight;
+      const rect = el.getBoundingClientRect();
+      const cw = rect.width || el.clientWidth;
+      const ch = rect.height || el.clientHeight;
       if (cw <= 0 || ch <= 0 || bounds.width <= 0 || bounds.height <= 0) return;
       // Tiny breathing margin so edges don't touch the container.
       const s = Math.min(cw / bounds.width, ch / bounds.height) * 0.98;
-      const clamped = Math.max(0.2, Math.min(1, s));
+      const clamped = Math.max(0.2, Math.min(MAX_FIT_SCALE, s));
       setScale((prev) => {
-        // Every card placement changes the board's bounding box by a little
-        // (bounds.width/height are a dependency below), which used to
-        // recompute and re-apply a near-identical scale on every single
-        // placement — a real but visually negligible change still triggers
-        // a render + the transform's CSS transition, which reads as the
-        // whole board "refreshing" every move. Skip re-applying when the
-        // new value is imperceptibly close to what's already showing.
-        return Math.abs(clamped - prev) < 0.01 ? prev : clamped;
+        // Skip an imperceptible change (every placement nudges the bounding
+        // box) — unless the current scale actually overflows the container,
+        // in which case it must be corrected now.
+        const overflows =
+          bounds.width * prev > cw + 0.5 || bounds.height * prev > ch + 0.5;
+        if (!overflows && Math.abs(clamped - prev) < 0.01) return prev;
+        return clamped;
       });
     };
     recalc();
