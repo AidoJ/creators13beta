@@ -336,22 +336,24 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
           }
         }
         if (result.ok === true) {
-          serverSeqRef.current = result.seq;
           const current = matchRowRef.current ?? row;
-          setMatchRowRef.current({
-            ...current,
-            seq: result.seq,
-            turn_started_at: result.turnStartedAt ?? current.turn_started_at,
-          });
+          let canonical: MatchState | null = null;
           if (result.publicState) {
             try {
-              const canonical = deserializeMatch(result.publicState as SerializedMatchState);
-              logClientStateChange("move_response", result.seq, canonical);
-              setStateRef.current(canonical);
+              canonical = deserializeMatch(result.publicState as SerializedMatchState);
             } catch (e) {
               console.error("[apply-move] could not hydrate publicState", e);
             }
           }
+          applyCanonical(
+            result.seq,
+            {
+              ...current,
+              seq: result.seq,
+              turn_started_at: result.turnStartedAt ?? current.turn_started_at,
+            },
+            canonical,
+          );
           return;
         }
         const rejected = result as Extract<typeof result, { ok: false }>;
