@@ -58,6 +58,10 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
    *  that is exactly the loop that once flooded the server with hundreds of
    *  "stale seq: expected 20 got 8" rejections per second. */
   const staleSeqRef = useRef<number | null>(null);
+  /** True only when the browser actually reported losing connectivity since
+   *  the last resync. Gates the "you were offline" wording so a plain
+   *  timeout/race can never claim the player dropped out. */
+  const wentOfflineRef = useRef(false);
   const [pendingMoveCount, setPendingMoveCount] = useState(0);
 
 
