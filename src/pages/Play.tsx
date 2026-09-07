@@ -375,7 +375,12 @@ export default function Play() {
     (remoteState: MatchState, row: GameMatchRow) => {
       const seq = Number(row.seq ?? 0);
       const isTerminal = row.status === "finished" || remoteState.finished;
-      if (!isTerminal && seq <= serverSeqRef.current) return;
+      // STRICT ordering: never apply a snapshot older than what's showing.
+      // A late-arriving older snapshot used to be let through when it (or the
+      // current view) was terminal, which is how the results screen could
+      // flash open and then be wiped by a stale push.
+      if (seq < serverSeqRef.current) return;
+      if (seq === serverSeqRef.current && !isTerminal) return;
       logClientStateChange("realtime_push", seq, remoteState);
       setState(remoteState);
       setMatchRow(row);

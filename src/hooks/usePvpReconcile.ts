@@ -58,6 +58,10 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
    *  that is exactly the loop that once flooded the server with hundreds of
    *  "stale seq: expected 20 got 8" rejections per second. */
   const staleSeqRef = useRef<number | null>(null);
+  /** True only when the browser actually reported losing connectivity since
+   *  the last resync. Gates the "you were offline" wording so a plain
+   *  timeout/race can never claim the player dropped out. */
+  const wentOfflineRef = useRef(false);
   const [pendingMoveCount, setPendingMoveCount] = useState(0);
 
 
@@ -80,19 +84,58 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
     setPendingMoveCount(queueLength(matchId));
   }, []);
 
-  /** Pull the authoritative row + redacted state and push it into the page. */
-  const reconcile = useCallback(async (matchId: string) => {
+  /** Apply a canonical snapshot ONLY if it is at least as new as what is
+   *  already showing. Out-of-order snapshots (a slow reconcile fetch landing
+   *  after a newer realtime push, a replayed ack racing a poll) used to be
+   *  applied blindly, which rewound the board and could wipe a just-opened
+   *  results screen. */
+  const applyCanonical = useCallback(
+    (seq: number, row: GameMatchRow, canonical: MatchState | null) => {
+      if (seq < serverSeqRef.current) {
+        console.warn("[apply-move] ignoring stale snapshot", {
+          seq,
+          current: serverSeqRef.current,
+        });
+        return false;
+      }
+      setMatchRowRef.current(row);
+      if (canonical) {
+        logClientStateChange("move_response", seq, canonical);
+        setStateRef.current(canonical);
+      }
+      serverSeqRef.current = seq;
+      return true;
+    },
+    [],
+  );
+
+  /** Pull the authoritative row + redacted state and push it into the page.
+   *  Returns the canonical state so callers can inspect it (e.g. to check
+   *  whether a "lost" move actually landed). */
+  const reconcile = useCallback(async (matchId: string): Promise<MatchState | null> => {
     try {
       const { row, state: canonical } = await loadMatch(matchId);
-      setMatchRowRef.current(row);
-      logClientStateChange("move_response", Number(row.seq ?? 0), canonical);
-      setStateRef.current(canonical);
-      serverSeqRef.current = Number(row.seq ?? 0);
+      applyCanonical(Number(row.seq ?? 0), row, canonical);
       staleSeqRef.current = null;
-
+      return canonical;
     } catch (e) {
       console.error("[apply-move] reconcile failed", e);
+      return null;
     }
+  }, [applyCanonical]);
+
+  /** Best-effort: did this move already land on the table? Only positively
+   *  determinable for board moves (the hex is occupied in the canonical
+   *  state). Returns null when we can't tell. */
+  const moveLanded = useCallback((move: ServerMove, canonical: MatchState | null): boolean | null => {
+    if (!canonical) return null;
+    const occupied = (key: string) =>
+      canonical.players.some((p) => p.ecosystem?.placed?.has?.(key));
+    if (move.type === "place") return occupied(`${move.pos.q},${move.pos.r}`);
+    if (move.type === "move_hex") {
+      return occupied(`${move.to_pos.q},${move.to_pos.r}`) && !occupied(move.from_key);
+    }
+    return null;
   }, []);
 
   /**
@@ -132,22 +175,24 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
         if (result.ok === true) {
           removeQueued(matchId, entry.id);
           syncPending(matchId);
-          serverSeqRef.current = result.seq;
           const current = matchRowRef.current ?? row;
-          setMatchRowRef.current({
-            ...current,
-            seq: result.seq,
-            turn_started_at: result.turnStartedAt ?? current.turn_started_at,
-          });
+          let canonical: MatchState | null = null;
           if (result.publicState) {
             try {
-              const canonical = deserializeMatch(result.publicState as SerializedMatchState);
-              logClientStateChange("move_response", result.seq, canonical);
-              setStateRef.current(canonical);
+              canonical = deserializeMatch(result.publicState as SerializedMatchState);
             } catch (e) {
               console.error("[apply-move] could not hydrate publicState", e);
             }
           }
+          applyCanonical(
+            result.seq,
+            {
+              ...current,
+              seq: result.seq,
+              turn_started_at: result.turnStartedAt ?? current.turn_started_at,
+            },
+            canonical,
+          );
           continue;
         }
 
@@ -166,20 +211,29 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
         }
 
         if (result.reason === "stale") {
-          // THE critical safety path: the match advanced while we were
-          // offline. Nothing in the queue is valid any more.
-          console.warn("[apply-move REPLAY DROPPED — stale]", {
+          // The match advanced past the seq this move was composed against.
+          // That does NOT automatically mean the move was lost: a request
+          // that timed out or was retried very often DID land, and the 409 is
+          // just our own move coming back at us. Re-check the table before
+          // telling the player anything.
+          console.warn("[apply-move REPLAY REJECTED — stale]", {
             moveType: entry.move.type,
             expectedSeq: entry.expectedSeq,
           });
           staleSeqRef.current = entry.expectedSeq;
           clearQueue(matchId);
-
           syncPending(matchId);
-          toast.message("Your turn passed while you were offline", {
-            description: "That move was discarded — catching up to the table.",
-          });
-          await reconcile(matchId);
+          const canonical = await reconcile(matchId);
+          const landed = moveLanded(entry.move, canonical);
+          if (landed !== true && wentOfflineRef.current) {
+            // Genuinely lost, and there really was a connectivity drop.
+            toast.message("Your turn passed while you were offline", {
+              description: "That move was discarded — catching up to the table.",
+            });
+          } else if (landed !== true) {
+            toast.message("Catching up to the table…");
+          }
+          wentOfflineRef.current = false;
           break;
         }
 
@@ -196,7 +250,7 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
       const id = matchRowRef.current?.id;
       if (id) syncPending(id);
     }
-  }, [reconcile, syncPending]);
+  }, [reconcile, syncPending, applyCanonical, moveLanded]);
 
   // Replay triggers: mount/restore (covers a mid-blip reload), signal return,
   // tab focus, and a slow retry tick while anything is still queued.
@@ -205,14 +259,20 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
     syncPending(matchRow.id);
     void drainQueue();
     const onOnline = () => void drainQueue();
+    const onOffline = () => { wentOfflineRef.current = true; };
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      wentOfflineRef.current = true;
+    }
     const onVisible = () => {
       if (document.visibilityState === "visible") void drainQueue();
     };
     window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
     document.addEventListener("visibilitychange", onVisible);
     const t = setInterval(() => void drainQueue(), RETRY_INTERVAL_MS);
     return () => {
       window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
       document.removeEventListener("visibilitychange", onVisible);
       clearInterval(t);
     };
@@ -276,22 +336,24 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
           }
         }
         if (result.ok === true) {
-          serverSeqRef.current = result.seq;
           const current = matchRowRef.current ?? row;
-          setMatchRowRef.current({
-            ...current,
-            seq: result.seq,
-            turn_started_at: result.turnStartedAt ?? current.turn_started_at,
-          });
+          let canonical: MatchState | null = null;
           if (result.publicState) {
             try {
-              const canonical = deserializeMatch(result.publicState as SerializedMatchState);
-              logClientStateChange("move_response", result.seq, canonical);
-              setStateRef.current(canonical);
+              canonical = deserializeMatch(result.publicState as SerializedMatchState);
             } catch (e) {
               console.error("[apply-move] could not hydrate publicState", e);
             }
           }
+          applyCanonical(
+            result.seq,
+            {
+              ...current,
+              seq: result.seq,
+              turn_started_at: result.turnStartedAt ?? current.turn_started_at,
+            },
+            canonical,
+          );
           return;
         }
         const rejected = result as Extract<typeof result, { ok: false }>;
@@ -316,12 +378,16 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
         }
         if (rejected.reason === "stale") {
           staleSeqRef.current = expected;
-          toast.message("Catching up to opponent…");
-
+          // Silent unless the move genuinely didn't land: a 409 here is very
+          // often our own retried move echoing back.
+          const canonical = await reconcile(matchId);
+          if (moveLanded(move, canonical) === false) {
+            toast.message("Catching up to opponent…");
+          }
         } else {
           toast.error(rejected.message ?? "Move rejected by server");
+          await reconcile(matchId);
         }
-        await reconcile(matchId);
       } finally {
         inFlightRef.current = false;
         syncPending(matchId);
@@ -329,7 +395,7 @@ export function usePvpReconcile({ matchRow, setMatchRow, setState }: Args): PvpR
         void drainQueue();
       }
     },
-    [drainQueue, reconcile, syncPending],
+    [drainQueue, reconcile, syncPending, applyCanonical, moveLanded],
   );
 
   return { serverSeqRef, submitServerMove, pendingMoveCount };
