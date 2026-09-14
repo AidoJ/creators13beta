@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>13Creators — front page mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2E1E33;
+  --ink-soft:#6A5870;
+  --magenta:#B21E4B;
+  --magenta-deep:#8C1339;
+  --lilac:#EBD3EE;
+  --lilac-deep:#D9AEE0;
+  --gold:#C1902C;
+  --mint:#E9F3EE;
+  --paper:#FFFDF9;
+  --line:#E4D7E6;
+  --maxw:1120px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-padding-top:132px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto} *{animation:none!important; transition:none!important}}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:Fredoka,"Segoe UI",system-ui,sans-serif; font-weight:400;
+  font-size:17px; line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{margin:0; font-weight:600; line-height:1.15; letter-spacing:-.01em}
+p{margin:0 0 .8em}
+a{color:inherit}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 24px}
+.hand{font-family:Caveat,cursive; font-weight:700}
+
+/* ---------- review chrome (not part of the product) ---------- */
+.review{background:#221528; color:#F3E9F5; font-size:13.5px; padding:9px 0}
+.review .wrap{display:flex; gap:14px; align-items:center; flex-wrap:wrap}
+.review b{font-weight:600}
+.review button{
+  font:inherit; font-family:inherit; background:transparent; color:#F3E9F5;
+  border:1px solid #6A4A72; border-radius:99px; padding:3px 13px; cursor:pointer;
+}
+.review button[aria-pressed="true"]{background:#F3E9F5; color:#221528; border-color:#F3E9F5}
+.note{
+  display:none; background:#FFF6D9; border-left:4px solid var(--gold);
+  padding:12px 16px; margin:0 0 22px; font-size:14.5px; line-height:1.5; border-radius:0 10px 10px 0;
+}
+body.notes-on .note{display:block}
+
+/* ---------- sticky nav ---------- */
+header{position:sticky; top:0; z-index:40; background:rgba(255,253,249,.94); backdrop-filter:blur(8px); border-bottom:1px solid var(--line)}
+.nav{display:flex; align-items:center; gap:10px; height:66px}
+.mark{display:flex; align-items:center; gap:9px; font-weight:700; font-size:19px; color:var(--magenta); text-decoration:none; margin-right:auto}
+.hex{width:26px; height:29px; background:var(--magenta); clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+.nav a.link{
+  text-decoration:none; font-size:15.5px; color:var(--ink-soft); padding:7px 13px; border-radius:99px;
+}
+.nav a.link:hover,.nav a.link:focus-visible{color:var(--ink); background:var(--lilac)}
+.nav a.link[aria-current="true"]{color:var(--magenta-deep); background:var(--lilac); font-weight:500}
+.signin{font-size:15.5px; text-decoration:none; padding:7px 15px; border-radius:99px; border:1.5px solid var(--line)}
+.signin:hover{border-color:var(--magenta); color:var(--magenta)}
+@media(max-width:880px){.nav a.link{display:none}}
+
+/* path bar */
+.pathbar{display:none; background:var(--lilac); border-bottom:1px solid var(--lilac-deep); font-size:15px}
+.pathbar.on{display:block}
+.pathbar .wrap{display:flex; align-items:center; gap:12px; padding-top:9px; padding-bottom:9px; flex-wrap:wrap}
+.pathbar strong{font-weight:600}
+.pathbar button{font:inherit; font-family:inherit; background:none; border:none; text-decoration:underline; cursor:pointer; color:var(--magenta-deep); padding:0}
+
+/* ---------- hero ---------- */
+.hero{background:linear-gradient(180deg,var(--mint) 0%,var(--paper) 100%); padding:64px 0 12px; text-align:center}
+.hero h1{font-size:clamp(34px,5.2vw,56px); max-width:15ch; margin:0 auto .5rem}
+.hero .sub{color:var(--ink-soft); max-width:46ch; margin:0 auto; font-size:18px}
+
+/* ---------- chooser ---------- */
+.chooser{padding:44px 0 8px}
+.chooser .lead{font-size:clamp(30px,4vw,42px); text-align:center; margin-bottom:6px}
+.chooser .hint{text-align:center; color:var(--ink-soft); margin-bottom:26px}
+.paths{display:grid; grid-template-columns:repeat(3,1fr); gap:18px}
+@media(max-width:800px){.paths{grid-template-columns:1fr}}
+.path{
+  font:inherit; font-family:inherit; text-align:left; cursor:pointer;
+  background:var(--lilac); border:2px solid transparent; border-radius:20px;
+  padding:24px 22px 20px; display:flex; flex-direction:column; gap:8px; color:var(--ink);
+}
+.path:hover{border-color:var(--lilac-deep)}
+.path:focus-visible{outline:3px solid var(--magenta); outline-offset:2px}
+.path[aria-pressed="true"]{background:var(--magenta); color:#fff; border-color:var(--magenta-deep)}
+.path[aria-pressed="true"] .path-sub,.path[aria-pressed="true"] .path-go{color:#F6DCE5}
+.path-title{font-size:23px; font-weight:600; line-height:1.2}
+.path-sub{color:var(--ink-soft); font-size:15.5px}
+.path-go{margin-top:auto; padding-top:10px; font-size:14.5px; color:var(--magenta-deep); font-weight:500}
+
+/* ---------- sections ---------- */
+section.band{padding:60px 0; border-top:1px solid var(--line)}
+section.band.dim{opacity:.42}
+.band-head{display:flex; align-items:flex-start; gap:14px; margin-bottom:8px}
+.band-hex{width:22px; height:25px; flex:none; margin-top:7px; background:var(--gold); clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+.band h2{font-size:clamp(27px,3.4vw,36px)}
+.band .blurb{color:var(--ink-soft); max-width:56ch; margin:0 0 30px 36px}
+
+.cards{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; align-items:stretch}
+@media(max-width:860px){.cards{grid-template-columns:1fr}}
+.card{
+  background:#fff; border:1px solid var(--line); border-radius:20px; padding:26px 24px;
+  display:flex; flex-direction:column;
+}
+.card.feature{border:2px solid var(--magenta); box-shadow:0 10px 30px -18px rgba(178,30,75,.55)}
+.card .bird{font-size:30px; line-height:1; margin-bottom:6px}
+.card h3{font-size:25px; margin-bottom:2px}
+.price{font-size:19px; font-weight:600; color:var(--magenta-deep); margin:8px 0 2px}
+.terms{font-size:14.5px; color:var(--ink-soft); margin-bottom:16px}
+.card ul{list-style:none; padding:0; margin:0 0 22px; display:flex; flex-direction:column; gap:9px; font-size:15.5px}
+.card li{display:flex; gap:9px; align-items:flex-start}
+.tick{width:8px; height:9px; flex:none; margin-top:7px; background:var(--gold); clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+.cta{
+  margin-top:auto; display:block; text-align:center; text-decoration:none; font-weight:500; font-size:16px;
+  background:var(--magenta); color:#fff; padding:13px 18px; border-radius:99px; border:2px solid var(--magenta);
+}
+.cta:hover{background:var(--magenta-deep); border-color:var(--magenta-deep)}
+.cta.quiet{background:#fff; color:var(--magenta-deep)}
+.cta.quiet:hover{background:var(--lilac)}
+.after{font-size:14px; color:var(--ink-soft); text-align:center; margin-top:9px}
+
+.steps{display:flex; gap:10px; flex-wrap:wrap; margin:0 0 28px 36px; font-size:15px; color:var(--ink-soft); align-items:center}
+.steps span{background:#fff; border:1px solid var(--line); border-radius:99px; padding:6px 14px}
+
+/* ---------- floating play ---------- */
+.play{
+  position:fixed; right:22px; bottom:22px; z-index:50; width:150px; height:168px;
+  background:#F6C98A; color:var(--ink); border:none; cursor:pointer;
+  clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
+  font:inherit; font-family:inherit; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:2px; text-align:center; text-decoration:none;
+  filter:drop-shadow(0 12px 20px rgba(46,30,51,.28));
+}
+.play:hover{background:#F2BC72}
+.play:focus-visible{outline:3px solid var(--magenta); outline-offset:3px}
+.play b{font-size:18px; font-weight:700; line-height:1.1}
+.play i{font-style:normal; font-size:13.5px; letter-spacing:.02em}
+@media(max-width:600px){
+  .play{right:12px; bottom:12px; width:118px; height:132px}
+  .play b{font-size:15px}
+}
+footer{padding:46px 0 150px; border-top:1px solid var(--line); color:var(--ink-soft); font-size:14.5px}
+</style>
+</head>
+<body>
+
+<div class="review">
+  <div class="wrap">
+    <b>Mockup for review</b>
+    <span>Layout and navigation only — wording, photos and colours are placeholders.</span>
+    <button id="notesBtn" aria-pressed="false">Show design notes</button>
+  </div>
+</div>
+
+<header>
+  <div class="wrap nav">
+    <a class="mark" href="#top"><span class="hex"></span>13Creators</a>
+    <a class="link" href="#community" data-nav="community">Community</a>
+    <a class="link" href="#profiling" data-nav="profiling">Creator Types</a>
+    <a class="link" href="#practitioner" data-nav="practitioner">Practitioner training</a>
+    <a class="signin" href="#">Sign in</a>
+  </div>
+  <div class="pathbar" id="pathbar">
+    <div class="wrap">
+      <span>You're looking at: <strong id="pathLabel"></strong></span>
+      <button id="clearPath">Show me everything</button>
+    </div>
+  </div>
+</header>
+
+<div id="top" class="hero">
+  <div class="wrap">
+    <h1>Discover the 13 Creator Types</h1>
+    <p class="sub">Play the card game for free. Meet other Creators. Find out your own type — or train to profile others.</p>
+  </div>
+</div>
+
+<div class="chooser">
+  <div class="wrap">
+    <p class="note">The whole page is one scroll, so nobody hits a dead end. These three buttons don't take you to a new page — they quieten the parts you didn't ask for and jump you to the right section. The bar at the top then shows what you chose, with a way back to everything. That's how someone finds their way without a menu to learn.</p>
+    <h2 class="lead hand">I want to…</h2>
+    <p class="hint">Pick one to jump straight there, or just scroll.</p>
+    <div class="paths">
+      <button class="path" data-path="community" aria-pressed="false">
+        <span class="path-title">Join the Co-Creators community</span>
+        <span class="path-sub">Meet other Creators and join projects.</span>
+        <span class="path-go">From $8 a month</span>
+      </button>
+      <button class="path" data-path="profiling" aria-pressed="false">
+        <span class="path-title">Find out my Creator Types</span>
+        <span class="path-sub">Discover your body type and its natural powers.</span>
+        <span class="path-go">Free, or from $150</span>
+      </button>
+      <button class="path" data-path="practitioner" aria-pressed="false">
+        <span class="path-title">Become a certified practitioner</span>
+        <span class="path-sub">Train to profile others. Open to all, by application.</span>
+        <span class="path-go">From $200 a month</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<section class="band" id="community" data-band="community">
+  <div class="wrap">
+    <p class="note">Three memberships, but only one decision: how far in do you want to go. Each card adds to the one before it, so the reading order matches the price order. CREATE is marked as the common choice so nobody has to weigh all three equally.</p>
+    <div class="band-head"><span class="band-hex"></span><h2>Join the community</h2></div>
+    <p class="blurb">Every membership includes the card game and the member map. The difference is how much you take part.</p>
+    <div class="steps"><span>1. Choose a membership</span><span>2. Create your account</span><span>3. Pay</span><span>4. You're in</span></div>
+    <div class="cards">
+      <div class="card">
+        <div class="bird">🐦</div>
+        <h3>Connect</h3>
+        <p class="price">$8 a month</p>
+        <p class="terms">Cancel anytime</p>
+        <ul>
+          <li><span class="tick"></span>Play with up to 4 players</li>
+          <li><span class="tick"></span>Create your member profile</li>
+          <li><span class="tick"></span>Contact other members</li>
+          <li><span class="tick"></span>Match with other Creators</li>
+        </ul>
+        <a class="cta quiet" href="#">Join Connect</a>
+      </div>
+      <div class="card feature">
+        <div class="bird">🐤</div>
+        <h3>Create</h3>
+        <p class="price">$28 a month for 13 months</p>
+        <p class="terms">Cancel anytime</p>
+        <ul>
+          <li><span class="tick"></span>Everything in Connect</li>
+          <li><span class="tick"></span>Monthly live Zoom call: 13 Creators Q&amp;A</li>
+        </ul>
+        <a class="cta" href="#">Join Create</a>
+        <p class="after">After 13 months you move to Connect at $8 a month.</p>
+      </div>
+      <div class="card">
+        <div class="bird">🦜</div>
+        <h3>Co-Create</h3>
+        <p class="price">$88 a month for 13 months</p>
+        <p class="terms">Cancel anytime</p>
+        <ul>
+          <li><span class="tick"></span>Everything in Create</li>
+          <li><span class="tick"></span>Monthly live Zoom call: Co-Creator Jam</li>
+          <li><span class="tick"></span>Limited to 13 people per call</li>
+        </ul>
+        <a class="cta quiet" href="#">Join Co-Create</a>
+        <p class="after">After 13 months you move to Connect at $8 a month.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="profiling" data-band="profiling">
+  <div class="wrap">
+    <p class="note">The free option is first, not last. Volunteering as a case study is the widest door into the platform, and burying it under two paid options would waste it. The paid cards then read as "same thing, sooner, with a certified practitioner".</p>
+    <div class="band-head"><span class="band-hex"></span><h2>Find out your Creator Types</h2></div>
+    <p class="blurb">Three ways in. All of them end with a practitioner talking you through what your body type means.</p>
+    <div class="steps"><span>1. Choose how</span><span>2. Book your consultation</span><span>3. Meet your practitioner</span><span>4. Your types appear in your profile</span></div>
+    <div class="cards">
+      <div class="card">
+        <h3>Body Profile</h3>
+        <p class="price">Free</p>
+        <p class="terms">2 Creator Types</p>
+        <ul>
+          <li><span class="tick"></span>Volunteer as a case study for a trainee practitioner</li>
+          <li><span class="tick"></span>You agree to your photos being viewed in class</li>
+          <li><span class="tick"></span>Signed off by the trainer</li>
+        </ul>
+        <a class="cta quiet" href="#">Volunteer as a case study</a>
+      </div>
+      <div class="card feature">
+        <h3>Body Profile</h3>
+        <p class="price">$150</p>
+        <p class="terms">2 Creator Types</p>
+        <ul>
+          <li><span class="tick"></span>Book with a certified practitioner</li>
+          <li><span class="tick"></span>Private 1-hour consultation, on Zoom or in person</li>
+        </ul>
+        <a class="cta" href="#">Book a body profile</a>
+      </div>
+      <div class="card">
+        <h3>Advanced Body Profile</h3>
+        <p class="price">$300</p>
+        <p class="terms">4 Creator Types</p>
+        <ul>
+          <li><span class="tick"></span>Book with a certified profiler</li>
+          <li><span class="tick"></span>Private 1-hour consultation, on Zoom or in person</li>
+          <li><span class="tick"></span>Detailed PDF body type assessment</li>
+        </ul>
+        <a class="cta quiet" href="#">Book an advanced profile</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="practitioner" data-band="practitioner">
+  <div class="wrap">
+    <p class="note">This is the only path with a gate, so it says "apply" rather than "pay" — the button has to tell the truth about what happens next. The membership included in each level is stated on the card, because that's the part people miss and then ask about.</p>
+    <div class="band-head"><span class="band-hex"></span><h2>Become a certified practitioner</h2></div>
+    <p class="blurb">Weave the Creator Types into your own expertise. Each level runs for 13 months in a group of no more than 13.</p>
+    <div class="steps"><span>1. Apply</span><span>2. We review</span><span>3. Join the next intake</span><span>4. Train for 13 months</span></div>
+    <div class="cards">
+      <div class="card">
+        <h3>Level 1</h3>
+        <p class="price">$200 a month</p>
+        <p class="terms">13 months · includes Create membership</p>
+        <ul>
+          <li><span class="tick"></span>Live online group mentoring, coursework and peer support</li>
+          <li><span class="tick"></span>1-day online immersion</li>
+          <li><span class="tick"></span>24 case studies required</li>
+        </ul>
+        <a class="cta quiet" href="#">Apply for Level 1</a>
+      </div>
+      <div class="card">
+        <h3>Level 2</h3>
+        <p class="price">$300 a month</p>
+        <p class="terms">13 months · includes Co-Create membership</p>
+        <ul>
+          <li><span class="tick"></span>Live online group mentoring</li>
+          <li><span class="tick"></span>1-day online immersion</li>
+          <li><span class="tick"></span>6 in-depth case studies required</li>
+        </ul>
+        <a class="cta quiet" href="#">Apply for Level 2</a>
+      </div>
+      <div class="card">
+        <h3>Level 3</h3>
+        <p class="price">$400 a month</p>
+        <p class="terms">13 months · includes Co-Create membership</p>
+        <ul>
+          <li><span class="tick"></span>Live online group mentoring</li>
+          <li><span class="tick"></span>3-day in-person immersion</li>
+          <li><span class="tick"></span>Profiler's assessment</li>
+        </ul>
+        <a class="cta quiet" href="#">Apply for Level 3</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p class="note">Nothing here is a dead end: every section ends in one action, and the play button is always on screen for anyone who isn't ready to decide.</p>
+    <p>Still deciding? Play the card game first — it's free, and you can join anything else later.</p>
+  </div>
+</footer>
+
+<a class="play" href="#"><b>Play now</b><i>Card game · free</i></a>
+
+<script>
+(function(){
+  var labels = {
+    community:"Joining the community",
+    profiling:"Finding out my Creator Types",
+    practitioner:"Becoming a practitioner"
+  };
+  var paths = document.querySelectorAll('.path');
+  var bands = document.querySelectorAll('.band');
+  var navLinks = document.querySelectorAll('.nav a.link');
+  var bar = document.getElementById('pathbar');
+  var label = document.getElementById('pathLabel');
+  var current = null;
+
+  function apply(){
+    paths.forEach(function(p){ p.setAttribute('aria-pressed', String(p.dataset.path === current)); });
+    bands.forEach(function(b){ b.classList.toggle('dim', !!current && b.dataset.band !== current); });
+    navLinks.forEach(function(a){
+      if(current && a.dataset.nav === current){ a.setAttribute('aria-current','true'); }
+      else { a.removeAttribute('aria-current'); }
+    });
+    if(current){ label.textContent = labels[current]; bar.classList.add('on'); }
+    else { bar.classList.remove('on'); }
+  }
+
+  paths.forEach(function(p){
+    p.addEventListener('click', function(){
+      current = (current === p.dataset.path) ? null : p.dataset.path;
+      apply();
+      if(current){
+        var el = document.getElementById(current);
+        if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+      }
+    });
+  });
+
+  document.getElementById('clearPath').addEventListener('click', function(){
+    current = null; apply();
+    document.getElementById('top').scrollIntoView({behavior:'smooth'});
+  });
+
+  var btn = document.getElementById('notesBtn');
+  btn.addEventListener('click', function(){
+    var on = document.body.classList.toggle('notes-on');
+    btn.setAttribute('aria-pressed', String(on));
+    btn.textContent = on ? 'Hide design notes' : 'Show design notes';
+  });
+})();
+</script>
+</body>
+</html>
