@@ -58,7 +58,7 @@ export default function DiscountCodesCard({ userId }: Props) {
       `Discount:    ${row.percent}% off your profiling assessment`,
       `Earned at:   ${row.threshold} game points`,
       `Valid for:   Profiling assessment ONLY`,
-      `Not valid:   on any subscription (Wren / Robin / Falcon / Owl)`,
+      `Not valid:   on any subscription (Wren / Robin / Cockatoo / Owl)`,
       `Issued:      ${new Date(row.created_at).toLocaleString()}`,
       "",
       "Enter this code at checkout when purchasing your profiling assessment.",
