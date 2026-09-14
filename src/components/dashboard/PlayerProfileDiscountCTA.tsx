@@ -118,7 +118,7 @@ export default function PlayerProfileDiscountCTA({ userId }: Props) {
       `Discount:    ${activePct}% off your profiling assessment`,
       `Earned at:   ${activeThreshold} game points`,
       `Valid for:   Profiling assessment ONLY`,
-      `Not valid:   on any subscription (Wren / Robin / Falcon / Owl)`,
+      `Not valid:   on any subscription (Wren / Robin / Cockatoo / Owl)`,
       `Issued:      ${new Date().toLocaleString()}`,
       "",
       "Enter this code at checkout when purchasing your profiling assessment.",

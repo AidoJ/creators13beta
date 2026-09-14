@@ -5,7 +5,6 @@ const TIER_GRADIENTS: Record<string, string> = {
   wren: "from-emerald-500/30 via-teal-500/20 to-cyan-500/30",
   robin: "from-amber-500/30 via-orange-500/20 to-rose-500/30",
   cockatoo: "from-sky-500/30 via-blue-500/20 to-indigo-500/30",
-  falcon: "from-indigo-500/30 via-violet-500/20 to-fuchsia-500/30",
   owl: "from-yellow-500/30 via-amber-600/25 to-orange-700/30",
 };
 

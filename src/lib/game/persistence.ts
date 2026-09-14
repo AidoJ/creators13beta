@@ -57,46 +57,6 @@ function makeToken(): string {
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-export async function createMatchRow(args: {
-  mode: MatchMode;
-  hostUserId: string;
-  hostName: string;
-  guestName?: string;
-  state: MatchState;
-}): Promise<GameMatchRow> {
-  const inviteToken = args.mode === "pvp" ? makeToken() : null;
-  const status: MatchStatus = args.mode === "pvp" ? "waiting" : "active";
-  const { data, error } = await supabase
-    .from("game_matches")
-    .insert({
-      mode: args.mode,
-      status,
-      host_user_id: args.hostUserId,
-      host_name: args.hostName,
-      guest_name: args.guestName ?? null,
-      invite_token: inviteToken,
-      is_ranked: args.mode === "pvp",
-      state: serializeMatch(args.state) as any,
-      last_action_by: args.hostUserId,
-    })
-    .select("*")
-    .single();
-  if (error) throw error;
-
-  if (args.mode === "pvp") {
-    const { error: rosterErr } = await supabase
-      .from("game_match_players")
-      .insert({
-        match_id: (data as any).id,
-        user_id: args.hostUserId,
-        slot: 0,
-        display_name: args.hostName,
-      });
-    if (rosterErr) console.error("[createMatchRow] roster insert failed", rosterErr);
-  }
-
-  return data as unknown as GameMatchRow;
-}
 
 /**
  * B — create a multiplayer lobby match.
