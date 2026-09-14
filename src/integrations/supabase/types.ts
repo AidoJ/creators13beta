@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_grid: {
+        Row: {
+          created_at: string
+          feature_key: string
+          level_key: string
+        }
+        Insert: {
+          created_at?: string
+          feature_key: string
+          level_key: string
+        }
+        Update: {
+          created_at?: string
+          feature_key?: string
+          level_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_grid_feature_key_fkey"
+            columns: ["feature_key"]
+            isOneToOne: false
+            referencedRelation: "features"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "access_grid_level_key_fkey"
+            columns: ["level_key"]
+            isOneToOne: false
+            referencedRelation: "access_levels"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      access_levels: {
+        Row: {
+          created_at: string
+          display_name: string
+          key: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          key: string
+          sort_order: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          key?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       assessment_results: {
         Row: {
           answers: Json | null
@@ -702,6 +759,53 @@ export type Database = {
           },
         ]
       }
+      entitlements: {
+        Row: {
+          created_at: string
+          ends_at: string | null
+          id: string
+          level_key: string
+          source: Database["public"]["Enums"]["entitlement_source"]
+          starts_at: string
+          status: Database["public"]["Enums"]["entitlement_status"]
+          stripe_ref: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          level_key: string
+          source: Database["public"]["Enums"]["entitlement_source"]
+          starts_at?: string
+          status?: Database["public"]["Enums"]["entitlement_status"]
+          stripe_ref?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          level_key?: string
+          source?: Database["public"]["Enums"]["entitlement_source"]
+          starts_at?: string
+          status?: Database["public"]["Enums"]["entitlement_status"]
+          stripe_ref?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entitlements_level_key_fkey"
+            columns: ["level_key"]
+            isOneToOne: false
+            referencedRelation: "access_levels"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       faqs: {
         Row: {
           answer: string
@@ -731,6 +835,30 @@ export type Database = {
           id?: string
           question?: string
           sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      features: {
+        Row: {
+          category: string
+          created_at: string
+          display_name: string
+          key: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          display_name: string
+          key: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          display_name?: string
+          key?: string
           updated_at?: string
         }
         Relationships: []
@@ -2803,6 +2931,10 @@ export type Database = {
           total_bot_wins: number
         }[]
       }
+      has_feature: {
+        Args: { _feature_key: string; _uid: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2856,6 +2988,7 @@ export type Database = {
         Returns: undefined
       }
       marketing_unsubscribe: { Args: { _token: string }; Returns: boolean }
+      my_features: { Args: never; Returns: string[] }
       open_quiz_if_needed:
         | {
             Args: {
@@ -2940,6 +3073,8 @@ export type Database = {
         | "booking_made"
         | "awaiting_profiling"
         | "complete"
+      entitlement_source: "stripe" | "admin" | "code" | "backfill"
+      entitlement_status: "active" | "cancelled" | "expired"
       match_mode: "solo" | "pvp"
       match_status: "waiting" | "active" | "finished"
       order_status:
@@ -3123,6 +3258,8 @@ export const Constants = {
         "awaiting_profiling",
         "complete",
       ],
+      entitlement_source: ["stripe", "admin", "code", "backfill"],
+      entitlement_status: ["active", "cancelled", "expired"],
       match_mode: ["solo", "pvp"],
       match_status: ["waiting", "active", "finished"],
       order_status: [
