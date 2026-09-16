@@ -146,7 +146,21 @@ export default function Details() {
 
     setLoading(true);
 
-    const profileData: Record<string, unknown> = {
+    // Guardian details are only written for minors. For adults we deliberately
+    // leave whatever is stored untouched — a minor who turns 18 must keep the
+    // consent evidence for photos taken while they were under 18.
+    const guardianFields = isMinor
+      ? {
+          guardian_consent: guardianConsent,
+          guardian_first_name: guardianFirstName.trim() || null,
+          guardian_last_name: guardianLastName.trim() || null,
+          guardian_phone: guardianPhone.trim() || null,
+          guardian_email: guardianEmail.trim() || null,
+          ...(guardianConsent ? { guardian_consent_at: new Date().toISOString() } : {}),
+        }
+      : {};
+
+    const profileData = {
       user_id: user.id,
       first_name: firstName || null,
       last_name: lastName || null,
@@ -164,19 +178,8 @@ export default function Details() {
       postal_code: postalCode || null,
       country: country || null,
       medical_history: medicalHistory || null,
+      ...guardianFields,
     };
-
-    // Guardian details are only written for minors. For adults we deliberately
-    // leave whatever is stored untouched — a minor who turns 18 must keep the
-    // consent evidence for photos taken while they were under 18.
-    if (isMinor) {
-      profileData.guardian_consent = guardianConsent;
-      profileData.guardian_first_name = guardianFirstName.trim() || null;
-      profileData.guardian_last_name = guardianLastName.trim() || null;
-      profileData.guardian_phone = guardianPhone.trim() || null;
-      profileData.guardian_email = guardianEmail.trim() || null;
-      if (guardianConsent) profileData.guardian_consent_at = new Date().toISOString();
-    }
 
     const { error } = await supabase
       .from("profiles")
