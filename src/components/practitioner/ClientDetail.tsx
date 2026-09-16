@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { getCreatorTypeColor, sortCreatorTypes } from "@/lib/creatorTypes";
-import { isPaidTier } from "@/lib/clientClassification";
+
 
 interface ProfileData {
   first_name: string | null;
@@ -67,7 +67,7 @@ export default function ClientDetail({ clientId, onClientNameLoaded }: ClientDet
   const [savingZoom, setSavingZoom] = useState(false);
   const { user } = useAuth();
   const [isCertified, setIsCertified] = useState(false);
-  const [clientIsPaidSubscriber, setClientIsPaidSubscriber] = useState(false);
+  
   const [isCaseStudySubject, setIsCaseStudySubject] = useState(false);
   const [faceSplitData, setFaceSplitData] = useState<FaceSplitData | null>(null);
   const [bodyAnnotationData, setBodyAnnotationData] = useState<BodyAnnotationData | null>(null);
@@ -97,11 +97,11 @@ export default function ClientDetail({ clientId, onClientNameLoaded }: ClientDet
   useEffect(() => {
     async function fetchClientData() {
       setLoading(true);
-      const [profileRes, bookingRes, ctRes, subRes, csRes] = await Promise.all([
+      const [profileRes, bookingRes, ctRes, csRes] = await Promise.all([
         supabase.from("profiles").select("first_name, last_name, email, enrollment_step, date_of_birth, gender, height_cm, shoe_size, city, state, country, case_study_consent_at, guardian_consent, guardian_first_name, guardian_last_name, guardian_phone, guardian_email, guardian_consent_at").eq("user_id", clientId).maybeSingle(),
         supabase.from("bookings").select("id, scheduled_at, status, zoom_link").eq("client_id", clientId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
         supabase.from("creator_type_profiles").select("primary_type, secondary_type, type_3, type_4, profiled_at").eq("user_id", clientId).maybeSingle(),
-        (supabase.from("client_subscription_summary" as any).select("tier").eq("user_id", clientId).maybeSingle() as any),
+        
         supabase.from("case_studies").select("id").eq("subject_user_id", clientId).limit(1),
       ]);
       if (profileRes.data) {
@@ -111,7 +111,6 @@ export default function ClientDetail({ clientId, onClientNameLoaded }: ClientDet
       }
       if (bookingRes.data) setBooking(bookingRes.data);
       if (ctRes.data) setCreatorType(ctRes.data);
-      setClientIsPaidSubscriber(isPaidTier(subRes.data?.tier));
       setIsCaseStudySubject(!!(csRes.data && csRes.data.length > 0));
       setLoading(false);
     }
@@ -346,8 +345,8 @@ export default function ClientDetail({ clientId, onClientNameLoaded }: ClientDet
       {/* Photo composite */}
       <CompositePhotoLayout userId={clientId} subjectName={`${fullName}'s Profiling Photos`} showReclassify />
 
-      {/* Face Split & Body Annotation — certified practitioners only, paying subscribers only */}
-      {isCertified && clientIsPaidSubscriber && !isCaseStudySubject && (
+      {/* Face Split, Body Annotation & Profiling Report — Level 3 certified practitioners (or trainer/admin), non-case-study clients */}
+      {isCertified && !isCaseStudySubject && (
         <>
           <FaceSplitMirror userId={clientId} onDataChange={handleFaceSplitChange} />
           <BodyAnnotationTool userId={clientId} onDataChange={handleBodyAnnotationChange} />
