@@ -279,6 +279,16 @@ export default function AdminDashboard() {
     }
   }
 
+  async function handleCertificationLevel(userId: string, level: number) {
+    const { error } = await supabase.from("profiles").update({ certification_level: level } as never).eq("user_id", userId);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Certification level updated", description: `Set to Level ${level}` });
+      await fetchUsers();
+    }
+  }
+
   // Assign client to practitioner
   const [assignClient, setAssignClient] = useState("");
   const [assignPrac, setAssignPrac] = useState("");
