@@ -257,7 +257,7 @@ export default function Photos() {
       setLoadingExisting(false);
     };
     loadExisting();
-  }, [user]);
+  }, [user, navigate, toast, tier, billing]);
 
   const reviewPhoto = useCallback(async (key: PhotoKey, file: File) => {
     setPhotos((p) => ({ ...p, [key]: { ...p[key], reviewing: true, review: null } }));
