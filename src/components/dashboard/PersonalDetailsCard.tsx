@@ -14,6 +14,11 @@ interface ProfileData {
   city: string | null;
   state: string | null;
   country: string | null;
+  guardian_consent?: boolean | null;
+  guardian_first_name?: string | null;
+  guardian_last_name?: string | null;
+  guardian_phone?: string | null;
+  guardian_email?: string | null;
 }
 
 interface PersonalDetailsCardProps {
@@ -76,6 +81,24 @@ export default function PersonalDetailsCard({ profile, hasDetails }: PersonalDet
           <DetailItem icon={<MapPin className="h-3.5 w-3.5" />} label="Location" value={location} className="col-span-2" />
         )}
       </div>
+
+      {age !== null && age < 18 && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 mt-2 space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">Parent / Guardian</p>
+          {profile?.guardian_consent ? (
+            <div className="text-xs text-foreground space-y-0.5">
+              <p className="font-medium">
+                {[profile.guardian_first_name, profile.guardian_last_name].filter(Boolean).join(" ") || "—"}
+              </p>
+              <p className="text-muted-foreground">{profile.guardian_phone || "—"}</p>
+              <p className="text-muted-foreground">{profile.guardian_email || "—"}</p>
+              <p className="text-[11px] text-green-700 mt-1">✓ Consent confirmed</p>
+            </div>
+          ) : (
+            <p className="text-xs text-amber-700">Guardian consent not yet recorded — required before photo upload.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

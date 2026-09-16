@@ -29,6 +29,12 @@ interface ProfileData {
   state: string | null;
   country: string | null;
   case_study_consent_at: string | null;
+  guardian_consent: boolean | null;
+  guardian_first_name: string | null;
+  guardian_last_name: string | null;
+  guardian_phone: string | null;
+  guardian_email: string | null;
+  guardian_consent_at: string | null;
 }
 
 interface BookingData {
