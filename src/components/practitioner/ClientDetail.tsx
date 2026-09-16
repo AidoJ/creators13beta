@@ -76,11 +76,21 @@ export default function ClientDetail({ clientId, onClientNameLoaded }: ClientDet
   const handleFaceSplitChange = useCallback((data: FaceSplitData) => setFaceSplitData(data), []);
   const handleBodyAnnotationChange = useCallback((data: BodyAnnotationData) => setBodyAnnotationData(data), []);
 
-  // Fetch practitioner certification status
+  // Fetch practitioner certification status (Level 3 certified, or trainer/admin)
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("practitioner_status").eq("user_id", user.id).maybeSingle()
-      .then(({ data }) => setIsCertified(data?.practitioner_status === "certified"));
+    (async () => {
+      const [profileRes, rolesRes] = await Promise.all([
+        supabase.from("profiles").select("practitioner_status, certification_level").eq("user_id", user.id).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", user.id),
+      ]);
+      const roles = (rolesRes.data || []).map(r => r.role as string);
+      const isTrainerOrAdmin = roles.includes("trainer") || roles.includes("admin");
+      const isLevel3Certified =
+        profileRes.data?.practitioner_status === "certified" &&
+        ((profileRes.data as { certification_level?: number | null })?.certification_level ?? 1) >= 3;
+      setIsCertified(isTrainerOrAdmin || isLevel3Certified);
+    })();
   }, [user]);
 
   // Fetch client data + subscription
