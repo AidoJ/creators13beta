@@ -351,6 +351,71 @@ export default function Details() {
             </div>
           </section>
 
+          {/* Parent/Guardian consent — only shown when user is under 18 */}
+          {isMinor && (
+            <section className="bg-amber-500/5 border-2 border-amber-500/40 rounded-2xl p-6 space-y-4">
+              <h2 className="text-sm font-semibold text-amber-700 uppercase tracking-wider">Parent / Guardian Consent</h2>
+              <p className="text-sm text-foreground leading-relaxed">
+                Since you are under 18 years old, we need consent from a parent or guardian before you upload your photos.
+              </p>
+
+              <label className="flex gap-3 items-start cursor-pointer rounded-xl border border-border bg-card p-3">
+                <input
+                  type="checkbox"
+                  className="mt-1 h-4 w-4 flex-shrink-0 accent-primary"
+                  checked={guardianConsent}
+                  onChange={(e) => setGuardianConsent(e.target.checked)}
+                  required
+                />
+                <span className="text-xs text-foreground leading-relaxed">
+                  Yes, I confirm I have obtained consent from my parent/guardian named below and that they are aware of the following:
+                  <ul className="list-disc pl-5 mt-2 space-y-1">
+                    <li>I am having body and face photos submitted as a volunteer case study or paying client of 13CREATORS</li>
+                    <li>The <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-primary underline" onClick={(e) => e.stopPropagation()}>privacy policy</a> that states exactly how body photos are stored, viewed and removed from this website</li>
+                    <li>They can contact us for more information via <span className="text-primary">info@13creators.com</span></li>
+                  </ul>
+                </span>
+              </label>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="guardianFirstName">Guardian First Name *</Label>
+                  <Input id="guardianFirstName" required={isMinor} value={guardianFirstName} onChange={(e) => setGuardianFirstName(e.target.value)} placeholder="Jane" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="guardianLastName">Guardian Last Name *</Label>
+                  <Input id="guardianLastName" required={isMinor} value={guardianLastName} onChange={(e) => setGuardianLastName(e.target.value)} placeholder="Smith" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="guardianPhone">Guardian Phone *</Label>
+                <Input
+                  id="guardianPhone"
+                  type="tel"
+                  required={isMinor}
+                  value={guardianPhone}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val.startsWith("+")) {
+                      setGuardianPhone("+" + val.replace(/^\+*/, ""));
+                    } else {
+                      setGuardianPhone(val);
+                    }
+                  }}
+                  placeholder="+61 412 345 678"
+                />
+                <p className="text-[11px] text-muted-foreground mt-0.5">Must include country code, e.g. +61 for Australia</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="guardianEmail">Guardian Email *</Label>
+                <Input id="guardianEmail" type="email" required={isMinor} value={guardianEmail} onChange={(e) => setGuardianEmail(e.target.value)} placeholder="guardian@example.com" />
+              </div>
+            </section>
+          )}
+
+
           {/* Physical */}
           <section className="bg-card border border-border rounded-2xl p-6 space-y-4">
             <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Physical Details</h2>
