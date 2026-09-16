@@ -49,6 +49,24 @@ export default function Details() {
   const [postalCode, setPostalCode] = useState("");
   const [country, setCountry] = useState("Australia");
   const [medicalHistory, setMedicalHistory] = useState("");
+  const [guardianConsent, setGuardianConsent] = useState(false);
+  const [guardianFirstName, setGuardianFirstName] = useState("");
+  const [guardianLastName, setGuardianLastName] = useState("");
+  const [guardianPhone, setGuardianPhone] = useState("+61 ");
+  const [guardianEmail, setGuardianEmail] = useState("");
+
+  // Calculate age from DOB. Returns null if DOB is blank/invalid.
+  const ageFromDob = (() => {
+    if (!dateOfBirth) return null;
+    const dob = new Date(dateOfBirth);
+    if (isNaN(dob.getTime())) return null;
+    const now = new Date();
+    let age = now.getFullYear() - dob.getFullYear();
+    const m = now.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
+    return age;
+  })();
+  const isMinor = ageFromDob !== null && ageFromDob < 18;
 
   // Fetch existing profile data on mount — only once per user id, so that
   // returning to the tab (which re-fires auth state) doesn't wipe in-progress edits.
@@ -60,7 +78,7 @@ export default function Details() {
     const load = async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("first_name, last_name, phone, date_of_birth, gender, pronouns, height_cm, shoe_size, address_line1, address_line2, city, state, postal_code, country, medical_history")
+        .select("first_name, last_name, phone, date_of_birth, gender, pronouns, height_cm, shoe_size, address_line1, address_line2, city, state, postal_code, country, medical_history, guardian_consent, guardian_first_name, guardian_last_name, guardian_phone, guardian_email")
         .eq("user_id", user.id)
         .maybeSingle();
       if (data) {
@@ -85,6 +103,11 @@ export default function Details() {
         if (data.postal_code) setPostalCode(data.postal_code);
         if (data.country) setCountry(data.country);
         if (data.medical_history) setMedicalHistory(data.medical_history);
+        if (data.guardian_consent) setGuardianConsent(true);
+        if (data.guardian_first_name) setGuardianFirstName(data.guardian_first_name);
+        if (data.guardian_last_name) setGuardianLastName(data.guardian_last_name);
+        if (data.guardian_phone) setGuardianPhone(data.guardian_phone);
+        if (data.guardian_email) setGuardianEmail(data.guardian_email);
       }
       setFetching(false);
     };
@@ -102,7 +125,40 @@ export default function Details() {
       return;
     }
 
+    if (isMinor) {
+      if (!guardianConsent) {
+        toast({ title: "Parent/guardian consent required", description: "Please tick the consent confirmation.", variant: "destructive" });
+        return;
+      }
+      if (!guardianFirstName.trim() || !guardianLastName.trim()) {
+        toast({ title: "Guardian name required", variant: "destructive" });
+        return;
+      }
+      if (!/^\+\d[\d\s\-]{6,}$/.test(guardianPhone.trim())) {
+        toast({ title: "Guardian phone must be in international format", description: "e.g. +61 412 345 678", variant: "destructive" });
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guardianEmail.trim())) {
+        toast({ title: "Valid guardian email required", variant: "destructive" });
+        return;
+      }
+    }
+
     setLoading(true);
+
+    // Guardian details are only written for minors. For adults we deliberately
+    // leave whatever is stored untouched — a minor who turns 18 must keep the
+    // consent evidence for photos taken while they were under 18.
+    const guardianFields = isMinor
+      ? {
+          guardian_consent: guardianConsent,
+          guardian_first_name: guardianFirstName.trim() || null,
+          guardian_last_name: guardianLastName.trim() || null,
+          guardian_phone: guardianPhone.trim() || null,
+          guardian_email: guardianEmail.trim() || null,
+          ...(guardianConsent ? { guardian_consent_at: new Date().toISOString() } : {}),
+        }
+      : {};
 
     const profileData = {
       user_id: user.id,
@@ -122,6 +178,7 @@ export default function Details() {
       postal_code: postalCode || null,
       country: country || null,
       medical_history: medicalHistory || null,
+      ...guardianFields,
     };
 
     const { error } = await supabase
@@ -296,6 +353,71 @@ export default function Details() {
               <Input id="pronouns" value={pronouns} onChange={(e) => setPronouns(e.target.value)} placeholder="e.g. she/her, he/him, they/them" />
             </div>
           </section>
+
+          {/* Parent/Guardian consent — only shown when user is under 18 */}
+          {isMinor && (
+            <section className="bg-amber-500/5 border-2 border-amber-500/40 rounded-2xl p-6 space-y-4">
+              <h2 className="text-sm font-semibold text-amber-700 uppercase tracking-wider">Parent / Guardian Consent</h2>
+              <p className="text-sm text-foreground leading-relaxed">
+                Since you are under 18 years old, we need consent from a parent or guardian before you upload your photos.
+              </p>
+
+              <label className="flex gap-3 items-start cursor-pointer rounded-xl border border-border bg-card p-3">
+                <input
+                  type="checkbox"
+                  className="mt-1 h-4 w-4 flex-shrink-0 accent-primary"
+                  checked={guardianConsent}
+                  onChange={(e) => setGuardianConsent(e.target.checked)}
+                  required
+                />
+                <span className="text-xs text-foreground leading-relaxed">
+                  Yes, I confirm I have obtained consent from my parent/guardian named below and that they are aware of the following:
+                  <ul className="list-disc pl-5 mt-2 space-y-1">
+                    <li>I am having body and face photos submitted as a volunteer case study or paying client of 13CREATORS</li>
+                    <li>The <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-primary underline" onClick={(e) => e.stopPropagation()}>privacy policy</a> that states exactly how body photos are stored, viewed and removed from this website</li>
+                    <li>They can contact us for more information via <span className="text-primary">info@13creators.com</span></li>
+                  </ul>
+                </span>
+              </label>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="guardianFirstName">Guardian First Name *</Label>
+                  <Input id="guardianFirstName" required={isMinor} value={guardianFirstName} onChange={(e) => setGuardianFirstName(e.target.value)} placeholder="Jane" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="guardianLastName">Guardian Last Name *</Label>
+                  <Input id="guardianLastName" required={isMinor} value={guardianLastName} onChange={(e) => setGuardianLastName(e.target.value)} placeholder="Smith" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="guardianPhone">Guardian Phone *</Label>
+                <Input
+                  id="guardianPhone"
+                  type="tel"
+                  required={isMinor}
+                  value={guardianPhone}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val.startsWith("+")) {
+                      setGuardianPhone("+" + val.replace(/^\+*/, ""));
+                    } else {
+                      setGuardianPhone(val);
+                    }
+                  }}
+                  placeholder="+61 412 345 678"
+                />
+                <p className="text-[11px] text-muted-foreground mt-0.5">Must include country code, e.g. +61 for Australia</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="guardianEmail">Guardian Email *</Label>
+                <Input id="guardianEmail" type="email" required={isMinor} value={guardianEmail} onChange={(e) => setGuardianEmail(e.target.value)} placeholder="guardian@example.com" />
+              </div>
+            </section>
+          )}
+
 
           {/* Physical */}
           <section className="bg-card border border-border rounded-2xl p-6 space-y-4">

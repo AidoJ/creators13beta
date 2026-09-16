@@ -29,6 +29,12 @@ interface ProfileData {
   state: string | null;
   country: string | null;
   case_study_consent_at: string | null;
+  guardian_consent: boolean | null;
+  guardian_first_name: string | null;
+  guardian_last_name: string | null;
+  guardian_phone: string | null;
+  guardian_email: string | null;
+  guardian_consent_at: string | null;
 }
 
 interface BookingData {
@@ -82,7 +88,7 @@ export default function ClientDetail({ clientId, onClientNameLoaded }: ClientDet
     async function fetchClientData() {
       setLoading(true);
       const [profileRes, bookingRes, ctRes, subRes, csRes] = await Promise.all([
-        supabase.from("profiles").select("first_name, last_name, email, enrollment_step, date_of_birth, gender, height_cm, shoe_size, city, state, country, case_study_consent_at").eq("user_id", clientId).maybeSingle(),
+        supabase.from("profiles").select("first_name, last_name, email, enrollment_step, date_of_birth, gender, height_cm, shoe_size, city, state, country, case_study_consent_at, guardian_consent, guardian_first_name, guardian_last_name, guardian_phone, guardian_email, guardian_consent_at").eq("user_id", clientId).maybeSingle(),
         supabase.from("bookings").select("id, scheduled_at, status, zoom_link").eq("client_id", clientId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
         supabase.from("creator_type_profiles").select("primary_type, secondary_type, type_3, type_4, profiled_at").eq("user_id", clientId).maybeSingle(),
         (supabase.from("client_subscription_summary" as any).select("tier").eq("user_id", clientId).maybeSingle() as any),
@@ -203,6 +209,55 @@ export default function ClientDetail({ clientId, onClientNameLoaded }: ClientDet
           )}
         </div>
       </div>
+
+      {/* Parent/Guardian consent — only for under-18 clients */}
+      {(() => {
+        if (!profile.date_of_birth) return null;
+        const dob = new Date(profile.date_of_birth);
+        const now = new Date();
+        let age = now.getFullYear() - dob.getFullYear();
+        const m = now.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
+        if (age >= 18) return null;
+        const given = !!profile.guardian_consent;
+        return (
+          <div className={`rounded-2xl border p-4 space-y-3 ${given ? "border-green-500/30 bg-green-500/5" : "border-amber-500/40 bg-amber-500/5"}`}>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <h3 className="text-sm font-semibold text-foreground">Parent / Guardian Consent</h3>
+              <Badge variant="outline" className={`text-xs ${given ? "bg-green-500/10 text-green-600 border-green-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/30"}`}>
+                {given ? "Consent Given" : "Consent Missing"} · Age {age}
+              </Badge>
+            </div>
+            {given ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                <div>
+                  <span className="text-muted-foreground text-xs">Guardian</span>
+                  <p className="font-medium text-foreground">{[profile.guardian_first_name, profile.guardian_last_name].filter(Boolean).join(" ") || "—"}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-xs">Phone</span>
+                  <p className="font-medium text-foreground break-all">{profile.guardian_phone || "—"}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-xs">Email</span>
+                  <p className="font-medium text-foreground break-all">{profile.guardian_email || "—"}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-xs">Consented</span>
+                  <p className="font-medium text-foreground">
+                    {profile.guardian_consent_at ? new Date(profile.guardian_consent_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" }) : "—"}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-amber-600">
+                This client is under 18 and has not recorded parent/guardian consent. Do not proceed with profiling until consent is provided in their personal details.
+              </p>
+            )}
+          </div>
+        );
+      })()}
+
 
       {/* Booking info */}
       {booking?.scheduled_at && (
