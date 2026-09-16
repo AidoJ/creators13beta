@@ -210,6 +210,55 @@ export default function ClientDetail({ clientId, onClientNameLoaded }: ClientDet
         </div>
       </div>
 
+      {/* Parent/Guardian consent — only for under-18 clients */}
+      {(() => {
+        if (!profile.date_of_birth) return null;
+        const dob = new Date(profile.date_of_birth);
+        const now = new Date();
+        let age = now.getFullYear() - dob.getFullYear();
+        const m = now.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
+        if (age >= 18) return null;
+        const given = !!profile.guardian_consent;
+        return (
+          <div className={`rounded-2xl border p-4 space-y-3 ${given ? "border-green-500/30 bg-green-500/5" : "border-amber-500/40 bg-amber-500/5"}`}>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <h3 className="text-sm font-semibold text-foreground">Parent / Guardian Consent</h3>
+              <Badge variant="outline" className={`text-xs ${given ? "bg-green-500/10 text-green-600 border-green-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/30"}`}>
+                {given ? "Consent Given" : "Consent Missing"} · Age {age}
+              </Badge>
+            </div>
+            {given ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                <div>
+                  <span className="text-muted-foreground text-xs">Guardian</span>
+                  <p className="font-medium text-foreground">{[profile.guardian_first_name, profile.guardian_last_name].filter(Boolean).join(" ") || "—"}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-xs">Phone</span>
+                  <p className="font-medium text-foreground break-all">{profile.guardian_phone || "—"}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-xs">Email</span>
+                  <p className="font-medium text-foreground break-all">{profile.guardian_email || "—"}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-xs">Consented</span>
+                  <p className="font-medium text-foreground">
+                    {profile.guardian_consent_at ? new Date(profile.guardian_consent_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" }) : "—"}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-amber-600">
+                This client is under 18 and has not recorded parent/guardian consent. Do not proceed with profiling until consent is provided in their personal details.
+              </p>
+            )}
+          </div>
+        );
+      })()}
+
+
       {/* Booking info */}
       {booking?.scheduled_at && (
         <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
