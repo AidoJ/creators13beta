@@ -52,6 +52,29 @@ serve(async (req) => {
       throw new AuthError("Forbidden: no active practitioner relationship with this client", 403);
     }
 
+    // Authorisation: trainer/admin, or a certified practitioner at level 3+.
+    const [{ data: callerRoles }, { data: callerProfile }] = await Promise.all([
+      supabase.from("user_roles").select("role").eq("user_id", __caller.id),
+      supabase
+        .from("profiles")
+        .select("practitioner_status, certification_level")
+        .eq("user_id", __caller.id)
+        .maybeSingle(),
+    ]);
+    const isTrainerOrAdmin = (callerRoles ?? []).some(
+      (r: { role: string }) => r.role === "trainer" || r.role === "admin",
+    );
+    const isLevel3Certified =
+      (callerProfile as { practitioner_status?: string | null; certification_level?: number | null } | null)
+        ?.practitioner_status === "certified" &&
+      ((callerProfile as { certification_level?: number | null } | null)?.certification_level ?? 1) >= 3;
+    if (!isTrainerOrAdmin && !isLevel3Certified) {
+      throw new AuthError(
+        "Forbidden: profiling reports require Level 3 certification",
+        403,
+      );
+    }
+
     // Recipient is resolved server-side, never trusted from the request body.
     const { data: clientProfile } = await supabase
       .from("profiles")
