@@ -44,6 +44,7 @@ interface UserRow {
   enrollment_step: EnrollmentStep | null;
   practitioner_code: string | null;
   practitioner_status: string | null;
+  certification_level: number | null;
   training_started_at: string | null;
   roles: AppRole[];
   tier: string | null;
@@ -108,7 +109,7 @@ export default function AdminDashboard() {
 
   const fetchUsers = useCallback(async () => {
     const [profilesRes, rolesRes, subsRes] = await Promise.all([
-      supabase.from("profiles").select("user_id, first_name, last_name, email, enrollment_step, practitioner_code, practitioner_status, training_started_at").order("created_at", { ascending: false }),
+      supabase.from("profiles").select("user_id, first_name, last_name, email, enrollment_step, practitioner_code, practitioner_status, certification_level, training_started_at").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("subscriptions").select("user_id, tier, status"),
     ]);
@@ -134,6 +135,7 @@ export default function AdminDashboard() {
       enrollment_step: p.enrollment_step,
       practitioner_code: p.practitioner_code,
       practitioner_status: (p as any).practitioner_status || null,
+      certification_level: (p as any).certification_level ?? null,
       training_started_at: (p as any).training_started_at || null,
       roles: roleMap[p.user_id] || [],
       tier: subMap[p.user_id]?.tier || null,
@@ -273,6 +275,16 @@ export default function AdminDashboard() {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Status updated", description: `Set to ${status.replace(/_/g, " ")}` });
+      await fetchUsers();
+    }
+  }
+
+  async function handleCertificationLevel(userId: string, level: number) {
+    const { error } = await supabase.from("profiles").update({ certification_level: level } as never).eq("user_id", userId);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Certification level updated", description: `Set to Level ${level}` });
       await fetchUsers();
     }
   }
@@ -499,7 +511,7 @@ export default function AdminDashboard() {
                       <UserTableRow key={u.user_id} user={u} isExpanded={expandedUser === u.user_id}
                         onToggle={() => setExpandedUser(expandedUser === u.user_id ? null : u.user_id)}
                         onAddRole={handleAddRole} onRemoveRole={handleRemoveRole} addingRole={addingRole} stepLabel={stepLabel}
-                        onStatusChange={handlePractitionerStatus} onRefresh={fetchUsers}
+                        onStatusChange={handlePractitionerStatus} onLevelChange={handleCertificationLevel} onRefresh={fetchUsers}
                         assignedPractitioner={assignedPracMap[u.user_id] || null}
                         assignedPracCode={assignedPracCodeMap[u.user_id] || null}
                         practitioners={practitioners}
@@ -566,13 +578,14 @@ export default function AdminDashboard() {
 }
 
 
-function UserTableRow({ user: u, isExpanded, onToggle, onAddRole, onRemoveRole, addingRole, stepLabel, onStatusChange, onRefresh, assignedPractitioner, assignedPracCode, practitioners, currentPracId, onViewFile, onAssignPractitioner, isCallerAdmin }: {
+function UserTableRow({ user: u, isExpanded, onToggle, onAddRole, onRemoveRole, addingRole, stepLabel, onStatusChange, onLevelChange, onRefresh, assignedPractitioner, assignedPracCode, practitioners, currentPracId, onViewFile, onAssignPractitioner, isCallerAdmin }: {
   user: UserRow; isExpanded: boolean; onToggle: () => void;
   onAddRole: (userId: string, role: AppRole) => void;
   onRemoveRole: (userId: string, role: AppRole) => void;
   addingRole: { userId: string; role: AppRole } | null;
   stepLabel: (s: string | null) => string;
   onStatusChange: (userId: string, status: string) => void;
+  onLevelChange: (userId: string, level: number) => void;
   onRefresh: () => void;
   assignedPractitioner: string | null;
   assignedPracCode: string | null;
@@ -826,7 +839,25 @@ function UserTableRow({ user: u, isExpanded, onToggle, onAddRole, onRemoveRole, 
                         <SelectItem value="certified" className="text-xs">Certified</SelectItem>
                       </SelectContent>
                     </Select>
+                    <Select
+                      value={u.certification_level ? String(u.certification_level) : ""}
+                      onValueChange={v => onLevelChange(u.user_id, Number(v))}
+                    >
+                      <SelectTrigger className="w-32 h-8 text-xs">
+                        <SelectValue placeholder="Set level…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1" className="text-xs">Level 1</SelectItem>
+                        <SelectItem value="2" className="text-xs">Level 2</SelectItem>
+                        <SelectItem value="3" className="text-xs">Level 3</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+                  {u.practitioner_status === "certified" && (
+                    <p className="text-[10px] text-muted-foreground">
+                      Level 3 unlocks Creator Type assignment, face split / body annotation tools and profiling reports.
+                    </p>
+                  )}
 
                   {/* Training cohort date */}
                   <div className="pt-2 space-y-1">
