@@ -78,7 +78,7 @@ export default function Details() {
     const load = async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("first_name, last_name, phone, date_of_birth, gender, pronouns, height_cm, shoe_size, address_line1, address_line2, city, state, postal_code, country, medical_history")
+        .select("first_name, last_name, phone, date_of_birth, gender, pronouns, height_cm, shoe_size, address_line1, address_line2, city, state, postal_code, country, medical_history, guardian_consent, guardian_first_name, guardian_last_name, guardian_phone, guardian_email")
         .eq("user_id", user.id)
         .maybeSingle();
       if (data) {
@@ -103,6 +103,11 @@ export default function Details() {
         if (data.postal_code) setPostalCode(data.postal_code);
         if (data.country) setCountry(data.country);
         if (data.medical_history) setMedicalHistory(data.medical_history);
+        if (data.guardian_consent) setGuardianConsent(true);
+        if (data.guardian_first_name) setGuardianFirstName(data.guardian_first_name);
+        if (data.guardian_last_name) setGuardianLastName(data.guardian_last_name);
+        if (data.guardian_phone) setGuardianPhone(data.guardian_phone);
+        if (data.guardian_email) setGuardianEmail(data.guardian_email);
       }
       setFetching(false);
     };
@@ -120,9 +125,28 @@ export default function Details() {
       return;
     }
 
+    if (isMinor) {
+      if (!guardianConsent) {
+        toast({ title: "Parent/guardian consent required", description: "Please tick the consent confirmation.", variant: "destructive" });
+        return;
+      }
+      if (!guardianFirstName.trim() || !guardianLastName.trim()) {
+        toast({ title: "Guardian name required", variant: "destructive" });
+        return;
+      }
+      if (!/^\+\d[\d\s\-]{6,}$/.test(guardianPhone.trim())) {
+        toast({ title: "Guardian phone must be in international format", description: "e.g. +61 412 345 678", variant: "destructive" });
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guardianEmail.trim())) {
+        toast({ title: "Valid guardian email required", variant: "destructive" });
+        return;
+      }
+    }
+
     setLoading(true);
 
-    const profileData = {
+    const profileData: Record<string, unknown> = {
       user_id: user.id,
       first_name: firstName || null,
       last_name: lastName || null,
@@ -141,6 +165,18 @@ export default function Details() {
       country: country || null,
       medical_history: medicalHistory || null,
     };
+
+    // Guardian details are only written for minors. For adults we deliberately
+    // leave whatever is stored untouched — a minor who turns 18 must keep the
+    // consent evidence for photos taken while they were under 18.
+    if (isMinor) {
+      profileData.guardian_consent = guardianConsent;
+      profileData.guardian_first_name = guardianFirstName.trim() || null;
+      profileData.guardian_last_name = guardianLastName.trim() || null;
+      profileData.guardian_phone = guardianPhone.trim() || null;
+      profileData.guardian_email = guardianEmail.trim() || null;
+      if (guardianConsent) profileData.guardian_consent_at = new Date().toISOString();
+    }
 
     const { error } = await supabase
       .from("profiles")
