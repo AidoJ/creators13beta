@@ -49,6 +49,24 @@ export default function Details() {
   const [postalCode, setPostalCode] = useState("");
   const [country, setCountry] = useState("Australia");
   const [medicalHistory, setMedicalHistory] = useState("");
+  const [guardianConsent, setGuardianConsent] = useState(false);
+  const [guardianFirstName, setGuardianFirstName] = useState("");
+  const [guardianLastName, setGuardianLastName] = useState("");
+  const [guardianPhone, setGuardianPhone] = useState("+61 ");
+  const [guardianEmail, setGuardianEmail] = useState("");
+
+  // Calculate age from DOB. Returns null if DOB is blank/invalid.
+  const ageFromDob = (() => {
+    if (!dateOfBirth) return null;
+    const dob = new Date(dateOfBirth);
+    if (isNaN(dob.getTime())) return null;
+    const now = new Date();
+    let age = now.getFullYear() - dob.getFullYear();
+    const m = now.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
+    return age;
+  })();
+  const isMinor = ageFromDob !== null && ageFromDob < 18;
 
   // Fetch existing profile data on mount — only once per user id, so that
   // returning to the tab (which re-fires auth state) doesn't wipe in-progress edits.
