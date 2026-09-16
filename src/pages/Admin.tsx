@@ -839,7 +839,25 @@ function UserTableRow({ user: u, isExpanded, onToggle, onAddRole, onRemoveRole, 
                         <SelectItem value="certified" className="text-xs">Certified</SelectItem>
                       </SelectContent>
                     </Select>
+                    <Select
+                      value={u.certification_level ? String(u.certification_level) : ""}
+                      onValueChange={v => onLevelChange(u.user_id, Number(v))}
+                    >
+                      <SelectTrigger className="w-32 h-8 text-xs">
+                        <SelectValue placeholder="Set level…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1" className="text-xs">Level 1</SelectItem>
+                        <SelectItem value="2" className="text-xs">Level 2</SelectItem>
+                        <SelectItem value="3" className="text-xs">Level 3</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+                  {u.practitioner_status === "certified" && (
+                    <p className="text-[10px] text-muted-foreground">
+                      Level 3 unlocks Creator Type assignment, face split / body annotation tools and profiling reports.
+                    </p>
+                  )}
 
                   {/* Training cohort date */}
                   <div className="pt-2 space-y-1">
