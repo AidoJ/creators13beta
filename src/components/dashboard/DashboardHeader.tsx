@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Gamepad2, Globe, Users, GraduationCap, Settings, Menu, X } from "lucide-react";
+import { LogOut, User, Gamepad2, Globe, Users, GraduationCap, Settings, Menu, X, UserCog } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/13creators-logo.png";
