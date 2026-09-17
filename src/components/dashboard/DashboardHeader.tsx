@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Gamepad2, Globe, Users, GraduationCap, Settings, Menu, X } from "lucide-react";
+import { LogOut, User, Gamepad2, Globe, Users, GraduationCap, Settings, Menu, X, UserCog } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/13creators-logo.png";
@@ -55,6 +55,7 @@ export default function DashboardHeader({ email, onSignOut }: DashboardHeaderPro
     { label: "Me", path: "/dashboard", icon: User, show: true },
     { label: "Play", path: "/play", icon: Gamepad2, show: true, nested: true },
     { label: "Community", path: "/community/dashboard", icon: Globe, show: profileComplete || isStaff, nested: true },
+    { label: "Account", path: "/account", icon: UserCog, show: true },
   ];
 
   // Role-gated tools.
