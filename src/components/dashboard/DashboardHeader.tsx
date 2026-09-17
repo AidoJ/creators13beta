@@ -55,6 +55,7 @@ export default function DashboardHeader({ email, onSignOut }: DashboardHeaderPro
     { label: "Me", path: "/dashboard", icon: User, show: true },
     { label: "Play", path: "/play", icon: Gamepad2, show: true, nested: true },
     { label: "Community", path: "/community/dashboard", icon: Globe, show: profileComplete || isStaff, nested: true },
+    { label: "Account", path: "/account", icon: UserCog, show: true },
   ];
 
   // Role-gated tools.
