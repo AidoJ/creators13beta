@@ -129,6 +129,14 @@ export default function CreatorTypeAssignmentForm({ clientId, clientName }: Crea
       setSaved(true);
       toast({ title: "Creator types assigned!", description: `${clientName} has been profiled.` });
       setTimeout(() => setSaved(false), 3000);
+
+      // Full set assigned → notify the client their full Creator Profile is complete.
+      const assigned = types.filter(Boolean);
+      if (assigned.length >= maxSlots) {
+        void supabase.functions.invoke("notify-full-profile", {
+          body: { client_user_id: clientId, creator_types: assigned },
+        });
+      }
     }
   };
 

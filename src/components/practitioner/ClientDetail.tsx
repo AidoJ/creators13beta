@@ -5,6 +5,7 @@ import CompositePhotoLayout from "@/components/profiling/CompositePhotoLayout";
 import CreatorTypeAssignmentForm from "@/components/practitioner/CreatorTypeAssignmentForm";
 import ClientSubscriptionCard from "@/components/practitioner/ClientSubscriptionCard";
 import ClientRecordingLinks from "@/components/practitioner/ClientRecordingLinks";
+import ClientSessionImages from "@/components/practitioner/ClientSessionImages";
 import ProfilingReportButton from "@/components/practitioner/ProfilingReportButton";
 import FaceSplitMirror, { type FaceSplitData } from "@/components/trainer/FaceSplitMirror";
 import BodyAnnotationTool, { type BodyAnnotationData } from "@/components/trainer/BodyAnnotationTool";
@@ -334,6 +335,11 @@ export default function ClientDetail({ clientId, onClientNameLoaded }: ClientDet
       {/* Session Recordings */}
       <div className="rounded-2xl border border-border bg-card p-4">
         <ClientRecordingLinks clientId={clientId} />
+      </div>
+
+      {/* Session images */}
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <ClientSessionImages clientId={clientId} />
       </div>
 
       {/* Subscription info */}

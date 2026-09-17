@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
+import Account from "./pages/Account";
 import PlanSelection from "./pages/enrollment/PlanSelection";
 import Signup from "./pages/enrollment/Signup";
 const Payment = lazy(() => import("./pages/enrollment/Payment"));
@@ -102,6 +103,7 @@ const App = () => (
                 <Route path="/settings/community" element={<ProtectedRoute><RequiresCompletedProfile><CommunitySettings /></RequiresCompletedProfile></ProtectedRoute>} />
                 <Route path="/settings/contact" element={<ProtectedRoute><ContactSettings /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><RequiresCompletedProfile><Dashboard /></RequiresCompletedProfile></ProtectedRoute>} />
+                <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
                 <Route
                   path="/community/dashboard"
                   element={
