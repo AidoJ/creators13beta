@@ -2655,6 +2655,7 @@ export type Database = {
         Args: { _practitioner_id: string }
         Returns: undefined
       }
+      avatar_publicly_visible: { Args: { _owner: string }; Returns: boolean }
       bump_bot_match_stats: {
         Args: { _difficulty: string; _perfect_eco?: boolean; _won: boolean }
         Returns: {
