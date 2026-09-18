@@ -228,13 +228,13 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     setDaySessions([]);
     setDuration("60"); setZoomLink(""); setRecurrence("none"); setRecurrenceEnd("");
     setCoverImageUrl(""); setCoverImageFit("cover"); setCoverImagePosition("center");
-    setPromoLink(""); setPromoLabel("");
+    setPromoLink(""); setPromoLabel(""); setLocation("");
     setExternalEmails([]); setNewExternalEmail("");
     setTierGrid(emptyTierGrid());
     setBulkInvitedTiers(new Set());
     setEditingCallId(null);
     setEditOriginal(null);
-    setNotifyOnEdit(true);
+    setNotifyOnEdit(false);
     setShowForm(false);
   }
 
@@ -259,6 +259,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     setCoverImagePosition(call.cover_image_position || "center");
     setPromoLink(call.promo_link || "");
     setPromoLabel(call.promo_label || "");
+    setLocation(call.location || "");
 
     const start = new Date(call.starts_at || call.scheduled_at);
     const end = new Date(call.ends_at || new Date(start.getTime() + (call.duration_minutes || 60) * 60000));
@@ -311,7 +312,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
     setEditOriginal({ scheduled_at: call.scheduled_at, zoom_link: call.zoom_link, ends_at: call.ends_at });
     setEditingCallId(call.id);
-    setNotifyOnEdit(true);
+    setNotifyOnEdit(false);
     setShowForm(true);
   }
 
@@ -480,6 +481,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       cover_image_position: coverImagePosition.trim() || "center",
       promo_link: promoLink.trim() || null,
       promo_label: promoLabel.trim() || null,
+      location: location.trim() || null,
       created_by: user.id,
     });
 
@@ -756,6 +758,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       cover_image_position: coverImagePosition.trim() || "center",
       promo_link: promoLink.trim() || null,
       promo_label: promoLabel.trim() || null,
+      location: location.trim() || null,
     };
 
     const { error } = await supabase.from("training_calls").update(updatePayload).eq("id", editingCallId);
