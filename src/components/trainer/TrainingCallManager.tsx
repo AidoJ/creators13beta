@@ -783,8 +783,15 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     await supabase.from("training_call_events").insert({ call_id: editingCallId, event_type: "updated", details: "Event edited" });
 
     // Detect meaningful change for notification
-    const dateChanged = editOriginal && editOriginal.scheduled_at !== startsAt.toISOString();
-    const endChanged = editOriginal && (editOriginal.ends_at || null) !== endsAt.toISOString();
+    // Compare instants, not raw strings — the stored value and toISOString() are formatted
+    // differently, which previously made every save look like a reschedule.
+    const sameInstant = (a: string | null | undefined, b: Date | null) => {
+      if (!a) return b === null;
+      if (!b) return false;
+      return new Date(a).getTime() === b.getTime();
+    };
+    const dateChanged = editOriginal && !sameInstant(editOriginal.scheduled_at, startsAt);
+    const endChanged = editOriginal && !sameInstant(editOriginal.ends_at, endsAt);
     const zoomChanged = editOriginal && (editOriginal.zoom_link || null) !== (zoomLink.trim() || null);
 
     if (notifyOnEdit && (dateChanged || endChanged || zoomChanged)) {
