@@ -638,8 +638,8 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
       const { data, error } = await supabase.functions.invoke("send-training-invite", {
         body: {
-          title: referenceCall?.title || "Training Call Test",
-          description: referenceCall?.description || "This is a test training call email sent from the Trainer panel.",
+          title: referenceCall?.title || "Event Test",
+          description: referenceCall?.description || "This is a test event email sent from the Trainer panel.",
           scheduledAt,
           durationMinutes: referenceCall?.duration_minutes || 60,
           zoomLink: referenceCall?.zoom_link || "",
@@ -871,7 +871,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Call deleted" });
+      toast({ title: "Event deleted" });
       await fetchCalls();
       onCallsChanged?.();
     }
@@ -926,7 +926,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
               <Select value={eventType} onValueChange={setEventType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="training_call">Training Call</SelectItem>
+                  <SelectItem value="training_call">Training Session</SelectItem>
                   <SelectItem value="book_launch">Book Launch</SelectItem>
                   <SelectItem value="workshop">Workshop</SelectItem>
                   <SelectItem value="masterclass">Masterclass</SelectItem>
@@ -939,6 +939,11 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Zoom Link</label>
               <Input value={zoomLink} onChange={e => setZoomLink(e.target.value)} placeholder="https://zoom.us/j/..." />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="text-xs text-muted-foreground mb-1 block">Location</label>
+              <Input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. 12 Todd St, Alice Springs NT" />
+              <p className="text-[10px] text-muted-foreground mt-1">Leave blank for an online event — the tile will show &ldquo;Online event&rdquo;.</p>
             </div>
             <div className="sm:col-span-2">
               <label className="text-xs text-muted-foreground mb-1 block">Title *</label>
@@ -1247,10 +1252,10 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
       {/* Upcoming calls */}
       {loading ? (
-        <div className="text-center py-8 text-muted-foreground text-sm">Loading calls…</div>
+        <div className="text-center py-8 text-muted-foreground text-sm">Loading events…</div>
       ) : upcomingCalls.length === 0 && pastCalls.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground text-sm">
-          No training calls scheduled yet. Click "Schedule Call" to create one.
+          No events scheduled yet. Click "Schedule Event" to create one.
         </div>
       ) : (
         <>
