@@ -1,4 +1,4 @@
-import { Calendar, Clock, Lock } from "lucide-react";
+import { Calendar, Clock, Lock, MapPin, Globe } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const TIER_GRADIENTS: Record<string, string> = {
@@ -24,6 +24,7 @@ export interface EventCoverProps {
   end: Date;
   isMultiDay?: boolean;
   accessBadge?: "joinable" | "preview" | "public" | null;
+  location?: string | null;
   cornerBadge?: React.ReactNode;
 }
 
@@ -38,6 +39,7 @@ export function EventCover({
   isMultiDay,
   accessBadge,
   cornerBadge,
+  location,
 }: EventCoverProps) {
   const fmtDate = (d: Date) =>
     d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
@@ -92,6 +94,17 @@ export function EventCover({
           <Clock className="h-3 w-3" />
           {fmtTime(start)} – {fmtTime(end)}
         </span>
+        {location?.trim() ? (
+          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground max-w-full">
+            <MapPin className="h-3 w-3 shrink-0" />
+            <span className="truncate">{location}</span>
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+            <Globe className="h-3 w-3" />
+            Online event
+          </span>
+        )}
       </div>
     </div>
   );

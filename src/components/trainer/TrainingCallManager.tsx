@@ -37,6 +37,7 @@ interface TrainingCall {
   cover_image_position?: string | null;
   promo_link?: string | null;
   promo_label?: string | null;
+  location?: string | null;
 }
 
 interface Invitee {
@@ -102,6 +103,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [coverImagePosition, setCoverImagePosition] = useState("center");
   const [promoLink, setPromoLink] = useState("");
   const [promoLabel, setPromoLabel] = useState("");
+  const [location, setLocation] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   // Invitee selection
@@ -128,7 +130,8 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [editingCallId, setEditingCallId] = useState<string | null>(null);
   // Snapshot of original values for change detection when notifying invitees.
   const [editOriginal, setEditOriginal] = useState<{ scheduled_at: string; zoom_link: string | null; ends_at: string | null } | null>(null);
-  const [notifyOnEdit, setNotifyOnEdit] = useState(true);
+  // Off by default: an edit only emails invitees when the trainer explicitly ticks the box.
+  const [notifyOnEdit, setNotifyOnEdit] = useState(false);
 
   function setTierFlag(tier: TierKey, field: "visible" | "access", value: boolean) {
     setTierGrid(prev => {
@@ -225,13 +228,13 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     setDaySessions([]);
     setDuration("60"); setZoomLink(""); setRecurrence("none"); setRecurrenceEnd("");
     setCoverImageUrl(""); setCoverImageFit("cover"); setCoverImagePosition("center");
-    setPromoLink(""); setPromoLabel("");
+    setPromoLink(""); setPromoLabel(""); setLocation("");
     setExternalEmails([]); setNewExternalEmail("");
     setTierGrid(emptyTierGrid());
     setBulkInvitedTiers(new Set());
     setEditingCallId(null);
     setEditOriginal(null);
-    setNotifyOnEdit(true);
+    setNotifyOnEdit(false);
     setShowForm(false);
   }
 
@@ -256,6 +259,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     setCoverImagePosition(call.cover_image_position || "center");
     setPromoLink(call.promo_link || "");
     setPromoLabel(call.promo_label || "");
+    setLocation(call.location || "");
 
     const start = new Date(call.starts_at || call.scheduled_at);
     const end = new Date(call.ends_at || new Date(start.getTime() + (call.duration_minutes || 60) * 60000));
@@ -308,7 +312,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
     setEditOriginal({ scheduled_at: call.scheduled_at, zoom_link: call.zoom_link, ends_at: call.ends_at });
     setEditingCallId(call.id);
-    setNotifyOnEdit(true);
+    setNotifyOnEdit(false);
     setShowForm(true);
   }
 
@@ -477,6 +481,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       cover_image_position: coverImagePosition.trim() || "center",
       promo_link: promoLink.trim() || null,
       promo_label: promoLabel.trim() || null,
+      location: location.trim() || null,
       created_by: user.id,
     });
 
@@ -633,8 +638,8 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
       const { data, error } = await supabase.functions.invoke("send-training-invite", {
         body: {
-          title: referenceCall?.title || "Training Call Test",
-          description: referenceCall?.description || "This is a test training call email sent from the Trainer panel.",
+          title: referenceCall?.title || "Event Test",
+          description: referenceCall?.description || "This is a test event email sent from the Trainer panel.",
           scheduledAt,
           durationMinutes: referenceCall?.duration_minutes || 60,
           zoomLink: referenceCall?.zoom_link || "",
@@ -753,6 +758,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       cover_image_position: coverImagePosition.trim() || "center",
       promo_link: promoLink.trim() || null,
       promo_label: promoLabel.trim() || null,
+      location: location.trim() || null,
     };
 
     const { error } = await supabase.from("training_calls").update(updatePayload).eq("id", editingCallId);
@@ -777,8 +783,15 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     await supabase.from("training_call_events").insert({ call_id: editingCallId, event_type: "updated", details: "Event edited" });
 
     // Detect meaningful change for notification
-    const dateChanged = editOriginal && editOriginal.scheduled_at !== startsAt.toISOString();
-    const endChanged = editOriginal && (editOriginal.ends_at || null) !== endsAt.toISOString();
+    // Compare instants, not raw strings — the stored value and toISOString() are formatted
+    // differently, which previously made every save look like a reschedule.
+    const sameInstant = (a: string | null | undefined, b: Date | null) => {
+      if (!a) return b === null;
+      if (!b) return false;
+      return new Date(a).getTime() === b.getTime();
+    };
+    const dateChanged = editOriginal && !sameInstant(editOriginal.scheduled_at, startsAt);
+    const endChanged = editOriginal && !sameInstant(editOriginal.ends_at, endsAt);
     const zoomChanged = editOriginal && (editOriginal.zoom_link || null) !== (zoomLink.trim() || null);
 
     if (notifyOnEdit && (dateChanged || endChanged || zoomChanged)) {
@@ -858,7 +871,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Call deleted" });
+      toast({ title: "Event deleted" });
       await fetchCalls();
       onCallsChanged?.();
     }
@@ -913,7 +926,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
               <Select value={eventType} onValueChange={setEventType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="training_call">Training Call</SelectItem>
+                  <SelectItem value="training_call">Training Session</SelectItem>
                   <SelectItem value="book_launch">Book Launch</SelectItem>
                   <SelectItem value="workshop">Workshop</SelectItem>
                   <SelectItem value="masterclass">Masterclass</SelectItem>
@@ -926,6 +939,11 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Zoom Link</label>
               <Input value={zoomLink} onChange={e => setZoomLink(e.target.value)} placeholder="https://zoom.us/j/..." />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="text-xs text-muted-foreground mb-1 block">Location</label>
+              <Input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. 12 Todd St, Alice Springs NT" />
+              <p className="text-[10px] text-muted-foreground mt-1">Leave blank for an online event — the tile will show &ldquo;Online event&rdquo;.</p>
             </div>
             <div className="sm:col-span-2">
               <label className="text-xs text-muted-foreground mb-1 block">Title *</label>
@@ -1234,10 +1252,10 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
       {/* Upcoming calls */}
       {loading ? (
-        <div className="text-center py-8 text-muted-foreground text-sm">Loading calls…</div>
+        <div className="text-center py-8 text-muted-foreground text-sm">Loading events…</div>
       ) : upcomingCalls.length === 0 && pastCalls.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground text-sm">
-          No training calls scheduled yet. Click "Schedule Call" to create one.
+          No events scheduled yet. Click "Schedule Event" to create one.
         </div>
       ) : (
         <>
@@ -1393,6 +1411,7 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onEdit, onResend, sen
         start={startDt}
         end={endDt}
         isMultiDay={!!call.is_multi_day}
+        location={call.location}
         cornerBadge={cancelled ? <Badge variant="outline" className="text-[10px] text-destructive border-destructive/30 bg-background/80 backdrop-blur">Cancelled</Badge> : call.recurrence_rule !== "none" ? <Badge variant="outline" className="text-[10px] bg-background/80 backdrop-blur"><Repeat className="h-2.5 w-2.5 mr-0.5" />{call.recurrence_rule}</Badge> : null}
       />
       <div className="p-4 space-y-3">

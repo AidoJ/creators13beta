@@ -2375,6 +2375,7 @@ export type Database = {
           event_type: string
           id: string
           is_multi_day: boolean
+          location: string | null
           parent_call_id: string | null
           promo_label: string | null
           promo_link: string | null
@@ -2400,6 +2401,7 @@ export type Database = {
           event_type?: string
           id?: string
           is_multi_day?: boolean
+          location?: string | null
           parent_call_id?: string | null
           promo_label?: string | null
           promo_link?: string | null
@@ -2425,6 +2427,7 @@ export type Database = {
           event_type?: string
           id?: string
           is_multi_day?: boolean
+          location?: string | null
           parent_call_id?: string | null
           promo_label?: string | null
           promo_link?: string | null
@@ -2807,6 +2810,7 @@ export type Database = {
           has_access: boolean
           id: string
           is_multi_day: boolean
+          location: string
           promo_label: string
           promo_link: string
           scheduled_at: string
