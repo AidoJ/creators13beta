@@ -130,7 +130,8 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [editingCallId, setEditingCallId] = useState<string | null>(null);
   // Snapshot of original values for change detection when notifying invitees.
   const [editOriginal, setEditOriginal] = useState<{ scheduled_at: string; zoom_link: string | null; ends_at: string | null } | null>(null);
-  const [notifyOnEdit, setNotifyOnEdit] = useState(true);
+  // Off by default: an edit only emails invitees when the trainer explicitly ticks the box.
+  const [notifyOnEdit, setNotifyOnEdit] = useState(false);
 
   function setTierFlag(tier: TierKey, field: "visible" | "access", value: boolean) {
     setTierGrid(prev => {
