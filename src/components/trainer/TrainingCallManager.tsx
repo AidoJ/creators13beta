@@ -37,6 +37,7 @@ interface TrainingCall {
   cover_image_position?: string | null;
   promo_link?: string | null;
   promo_label?: string | null;
+  location?: string | null;
 }
 
 interface Invitee {
