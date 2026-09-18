@@ -1411,6 +1411,7 @@ function CallCard({ call, onCancel, onDelete, onDuplicate, onEdit, onResend, sen
         start={startDt}
         end={endDt}
         isMultiDay={!!call.is_multi_day}
+        location={call.location}
         cornerBadge={cancelled ? <Badge variant="outline" className="text-[10px] text-destructive border-destructive/30 bg-background/80 backdrop-blur">Cancelled</Badge> : call.recurrence_rule !== "none" ? <Badge variant="outline" className="text-[10px] bg-background/80 backdrop-blur"><Repeat className="h-2.5 w-2.5 mr-0.5" />{call.recurrence_rule}</Badge> : null}
       />
       <div className="p-4 space-y-3">
