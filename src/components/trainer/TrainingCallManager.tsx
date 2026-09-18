@@ -103,6 +103,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [coverImagePosition, setCoverImagePosition] = useState("center");
   const [promoLink, setPromoLink] = useState("");
   const [promoLabel, setPromoLabel] = useState("");
+  const [location, setLocation] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   // Invitee selection
