@@ -37,6 +37,7 @@ interface CommunityEvent {
   cover_image_position: string | null;
   promo_link: string | null;
   promo_label: string | null;
+  location: string | null;
 }
 
 function eventStart(ev: CommunityEvent): Date {
@@ -200,6 +201,7 @@ function EventTile({ ev, past }: { ev: CommunityEvent; past?: boolean }) {
         start={start}
         end={end}
         isMultiDay={!!ev.is_multi_day}
+        location={ev.location}
         accessBadge={ev.has_access ? "joinable" : "preview"}
       />
 
