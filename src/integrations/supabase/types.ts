@@ -2746,6 +2746,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      agent_readonly_query: { Args: { _sql: string }; Returns: Json }
       approve_contact_request: {
         Args: { _request_id: string }
         Returns: undefined
