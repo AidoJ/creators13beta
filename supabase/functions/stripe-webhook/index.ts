@@ -170,12 +170,12 @@ serve(async (req) => {
               phases: [{
                 items: phase.items.map((i: any) => ({ price: i.price as string, quantity: i.quantity ?? 1 })),
                 start_date: phase.start_date,
-                iterations: remainingInstalments,
+                iterations: instalments,
                 metadata: { user_id: userId, level_key: levelKey, product_id: productId },
               }],
               metadata: { user_id: userId, level_key: levelKey, product_id: productId },
             });
-            logStep("Fixed-term schedule attached", { scheduleId: schedule.id, iterations: remainingInstalments });
+            logStep("Fixed-term schedule attached", { scheduleId: schedule.id, iterations: instalments });
           } catch (e) {
             logStep("ERROR attaching fixed-term schedule", { message: String(e) });
           }
