@@ -156,10 +156,12 @@ serve(async (req) => {
         logStep("Entitlement", { userId, levelKey, result });
 
         // Fixed-term course: convert the subscription into a schedule that
-        // supplies the remaining instalments and cancels at the end.
-        // termMonths counts TOTAL payments; the checkout payment is #1.
-        const remainingInstalments = termMonths - 1;
-        if (billingShape === "fixed_term" && remainingInstalments > 0 && subscriptionId) {
+        // cancels at the end. Verified with a Stripe test clock: `iterations`
+        // counts TOTAL billing cycles in the phase, and the phase starts at the
+        // already-paid checkout period — so iterations = termMonths yields
+        // exactly termMonths payments (checkout payment is instalment one).
+        const instalments = termMonths;
+        if (billingShape === "fixed_term" && instalments > 0 && subscriptionId) {
           try {
             const schedule = await stripe.subscriptionSchedules.create({ from_subscription: subscriptionId });
             const phase = schedule.phases[0];
