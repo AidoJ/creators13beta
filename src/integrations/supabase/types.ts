@@ -3121,6 +3121,16 @@ export type Database = {
         Returns: undefined
       }
       release_sweep_lease: { Args: { _key: string }; Returns: undefined }
+      reserve_seat: {
+        Args: {
+          _level_key: string
+          _minutes?: number
+          _product_id: string
+          _seat_cap: number
+          _user_id: string
+        }
+        Returns: string
+      }
       resolve_effective_tier: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["subscription_tier"]
