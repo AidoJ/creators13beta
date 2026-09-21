@@ -65,25 +65,25 @@ serve(async (req) => {
       const currency = (product.currency || "aud").toLowerCase();
       const levelKey: string | null = product.grants_level_key ?? null;
 
-      // Seat cap: count active entitlements + unexpired reservations, then hold
-      // a seat for this checkout. Re-checked in the webhook before granting.
+      // Seat cap: check-and-hold happens atomically inside reserve_seat, which
+      // takes a per-level lock. Two simultaneous checkouts for the last seat
+      // cannot both succeed. Re-checked in the webhook before granting.
       let reservationId: string | null = null;
       if (product.seat_cap && levelKey) {
-        const { data: taken, error: seatErr } = await supabaseClient.rpc("seats_taken", { _level_key: levelKey });
-        if (seatErr) throw new Error(`Could not check seats: ${seatErr.message}`);
-        if ((taken ?? 0) >= product.seat_cap) {
+        const { data: res, error: resErr } = await supabaseClient.rpc("reserve_seat", {
+          _product_id: product.id,
+          _level_key: levelKey,
+          _user_id: userId,
+          _seat_cap: product.seat_cap,
+          _minutes: 30,
+        });
+        if (resErr) throw new Error(`Could not hold a seat: ${resErr.message}`);
+        if (!res) {
           return new Response(JSON.stringify({ error: "sold_out", message: "This course is fully booked." }), {
             status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
-        const { data: res, error: resErr } = await supabaseClient.from("seat_reservations").insert({
-          product_id: product.id,
-          level_key: levelKey,
-          user_id: userId,
-          expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-        }).select("id").single();
-        if (resErr) throw new Error(`Could not hold a seat: ${resErr.message}`);
-        reservationId = res.id;
+        reservationId = res as string;
       }
 
       // FREE / NO-CHARGE product (e.g. case study): grant straight away.
