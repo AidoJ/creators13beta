@@ -6,8 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, CheckCircle, XCircle, Clock, BarChart3, Eye, EyeOff, GitBranch, Save, Calendar, ArrowLeft, Mail, Scissors, KeyRound } from "lucide-react";
+import { FileText, CheckCircle, XCircle, Clock, BarChart3, Eye, EyeOff, GitBranch, Save, Calendar, ArrowLeft, Mail, Scissors, KeyRound, ShoppingBag} from "lucide-react";
 import EntitlementsPanel from "@/components/admin/EntitlementsPanel";
+import ProductsPanel from "@/components/admin/ProductsPanel";
 
 import { toast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
@@ -273,7 +274,12 @@ export default function TrainerDashboard() {
             <TabsTrigger value="invitations"><Mail className="h-3.5 w-3.5 mr-1" />Invitations</TabsTrigger>
             <TabsTrigger value="face-split"><Scissors className="h-3.5 w-3.5 mr-1" />Face Split</TabsTrigger>
             <TabsTrigger value="access"><KeyRound className="h-3.5 w-3.5 mr-1" />Access Levels</TabsTrigger>
+            <TabsTrigger value="products"><ShoppingBag className="h-3.5 w-3.5 mr-1" />Products</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="products" className="space-y-4">
+            <ProductsPanel />
+          </TabsContent>
 
           <TabsContent value="access" className="space-y-4">
             <EntitlementsPanel />
