@@ -140,18 +140,28 @@ serve(async (req) => {
           logStep("WARNING: seat cap exceeded at payment time — granting anyway, flag for admin", { userId, levelKey });
         }
 
-        const endsAt = billingShape === "fixed_term" && termMonths > 0
-          ? new Date(Date.now() + termMonths * 31 * 24 * 60 * 60 * 1000).toISOString()
-          : null;
+        // Fixed term = termMonths total payments: the checkout payment is
+        // instalment one, the schedule supplies the remaining (termMonths - 1).
+        // Access therefore ends termMonths calendar months after signup.
+        let endsAt: string | null = null;
+        if (billingShape === "fixed_term" && termMonths > 0) {
+          const end = new Date();
+          end.setMonth(end.getMonth() + termMonths);
+          endsAt = end.toISOString();
+        }
 
         const result = await grantEntitlement(supabase, {
           userId, levelKey, source: "stripe", stripeRef: subscriptionId || session.id, endsAt,
         });
         logStep("Entitlement", { userId, levelKey, result });
 
-        // Fixed-term course: convert the subscription into a schedule with a
-        // fixed number of instalments that cancels at the end.
-        if (billingShape === "fixed_term" && termMonths > 0 && subscriptionId) {
+        // Fixed-term course: convert the subscription into a schedule that
+        // cancels at the end. Verified with a Stripe test clock: `iterations`
+        // counts TOTAL billing cycles in the phase, and the phase starts at the
+        // already-paid checkout period — so iterations = termMonths yields
+        // exactly termMonths payments (checkout payment is instalment one).
+        const instalments = termMonths;
+        if (billingShape === "fixed_term" && instalments > 0 && subscriptionId) {
           try {
             const schedule = await stripe.subscriptionSchedules.create({ from_subscription: subscriptionId });
             const phase = schedule.phases[0];
@@ -160,12 +170,12 @@ serve(async (req) => {
               phases: [{
                 items: phase.items.map((i: any) => ({ price: i.price as string, quantity: i.quantity ?? 1 })),
                 start_date: phase.start_date,
-                iterations: termMonths,
+                iterations: instalments,
                 metadata: { user_id: userId, level_key: levelKey, product_id: productId },
               }],
               metadata: { user_id: userId, level_key: levelKey, product_id: productId },
             });
-            logStep("Fixed-term schedule attached", { scheduleId: schedule.id, iterations: termMonths });
+            logStep("Fixed-term schedule attached", { scheduleId: schedule.id, iterations: instalments });
           } catch (e) {
             logStep("ERROR attaching fixed-term schedule", { message: String(e) });
           }
