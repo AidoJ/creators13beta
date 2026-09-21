@@ -1,1 +1,4 @@
 project_id = "kbcxvycgwtoxqkbpcesi"
+
+[functions.agent-db-query]
+verify_jwt = false
