@@ -155,9 +155,11 @@ serve(async (req) => {
         });
         logStep("Entitlement", { userId, levelKey, result });
 
-        // Fixed-term course: convert the subscription into a schedule with a
-        // fixed number of instalments that cancels at the end.
-        if (billingShape === "fixed_term" && termMonths > 0 && subscriptionId) {
+        // Fixed-term course: convert the subscription into a schedule that
+        // supplies the remaining instalments and cancels at the end.
+        // termMonths counts TOTAL payments; the checkout payment is #1.
+        const remainingInstalments = termMonths - 1;
+        if (billingShape === "fixed_term" && remainingInstalments > 0 && subscriptionId) {
           try {
             const schedule = await stripe.subscriptionSchedules.create({ from_subscription: subscriptionId });
             const phase = schedule.phases[0];
@@ -166,12 +168,12 @@ serve(async (req) => {
               phases: [{
                 items: phase.items.map((i: any) => ({ price: i.price as string, quantity: i.quantity ?? 1 })),
                 start_date: phase.start_date,
-                iterations: termMonths,
+                iterations: remainingInstalments,
                 metadata: { user_id: userId, level_key: levelKey, product_id: productId },
               }],
               metadata: { user_id: userId, level_key: levelKey, product_id: productId },
             });
-            logStep("Fixed-term schedule attached", { scheduleId: schedule.id, iterations: termMonths });
+            logStep("Fixed-term schedule attached", { scheduleId: schedule.id, iterations: remainingInstalments });
           } catch (e) {
             logStep("ERROR attaching fixed-term schedule", { message: String(e) });
           }
