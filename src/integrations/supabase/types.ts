@@ -1627,50 +1627,73 @@ export type Database = {
       products: {
         Row: {
           active: boolean | null
+          billing_shape: string
           created_at: string
           currency: string | null
           description: string | null
+          grants_level_key: string | null
           id: string
           image_url: string | null
+          is_visible_on_storefront: boolean
           name: string
           price_cents: number
           product_type: Database["public"]["Enums"]["product_type"] | null
+          seat_cap: number | null
           shopify_product_id: string | null
           stripe_price_id: string | null
           stripe_product_id: string | null
+          term_months: number | null
           updated_at: string
         }
         Insert: {
           active?: boolean | null
+          billing_shape?: string
           created_at?: string
           currency?: string | null
           description?: string | null
+          grants_level_key?: string | null
           id?: string
           image_url?: string | null
+          is_visible_on_storefront?: boolean
           name: string
           price_cents?: number
           product_type?: Database["public"]["Enums"]["product_type"] | null
+          seat_cap?: number | null
           shopify_product_id?: string | null
           stripe_price_id?: string | null
           stripe_product_id?: string | null
+          term_months?: number | null
           updated_at?: string
         }
         Update: {
           active?: boolean | null
+          billing_shape?: string
           created_at?: string
           currency?: string | null
           description?: string | null
+          grants_level_key?: string | null
           id?: string
           image_url?: string | null
+          is_visible_on_storefront?: boolean
           name?: string
           price_cents?: number
           product_type?: Database["public"]["Enums"]["product_type"] | null
+          seat_cap?: number | null
           shopify_product_id?: string | null
           stripe_price_id?: string | null
           stripe_product_id?: string | null
+          term_months?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_grants_level_key_fkey"
+            columns: ["grants_level_key"]
+            isOneToOne: false
+            referencedRelation: "access_levels"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       profile_discount_codes: {
         Row: {
@@ -2110,6 +2133,51 @@ export type Database = {
         }
         Relationships: []
       }
+      seat_reservations: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          level_key: string
+          product_id: string
+          stripe_session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          level_key: string
+          product_id: string
+          stripe_session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          level_key?: string
+          product_id?: string
+          stripe_session_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seat_reservations_level_key_fkey"
+            columns: ["level_key"]
+            isOneToOne: false
+            referencedRelation: "access_levels"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "seat_reservations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       special_cards: {
         Row: {
           art_path: string | null
@@ -2149,6 +2217,24 @@ export type Database = {
           slug?: string
           sort_order?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      stripe_webhook_events: {
+        Row: {
+          event_id: string
+          event_type: string
+          processed_at: string
+        }
+        Insert: {
+          event_id: string
+          event_type: string
+          processed_at?: string
+        }
+        Update: {
+          event_id?: string
+          event_type?: string
+          processed_at?: string
         }
         Relationships: []
       }
@@ -2298,6 +2384,7 @@ export type Database = {
         Row: {
           access: boolean
           created_at: string
+          level_key: string | null
           tier: Database["public"]["Enums"]["subscription_tier"]
           training_call_id: string
           updated_at: string
@@ -2306,6 +2393,7 @@ export type Database = {
         Insert: {
           access?: boolean
           created_at?: string
+          level_key?: string | null
           tier: Database["public"]["Enums"]["subscription_tier"]
           training_call_id: string
           updated_at?: string
@@ -2314,12 +2402,20 @@ export type Database = {
         Update: {
           access?: boolean
           created_at?: string
+          level_key?: string | null
           tier?: Database["public"]["Enums"]["subscription_tier"]
           training_call_id?: string
           updated_at?: string
           visible?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "training_call_tier_access_level_key_fkey"
+            columns: ["level_key"]
+            isOneToOne: false
+            referencedRelation: "access_levels"
+            referencedColumns: ["key"]
+          },
           {
             foreignKeyName: "training_call_tier_access_training_call_id_fkey"
             columns: ["training_call_id"]
@@ -3035,6 +3131,7 @@ export type Database = {
         Args: { _request_id: string }
         Returns: undefined
       }
+      seats_taken: { Args: { _level_key: string }; Returns: number }
       send_contact_request: {
         Args: { _reason: string; _to_user_id: string }
         Returns: string

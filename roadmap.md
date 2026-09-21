@@ -10,7 +10,9 @@
 
 # Roadmap — Products / entitlement checkout (awaiting approval)
 
-- [ ] Review + open questions answered (levels list, owl, products table collision, role vs entitlement, events re-key)
+- [x] Review + open questions answered (Option A events, no Owl this batch, extend products, entitlement+role, taster->Connect)
+- [ ] Rename taster display name to Connect
+- [ ] Confirm Stripe retry window (no hardcoded number)
 - [ ] Products/plans table + RLS + admin panel
 - [ ] Inline price_data checkout + "move subscribers to current price"
 - [ ] Fixed-term 13-instalment schedule + seat cap

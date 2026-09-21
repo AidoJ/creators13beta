@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Users, Shield, ChevronDown, ChevronUp, FileText, CheckCircle, Clock, BarChart3, Eye, EyeOff, FolderOpen, Save, HelpCircle, Briefcase, CreditCard, Mail, Send, UserPlus, ExternalLink, Gamepad2, Brain, Megaphone, KeyRound } from "lucide-react";
+import { Search, Users, Shield, ChevronDown, ChevronUp, FileText, CheckCircle, Clock, BarChart3, Eye, EyeOff, FolderOpen, Save, HelpCircle, Briefcase, CreditCard, Mail, Send, UserPlus, ExternalLink, Gamepad2, Brain, Megaphone, KeyRound, ShoppingBag} from "lucide-react";
 import EntitlementsPanel from "@/components/admin/EntitlementsPanel";
+import ProductsPanel from "@/components/admin/ProductsPanel";
 import GameSettingsPanel from "@/components/admin/GameSettingsPanel";
 
 import { DevMultiplayerPanel } from "@/components/admin/DevMultiplayerPanel";
@@ -424,7 +425,12 @@ export default function AdminDashboard() {
             <TabsTrigger value="quiz"><Brain className="h-3.5 w-3.5 mr-1" />Quiz Bank</TabsTrigger>
             <TabsTrigger value="marketing"><Megaphone className="h-3.5 w-3.5 mr-1" />Marketing</TabsTrigger>
             <TabsTrigger value="access"><KeyRound className="h-3.5 w-3.5 mr-1" />Access Levels</TabsTrigger>
+            <TabsTrigger value="products"><ShoppingBag className="h-3.5 w-3.5 mr-1" />Products</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="products" className="space-y-4">
+            <ProductsPanel />
+          </TabsContent>
 
           <TabsContent value="access" className="space-y-4">
             <EntitlementsPanel />
