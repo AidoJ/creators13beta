@@ -49,6 +49,107 @@ serve(async (req) => {
     const body = await req.json();
     const { priceId, successUrl, cancelUrl, tier, billing, embedded } = body;
 
+    // ------------------------------------------------------------------
+    // NEW PRODUCT PATH — inline pricing straight from the products table.
+    // Runs only when product_id is supplied; the legacy tier flow below is
+    // untouched.
+    // ------------------------------------------------------------------
+    if (body.product_id) {
+      const { data: product, error: prodErr } = await supabaseClient
+        .from("products").select("*").eq("id", body.product_id).maybeSingle();
+      if (prodErr || !product) throw new Error("Product not found");
+      if (!product.active) throw new Error("This product is not currently available");
+
+      const origin = req.headers.get("origin") || "http://localhost:3000";
+      const currency = (product.currency || "aud").toLowerCase();
+      const levelKey: string | null = product.grants_level_key ?? null;
+
+      // Seat cap: count active entitlements + unexpired reservations, then hold
+      // a seat for this checkout. Re-checked in the webhook before granting.
+      let reservationId: string | null = null;
+      if (product.seat_cap && levelKey) {
+        const { data: taken, error: seatErr } = await supabaseClient.rpc("seats_taken", { _level_key: levelKey });
+        if (seatErr) throw new Error(`Could not check seats: ${seatErr.message}`);
+        if ((taken ?? 0) >= product.seat_cap) {
+          return new Response(JSON.stringify({ error: "sold_out", message: "This course is fully booked." }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { data: res, error: resErr } = await supabaseClient.from("seat_reservations").insert({
+          product_id: product.id,
+          level_key: levelKey,
+          user_id: userId,
+          expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+        }).select("id").single();
+        if (resErr) throw new Error(`Could not hold a seat: ${resErr.message}`);
+        reservationId = res.id;
+      }
+
+      // FREE / NO-CHARGE product (e.g. case study): grant straight away.
+      if (!product.price_cents || product.price_cents <= 0) {
+        if (levelKey) {
+          await grantEntitlement(supabaseClient, { userId, levelKey, source: "admin" });
+        }
+        if (reservationId) await supabaseClient.from("seat_reservations").delete().eq("id", reservationId);
+        return new Response(JSON.stringify({ free: true, url: successUrl || `${origin}/dashboard` }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+        });
+      }
+
+      const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+      if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+      const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+
+      const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
+      const customerId = customers.data[0]?.id;
+
+      const recurring = product.billing_shape === "recurring" || product.billing_shape === "fixed_term";
+      const metadata: Record<string, string> = {
+        user_id: userId,
+        product_id: product.id,
+        billing_shape: product.billing_shape,
+        level_key: levelKey ?? "",
+        term_months: product.term_months ? String(product.term_months) : "",
+        reservation_id: reservationId ?? "",
+      };
+
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        customer_email: customerId ? undefined : userEmail,
+        mode: recurring ? "subscription" : "payment",
+        ...(embedded
+          ? { ui_mode: "embedded", return_url: successUrl || `${origin}/dashboard?purchase=success` }
+          : {
+              success_url: successUrl || `${origin}/dashboard?purchase=success`,
+              cancel_url: cancelUrl || `${origin}/dashboard?purchase=canceled`,
+            }),
+        line_items: [{
+          quantity: 1,
+          price_data: {
+            currency,
+            unit_amount: product.price_cents,
+            product_data: {
+              name: product.name,
+              ...(product.description ? { description: product.description } : {}),
+            },
+            ...(recurring ? { recurring: { interval: "month" as const } } : {}),
+          },
+        }],
+        metadata,
+        ...(recurring ? { subscription_data: { metadata } } : {}),
+      });
+
+      if (reservationId) {
+        await supabaseClient.from("seat_reservations").update({ stripe_session_id: session.id }).eq("id", reservationId);
+      }
+      logStep("Product checkout session created", { sessionId: session.id, productId: product.id });
+
+      return new Response(JSON.stringify(
+        embedded ? { clientSecret: session.client_secret } : { url: session.url }
+      ), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 });
+    }
+
+
 
     const tierValue = tier || "wren";
     const role = tierValue === "owl" ? "trainee" : "client";
