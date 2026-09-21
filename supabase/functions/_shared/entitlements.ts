@@ -45,3 +45,15 @@ export async function expireEntitlementsByRef(admin: SupabaseClient, stripeRef: 
     .eq("stripe_ref", stripeRef)
     .eq("status", "active");
 }
+
+/**
+ * Legacy subscription tier -> access level. Used alongside (not instead of) the
+ * existing role assignment until switch-over. "owl" intentionally has no level
+ * yet — it arrives with the full grid seed.
+ */
+export const TIER_LEVEL_MAP: Record<string, string | null> = {
+  wren: null, // everyone implicitly holds "free"
+  robin: "creator",
+  cockatoo: "co_creator",
+  owl: null,
+};

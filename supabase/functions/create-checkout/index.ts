@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { grantEntitlement, TIER_LEVEL_MAP } from "../_shared/entitlements.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -196,6 +197,23 @@ serve(async (req) => {
     );
     if (subscriptionError) throw new Error(`Could not create subscription record: ${subscriptionError.message}`);
     logStep("Created role + subscription records", { role, tier: tierValue });
+
+    // Entitlements, granted ALONGSIDE the existing role (role removal happens at
+    // switch-over, not now). Paid tiers are granted by the webhook once payment
+    // succeeds; only the no-charge paths grant here.
+    if (signupPath === "case_study") {
+      // Case study: the case_study level plus 30 days of Connect, no charge.
+      // Idempotent — nothing re-granted while an active one exists.
+      await grantEntitlement(supabaseClient, { userId, levelKey: "case_study", source: "code" });
+      await grantEntitlement(supabaseClient, {
+        userId, levelKey: "taster", source: "code",
+        endsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      });
+      logStep("Granted case study entitlements", { userId });
+    } else if (tierValue === "wren") {
+      const level = TIER_LEVEL_MAP[tierValue];
+      if (level) await grantEntitlement(supabaseClient, { userId, levelKey: level, source: "stripe" });
+    }
 
     // If practitioner code provided, link client to practitioner
     if (practitionerCode) {
