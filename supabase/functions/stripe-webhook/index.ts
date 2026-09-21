@@ -140,9 +140,15 @@ serve(async (req) => {
           logStep("WARNING: seat cap exceeded at payment time — granting anyway, flag for admin", { userId, levelKey });
         }
 
-        const endsAt = billingShape === "fixed_term" && termMonths > 0
-          ? new Date(Date.now() + termMonths * 31 * 24 * 60 * 60 * 1000).toISOString()
-          : null;
+        // Fixed term = termMonths total payments: the checkout payment is
+        // instalment one, the schedule supplies the remaining (termMonths - 1).
+        // Access therefore ends termMonths calendar months after signup.
+        let endsAt: string | null = null;
+        if (billingShape === "fixed_term" && termMonths > 0) {
+          const end = new Date();
+          end.setMonth(end.getMonth() + termMonths);
+          endsAt = end.toISOString();
+        }
 
         const result = await grantEntitlement(supabase, {
           userId, levelKey, source: "stripe", stripeRef: subscriptionId || session.id, endsAt,
