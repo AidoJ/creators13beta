@@ -47,9 +47,11 @@ Recommendation: **grant the entitlement in addition to the role**, and remove th
 
 One endpoint exists and I'll extend it rather than adding a second.
 
-- **Handled today:** checkout completed, subscription updated, subscription deleted. Everything else is accepted and ignored. Which events the endpoint is *subscribed to* lives in the Stripe dashboard, not the code — worth confirming there.
-- **Duplicates:** not guarded, but currently harmless — each handler rewrites the same fields with the same values. That breaks as soon as it grants entitlements or seats, where a replay would double-grant.
-- **To add:** a processed-event ledger so each Stripe event is acted on once; the paid-invoice event (confirms each of the 13 instalments); the schedule events, including completion of the final phase, which is what ends a course entitlement cleanly; subscription-deleted as a backstop; and handling for a failed instalment mid-term.
+- **Handled in code today:** checkout completed, subscription updated, subscription deleted. Everything else is accepted and ignored.
+- **Was subscribed to (test mode):** checkout completed, checkout async payment succeeded/failed, subscription created/updated/deleted. The three checkout/subscription extras were arriving and being ignored.
+- **Now subscribed to** (I added these): invoice paid, invoice payment failed, invoice payment action required, and the four subscription-schedule events (completed, canceled, aborted, updated). Adding them is inert until the handler uses them.
+- **Duplicates:** not guarded, but currently harmless — each handler rewrites the same fields with the same values. That breaks as soon as it grants entitlements or seats, where a replay would double-grant. A processed-event ledger goes in first.
+- **Failed instalment:** recommended behaviour is to keep access while Stripe is still retrying (roughly three weeks of retries), show a "payment problem" notice, and only end access when Stripe itself gives up — one timer, not two. Awaiting your decision.
 
 ## What I'd build once you've decided
 
