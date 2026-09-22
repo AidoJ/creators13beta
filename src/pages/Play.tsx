@@ -41,7 +41,6 @@ import {
   inviteUrl,
   type GameMatchRow,
 } from "@/lib/game/persistence";
-import { isPaidTier } from "@/lib/clientClassification";
 import { type ServerMove } from "@/lib/game/serverMoves";
 import { logClientStateChange } from "@/lib/game/debugLog";
 
