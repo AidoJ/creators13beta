@@ -94,6 +94,78 @@ serve(async (req) => {
         subscriptionId: session.subscription,
       });
 
+      // ---- Clinic Profile referral ---------------------------------------
+      // The payer is the practitioner. Do NOT touch their subscription and do
+      // NOT grant them anything: mark the invitation paid and email the client
+      // their signup link. The access level is granted on redemption.
+      const referralInvitationId = session.metadata?.invitation_id;
+      if (referralInvitationId) {
+        const { data: invite } = await supabase
+          .from("client_invitations")
+          .select("id, name, email, invite_token, paid_at, practitioner_id")
+          .eq("id", referralInvitationId)
+          .maybeSingle();
+
+        if (!invite) {
+          logStep("ERROR: referral invitation not found", { referralInvitationId });
+          return new Response(JSON.stringify({ received: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+          });
+        }
+
+        if (!invite.paid_at) {
+          await supabase
+            .from("client_invitations")
+            .update({ paid_at: new Date().toISOString(), stripe_ref: session.id })
+            .eq("id", invite.id);
+        }
+
+        const origin = session.metadata?.app_origin || "https://creators13.lovable.app";
+        const inviteLink = `${origin}/enroll?tier=wren&billing=monthly&clinic=true&invite=${invite.invite_token}`;
+
+        const resendKey = Deno.env.get("RESEND_API_KEY");
+        if (resendKey) {
+          const { data: tpl } = await supabase
+            .from("email_templates")
+            .select("subject, html_body")
+            .eq("template_key", "clinic_profile_invite")
+            .maybeSingle();
+
+          const { data: prac } = await supabase
+            .from("profiles")
+            .select("first_name, last_name")
+            .eq("user_id", invite.practitioner_id)
+            .maybeSingle();
+          const practitionerName =
+            [prac?.first_name, prac?.last_name].filter(Boolean).join(" ") || "Your practitioner";
+
+          if (tpl) {
+            const fill = (s: string) =>
+              s.replace(/\{\{clientName\}\}/g, invite.name || "there")
+                .replace(/\{\{clientEmail\}\}/g, invite.email || "")
+                .replace(/\{\{practitionerName\}\}/g, practitionerName)
+                .replace(/\{\{inviteLink\}\}/g, inviteLink);
+            const res = await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                from: "13 Creator Types <noreply@13creatortypes.com>",
+                to: [invite.email],
+                subject: fill(tpl.subject),
+                html: fill(tpl.html_body),
+              }),
+            });
+            logStep("Clinic invite email dispatched", { ok: res.ok, status: res.status });
+          } else {
+            logStep("ERROR: clinic_profile_invite template missing");
+          }
+        }
+
+        return new Response(JSON.stringify({ received: true, referral: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+        });
+      }
+
       // Update subscription record
       const { error: subError } = await supabase
         .from("subscriptions")
