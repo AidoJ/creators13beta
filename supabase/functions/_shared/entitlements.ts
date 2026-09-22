@@ -47,12 +47,19 @@ export async function expireEntitlementsByRef(admin: SupabaseClient, stripeRef: 
 }
 
 /**
- * Legacy subscription tier -> access level. Used alongside (not instead of) the
- * existing role assignment until switch-over.
+ * Legacy subscription tier -> access level. Single source of truth is the
+ * access_levels.subscription_tier column (also read by the
+ * tcta_sync_level_key trigger) — never hardcode a second map here.
+ * Returns null when the tier maps to no grantable level; "free" is never
+ * granted as a row because everyone implicitly holds it.
  */
-export const TIER_LEVEL_MAP: Record<string, string | null> = {
-  wren: null, // everyone implicitly holds "free"
-  robin: "creator",
-  cockatoo: "co_creator",
-  owl: "owl",
-};
+export async function levelKeyForTier(admin: SupabaseClient, tier: string): Promise<string | null> {
+  const { data, error } = await admin
+    .from("access_levels")
+    .select("key")
+    .eq("subscription_tier", tier)
+    .maybeSingle();
+  if (error) throw new Error(`Could not resolve tier ${tier}: ${error.message}`);
+  const key = data?.key ?? null;
+  return key === "free" ? null : key;
+}
