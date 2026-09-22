@@ -183,7 +183,7 @@ export default function Details() {
 
     const { error } = await supabase
       .from("profiles")
-      .upsert(profileData, { onConflict: "user_id" });
+      .upsert(profileData as never, { onConflict: "user_id" });
 
     setLoading(false);
 
@@ -226,11 +226,19 @@ export default function Details() {
 
     const nextParams = new URLSearchParams({ tier, billing });
     if (params.get("case_study") === "true") nextParams.set("case_study", "true");
+    // Clinic Profile referrals carry their own context through to consent so the
+    // consent screen shows clinic wording rather than case-study wording.
+    const isClinicReferral = params.get("clinic") === "true";
+    if (isClinicReferral) {
+      nextParams.set("clinic", "true");
+      const t = params.get("invite");
+      if (t) nextParams.set("invite", t);
+    }
 
     // Check if this is a case study signup — route to consent first
     const isCaseStudy = params.get("case_study") === "true" || false;
     // Also check if referral_code exists in subscription (indicates case study)
-    let needsConsent = isCaseStudy;
+    let needsConsent = isCaseStudy || isClinicReferral;
     if (!needsConsent && user) {
       const { data: sub } = await supabase
         .from("subscriptions")

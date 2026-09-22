@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +16,14 @@ const CONSENT_ITEMS = [
   "I confirm that I am over 18 years of age.",
 ];
 
+// Clinic Profile referrals are paid client profilings, not training case studies.
+const CLINIC_CONSENT_ITEMS = [
+  "I understand that my photos will be used for body-type profiling to create my Creator Type profile.",
+  "I consent to my photos and profiling details being reviewed by my practitioner and a certified trainer.",
+  "I understand I can withdraw my consent and request deletion of my data at any time by contacting my practitioner.",
+  "I confirm that I am over 18, or that my parent or guardian has given consent on my behalf.",
+];
+
 export default function Consent() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
@@ -25,9 +33,31 @@ export default function Consent() {
 
   const tier = params.get("tier") || "wren";
   const billing = params.get("billing") || "monthly";
+  // Clinic context comes from the invite link, but the enrollment gate can
+  // redirect here without the link params — so fall back to the signup path
+  // recorded on the plan row when the referral was redeemed.
+  const [clinicSignup, setClinicSignup] = useState(false);
+  const isClinic = params.get("clinic") === "true" || clinicSignup;
+  const consentItems = isClinic ? CLINIC_CONSENT_ITEMS : CONSENT_ITEMS;
 
   const [checked, setChecked] = useState<boolean[]>(CONSENT_ITEMS.map(() => false));
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user || params.get("clinic") === "true") return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("signup_path")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!cancelled && data?.signup_path === "clinic") setClinicSignup(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, params]);
 
   const allChecked = checked.every(Boolean);
 
@@ -57,6 +87,11 @@ export default function Consent() {
     toast({ title: "Consent recorded" });
     const nextParams = new URLSearchParams({ tier, billing });
     if (params.get("case_study") === "true") nextParams.set("case_study", "true");
+    if (isClinic) {
+      nextParams.set("clinic", "true");
+      const t = params.get("invite");
+      if (t) nextParams.set("invite", t);
+    }
     navigate(`/enroll/photos?${nextParams.toString()}`);
   };
 
@@ -77,14 +112,16 @@ export default function Consent() {
           <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <ShieldCheck className="h-7 w-7 text-primary" />
           </div>
-          <h1 className="text-3xl font-display font-bold text-foreground mb-2">Case Study Consent</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground mb-2">
+            {isClinic ? "Profile Consent" : "Case Study Consent"}
+          </h1>
           <p className="text-muted-foreground">
             Before submitting your photos, please review and agree to the following.
           </p>
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-6 space-y-5 mb-8">
-          {CONSENT_ITEMS.map((item, i) => (
+          {consentItems.map((item, i) => (
             <label
               key={i}
               className="flex items-start gap-3 cursor-pointer group"
