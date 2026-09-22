@@ -1882,7 +1882,7 @@ export type Database = {
           height_cm?: number | null
           hide_avatar?: boolean
           id?: string
-          invitation_code?: string
+          invitation_code: string
           invited_by_user_id?: string | null
           last_enrollment_activity_at?: string | null
           last_name?: string | null

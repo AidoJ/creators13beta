@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ALTER COLUMN invitation_code DROP DEFAULT;
