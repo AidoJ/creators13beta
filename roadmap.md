@@ -22,3 +22,11 @@
 - [ ] Webhook: extend existing stripe-webhook endpoint (no second endpoint) — idempotency ledger, schedule/invoice events
 
 - [ ] create-checkout: a call with no product/tier falls through to the legacy free-tier path and rewrites the caller's own subscription to wren/active. Guard it.
+
+# Roadmap — Guardian consent two-step verification (design first, approval pending)
+
+- [ ] Schema: guardian_consent_status enum (pending | email_confirmed | verified) + separate timestamps for email confirmation and A'Hara's verbal confirmation
+- [ ] Guardian verification email: link + prominent child-safety note + A'Hara's phone number (number to be supplied)
+- [ ] A'Hara confirmation tick on trainer/admin screen only (not on the minor's enrolment form)
+- [ ] Both upload-guard triggers must require status = 'verified'
+- [ ] Reminder to A'Hara every 3 days while status = email_confirmed (enrolment, guardian, phone, days pending); no auto-expiry
