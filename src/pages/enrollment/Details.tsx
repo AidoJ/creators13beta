@@ -202,6 +202,17 @@ export default function Details() {
         .update({ status: "photos_pending" })
         .eq("email", user.email)
         .in("status", ["pending", "link_clicked", "account_created"]);
+
+      // Clinic Profile referral: redeem the practitioner-paid invitation. This
+      // grants the profiling access, links the practitioner, and is a no-op for
+      // everyone else. Then let the referring practitioner know.
+      const inviteToken = params.get("invite");
+      const { data: redeemed } = await (supabase as any).rpc("redeem_clinic_invitation", {
+        _token: inviteToken || "",
+      });
+      if (redeemed && (redeemed as any).ok) {
+        supabase.functions.invoke("notify-clinic-signup").catch(() => {});
+      }
     }
 
     toast({ title: "Details saved!" });

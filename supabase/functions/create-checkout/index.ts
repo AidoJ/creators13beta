@@ -65,11 +65,31 @@ serve(async (req) => {
       const currency = (product.currency || "aud").toLowerCase();
       const levelKey: string | null = product.grants_level_key ?? null;
 
+      // ---- Clinic Profile referral -------------------------------------
+      // The practitioner pays on behalf of someone who has no account yet.
+      // Nothing may be granted to the payer: the webhook marks the invitation
+      // paid, and the access level is granted to the client on redemption.
+      let referralInvitationId: string | null = null;
+      if (body.invitation_id) {
+        const { data: invite, error: invErr } = await supabaseClient
+          .from("client_invitations")
+          .select("id, practitioner_id, kind, paid_at")
+          .eq("id", body.invitation_id)
+          .maybeSingle();
+        if (invErr) throw new Error(`Could not verify invitation: ${invErr.message}`);
+        if (!invite) throw new Error("Invitation not found");
+        if (invite.practitioner_id !== userId) throw new Error("This invitation is not yours");
+        if (invite.kind !== "clinic_profile") throw new Error("Invitation is not a Clinic Profile referral");
+        if (invite.paid_at) throw new Error("This invitation has already been paid for");
+        referralInvitationId = invite.id;
+        logStep("Referral purchase", { invitationId: referralInvitationId });
+      }
+
       // Seat cap: check-and-hold happens atomically inside reserve_seat, which
       // takes a per-level lock. Two simultaneous checkouts for the last seat
       // cannot both succeed. Re-checked in the webhook before granting.
       let reservationId: string | null = null;
-      if (product.seat_cap && levelKey) {
+      if (product.seat_cap && levelKey && !referralInvitationId) {
         const { data: res, error: resErr } = await supabaseClient.rpc("reserve_seat", {
           _product_id: product.id,
           _level_key: levelKey,
@@ -88,7 +108,7 @@ serve(async (req) => {
 
       // FREE / NO-CHARGE product (e.g. case study): grant straight away.
       if (!product.price_cents || product.price_cents <= 0) {
-        if (levelKey) {
+        if (levelKey && !referralInvitationId) {
           await grantEntitlement(supabaseClient, { userId, levelKey, source: "admin" });
         }
         if (reservationId) await supabaseClient.from("seat_reservations").delete().eq("id", reservationId);
@@ -109,9 +129,12 @@ serve(async (req) => {
         user_id: userId,
         product_id: product.id,
         billing_shape: product.billing_shape,
-        level_key: levelKey ?? "",
+        // Referral purchases grant nothing to the payer.
+        level_key: referralInvitationId ? "" : (levelKey ?? ""),
         term_months: product.term_months ? String(product.term_months) : "",
         reservation_id: reservationId ?? "",
+        invitation_id: referralInvitationId ?? "",
+        app_origin: origin,
       };
 
       const session = await stripe.checkout.sessions.create({

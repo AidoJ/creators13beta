@@ -9,11 +9,13 @@ import CaseStudyList from "@/components/practitioner/CaseStudyList";
 import ReferenceChartsPanel from "@/components/practitioner/ReferenceChartsPanel";
 import CompositePhotoLayout from "@/components/profiling/CompositePhotoLayout";
 import InviteClientForm from "@/components/practitioner/InviteClientForm";
+import ClinicReferralForm from "@/components/practitioner/ClinicReferralForm";
+import { useFeatures } from "@/hooks/useFeatures";
 import CaseStudyPipeline from "@/components/practitioner/CaseStudyPipeline";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, ArrowLeft, Users, ClipboardList, Copy, CheckCircle, UserPlus, FolderOpen, BarChart3, Gauge, HelpCircle, Calendar } from "lucide-react";
+import { FileText, ArrowLeft, Users, ClipboardList, Copy, CheckCircle, UserPlus, FolderOpen, BarChart3, Gauge, HelpCircle, Calendar, Stethoscope } from "lucide-react";
 import ResourceLibrary from "@/components/practitioner/ResourceLibrary";
 import { toast } from "@/hooks/use-toast";
 import FAQPanel from "@/components/practitioner/FAQPanel";
@@ -28,6 +30,8 @@ export default function PractitionerDashboard() {
   const [editingCaseStudy, setEditingCaseStudy] = useState<any>(null);
   const [practitionerCode, setPractitionerCode] = useState<string | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
+  const { has: hasFeature } = useFeatures();
+  const canClinicRefer = hasFeature("prac_clinic_referral");
   const [activeTab, setActiveTab] = useState("pipeline");
   const [searchFilterCaseStudyId, setSearchFilterCaseStudyId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
@@ -148,6 +152,7 @@ export default function PractitionerDashboard() {
             <TabsTrigger value="calendar"><Calendar className="h-3.5 w-3.5 mr-1" />Calendar</TabsTrigger>
             <TabsTrigger value="clients"><Users className="h-3.5 w-3.5 mr-1" />Clients</TabsTrigger>
             <TabsTrigger value="invitations"><UserPlus className="h-3.5 w-3.5 mr-1" />Invite</TabsTrigger>
+            {canClinicRefer && <TabsTrigger value="clinic"><Stethoscope className="h-3.5 w-3.5 mr-1" />Clinic Referral</TabsTrigger>}
             <TabsTrigger value="cases"><ClipboardList className="h-3.5 w-3.5 mr-1" />Case Studies</TabsTrigger>
             <TabsTrigger value="resources"><FolderOpen className="h-3.5 w-3.5 mr-1" />Resources</TabsTrigger>
             <TabsTrigger value="charts"><BarChart3 className="h-3.5 w-3.5 mr-1" />Charts</TabsTrigger>
@@ -228,6 +233,12 @@ export default function PractitionerDashboard() {
           </TabsContent>
 
           {/* ======= INVITATIONS TAB ======= */}
+          {canClinicRefer && (
+            <TabsContent value="clinic" className="mt-4">
+              <ClinicReferralForm />
+            </TabsContent>
+          )}
+
           <TabsContent value="invitations" className="mt-4">
             <InviteClientForm practitionerCode={practitionerCode} />
           </TabsContent>
