@@ -208,10 +208,10 @@ export default function Photos() {
             navigate("/dashboard");
             return;
           }
-          if (age < 18 && !guardianComplete) {
+          if (age < 18 && !guardianVerified) {
             toast({
-              title: "Parent/guardian consent required",
-              description: "Since you are under 18, please complete the guardian consent section before uploading photos.",
+              title: "Parent/guardian consent not yet verified",
+              description: "Your parent or guardian must confirm the emailed link AND call A'Hara on 0412 293255 to confirm verbally. Uploads open once both are done.",
               variant: "destructive",
             });
             const qs = new URLSearchParams({ tier, billing, returnTo: "/enroll/photos" });
