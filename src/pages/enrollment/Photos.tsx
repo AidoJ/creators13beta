@@ -184,7 +184,7 @@ export default function Photos() {
       // under-16s, and for under-18s without complete parent/guardian consent.
       const { data: profileRow } = await supabase
         .from("profiles")
-        .select("date_of_birth, guardian_consent, guardian_first_name, guardian_last_name, guardian_phone, guardian_email")
+        .select("date_of_birth, guardian_consent_status")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -195,13 +195,10 @@ export default function Photos() {
           let age = now.getFullYear() - dob.getFullYear();
           const m = now.getMonth() - dob.getMonth();
           if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
-          const guardianComplete = !!(
-            profileRow.guardian_consent &&
-            profileRow.guardian_first_name &&
-            profileRow.guardian_last_name &&
-            profileRow.guardian_phone &&
-            profileRow.guardian_email
-          );
+          // Consent requires BOTH the guardian's email confirmation and A'Hara's
+          // recorded verbal confirmation. Either alone leaves uploads blocked.
+          const guardianVerified =
+            (profileRow as { guardian_consent_status?: string } | null)?.guardian_consent_status === "verified";
           if (age < 16) {
             toast({
               title: "Photo uploads not permitted under 16",
