@@ -128,7 +128,7 @@ export default function Dashboard() {
   const hasDetails = !!(profile?.first_name && profile?.date_of_birth && profile?.gender && profile?.height_cm);
 
 
-  if (!gateReady || loading) {
+  if (!gateReady || !featuresReady || loading) {
     return (
       <div className="min-h-screen bg-background">
         <DashboardHeader email={user?.email} onSignOut={signOut} />
