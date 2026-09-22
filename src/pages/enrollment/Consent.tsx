@@ -16,6 +16,14 @@ const CONSENT_ITEMS = [
   "I confirm that I am over 18 years of age.",
 ];
 
+// Clinic Profile referrals are paid client profilings, not training case studies.
+const CLINIC_CONSENT_ITEMS = [
+  "I understand that my photos will be used for body-type profiling to create my Creator Type profile.",
+  "I consent to my photos and profiling details being reviewed by my practitioner and a certified trainer.",
+  "I understand I can withdraw my consent and request deletion of my data at any time by contacting my practitioner.",
+  "I confirm that I am over 18, or that my parent or guardian has given consent on my behalf.",
+];
+
 export default function Consent() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
@@ -25,6 +33,8 @@ export default function Consent() {
 
   const tier = params.get("tier") || "wren";
   const billing = params.get("billing") || "monthly";
+  const isClinic = params.get("clinic") === "true";
+  const consentItems = isClinic ? CLINIC_CONSENT_ITEMS : CONSENT_ITEMS;
 
   const [checked, setChecked] = useState<boolean[]>(CONSENT_ITEMS.map(() => false));
   const [loading, setLoading] = useState(false);
