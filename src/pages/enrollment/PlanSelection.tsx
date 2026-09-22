@@ -44,6 +44,42 @@ export default function PlanSelection() {
     supabase.rpc("mark_invitation_link_clicked", { _token: urlInviteToken });
   }, [urlInviteToken]);
 
+  // ── Clinic Profile referral branch ────────────────────────────────────────
+  // The practitioner has already paid, so this person never sees the plan
+  // chooser. They go straight to the normal Details step with the referral
+  // attached. Safe to re-enter: redemption is idempotent and this branch only
+  // ever redirects. Both entry states are handled — brand new (to signup, then
+  // back here after verification) and existing account (redeem, then Details).
+  const urlClinic = searchParams.get("clinic") === "true" && !!urlInviteToken;
+  useEffect(() => {
+    if (!urlClinic) return;
+    let cancelled = false;
+    (async () => {
+      const { data: info } = await (supabase as any).rpc("lookup_clinic_invitation", { _token: urlInviteToken });
+      const inv = (info || {}) as any;
+      const q = new URLSearchParams({ tier: "wren", billing: "monthly", clinic: "true", invite: urlInviteToken });
+      if (!user) {
+        if (inv.ok && inv.email) q.set("email", inv.email);
+        if (inv.ok && inv.first_name) q.set("first_name", inv.first_name);
+        if (!cancelled) navigate(`/enroll/signup?${q.toString()}`, { replace: true });
+        return;
+      }
+      const invEmail = (inv.email || "").trim().toLowerCase();
+      const userEmail = (user.email || "").trim().toLowerCase();
+      if (invEmail && userEmail && invEmail !== userEmail) {
+        // Someone else (e.g. the referring practitioner) opened the link.
+        await supabase.auth.signOut();
+        return; // effect re-runs with no user → signup route above
+      }
+      const { data: redeemed } = await (supabase as any).rpc("redeem_clinic_invitation", { _token: urlInviteToken });
+      if (redeemed && (redeemed as any).ok && !(redeemed as any).already) {
+        supabase.functions.invoke("notify-clinic-signup").catch(() => {});
+      }
+      if (!cancelled) navigate(`/enroll/details?${q.toString()}`, { replace: true });
+    })();
+    return () => { cancelled = true; };
+  }, [urlClinic, urlInviteToken, user, navigate]);
+
   // Determine initial path from URL
   const initialPath: SignupPath = urlCaseStudy ? "case_study" : null;
 
@@ -299,6 +335,15 @@ export default function PlanSelection() {
   };
 
   const canContinue = signupPath && (isPlayer || (selectedTier && (!isCaseStudy || (practitionerCode.trim() && practitionerName))));
+
+  // Clinic referral: never show the plan chooser — the effect above is routing.
+  if (urlClinic) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <p className="text-muted-foreground">Setting up your Creator Type profiling…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
