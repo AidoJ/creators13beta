@@ -24,6 +24,7 @@ import InvitationsManager from "@/components/admin/InvitationsManager";
 import FaceSplitMirror from "@/components/trainer/FaceSplitMirror";
 import BodyAnnotationTool from "@/components/trainer/BodyAnnotationTool";
 import ClientDetail from "@/components/practitioner/ClientDetail";
+import ClinicProfileQueue from "@/components/trainer/ClinicProfileQueue";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SignedProfilingImage } from "@/lib/profilingPhotoUrl";
 
@@ -271,6 +272,7 @@ export default function TrainerDashboard() {
             <TabsTrigger value="cases-profile"><FileText className="h-3.5 w-3.5 mr-1" />CS (Profile) {profilingCaseStudies > 0 && <Badge className="ml-1 h-5 text-[10px]" variant="secondary">{profilingCaseStudies}</Badge>}</TabsTrigger>
             <TabsTrigger value="cases-pr"><FileText className="h-3.5 w-3.5 mr-1" />CS (Approve) {pendingCaseStudies > 0 && <Badge className="ml-1 h-5 text-[10px]" variant="destructive">{pendingCaseStudies}</Badge>}</TabsTrigger>
             <TabsTrigger value="cases-dt"><FileText className="h-3.5 w-3.5 mr-1" />CS (Draft) {draftCaseStudies > 0 && <Badge className="ml-1 h-5 text-[10px]" variant="outline">{draftCaseStudies}</Badge>}</TabsTrigger>
+            <TabsTrigger value="clinic"><Stethoscope className="h-3.5 w-3.5 mr-1" />Clinic Queue</TabsTrigger>
             <TabsTrigger value="invitations"><Mail className="h-3.5 w-3.5 mr-1" />Invitations</TabsTrigger>
             <TabsTrigger value="face-split"><Scissors className="h-3.5 w-3.5 mr-1" />Face Split</TabsTrigger>
             <TabsTrigger value="access"><KeyRound className="h-3.5 w-3.5 mr-1" />Access Levels</TabsTrigger>
@@ -392,6 +394,10 @@ export default function TrainerDashboard() {
               userId={user?.id}
               showActions
             />
+          </TabsContent>
+
+          <TabsContent value="clinic" className="space-y-4">
+            <ClinicProfileQueue onOpenClient={(id, name) => { setViewingClientId(id); setViewingClientName(name); }} />
           </TabsContent>
 
           <TabsContent value="invitations" className="space-y-4">
