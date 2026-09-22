@@ -210,7 +210,7 @@ export default function Details() {
       const { data: redeemed } = await (supabase as any).rpc("redeem_clinic_invitation", {
         _token: inviteToken || "",
       });
-      if (redeemed && (redeemed as any).redeemed) {
+      if (redeemed && (redeemed as any).ok) {
         supabase.functions.invoke("notify-clinic-signup").catch(() => {});
       }
     }
