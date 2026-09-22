@@ -3136,6 +3136,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      lookup_clinic_invitation: { Args: { _token: string }; Returns: Json }
       lookup_practitioner_by_code: {
         Args: { _code: string }
         Returns: {

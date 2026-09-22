@@ -22,6 +22,10 @@ export default function Signup() {
   const isPlayer = params.get("path") === "player";
   const practitionerCode = params.get("practitioner_code") || "";
   const inviteToken = params.get("invite") || "";
+  // Clinic Profile referral: the practitioner has already paid, so this signup
+  // skips plan selection and payment entirely and goes straight to Details —
+  // the SAME Details/Consent/Photos steps every other signup uses.
+  const isClinic = params.get("clinic") === "true" && !!inviteToken;
   // Threaded through the email-confirmation redirect URL (see handleSignup)
   // so a returning page load can tell "the client who just confirmed their
   // OWN new account" apart from "a different already-logged-in user (e.g.
@@ -34,12 +38,33 @@ export default function Signup() {
     authReturnParams.set("practitioner_code", practitionerCode);
     if (inviteToken) authReturnParams.set("invite", inviteToken);
   }
+  if (isClinic) {
+    authReturnParams.set("clinic", "true");
+    authReturnParams.set("invite", inviteToken);
+  }
   if (isPlayer) authReturnParams.set("path", "player");
+  // Clinic sign-in returns to /enroll, whose clinic branch redeems the
+  // referral and forwards to Details — so the token survives sign-in.
   const authReturnTo = isPlayer
     ? `/dashboard`
     : tier === "wren"
       ? `/enroll?${authReturnParams.toString()}`
       : `/enroll/payment?${authReturnParams.toString()}`;
+
+  // Query string carried into Details for a clinic signup.
+  const clinicDetailsParams = () => {
+    const p = new URLSearchParams({ tier: "wren", billing: "monthly", clinic: "true", invite: inviteToken });
+    return p.toString();
+  };
+
+  // Redeem the practitioner-paid referral. Idempotent: safe to call on every
+  // hand-off, and a no-op once already redeemed by the same person.
+  async function redeemClinic() {
+    const { data } = await (supabase as any).rpc("redeem_clinic_invitation", { _token: inviteToken });
+    if (data && (data as any).ok && !(data as any).already) {
+      supabase.functions.invoke("notify-clinic-signup").catch(() => {});
+    }
+  }
 
   const [loading, setLoading] = useState(false);
   // Guards the account-setup retry (see retryAccountSetupIfNeeded) so it
@@ -58,11 +83,11 @@ export default function Signup() {
   // the one this signup flow expects.
   useEffect(() => {
     if (!user || signingOut || showVerification || loading) return;
-    if (!caseStudy) return;
+    if (!caseStudy && !isClinic) return;
     if (expectedEmail && user.email?.toLowerCase() === expectedEmail) return;
     setSigningOut(true);
     supabase.auth.signOut().then(() => setSigningOut(false));
-  }, [user, caseStudy, signingOut, showVerification, loading, expectedEmail]);
+  }, [user, caseStudy, isClinic, signingOut, showVerification, loading, expectedEmail]);
 
   // True once a real session exists post-redirect (email verification link,
   // including the case-study client's own return trip now that the sign-out
@@ -89,6 +114,10 @@ export default function Signup() {
       verifyParams.set("case_study", "true");
       verifyParams.set("practitioner_code", practitionerCode);
       if (inviteToken) verifyParams.set("invite", inviteToken);
+    }
+    if (isClinic) {
+      verifyParams.set("clinic", "true");
+      verifyParams.set("invite", inviteToken);
     }
     if (isPlayer) verifyParams.set("path", "player");
     const redirectUrl = `${appOrigin}/enroll/signup?${verifyParams.toString()}`;
@@ -137,22 +166,27 @@ export default function Signup() {
 
 
     // Create subscription/role records via edge function (handles all paths).
-    const priceId = tierInfo.stripe?.price_id || null;
-    const { error: fnError } = await supabase.functions.invoke("create-checkout", {
-      body: {
-        priceId,
-        email: values.email,
-        user_id: userId,
-        tier,
-        billing,
-        practitioner_code: practitionerCode || null,
-        invite_token: inviteToken || null,
-        signup_path: isPlayer ? "player" : caseStudy ? "case_study" : "paying",
-        successUrl: `${appOrigin}/enroll/practitioner?tier=${tier}&billing=${billing}&payment=skipped`,
-        cancelUrl: `${appOrigin}/enroll/payment?tier=${tier}&billing=${billing}&canceled=true`,
-      },
-    });
-    if (fnError) console.error("Edge function error:", fnError);
+    // Clinic referrals skip this entirely — no plan is being bought here, and
+    // redemption creates the free plan record plus the practitioner link.
+    if (!isClinic) {
+      const priceId = tierInfo.stripe?.price_id || null;
+      const { error: fnError } = await supabase.functions.invoke("create-checkout", {
+        body: {
+          priceId,
+          email: values.email,
+          user_id: userId,
+          tier,
+          billing,
+          practitioner_code: practitionerCode || null,
+          invite_token: inviteToken || null,
+          signup_path: isPlayer ? "player" : caseStudy ? "case_study" : "paying",
+          successUrl: `${appOrigin}/enroll/practitioner?tier=${tier}&billing=${billing}&payment=skipped`,
+          cancelUrl: `${appOrigin}/enroll/payment?tier=${tier}&billing=${billing}&canceled=true`,
+        },
+      });
+      if (fnError) console.error("Edge function error:", fnError);
+    }
+
 
     if (caseStudy) {
       const returnToPath = `/enroll/practitioner?tier=${tier}&billing=${billing}&case_study=true&practitioner_code=${encodeURIComponent(practitionerCode)}${inviteToken ? `&invite=${encodeURIComponent(inviteToken)}` : ""}`;
@@ -176,6 +210,11 @@ export default function Signup() {
     if (authData.session || authData.user?.email_confirmed_at) {
       if (isPlayer) {
         navigate("/dashboard");
+        return;
+      }
+      if (isClinic) {
+        await redeemClinic();
+        navigate(`/enroll/details?${clinicDetailsParams()}`);
         return;
       }
       const nextParams = new URLSearchParams({ tier, billing });
@@ -206,9 +245,18 @@ export default function Signup() {
     if (!user?.email) return;
     retriedRef.current = true;
 
+    // Clinic referral: redemption (idempotent) does the equivalent work —
+    // grants the paid-for profiling access, links the practitioner and creates
+    // the free plan record. No checkout call belongs on this path.
+    if (isClinic) {
+      await redeemClinic();
+      return;
+    }
+
     const appOrigin = getAppOrigin();
     const priceId = tierInfo.stripe?.price_id || null;
     const signupPath = isPlayer ? "player" : caseStudy ? "case_study" : "paying";
+
 
     const { error: fnError } = await supabase.functions.invoke("create-checkout", {
       body: {
@@ -253,15 +301,21 @@ export default function Signup() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [arrivedVerified]);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     // Secondary path: confirmed in another tab, clicking "I've Verified —
     // Continue" back in the original tab (arrivedVerified may not have
     // fired there if this tab's session only just became available).
     if (user?.email && (!expectedEmail || user.email.toLowerCase() === expectedEmail)) {
-      retryAccountSetupIfNeeded();
+      await retryAccountSetupIfNeeded();
     }
     if (isPlayer) {
       navigate("/dashboard");
+      return;
+    }
+    if (isClinic) {
+      // Retry may have been skipped (already run); redemption is idempotent.
+      await redeemClinic();
+      navigate(`/enroll/details?${clinicDetailsParams()}`);
       return;
     }
     const nextParams = new URLSearchParams({ tier, billing });
@@ -342,12 +396,24 @@ export default function Signup() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-display font-bold text-foreground mb-2">Create Your Account</h1>
           <p className="text-muted-foreground">
-            {isPlayer ? "Set up your free player account" : <>Setting up your <span className="font-semibold text-foreground">{tierInfo.name}</span> membership</>}
+            {isClinic
+              ? "Your Creator Type profiling has already been paid for by your practitioner."
+              : isPlayer
+                ? "Set up your free player account"
+                : <>Setting up your <span className="font-semibold text-foreground">{tierInfo.name}</span> membership</>}
           </p>
         </div>
 
         <section className="bg-card border border-border rounded-2xl p-6">
-          <SignupFields loading={loading} submitLabel={submitLabel} onSubmit={handleSignup} />
+          <SignupFields
+            loading={loading}
+            submitLabel={submitLabel}
+            initial={isClinic ? {
+              email: params.get("email") || "",
+              firstName: params.get("first_name") || "",
+            } : undefined}
+            onSubmit={handleSignup}
+          />
         </section>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
