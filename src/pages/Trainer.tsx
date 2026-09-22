@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, CheckCircle, XCircle, Clock, BarChart3, Eye, EyeOff, GitBranch, Save, Calendar, ArrowLeft, Mail, Scissors, KeyRound, ShoppingBag, Stethoscope} from "lucide-react";
+import { FileText, CheckCircle, XCircle, Clock, BarChart3, Eye, EyeOff, GitBranch, Save, Calendar, ArrowLeft, Mail, Scissors, KeyRound, ShoppingBag, Stethoscope, ShieldCheck} from "lucide-react";
 import EntitlementsPanel from "@/components/admin/EntitlementsPanel";
 import ProductsPanel from "@/components/admin/ProductsPanel";
 
