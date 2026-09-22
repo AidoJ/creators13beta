@@ -58,6 +58,7 @@ export default function Dashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { ready: gateReady, state: gateState } = useEnrollmentGate();
+  const { ready: featuresReady, features } = useFeatures();
   const isPlayerOnly = !!gateState?.isPlayerOnly;
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [booking, setBooking] = useState<BookingData | null>(null);
