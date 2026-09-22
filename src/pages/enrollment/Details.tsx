@@ -183,7 +183,7 @@ export default function Details() {
 
     const { error } = await supabase
       .from("profiles")
-      .upsert(profileData, { onConflict: "user_id" });
+      .upsert(profileData as never, { onConflict: "user_id" });
 
     setLoading(false);
 
