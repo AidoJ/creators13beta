@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useEnrollmentGate } from "@/hooks/useEnrollmentGate";
+import { useFeatures } from "@/hooks/useFeatures";
 import type { TierKey } from "@/lib/tiers";
 
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
@@ -57,6 +58,7 @@ export default function Dashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { ready: gateReady, state: gateState } = useEnrollmentGate();
+  const { ready: featuresReady, features } = useFeatures();
   const isPlayerOnly = !!gateState?.isPlayerOnly;
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [booking, setBooking] = useState<BookingData | null>(null);
@@ -126,7 +128,7 @@ export default function Dashboard() {
   const hasDetails = !!(profile?.first_name && profile?.date_of_birth && profile?.gender && profile?.height_cm);
 
 
-  if (!gateReady || loading) {
+  if (!gateReady || !featuresReady || loading) {
     return (
       <div className="min-h-screen bg-background">
         <DashboardHeader email={user?.email} onSignOut={signOut} />
@@ -158,7 +160,11 @@ export default function Dashboard() {
   }
 
   const isPaidTier = !!subscription?.tier && subscription.tier !== "wren";
-  const showProfileSection = isPaidTier || hasProfilingFootprint;
+  // Access decision — the grid decides who sees Creator Profiles (Owl,
+  // practitioners, case_study, profile buyers, existing_profiled). Paid
+  // membership alone no longer qualifies, and the profiling footprint
+  // heuristic is gone from this condition.
+  const showProfileSection = features.has("dashboard_view_creator_profiles");
 
 
   return (
