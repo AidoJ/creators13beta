@@ -134,6 +134,7 @@ serve(async (req) => {
         term_months: product.term_months ? String(product.term_months) : "",
         reservation_id: reservationId ?? "",
         invitation_id: referralInvitationId ?? "",
+        app_origin: origin,
       };
 
       const session = await stripe.checkout.sessions.create({
