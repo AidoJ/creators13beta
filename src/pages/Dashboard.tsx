@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useEnrollmentGate } from "@/hooks/useEnrollmentGate";
+import { useFeatures } from "@/hooks/useFeatures";
 import type { TierKey } from "@/lib/tiers";
 
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
