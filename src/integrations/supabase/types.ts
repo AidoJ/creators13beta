@@ -302,37 +302,70 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          grants_level_key: string | null
           id: string
           invite_token: string
+          kind: string
           name: string
+          paid_at: string | null
           phone: string | null
           practitioner_id: string
+          product_id: string | null
+          redeemed_at: string | null
           reminder_sent_at: string | null
           status: string
+          stripe_ref: string | null
         }
         Insert: {
           created_at?: string
           email: string
+          grants_level_key?: string | null
           id?: string
           invite_token?: string
+          kind?: string
           name: string
+          paid_at?: string | null
           phone?: string | null
           practitioner_id: string
+          product_id?: string | null
+          redeemed_at?: string | null
           reminder_sent_at?: string | null
           status?: string
+          stripe_ref?: string | null
         }
         Update: {
           created_at?: string
           email?: string
+          grants_level_key?: string | null
           id?: string
           invite_token?: string
+          kind?: string
           name?: string
+          paid_at?: string | null
           phone?: string | null
           practitioner_id?: string
+          product_id?: string | null
+          redeemed_at?: string | null
           reminder_sent_at?: string | null
           status?: string
+          stripe_ref?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "client_invitations_grants_level_key_fkey"
+            columns: ["grants_level_key"]
+            isOneToOne: false
+            referencedRelation: "access_levels"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "client_invitations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       client_practitioner: {
         Row: {
@@ -2902,6 +2935,23 @@ export type Database = {
       generate_practitioner_code:
         | { Args: never; Returns: string }
         | { Args: { _first_name?: string }; Returns: string }
+      get_clinic_profile_queue: {
+        Args: never
+        Returns: {
+          client_email: string
+          client_name: string
+          client_phone: string
+          client_user_id: string
+          creator_types_assigned: number
+          invitation_id: string
+          paid_at: string
+          photos_uploaded: number
+          practitioner_id: string
+          practitioner_name: string
+          redeemed_at: string
+          signup_status: string
+        }[]
+      }
       get_community_events: {
         Args: { _from?: string; _to?: string }
         Returns: {
@@ -3126,6 +3176,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      redeem_clinic_invitation: { Args: { _token: string }; Returns: Json }
       register_lobby_host_roster: {
         Args: { _match_id: string }
         Returns: undefined
