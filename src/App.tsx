@@ -30,6 +30,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CardPreview from "./pages/CardPreview";
 import Unsubscribe from "./pages/Unsubscribe";
+import GuardianVerify from "./pages/GuardianVerify";
 import EnrollmentResume from "./pages/EnrollmentResume";
 import EnrollmentRemindersUnsubscribe from "./pages/EnrollmentRemindersUnsubscribe";
 
@@ -145,6 +146,7 @@ const App = () => (
                 <Route path="/admin" element={<ProtectedRoute><RoleGuard allowedRoles={["trainer", "admin"]}><AdminDashboard /></RoleGuard></ProtectedRoute>} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
+                <Route path="/guardian-verify" element={<GuardianVerify />} />
                 <Route path="/unsubscribe" element={<Unsubscribe />} />
                 <Route path="/unsubscribe/enrollment" element={<EnrollmentRemindersUnsubscribe />} />
                 <Route path="/enroll/resume" element={<EnrollmentResume />} />

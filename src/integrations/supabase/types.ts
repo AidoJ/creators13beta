@@ -1799,10 +1799,18 @@ export type Database = {
           gender: string | null
           guardian_consent: boolean | null
           guardian_consent_at: string | null
+          guardian_consent_status: Database["public"]["Enums"]["guardian_consent_state"]
           guardian_email: string | null
+          guardian_email_confirmed_at: string | null
           guardian_first_name: string | null
           guardian_last_name: string | null
           guardian_phone: string | null
+          guardian_reminder_count: number
+          guardian_reminder_last_sent_at: string | null
+          guardian_verbal_confirmed_at: string | null
+          guardian_verbal_confirmed_by: string | null
+          guardian_verification_sent_at: string | null
+          guardian_verification_token: string | null
           height_cm: number | null
           hide_avatar: boolean
           id: string
@@ -1875,10 +1883,18 @@ export type Database = {
           gender?: string | null
           guardian_consent?: boolean | null
           guardian_consent_at?: string | null
+          guardian_consent_status?: Database["public"]["Enums"]["guardian_consent_state"]
           guardian_email?: string | null
+          guardian_email_confirmed_at?: string | null
           guardian_first_name?: string | null
           guardian_last_name?: string | null
           guardian_phone?: string | null
+          guardian_reminder_count?: number
+          guardian_reminder_last_sent_at?: string | null
+          guardian_verbal_confirmed_at?: string | null
+          guardian_verbal_confirmed_by?: string | null
+          guardian_verification_sent_at?: string | null
+          guardian_verification_token?: string | null
           height_cm?: number | null
           hide_avatar?: boolean
           id?: string
@@ -1951,10 +1967,18 @@ export type Database = {
           gender?: string | null
           guardian_consent?: boolean | null
           guardian_consent_at?: string | null
+          guardian_consent_status?: Database["public"]["Enums"]["guardian_consent_state"]
           guardian_email?: string | null
+          guardian_email_confirmed_at?: string | null
           guardian_first_name?: string | null
           guardian_last_name?: string | null
           guardian_phone?: string | null
+          guardian_reminder_count?: number
+          guardian_reminder_last_sent_at?: string | null
+          guardian_verbal_confirmed_at?: string | null
+          guardian_verbal_confirmed_by?: string | null
+          guardian_verification_sent_at?: string | null
+          guardian_verification_token?: string | null
           height_cm?: number | null
           hide_avatar?: boolean
           id?: string
@@ -2900,6 +2924,11 @@ export type Database = {
         }[]
       }
       compute_match_score: { Args: { _a: string; _b: string }; Returns: number }
+      confirm_guardian_email: { Args: { _token: string }; Returns: Json }
+      confirm_guardian_verbal_consent: {
+        Args: { _user_id: string }
+        Returns: Json
+      }
       creator_type_code: {
         Args: { _lower: boolean; _type: string }
         Returns: string
@@ -3000,6 +3029,23 @@ export type Database = {
           practitioner_code: string
           practitioner_status: Database["public"]["Enums"]["practitioner_status"]
           user_id: string
+        }[]
+      }
+      get_guardian_consent_queue: {
+        Args: never
+        Returns: {
+          child_email: string
+          child_name: string
+          date_of_birth: string
+          days_waiting: number
+          email_confirmed_at: string
+          guardian_email: string
+          guardian_name: string
+          guardian_phone: string
+          status: Database["public"]["Enums"]["guardian_consent_state"]
+          user_id: string
+          verbal_confirmed_at: string
+          verification_sent_at: string
         }[]
       }
       get_incoming_contact_requests: {
@@ -3249,6 +3295,7 @@ export type Database = {
         | "complete"
       entitlement_source: "stripe" | "admin" | "code" | "backfill"
       entitlement_status: "active" | "cancelled" | "expired"
+      guardian_consent_state: "pending" | "email_confirmed" | "verified"
       match_mode: "solo" | "pvp"
       match_status: "waiting" | "active" | "finished"
       order_status:
@@ -3434,6 +3481,7 @@ export const Constants = {
       ],
       entitlement_source: ["stripe", "admin", "code", "backfill"],
       entitlement_status: ["active", "cancelled", "expired"],
+      guardian_consent_state: ["pending", "email_confirmed", "verified"],
       match_mode: ["solo", "pvp"],
       match_status: ["waiting", "active", "finished"],
       order_status: [

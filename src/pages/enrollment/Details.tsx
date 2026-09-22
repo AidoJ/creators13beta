@@ -12,6 +12,7 @@ import { ArrowRight, Loader2, CheckCircle } from "lucide-react";
 import { TIERS, TierKey } from "@/lib/tiers";
 import EnrollmentHeader from "@/components/enrollment/EnrollmentHeader";
 import { useEnrollmentGate } from "@/hooks/useEnrollmentGate";
+import { getAppOrigin } from "@/lib/appOrigin";
 
 export default function Details() {
   const [params] = useSearchParams();
@@ -190,6 +191,15 @@ export default function Details() {
     if (error) {
       toast({ title: "Failed to save details", description: error.message, variant: "destructive" });
       return;
+    }
+
+    // Under-18s: send (or re-send) the guardian's email-confirmation link. That
+    // is step one of two — the guardian must also phone A'Hara, who records the
+    // verbal confirmation on her own screen. Uploads stay blocked until both.
+    if (isMinor && guardianEmail.trim()) {
+      supabase.functions
+        .invoke("send-guardian-verification", { body: { app_origin: getAppOrigin() } })
+        .catch(() => {});
     }
 
     // Mark any pending invitation for this email as "photos_pending" — they've
@@ -380,6 +390,17 @@ export default function Details() {
               <p className="text-sm text-foreground leading-relaxed">
                 Since you are under 18 years old, we need consent from a parent or guardian before you upload your photos.
               </p>
+
+              <div className="rounded-xl border-2 border-destructive/50 bg-destructive/5 p-4 text-sm leading-relaxed">
+                <p className="font-semibold text-destructive mb-1">
+                  We take child safety very seriously. Your parent or guardian must complete BOTH steps:
+                </p>
+                <p className="text-foreground">(a) Click the confirmation link we'll email them when you save this page.</p>
+                <p className="text-foreground">(b) Call A'Hara on <span className="font-semibold">0412 293255</span> to confirm consent verbally.</p>
+                <p className="text-foreground mt-1">
+                  Photo uploads stay locked until both are done.
+                </p>
+              </div>
 
               <label className="flex gap-3 items-start cursor-pointer rounded-xl border border-border bg-card p-3">
                 <input
