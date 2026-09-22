@@ -12,6 +12,7 @@ import { ArrowRight, Loader2, CheckCircle } from "lucide-react";
 import { TIERS, TierKey } from "@/lib/tiers";
 import EnrollmentHeader from "@/components/enrollment/EnrollmentHeader";
 import { useEnrollmentGate } from "@/hooks/useEnrollmentGate";
+import { getAppOrigin } from "@/lib/appOrigin";
 
 export default function Details() {
   const [params] = useSearchParams();
