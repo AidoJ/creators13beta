@@ -92,14 +92,16 @@ export default function Consent() {
           <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <ShieldCheck className="h-7 w-7 text-primary" />
           </div>
-          <h1 className="text-3xl font-display font-bold text-foreground mb-2">Case Study Consent</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground mb-2">
+            {isClinic ? "Profile Consent" : "Case Study Consent"}
+          </h1>
           <p className="text-muted-foreground">
             Before submitting your photos, please review and agree to the following.
           </p>
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-6 space-y-5 mb-8">
-          {CONSENT_ITEMS.map((item, i) => (
+          {consentItems.map((item, i) => (
             <label
               key={i}
               className="flex items-start gap-3 cursor-pointer group"
