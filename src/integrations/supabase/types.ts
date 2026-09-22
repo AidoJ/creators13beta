@@ -53,6 +53,9 @@ export type Database = {
           display_name: string
           key: string
           sort_order: number
+          subscription_tier:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
           updated_at: string
         }
         Insert: {
@@ -60,6 +63,9 @@ export type Database = {
           display_name: string
           key: string
           sort_order: number
+          subscription_tier?:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
           updated_at?: string
         }
         Update: {
@@ -67,6 +73,9 @@ export type Database = {
           display_name?: string
           key?: string
           sort_order?: number
+          subscription_tier?:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
           updated_at?: string
         }
         Relationships: []
