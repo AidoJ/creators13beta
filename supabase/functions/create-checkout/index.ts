@@ -211,7 +211,7 @@ serve(async (req) => {
       });
       logStep("Granted case study entitlements", { userId });
     } else if (tierValue === "wren") {
-      const level = TIER_LEVEL_MAP[tierValue];
+      const level = await levelKeyForTier(supabaseClient, tierValue);
       if (level) await grantEntitlement(supabaseClient, { userId, levelKey: level, source: "stripe" });
     }
 
