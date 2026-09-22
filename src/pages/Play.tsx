@@ -1370,13 +1370,13 @@ export default function Play() {
         return;
       }
 
-      // Tier lookup — gates capacity. Only the host's tier matters.
-      const { data: sub } = await supabase
-        .from("subscriptions")
-        .select("tier")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      const playerCount: 2 | 4 = isPaidTier(sub?.tier ?? null) ? 4 : 2;
+      // Capacity is an access decision — resolved from the access grid, not
+      // the subscription tier. Only the host's entitlements matter.
+      const { data: canInvite } = await (supabase as any).rpc("has_feature", {
+        _uid: user.id,
+        _feature_key: "game_multiplayer_invite",
+      });
+      const playerCount: 2 | 4 = canInvite ? 4 : 2;
 
       const hostName = await fetchPlayerShortName(user);
       const deck = buildDeck(allCards, specialCards);

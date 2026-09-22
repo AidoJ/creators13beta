@@ -158,7 +158,11 @@ export default function Dashboard() {
   }
 
   const isPaidTier = !!subscription?.tier && subscription.tier !== "wren";
-  const showProfileSection = isPaidTier || hasProfilingFootprint;
+  // Access decision — the grid decides who sees Creator Profiles (Owl,
+  // practitioners, case_study, profile buyers, existing_profiled). Paid
+  // membership alone no longer qualifies, and the profiling footprint
+  // heuristic is gone from this condition.
+  const showProfileSection = features.has("dashboard_view_creator_profiles");
 
 
   return (
