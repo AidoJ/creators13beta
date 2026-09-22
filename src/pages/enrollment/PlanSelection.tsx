@@ -59,6 +59,13 @@ export default function PlanSelection() {
       const inv = (info || {}) as any;
       const q = new URLSearchParams({ tier: "wren", billing: "monthly", clinic: "true", invite: urlInviteToken });
       if (!user) {
+        // Already has an account → sign in, returning to this same link so the
+        // referral is picked up and redeemed on the way back.
+        if (inv.ok && inv.has_account) {
+          const back = `/enroll?${q.toString()}`;
+          if (!cancelled) navigate(`/auth?returnTo=${encodeURIComponent(back)}`, { replace: true });
+          return;
+        }
         if (inv.ok && inv.email) q.set("email", inv.email);
         if (inv.ok && inv.first_name) q.set("first_name", inv.first_name);
         if (!cancelled) navigate(`/enroll/signup?${q.toString()}`, { replace: true });
