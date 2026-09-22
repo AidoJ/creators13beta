@@ -108,7 +108,7 @@ serve(async (req) => {
 
       // FREE / NO-CHARGE product (e.g. case study): grant straight away.
       if (!product.price_cents || product.price_cents <= 0) {
-        if (levelKey) {
+        if (levelKey && !referralInvitationId) {
           await grantEntitlement(supabaseClient, { userId, levelKey, source: "admin" });
         }
         if (reservationId) await supabaseClient.from("seat_reservations").delete().eq("id", reservationId);
@@ -129,9 +129,11 @@ serve(async (req) => {
         user_id: userId,
         product_id: product.id,
         billing_shape: product.billing_shape,
-        level_key: levelKey ?? "",
+        // Referral purchases grant nothing to the payer.
+        level_key: referralInvitationId ? "" : (levelKey ?? ""),
         term_months: product.term_months ? String(product.term_months) : "",
         reservation_id: reservationId ?? "",
+        invitation_id: referralInvitationId ?? "",
       };
 
       const session = await stripe.checkout.sessions.create({
