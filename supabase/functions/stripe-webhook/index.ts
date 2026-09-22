@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
-import { grantEntitlement, expireEntitlementsByRef, TIER_LEVEL_MAP } from "../_shared/entitlements.ts";
+import { grantEntitlement, expireEntitlementsByRef, levelKeyForTier } from "../_shared/entitlements.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -184,7 +184,7 @@ serve(async (req) => {
         // Legacy tier path — grant the matching level alongside the existing role.
         const { data: subRow } = await supabase
           .from("subscriptions").select("tier").eq("user_id", userId).maybeSingle();
-        const tierLevel = subRow?.tier ? TIER_LEVEL_MAP[subRow.tier] : null;
+        const tierLevel = subRow?.tier ? await levelKeyForTier(supabase, subRow.tier) : null;
         if (tierLevel) {
           const result = await grantEntitlement(supabase, {
             userId, levelKey: tierLevel, source: "stripe", stripeRef: subscriptionId,

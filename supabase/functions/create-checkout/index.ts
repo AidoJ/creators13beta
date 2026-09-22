@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
-import { grantEntitlement, TIER_LEVEL_MAP } from "../_shared/entitlements.ts";
+import { grantEntitlement, levelKeyForTier } from "../_shared/entitlements.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -211,7 +211,7 @@ serve(async (req) => {
       });
       logStep("Granted case study entitlements", { userId });
     } else if (tierValue === "wren") {
-      const level = TIER_LEVEL_MAP[tierValue];
+      const level = await levelKeyForTier(supabaseClient, tierValue);
       if (level) await grantEntitlement(supabaseClient, { userId, levelKey: level, source: "stripe" });
     }
 
