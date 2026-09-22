@@ -33,11 +33,31 @@ export default function Consent() {
 
   const tier = params.get("tier") || "wren";
   const billing = params.get("billing") || "monthly";
-  const isClinic = params.get("clinic") === "true";
+  // Clinic context comes from the invite link, but the enrollment gate can
+  // redirect here without the link params — so fall back to the signup path
+  // recorded on the plan row when the referral was redeemed.
+  const [clinicSignup, setClinicSignup] = useState(false);
+  const isClinic = params.get("clinic") === "true" || clinicSignup;
   const consentItems = isClinic ? CLINIC_CONSENT_ITEMS : CONSENT_ITEMS;
 
   const [checked, setChecked] = useState<boolean[]>(CONSENT_ITEMS.map(() => false));
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user || params.get("clinic") === "true") return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("signup_path")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!cancelled && data?.signup_path === "clinic") setClinicSignup(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, params]);
 
   const allChecked = checked.every(Boolean);
 
