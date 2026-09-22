@@ -149,7 +149,7 @@ serve(async (req) => {
               method: "POST",
               headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
               body: JSON.stringify({
-                from: "13 Creator Types <noreply@13creatortypes.com>",
+                from: "13 Creators <noreply@connect.13creators.com>",
                 to: [invite.email],
                 subject: fill(tpl.subject),
                 html: fill(tpl.html_body),
