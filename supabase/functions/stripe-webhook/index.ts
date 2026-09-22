@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
-import { grantEntitlement, expireEntitlementsByRef, TIER_LEVEL_MAP } from "../_shared/entitlements.ts";
+import { grantEntitlement, expireEntitlementsByRef, levelKeyForTier } from "../_shared/entitlements.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
