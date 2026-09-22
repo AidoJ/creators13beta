@@ -20,3 +20,5 @@
 - [ ] has_feature service-role fix; entitlement granted alongside existing role
 - [ ] Events access re-key (per decision)
 - [ ] Webhook: extend existing stripe-webhook endpoint (no second endpoint) — idempotency ledger, schedule/invoice events
+
+- [ ] create-checkout: a call with no product/tier falls through to the legacy free-tier path and rewrites the caller's own subscription to wren/active. Guard it.
