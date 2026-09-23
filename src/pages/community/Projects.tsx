@@ -37,8 +37,9 @@ export default function Projects() {
   const [types, setTypes] = useState<string[]>([]);
   const [roles, setRoles] = useState<string[]>([]);
 
-  const canView = has("projects_view");
-  const canAdd = has("projects_add_edit");
+  // The database policies allow admins as well as feature holders; mirror that here.
+  const canView = has("projects_view") || isAdmin;
+  const canAdd = has("projects_add_edit") || isAdmin;
 
   async function load() {
     setLoading(true);
