@@ -7,8 +7,8 @@ export interface QuizQuestion {
   category: string;
   prompt: string;
   option_a: string; option_b: string; option_c: string; option_d: string;
-  explanation: string | null;
-  // correct_option intentionally omitted — server validates.
+  // correct_option and explanation intentionally omitted — the server reveals
+  // them only in the submit_quiz_answer result, after an answer is given.
 }
 export interface QuizProgress {
   correct_count: number;
@@ -61,7 +61,7 @@ export function useQuizProgress(matchId: string | null, userId: string | null, r
       setProgress(prog);
       if (prog.open_question_id) {
         const { data: q } = await supabase.from("quiz_questions")
-          .select("id, creator_type, category, prompt, option_a, option_b, option_c, option_d, explanation")
+          .select("id, creator_type, category, prompt, option_a, option_b, option_c, option_d")
           .eq("id", prog.open_question_id).maybeSingle();
         if (!cancelled) setQuestion(q ?? null);
       } else {
@@ -91,7 +91,7 @@ export function useQuizProgress(matchId: string | null, userId: string | null, r
     // question server-side — pull it in so it can be answered immediately.
     if (nextId) {
       const { data: q } = await supabase.from("quiz_questions")
-        .select("id, creator_type, category, prompt, option_a, option_b, option_c, option_d, explanation")
+        .select("id, creator_type, category, prompt, option_a, option_b, option_c, option_d")
         .eq("id", nextId).maybeSingle();
       setQuestion((q as any) ?? null);
     } else {
