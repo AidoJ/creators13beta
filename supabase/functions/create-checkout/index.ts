@@ -47,8 +47,20 @@ serve(async (req) => {
     const userEmail: string = authData.user.email;
     logStep("User from JWT", { userId, email: userEmail });
 
-    const body = await req.json();
+    let body: Record<string, any>;
+    try {
+      body = await req.json();
+    } catch {
+      body = null as unknown as Record<string, any>;
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      logStep("Rejected: malformed body");
+      return new Response(JSON.stringify({ error: "invalid_request", message: "A valid checkout request body is required." }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const { priceId, successUrl, cancelUrl, tier, billing, embedded } = body;
+
 
     // ------------------------------------------------------------------
     // NEW PRODUCT PATH — inline pricing straight from the products table.
