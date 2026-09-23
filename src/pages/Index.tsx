@@ -42,6 +42,7 @@ const Index = () => {
   }, [user, loading]);
 
   if (loading || !destination) return null;
+  if (destination === "__front") return <FrontPage />;
   return <Navigate to={destination} replace />;
 };
 
