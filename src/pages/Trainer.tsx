@@ -136,6 +136,7 @@ export default function TrainerDashboard() {
       _case_study_id: id,
       _status: action,
       _reviewer_notes: notes || null,
+      _complete_enrollment: action === "approved",
     });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -158,9 +159,6 @@ export default function TrainerDashboard() {
             console.error("Failed to sync creator types:", upsertErr);
             toast({ title: "Warning", description: "Case study approved but creator types failed to sync: " + upsertErr.message, variant: "destructive" });
           }
-          // Mark enrollment as complete
-          const { error: stepErr } = await supabase.from("profiles").update({ enrollment_step: "complete" }).eq("user_id", cs.subject_user_id);
-          if (stepErr) console.error("Failed to update enrollment step:", stepErr);
           // Notify client of their approved creator types
           try {
             await supabase.functions.invoke("notify-client-approved", {
@@ -197,7 +195,11 @@ export default function TrainerDashboard() {
   }
 
   async function handleMarkProfiled(id: string) {
-    const { error } = await supabase.from("case_studies").update({ status: "draft" as any, profiling_complete: true } as any).eq("id", id);
+    const { error } = await supabase.rpc("review_case_study", {
+      _case_study_id: id,
+      _status: "draft",
+      _profiling_complete: true,
+    });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {

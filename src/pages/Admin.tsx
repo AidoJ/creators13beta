@@ -237,6 +237,7 @@ export default function AdminDashboard() {
       _case_study_id: id,
       _status: action,
       _reviewer_notes: notes || null,
+      _complete_enrollment: action === "approved",
     });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -255,8 +256,6 @@ export default function AdminDashboard() {
             profiled_by: user?.id ?? null,
             profiled_at: new Date().toISOString(),
           }, { onConflict: "user_id" });
-          // Mark enrollment as complete
-          await supabase.from("profiles").update({ enrollment_step: "complete" }).eq("user_id", cs.subject_user_id);
         }
       }
       toast({ title: action === "approved" ? "Case study approved" : "Revision requested with notes" });
