@@ -33,7 +33,7 @@ export const CREATOR_TYPE_TEAM_ROLE: Record<string, string> = {
   Mountain: "Director",
   Soil: "Stabilizer",
   River: "Integrator",
-  Sky: "The Visionary",
+  Sky: "The Adaptor",
 };
 
 export function creatorMetaFor(typeName: string | null | undefined): { family: string; teamRole: string } | null {
