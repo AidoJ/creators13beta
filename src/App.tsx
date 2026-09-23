@@ -17,14 +17,16 @@ import PlanSelection from "./pages/enrollment/PlanSelection";
 import Signup from "./pages/enrollment/Signup";
 const Payment = lazy(() => import("./pages/enrollment/Payment"));
 
-// Plain /enroll visits go to the new storefront front page. Deep links that
-// still need the old flow (case-study invites, clinic referrals, practitioner
-// codes, community referral links, upgrade/discount handoffs) keep working.
-const ENROLL_DEEP_LINK_PARAMS = ["case_study", "clinic", "invite", "practitioner_code", "ref", "upgrade", "discount", "code"];
+// Only a truly bare /enroll visit goes to the new storefront front page.
+// Anything carrying a meaningful query parameter keeps the old flow, so new
+// parameters never need to be added to a list to keep working. Marketing /
+// analytics parameters are ignored because they carry no signup intent.
+const ENROLL_IGNORED_PARAM = (k: string) =>
+  /^utm_/i.test(k) || ["gclid", "fbclid", "msclkid", "mc_cid", "mc_eid", "ref_src", "_ga"].includes(k.toLowerCase());
 function EnrollEntry() {
   const [searchParams] = useSearchParams();
-  const isDeepLink = ENROLL_DEEP_LINK_PARAMS.some((k) => searchParams.has(k));
-  if (!isDeepLink) return <Navigate to="/" replace />;
+  const meaningful = [...searchParams.keys()].filter((k) => !ENROLL_IGNORED_PARAM(k));
+  if (meaningful.length === 0) return <Navigate to="/" replace />;
   return <PlanSelection />;
 }
 import PractitionerSelection from "./pages/enrollment/PractitionerSelection";
