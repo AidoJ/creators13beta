@@ -132,11 +132,12 @@ export default function TrainerDashboard() {
   }, [fetchUsers, fetchCaseStudies]);
 
   async function handleCaseStudyAction(id: string, action: "approved" | "revision_requested", notes?: string) {
-    const updateData: { status: "approved" | "revision_requested"; reviewed_by?: string; reviewed_at: string; reviewer_notes?: string } = {
-      status: action, reviewed_by: user?.id, reviewed_at: new Date().toISOString(),
-    };
-    if (notes) updateData.reviewer_notes = notes;
-    const { error } = await supabase.from("case_studies").update(updateData).eq("id", id);
+    const { error } = await supabase.rpc("review_case_study", {
+      _case_study_id: id,
+      _status: action,
+      _reviewer_notes: notes || null,
+      _complete_enrollment: action === "approved",
+    });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
@@ -158,9 +159,6 @@ export default function TrainerDashboard() {
             console.error("Failed to sync creator types:", upsertErr);
             toast({ title: "Warning", description: "Case study approved but creator types failed to sync: " + upsertErr.message, variant: "destructive" });
           }
-          // Mark enrollment as complete
-          const { error: stepErr } = await supabase.from("profiles").update({ enrollment_step: "complete" }).eq("user_id", cs.subject_user_id);
-          if (stepErr) console.error("Failed to update enrollment step:", stepErr);
           // Notify client of their approved creator types
           try {
             await supabase.functions.invoke("notify-client-approved", {
@@ -197,7 +195,11 @@ export default function TrainerDashboard() {
   }
 
   async function handleMarkProfiled(id: string) {
-    const { error } = await supabase.from("case_studies").update({ status: "draft" as any, profiling_complete: true } as any).eq("id", id);
+    const { error } = await supabase.rpc("review_case_study", {
+      _case_study_id: id,
+      _status: "draft",
+      _profiling_complete: true,
+    });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
@@ -546,7 +548,7 @@ function CaseStudyList({ caseStudies, emptyMessage, expandedCaseStudy, setExpand
                     {cs.status !== "submitted" && (
                       <>
                         <Button size="sm" variant="outline" disabled={!revisionNotes[cs.id]?.trim()} onClick={async () => {
-                          const { error } = await supabase.from("case_studies").update({ reviewer_notes: revisionNotes[cs.id], reviewed_by: userId, reviewed_at: new Date().toISOString() }).eq("id", cs.id);
+                          const { error } = await supabase.rpc("review_case_study", { _case_study_id: cs.id, _reviewer_notes: revisionNotes[cs.id] });
                           if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); } else {
                             toast({ title: "Feedback saved" }); setRevisionNotes(prev => { const n = { ...prev }; delete n[cs.id]; return n; }); await fetchCaseStudies();
                           }

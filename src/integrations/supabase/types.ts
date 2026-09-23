@@ -3245,6 +3245,16 @@ export type Database = {
       }
       resolve_invitation_code: { Args: { _code: string }; Returns: string }
       resolve_match_invite_code: { Args: { _code: string }; Returns: string }
+      review_case_study: {
+        Args: {
+          _case_study_id: string
+          _complete_enrollment?: boolean
+          _profiling_complete?: boolean
+          _reviewer_notes?: string
+          _status?: Database["public"]["Enums"]["case_study_status"]
+        }
+        Returns: undefined
+      }
       revoke_contact_request: {
         Args: { _request_id: string }
         Returns: undefined
@@ -3253,6 +3263,14 @@ export type Database = {
       send_contact_request: {
         Args: { _reason: string; _to_user_id: string }
         Returns: string
+      }
+      set_practitioner_certification: {
+        Args: {
+          _certification_level?: number
+          _status?: Database["public"]["Enums"]["practitioner_status"]
+          _user_id: string
+        }
+        Returns: undefined
       }
       submit_quiz_answer: {
         Args: {
