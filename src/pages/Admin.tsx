@@ -233,16 +233,11 @@ export default function AdminDashboard() {
   }
 
   async function handleCaseStudyAction(id: string, action: "approved" | "revision_requested", notes?: string) {
-    const updateData: { status: "approved" | "revision_requested"; reviewed_by?: string; reviewed_at: string; reviewer_notes?: string } = {
-      status: action,
-      reviewed_by: user?.id,
-      reviewed_at: new Date().toISOString(),
-    };
-    // Always save reviewer_notes if provided (for both approve and revision)
-    if (notes) {
-      updateData.reviewer_notes = notes;
-    }
-    const { error } = await supabase.from("case_studies").update(updateData).eq("id", id);
+    const { error } = await supabase.rpc("review_case_study", {
+      _case_study_id: id,
+      _status: action,
+      _reviewer_notes: notes || null,
+    });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
@@ -271,7 +266,10 @@ export default function AdminDashboard() {
   }
 
   async function handlePractitionerStatus(userId: string, status: string) {
-    const { error } = await supabase.from("profiles").update({ practitioner_status: status as Database["public"]["Enums"]["practitioner_status"] }).eq("user_id", userId);
+    const { error } = await supabase.rpc("set_practitioner_certification", {
+      _user_id: userId,
+      _status: status as Database["public"]["Enums"]["practitioner_status"],
+    });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
@@ -281,7 +279,10 @@ export default function AdminDashboard() {
   }
 
   async function handleCertificationLevel(userId: string, level: number) {
-    const { error } = await supabase.from("profiles").update({ certification_level: level } as never).eq("user_id", userId);
+    const { error } = await supabase.rpc("set_practitioner_certification", {
+      _user_id: userId,
+      _certification_level: level,
+    });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
