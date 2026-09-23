@@ -3248,6 +3248,8 @@ export type Database = {
       review_case_study: {
         Args: {
           _case_study_id: string
+          _complete_enrollment?: boolean
+          _profiling_complete?: boolean
           _reviewer_notes?: string
           _status?: Database["public"]["Enums"]["case_study_status"]
         }
