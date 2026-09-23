@@ -27,6 +27,7 @@ import PractitionersTab from "@/components/admin/PractitionersTab";
 import SubscribersTab from "@/components/admin/SubscribersTab";
 import EmailTemplateEditor from "@/components/admin/EmailTemplateEditor";
 import InvitationsManager from "@/components/admin/InvitationsManager";
+import PractitionerApplicationsPanel from "@/components/admin/PractitionerApplicationsPanel";
 import { getDirtyMessage, confirmDiscardIfDirty } from "@/components/admin/unsavedChanges";
 import { capitaliseTypeName } from "@/lib/creatorTypes";
 
@@ -426,10 +427,15 @@ export default function AdminDashboard() {
             <TabsTrigger value="marketing"><Megaphone className="h-3.5 w-3.5 mr-1" />Marketing</TabsTrigger>
             <TabsTrigger value="access"><KeyRound className="h-3.5 w-3.5 mr-1" />Access Levels</TabsTrigger>
             <TabsTrigger value="products"><ShoppingBag className="h-3.5 w-3.5 mr-1" />Products</TabsTrigger>
+            <TabsTrigger value="applications"><UserPlus className="h-3.5 w-3.5 mr-1" />Applications</TabsTrigger>
           </TabsList>
 
           <TabsContent value="products" className="space-y-4">
             <ProductsPanel />
+          </TabsContent>
+
+          <TabsContent value="applications" className="space-y-4">
+            <PractitionerApplicationsPanel />
           </TabsContent>
 
           <TabsContent value="access" className="space-y-4">
