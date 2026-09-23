@@ -29,6 +29,7 @@ export default function Projects() {
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [members, setMembers] = useState<MemberOption[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminChecked, setAdminChecked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
 
@@ -70,10 +71,10 @@ export default function Projects() {
   }
 
   useEffect(() => {
-    if (!user) { setIsAdmin(false); return; }
+    if (!user) { setIsAdmin(false); setAdminChecked(true); return; }
     supabase
       .rpc("has_role", { _user_id: user.id, _role: "admin" as any })
-      .then(({ data }) => setIsAdmin(!!data));
+      .then(({ data }) => { setIsAdmin(!!data); setAdminChecked(true); });
   }, [user]);
 
   useEffect(() => {
@@ -103,7 +104,7 @@ export default function Projects() {
     set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
   }
 
-  if (ready && !canView) {
+  if (ready && adminChecked && !canView) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <Card className="p-8 max-w-md text-center space-y-3">
