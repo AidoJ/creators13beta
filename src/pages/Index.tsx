@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { getRequiredEnrollmentPath, loadEnrollmentState } from "@/lib/enrollmentGate";
+import FrontPage from "./FrontPage";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -20,10 +21,13 @@ const Index = () => {
         return;
       }
     }
-    if (!user) {
-      setDestination("/enroll");
+    // Public front page for visitors, and for a signed-in person coming back
+    // from sign-in to finish a purchase they started here (?buy=...).
+    if (!user || new URLSearchParams(window.location.search).has("buy")) {
+      setDestination("__front");
       return;
     }
+
 
     (async () => {
       try {
@@ -38,6 +42,7 @@ const Index = () => {
   }, [user, loading]);
 
   if (loading || !destination) return null;
+  if (destination === "__front") return <FrontPage />;
   return <Navigate to={destination} replace />;
 };
 
