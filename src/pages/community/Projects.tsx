@@ -28,6 +28,7 @@ export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [members, setMembers] = useState<MemberOption[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
 
