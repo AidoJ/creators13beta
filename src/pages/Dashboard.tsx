@@ -41,6 +41,13 @@ interface ProfileData {
   state: string | null;
   country: string | null;
   case_study_consent_at: string | null;
+  guardian_consent_declared: boolean | null;
+  guardian_consent_status: "pending" | "email_confirmed" | "verified";
+  guardian_verbal_confirmed_at: string | null;
+  guardian_first_name: string | null;
+  guardian_last_name: string | null;
+  guardian_phone: string | null;
+  guardian_email: string | null;
 }
 
 interface BookingData {
@@ -77,7 +84,7 @@ export default function Dashboard() {
     if (!user) return;
     const fetchData = async () => {
       const [profileRes, bookingRes, subRes, ctpRes, csRes, cpRes, photosRes, visRes] = await Promise.all([
-        supabase.from("profiles").select("first_name, last_name, enrollment_step, date_of_birth, gender, pronouns, height_cm, shoe_size, phone, city, state, country, case_study_consent_at, guardian_consent, guardian_first_name, guardian_last_name, guardian_phone, guardian_email").eq("user_id", user.id).maybeSingle(),
+        supabase.from("profiles").select("first_name, last_name, enrollment_step, date_of_birth, gender, pronouns, height_cm, shoe_size, phone, city, state, country, case_study_consent_at, guardian_consent_declared, guardian_consent_status, guardian_verbal_confirmed_at, guardian_first_name, guardian_last_name, guardian_phone, guardian_email").eq("user_id", user.id).maybeSingle(),
         supabase.from("bookings").select("scheduled_at, status, zoom_link").eq("client_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
         supabase.from("subscriptions").select("tier, status, referral_code").eq("user_id", user.id).maybeSingle(),
         supabase.from("creator_type_profiles").select("primary_type, secondary_type, type_3, type_4").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),

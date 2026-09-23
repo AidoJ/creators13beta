@@ -30,12 +30,14 @@ interface ProfileData {
   state: string | null;
   country: string | null;
   case_study_consent_at: string | null;
-  guardian_consent: boolean | null;
+  guardian_consent_declared: boolean | null;
+  guardian_consent_status: "pending" | "email_confirmed" | "verified";
   guardian_first_name: string | null;
   guardian_last_name: string | null;
   guardian_phone: string | null;
   guardian_email: string | null;
-  guardian_consent_at: string | null;
+  guardian_consent_declared_at: string | null;
+  guardian_verbal_confirmed_at: string | null;
 }
 
 interface BookingData {
@@ -99,7 +101,7 @@ export default function ClientDetail({ clientId, onClientNameLoaded }: ClientDet
     async function fetchClientData() {
       setLoading(true);
       const [profileRes, bookingRes, ctRes, csRes] = await Promise.all([
-        supabase.from("profiles").select("first_name, last_name, email, enrollment_step, date_of_birth, gender, height_cm, shoe_size, city, state, country, case_study_consent_at, guardian_consent, guardian_first_name, guardian_last_name, guardian_phone, guardian_email, guardian_consent_at").eq("user_id", clientId).maybeSingle(),
+        supabase.from("profiles").select("first_name, last_name, email, enrollment_step, date_of_birth, gender, height_cm, shoe_size, city, state, country, case_study_consent_at, guardian_consent_declared, guardian_consent_declared_at, guardian_consent_status, guardian_verbal_confirmed_at, guardian_first_name, guardian_last_name, guardian_phone, guardian_email").eq("user_id", clientId).maybeSingle(),
         supabase.from("bookings").select("id, scheduled_at, status, zoom_link").eq("client_id", clientId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
         supabase.from("creator_type_profiles").select("primary_type, secondary_type, type_3, type_4, profiled_at").eq("user_id", clientId).maybeSingle(),
         
@@ -229,16 +231,18 @@ export default function ClientDetail({ clientId, onClientNameLoaded }: ClientDet
         const m = now.getMonth() - dob.getMonth();
         if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
         if (age >= 18) return null;
-        const given = !!profile.guardian_consent;
+        const declared = !!profile.guardian_consent_declared;
+        const verified = profile.guardian_consent_status === "verified";
+        const statusLabel = verified ? "Verified (email + phone)" : declared ? "Declared by the young person" : "Declaration Missing";
         return (
-          <div className={`rounded-2xl border p-4 space-y-3 ${given ? "border-green-500/30 bg-green-500/5" : "border-amber-500/40 bg-amber-500/5"}`}>
+          <div className={`rounded-2xl border p-4 space-y-3 ${verified ? "border-green-500/30 bg-green-500/5" : "border-amber-500/40 bg-amber-500/5"}`}>
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <h3 className="text-sm font-semibold text-foreground">Parent / Guardian Consent</h3>
-              <Badge variant="outline" className={`text-xs ${given ? "bg-green-500/10 text-green-600 border-green-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/30"}`}>
-                {given ? "Consent Given" : "Consent Missing"} · Age {age}
+              <Badge variant="outline" className={`text-xs ${verified ? "bg-green-500/10 text-green-600 border-green-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/30"}`}>
+                {statusLabel} · Age {age}
               </Badge>
             </div>
-            {given ? (
+            {declared ? (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
                 <div>
                   <span className="text-muted-foreground text-xs">Guardian</span>
@@ -253,9 +257,11 @@ export default function ClientDetail({ clientId, onClientNameLoaded }: ClientDet
                   <p className="font-medium text-foreground break-all">{profile.guardian_email || "—"}</p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground text-xs">Consented</span>
+                  <span className="text-muted-foreground text-xs">Status</span>
                   <p className="font-medium text-foreground">
-                    {profile.guardian_consent_at ? new Date(profile.guardian_consent_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" }) : "—"}
+                    {verified
+                      ? `Verified (email + phone)${profile.guardian_verbal_confirmed_at ? ` · ${new Date(profile.guardian_verbal_confirmed_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}` : ""}`
+                      : "Declared by the young person"}
                   </p>
                 </div>
               </div>

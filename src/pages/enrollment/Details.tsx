@@ -79,7 +79,7 @@ export default function Details() {
     const load = async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("first_name, last_name, phone, date_of_birth, gender, pronouns, height_cm, shoe_size, address_line1, address_line2, city, state, postal_code, country, medical_history, guardian_consent, guardian_first_name, guardian_last_name, guardian_phone, guardian_email")
+        .select("first_name, last_name, phone, date_of_birth, gender, pronouns, height_cm, shoe_size, address_line1, address_line2, city, state, postal_code, country, medical_history, guardian_consent_declared, guardian_first_name, guardian_last_name, guardian_phone, guardian_email")
         .eq("user_id", user.id)
         .maybeSingle();
       if (data) {
@@ -104,7 +104,7 @@ export default function Details() {
         if (data.postal_code) setPostalCode(data.postal_code);
         if (data.country) setCountry(data.country);
         if (data.medical_history) setMedicalHistory(data.medical_history);
-        if (data.guardian_consent) setGuardianConsent(true);
+        if (data.guardian_consent_declared) setGuardianConsent(true);
         if (data.guardian_first_name) setGuardianFirstName(data.guardian_first_name);
         if (data.guardian_last_name) setGuardianLastName(data.guardian_last_name);
         if (data.guardian_phone) setGuardianPhone(data.guardian_phone);
@@ -175,12 +175,12 @@ export default function Details() {
     // consent evidence for photos taken while they were under 18.
     const guardianFields = isMinor
       ? {
-          guardian_consent: guardianConsent,
+          guardian_consent_declared: guardianConsent,
           guardian_first_name: guardianFirstName.trim() || null,
           guardian_last_name: guardianLastName.trim() || null,
           guardian_phone: guardianPhone.trim() || null,
           guardian_email: guardianEmail.trim() || null,
-          ...(guardianConsent ? { guardian_consent_at: new Date().toISOString() } : {}),
+          ...(guardianConsent ? { guardian_consent_declared_at: new Date().toISOString() } : {}),
         }
       : {};
 
