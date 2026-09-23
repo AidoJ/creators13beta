@@ -44,7 +44,8 @@ export default function QuizBankPanel() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("quiz_questions").select("*").order("creator_type").order("category").order("updated_at", { ascending: false });
+    // Answers live behind a staff-only server function — players cannot read them.
+    const { data, error } = await supabase.rpc("admin_list_quiz_questions");
     if (error) toast({ title: "Load failed", description: error.message, variant: "destructive" });
     else setRows((data ?? []) as Q[]);
     setLoading(false);
