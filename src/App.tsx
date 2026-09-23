@@ -16,6 +16,17 @@ import Account from "./pages/Account";
 import PlanSelection from "./pages/enrollment/PlanSelection";
 import Signup from "./pages/enrollment/Signup";
 const Payment = lazy(() => import("./pages/enrollment/Payment"));
+
+// Plain /enroll visits go to the new storefront front page. Deep links that
+// still need the old flow (case-study invites, clinic referrals, practitioner
+// codes, community referral links, upgrade/discount handoffs) keep working.
+const ENROLL_DEEP_LINK_PARAMS = ["case_study", "clinic", "invite", "practitioner_code", "ref", "upgrade", "discount", "code"];
+function EnrollEntry() {
+  const [searchParams] = useSearchParams();
+  const isDeepLink = ENROLL_DEEP_LINK_PARAMS.some((k) => searchParams.has(k));
+  if (!isDeepLink) return <Navigate to="/" replace />;
+  return <PlanSelection />;
+}
 import PractitionerSelection from "./pages/enrollment/PractitionerSelection";
 import Details from "./pages/enrollment/Details";
 import Consent from "./pages/enrollment/Consent";
