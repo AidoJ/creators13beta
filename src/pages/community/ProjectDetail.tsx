@@ -39,8 +39,8 @@ export default function ProjectDetail() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
 
-  const canView = has("projects_view");
-  const canAddEdit = has("projects_add_edit");
+  const canView = has("projects_view") || isAdmin;
+  const canAddEdit = has("projects_add_edit") || isAdmin;
 
   async function load() {
     if (!projectId) return;
