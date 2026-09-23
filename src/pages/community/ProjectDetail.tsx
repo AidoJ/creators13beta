@@ -48,7 +48,7 @@ export default function ProjectDetail() {
     const [projRes, ccRes, memberRes, adminRes] = await Promise.all([
       supabase.from("projects" as any).select("*").eq("id", projectId).maybeSingle(),
       supabase.from("project_co_creators" as any).select("user_id").eq("project_id", projectId),
-      supabase.rpc("get_community_members", { _limit: 500 }),
+      supabase.rpc("get_project_member_options" as any),
       supabase.rpc("has_role", { _user_id: user?.id, _role: "admin" as any }),
     ]);
     if (projRes.error) {

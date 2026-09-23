@@ -58,7 +58,7 @@ export default function Projects() {
     }
     setLoading(false);
     // The member directory only matters for tagging co-creators, so it loads after the list.
-    const memberRes = await supabase.rpc("get_community_members", { _limit: 500 });
+    const memberRes = await supabase.rpc("get_project_member_options" as any);
     setMembers(
       (((memberRes.data || []) as any[]) || []).map((m) => ({
         user_id: m.user_id,
