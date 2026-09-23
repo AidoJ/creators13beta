@@ -41,10 +41,10 @@ export default function Projects() {
 
   async function load() {
     setLoading(true);
-    const [{ data, error }, memberRes] = await Promise.all([
-      supabase.from("projects" as any).select("*").order("start_date", { ascending: true }),
-      supabase.rpc("get_community_members", { _limit: 500 }),
-    ]);
+    const { data, error } = await supabase
+      .from("projects" as any)
+      .select("*")
+      .order("start_date", { ascending: true });
     if (error) {
       toast({ title: "Couldn't load projects", description: error.message, variant: "destructive" });
       setProjects([]);
@@ -56,13 +56,15 @@ export default function Projects() {
       );
       setThumbs(Object.fromEntries(entries.filter(([, u]) => !!u) as [string, string][]));
     }
+    setLoading(false);
+    // The member directory only matters for tagging co-creators, so it loads after the list.
+    const memberRes = await supabase.rpc("get_project_member_options" as any);
     setMembers(
       (((memberRes.data || []) as any[]) || []).map((m) => ({
         user_id: m.user_id,
         display_name: m.display_name || "Member",
       }))
     );
-    setLoading(false);
   }
 
   useEffect(() => {

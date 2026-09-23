@@ -3236,6 +3236,13 @@ export type Database = {
       }
       get_pending_request_count: { Args: never; Returns: number }
       get_player_quiz_stats: { Args: { _user_id: string }; Returns: Json }
+      get_project_member_options: {
+        Args: never
+        Returns: {
+          display_name: string
+          user_id: string
+        }[]
+      }
       get_public_member_profile: {
         Args: { _target_user_id: string }
         Returns: {
