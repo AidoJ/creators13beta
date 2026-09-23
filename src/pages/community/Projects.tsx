@@ -70,6 +70,13 @@ export default function Projects() {
   }
 
   useEffect(() => {
+    if (!user) { setIsAdmin(false); return; }
+    supabase
+      .rpc("has_role", { _user_id: user.id, _role: "admin" as any })
+      .then(({ data }) => setIsAdmin(!!data));
+  }, [user]);
+
+  useEffect(() => {
     if (!user || !ready) return;
     if (!canView) { setLoading(false); return; }
     load();
