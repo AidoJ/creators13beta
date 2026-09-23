@@ -47,8 +47,20 @@ serve(async (req) => {
     const userEmail: string = authData.user.email;
     logStep("User from JWT", { userId, email: userEmail });
 
-    const body = await req.json();
+    let body: Record<string, any>;
+    try {
+      body = await req.json();
+    } catch {
+      body = null as unknown as Record<string, any>;
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      logStep("Rejected: malformed body");
+      return new Response(JSON.stringify({ error: "invalid_request", message: "A valid checkout request body is required." }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const { priceId, successUrl, cancelUrl, tier, billing, embedded } = body;
+
 
     // ------------------------------------------------------------------
     // NEW PRODUCT PATH — inline pricing straight from the products table.
@@ -175,10 +187,46 @@ serve(async (req) => {
 
 
 
-    const tierValue = tier || "wren";
+    // ------------------------------------------------------------------
+    // LEGACY TIER PATH — only reachable with an explicit, valid tier.
+    // A product-less / malformed call used to fall through here, default to
+    // "wren" and rewrite the caller's own plan to free. Both holes are closed:
+    // the tier must be stated, and an existing live plan is never downgraded.
+    // ------------------------------------------------------------------
+    const VALID_TIERS = ["wren", "robin", "cockatoo", "owl"];
+    if (typeof tier !== "string" || !VALID_TIERS.includes(tier)) {
+      logStep("Rejected: missing or invalid tier", { tier });
+      return new Response(JSON.stringify({
+        error: "invalid_request",
+        message: "A product or a valid plan must be specified for checkout.",
+      }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const tierValue = tier;
     const role = tierValue === "owl" ? "trainee" : "client";
     const practitionerCode = body.practitioner_code || null;
     const inviteToken = body.invite_token || null;
+
+    // Never let the free path overwrite a live paid plan.
+    if (tierValue === "wren") {
+      const { data: existingSub, error: existingSubErr } = await supabaseClient
+        .from("subscriptions")
+        .select("tier, status")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (existingSubErr) throw new Error(`Could not check existing plan: ${existingSubErr.message}`);
+      if (
+        existingSub &&
+        existingSub.tier !== "wren" &&
+        ["active", "trialing", "past_due"].includes(existingSub.status)
+      ) {
+        logStep("Rejected: would downgrade a live plan", { tier: existingSub.tier, status: existingSub.status });
+        return new Response(JSON.stringify({
+          error: "existing_plan",
+          message: "You already have an active plan. Please manage it from your dashboard instead.",
+        }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
 
     if (inviteToken) {
       const { data: invitation, error: invitationError } = await supabaseClient
