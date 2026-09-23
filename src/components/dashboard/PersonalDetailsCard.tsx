@@ -14,7 +14,9 @@ interface ProfileData {
   city: string | null;
   state: string | null;
   country: string | null;
-  guardian_consent?: boolean | null;
+  guardian_consent_declared?: boolean | null;
+  guardian_consent_status?: "pending" | "email_confirmed" | "verified" | null;
+  guardian_verbal_confirmed_at?: string | null;
   guardian_first_name?: string | null;
   guardian_last_name?: string | null;
   guardian_phone?: string | null;
@@ -50,6 +52,11 @@ export default function PersonalDetailsCard({ profile, hasDetails }: PersonalDet
     : null;
 
   const location = [profile?.city, profile?.state, profile?.country].filter(Boolean).join(", ");
+  const guardianVerified = profile?.guardian_consent_status === "verified";
+  const guardianDeclared = !!profile?.guardian_consent_declared;
+  const verificationDate = profile?.guardian_verbal_confirmed_at
+    ? new Date(profile.guardian_verbal_confirmed_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })
+    : null;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
@@ -85,14 +92,18 @@ export default function PersonalDetailsCard({ profile, hasDetails }: PersonalDet
       {age !== null && age < 18 && (
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 mt-2 space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">Parent / Guardian</p>
-          {profile?.guardian_consent ? (
+          {guardianDeclared ? (
             <div className="text-xs text-foreground space-y-0.5">
               <p className="font-medium">
                 {[profile.guardian_first_name, profile.guardian_last_name].filter(Boolean).join(" ") || "—"}
               </p>
               <p className="text-muted-foreground">{profile.guardian_phone || "—"}</p>
               <p className="text-muted-foreground">{profile.guardian_email || "—"}</p>
-              <p className="text-[11px] text-green-700 mt-1">✓ Consent confirmed</p>
+              <p className={`text-[11px] mt-1 ${guardianVerified ? "text-green-700" : "text-amber-700"}`}>
+                {guardianVerified
+                  ? `Verified (email + phone)${verificationDate ? ` · ${verificationDate}` : ""}`
+                  : "Declared by the young person"}
+              </p>
             </div>
           ) : (
             <p className="text-xs text-amber-700">Guardian consent not yet recorded — required before photo upload.</p>
