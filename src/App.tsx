@@ -49,6 +49,8 @@ const MemberProfile = lazy(() => import("./pages/member/MemberProfile"));
 const CommunityDashboard = lazy(() => import("./pages/community/CommunityDashboard"));
 const Connections = lazy(() => import("./pages/community/Connections"));
 const CommunityEvents = lazy(() => import("./pages/community/CommunityEvents"));
+const Projects = lazy(() => import("./pages/community/Projects"));
+const ProjectDetail = lazy(() => import("./pages/community/ProjectDetail"));
 const LotusPreview = import.meta.env.DEV
   ? lazy(() => import("./pages/_preview/LotusPreview"))
   : null;
@@ -136,6 +138,30 @@ const App = () => (
                       <RequiresCompletedProfile>
                         <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
                           <CommunityEvents />
+                        </Suspense>
+                      </RequiresCompletedProfile>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/community/projects"
+                  element={
+                    <ProtectedRoute>
+                      <RequiresCompletedProfile>
+                        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
+                          <Projects />
+                        </Suspense>
+                      </RequiresCompletedProfile>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/community/projects/:projectId"
+                  element={
+                    <ProtectedRoute>
+                      <RequiresCompletedProfile>
+                        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
+                          <ProjectDetail />
                         </Suspense>
                       </RequiresCompletedProfile>
                     </ProtectedRoute>
