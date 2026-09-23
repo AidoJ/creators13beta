@@ -21,10 +21,13 @@ const Index = () => {
         return;
       }
     }
-    if (!user) {
-      setDestination("/enroll");
+    // Public front page for visitors, and for a signed-in person coming back
+    // from sign-in to finish a purchase they started here (?buy=...).
+    if (!user || new URLSearchParams(window.location.search).has("buy")) {
+      setDestination("__front");
       return;
     }
+
 
     (async () => {
       try {
