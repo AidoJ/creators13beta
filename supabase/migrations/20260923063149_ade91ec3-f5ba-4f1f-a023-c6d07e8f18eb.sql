@@ -1,0 +1,2 @@
+DELETE FROM public.practitioner_applications WHERE email = 'aidan.test.applicant@example.com';
+DELETE FROM public.entitlements WHERE user_id = '92483b54-799d-493e-b643-5c1674ed86df' AND level_key = 'profile_body' AND source = 'stripe';
