@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { getRequiredEnrollmentPath, loadEnrollmentState } from "@/lib/enrollmentGate";
+import FrontPage from "./FrontPage";
 
 const Index = () => {
   const { user, loading } = useAuth();
