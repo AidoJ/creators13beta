@@ -2808,6 +2808,35 @@ export type Database = {
         Args: { _key: string; _ttl_seconds: number }
         Returns: boolean
       }
+      admin_list_quiz_questions: {
+        Args: never
+        Returns: {
+          active: boolean
+          category: Database["public"]["Enums"]["quiz_category"]
+          correct_option: Database["public"]["Enums"]["quiz_option"]
+          created_at: string
+          creator_type: string
+          explanation: string | null
+          id: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          prompt: string
+          review_status: Database["public"]["Enums"]["quiz_review_status"]
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_field: string | null
+          updated_at: string
+          version: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "quiz_questions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       admin_reset_player_progress: {
         Args: { _user_id: string }
         Returns: undefined
