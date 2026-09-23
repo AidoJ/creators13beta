@@ -141,7 +141,13 @@ export default function ProjectForm({ project, coCreatorIds = [], members, onSav
       if (isEdit) {
         const update: Record<string, unknown> = { ...payload };
         // Only the original creator may hand the project to someone else.
-        if (isCreator && creatorId !== project!.creator_id) update.creator_id = creatorId;
+        if (isCreator && creatorId !== project!.creator_id) {
+          update.creator_id = creatorId;
+          // Keep the outgoing creator on the project as a co-creator so they don't lose edit rights.
+          await supabase
+            .from("project_co_creators" as any)
+            .insert({ project_id: project!.id, user_id: project!.creator_id, added_by: user.id });
+        }
         const { error } = await supabase.from("projects" as any).update(update).eq("id", project!.id);
         if (error) throw error;
       } else {
