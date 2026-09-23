@@ -5,6 +5,6 @@
 - [x] Close every confirmed profiles, case-study approval, and invitation entitlement gap.
 - [x] Regression-test permitted and forbidden writes, then rerun the security scan.
 - [x] Report all three findings and fixes before publishing.
-- [ ] Click a real guardian verification email link and confirm server-side email confirmation still succeeds with member token reads blocked.
-- [ ] Complete a paid Clinic Profile referral through invite signup, entitlement grant, and practitioner linking after invitation lockdown.
+- [x] Click a real guardian verification email link and confirm server-side email confirmation still succeeds with member token reads blocked.
+- [x] Complete a paid Clinic Profile referral through invite signup, entitlement grant, and practitioner linking after invitation lockdown.
 - [ ] Publish the combined Clinic referral and guardian-consent release only after security verification.
