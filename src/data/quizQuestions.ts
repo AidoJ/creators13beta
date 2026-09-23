@@ -427,7 +427,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Integrator",
       "Director",
       "Stabilizer",
-      "The Visionary"
+      "The Adaptor"
     ],
     "correct_index": 2,
     "explanation": "Fire operates as a Stabilizer.",
@@ -441,7 +441,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "options": [
       "Director",
       "Stabilizer",
-      "The Visionary",
+      "The Adaptor",
       "Integrator"
     ],
     "correct_index": 0,
@@ -456,7 +456,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "options": [
       "Stabilizer",
       "Integrator",
-      "The Visionary",
+      "The Adaptor",
       "Director"
     ],
     "correct_index": 3,
@@ -471,7 +471,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "options": [
       "Stabilizer",
       "Integrator",
-      "The Visionary",
+      "The Adaptor",
       "Director"
     ],
     "correct_index": 0,
@@ -484,7 +484,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0031",
     "prompt": "What role does the Mountain Creator play on a team?",
     "options": [
-      "The Visionary",
+      "The Adaptor",
       "Integrator",
       "Director",
       "Stabilizer"
@@ -499,7 +499,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0032",
     "prompt": "What role does the Ocean Creator play on a team?",
     "options": [
-      "The Visionary",
+      "The Adaptor",
       "Integrator",
       "Stabilizer",
       "Director"
@@ -517,7 +517,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Stabilizer",
       "Director",
       "Integrator",
-      "The Visionary"
+      "The Adaptor"
     ],
     "correct_index": 2,
     "explanation": "River operates as a Integrator.",
@@ -531,11 +531,11 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "options": [
       "Integrator",
       "Director",
-      "The Visionary",
+      "The Adaptor",
       "Stabilizer"
     ],
     "correct_index": 2,
-    "explanation": "Sky operates as a The Visionary.",
+    "explanation": "Sky operates as the Adaptor.",
     "style": "team_role_recall",
     "category": "team_role",
     "creator": "Sky"
@@ -547,7 +547,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Director",
       "Integrator",
       "Stabilizer",
-      "The Visionary"
+      "The Adaptor"
     ],
     "correct_index": 0,
     "explanation": "Snow operates as a Director.",
@@ -559,7 +559,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0036",
     "prompt": "What role does the Soil Creator play on a team?",
     "options": [
-      "The Visionary",
+      "The Adaptor",
       "Integrator",
       "Director",
       "Stabilizer"
@@ -577,7 +577,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Stabilizer",
       "Director",
       "Integrator",
-      "The Visionary"
+      "The Adaptor"
     ],
     "correct_index": 2,
     "explanation": "Sun operates as a Integrator.",
@@ -589,7 +589,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0038",
     "prompt": "What role does the Tree Creator play on a team?",
     "options": [
-      "The Visionary",
+      "The Adaptor",
       "Director",
       "Integrator",
       "Stabilizer"
@@ -606,7 +606,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "options": [
       "Stabilizer",
       "Integrator",
-      "The Visionary",
+      "The Adaptor",
       "Director"
     ],
     "correct_index": 1,
@@ -722,7 +722,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0047",
-    "prompt": "Which Creator is the The Visionary in the Sustainers Family?",
+    "prompt": "Which Creator is the Adaptor in the Sustainers Family?",
     "options": [
       "Ocean",
       "Lava",
@@ -730,7 +730,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Sky"
     ],
     "correct_index": 3,
-    "explanation": "Sky is the Sustainers The Visionary.",
+    "explanation": "Sky is the Sustainers Adaptor.",
     "style": "reverse_family_role",
     "category": "reverse",
     "creator": "Sky"
@@ -1307,7 +1307,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     "id": "q0086",
-    "prompt": "Which Creator shows up at the table like this?\n\n\"As The Visionary, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.\"",
+    "prompt": "Which Creator shows up at the table like this?\n\n\"As The Adaptor, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.\"",
     "options": [
       "Lava",
       "Sky",
@@ -1489,7 +1489,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0098",
     "prompt": "Which of the following best describes how the River Creator shows up at the table?",
     "options": [
-      "As The Visionary, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.",
+      "As The Adaptor, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.",
       "A Realist Director who builds structures that outlast the conversation that created them. This Creator's contributions are the ones the team is still using five years later, when nobody can remember who decided on them — they just feel like part of the terrain now.",
       "A Realist Integrator who keeps the work moving. This Creator doesn't deliberate; this Creator flows toward the lower ground and finds the route. Stuck projects unstick around Rivers because Rivers don't argue with the obstacle — they find the way around, and the rest of the team follows.",
       "An Optimist Stabilizer who works by strike — long stretches of listening, then one sentence that reframes the entire conversation. You can spot a this Creator by the quiet that comes right before the comment everyone quotes back later."
@@ -1504,7 +1504,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "id": "q0099",
     "prompt": "Which of the following best describes how the Sky Creator shows up at the table?",
     "options": [
-      "As The Visionary, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.",
+      "As The Adaptor, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.",
       "As a Catalyst Director, this Creator is the one who says the unsayable in the meeting. The conversation stays where it is until this Creator arrives — then it moves. Don't expect diplomacy; expect the chair to get pulled out and a new one put in its place.",
       "As an Integrator, this Creator is the one who picks things up from every corner of the room and weaves them into something nobody else saw was there. Where others see scattered fragments, this Creator sees a pattern about to organise itself.",
       "An Optimist Director who leads by lowering the temperature. While other Directors push, this Creator makes a space so calm and well-laid that the right answer surfaces on its own. The decision was always there; this Creator just cleared the conditions for it to land."
@@ -1521,7 +1521,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "options": [
       "A Humanist Stabilizer whose contribution is often a single, slow sentence that goes deeper than the last twenty minutes of conversation combined. This Creator doesn't talk often; when this Creator talks, everyone notices that the room has changed depth.",
       "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. This Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description.",
-      "As The Visionary, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.",
+      "As The Adaptor, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.",
       "An Optimist Director who leads by lowering the temperature. While other Directors push, this Creator makes a space so calm and well-laid that the right answer surfaces on its own. The decision was always there; this Creator just cleared the conditions for it to land."
     ],
     "correct_index": 3,
@@ -1535,7 +1535,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     "prompt": "Which of the following best describes how the Soil Creator shows up at the table?",
     "options": [
       "A Humanist Director who leads by holding space, not by pushing. The decisions made around a this Creator tend to be ones the group already knew were right but hadn't yet been able to see clearly. This Creator just stopped stirring the water.",
-      "As The Visionary, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.",
+      "As The Adaptor, this Creator's role isn't to do the work — it's to keep the horizon visible while the work is being done. Lose this Creator from the team and within weeks everyone's nose is six inches from the spreadsheet, with no memory of what the spreadsheet was for.",
       "A Realist Stabilizer who feeds the team without ever needing to be at the front of the room. This Creator people are the reason the project shipped, the reason the new hire actually settled in, the reason the long thing didn't fall apart — even though none of those wins will appear in their job description.",
       "A Catalyst, but a Stabilizer — which means this Creator is the rare combination that brings the energy and keeps it lit. Without this Creator, projects start hot and cool by week two. With this Creator in the room, the spark you felt on day one is still there in month six."
     ],
