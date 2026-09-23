@@ -1797,8 +1797,8 @@ export type Database = {
           enrollment_step: Database["public"]["Enums"]["enrollment_step"] | null
           first_name: string | null
           gender: string | null
-          guardian_consent: boolean | null
-          guardian_consent_at: string | null
+          guardian_consent_declared: boolean | null
+          guardian_consent_declared_at: string | null
           guardian_consent_status: Database["public"]["Enums"]["guardian_consent_state"]
           guardian_email: string | null
           guardian_email_confirmed_at: string | null
@@ -1881,8 +1881,8 @@ export type Database = {
             | null
           first_name?: string | null
           gender?: string | null
-          guardian_consent?: boolean | null
-          guardian_consent_at?: string | null
+          guardian_consent_declared?: boolean | null
+          guardian_consent_declared_at?: string | null
           guardian_consent_status?: Database["public"]["Enums"]["guardian_consent_state"]
           guardian_email?: string | null
           guardian_email_confirmed_at?: string | null
@@ -1965,8 +1965,8 @@ export type Database = {
             | null
           first_name?: string | null
           gender?: string | null
-          guardian_consent?: boolean | null
-          guardian_consent_at?: string | null
+          guardian_consent_declared?: boolean | null
+          guardian_consent_declared_at?: string | null
           guardian_consent_status?: Database["public"]["Enums"]["guardian_consent_state"]
           guardian_email?: string | null
           guardian_email_confirmed_at?: string | null
