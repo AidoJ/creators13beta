@@ -405,10 +405,6 @@ export default function FrontPage() {
       <footer className="border-t border-border py-12 pb-40 text-sm text-muted-foreground">
         <div className="max-w-6xl mx-auto px-6">
           <p>Still deciding? Play the card game first — it's free, and you can join anything else later.</p>
-          <p className="mt-3 flex gap-4">
-            <Link to="/privacy-policy" className="underline">Privacy</Link>
-            <Link to="/terms-of-service" className="underline">Terms</Link>
-          </p>
         </div>
       </footer>
 
