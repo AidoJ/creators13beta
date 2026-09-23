@@ -143,7 +143,30 @@ export default function Details() {
         toast({ title: "Valid guardian email required", variant: "destructive" });
         return;
       }
+      // The guardian must be a different person: their contact details cannot be
+      // the young person's own. Mirrored by a database rule so it can't be bypassed.
+      const ownEmail = (user.email || "").trim().toLowerCase();
+      if (ownEmail && guardianEmail.trim().toLowerCase() === ownEmail) {
+        toast({
+          title: "Guardian email must be different",
+          description: "Your parent or guardian needs to use their own email address, not yours.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const digits = (v: string) => v.replace(/\D/g, "");
+      const ownDigits = digits(phone);
+      const guardDigits = digits(guardianPhone);
+      if (ownDigits.length >= 8 && guardDigits.length >= 8 && ownDigits.slice(-8) === guardDigits.slice(-8)) {
+        toast({
+          title: "Guardian phone must be different",
+          description: "Your parent or guardian needs to give their own phone number, not yours.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
+
 
     setLoading(true);
 
