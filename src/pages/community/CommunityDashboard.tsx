@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, Map as MapIcon, Users, MessageCircle, Calendar, ShoppingBag, Copy, Check, LayoutDashboard, Menu, X, EyeOff, SlidersHorizontal } from "lucide-react";
+import { Settings, Map as MapIcon, Users, MessageCircle, Calendar, ShoppingBag, Copy, Check, LayoutDashboard, Menu, X, EyeOff, SlidersHorizontal, FolderKanban } from "lucide-react";
 import { capitaliseTypeName, CREATOR_TYPE_NAMES, getCreatorTypeColor } from "@/lib/creatorTypes";
 import { isStockAvatarRef, stockAvatarUrl } from "@/lib/avatar";
 import { glyphForType } from "@/lib/game/glyphs";
@@ -584,6 +584,7 @@ export default function CommunityDashboard() {
 
                 {[
                   { label: "Events", img: eventsIcon.url, soon: false, onClick: () => navigate("/community/events"), badge: 0 },
+                  { label: "Projects", Icon: FolderKanban, soon: false, onClick: () => navigate("/community/projects"), badge: 0 },
                   {
                     label: "Connections",
                     Icon: MessageCircle,
@@ -683,6 +684,7 @@ export default function CommunityDashboard() {
           </Popover>
           {[
             { label: "Events", img: eventsIcon.url, onClick: () => navigate("/community/events") },
+            { label: "Projects", Icon: FolderKanban, onClick: () => navigate("/community/projects") },
             { label: "Connections", Icon: MessageCircle, onClick: () => navigate("/community/connections") },
             { label: "Dashboard", img: memberMatchIcon.url, onClick: () => navigate("/dashboard") },
             { label: "Shop", img: shopIcon.url, onClick: () => window.open("https://creatortypes.gumroad.com/l/Creatorblueprint", "_blank", "noopener,noreferrer") },

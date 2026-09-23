@@ -2047,6 +2047,104 @@ export type Database = {
         }
         Relationships: []
       }
+      project_co_creators: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_co_creators_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string
+          creator_id: string
+          description: string
+          duration_unit: string
+          duration_value: number
+          funding_status: string
+          id: string
+          location_label: string
+          location_lat: number | null
+          location_lng: number | null
+          name: string
+          other_info: string | null
+          proximity: string
+          seeking_creator_types: string[]
+          seeking_skills: string | null
+          seeking_team_roles: string[]
+          start_date: string
+          thumbnail_url: string | null
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          description: string
+          duration_unit: string
+          duration_value: number
+          funding_status: string
+          id?: string
+          location_label: string
+          location_lat?: number | null
+          location_lng?: number | null
+          name: string
+          other_info?: string | null
+          proximity: string
+          seeking_creator_types?: string[]
+          seeking_skills?: string | null
+          seeking_team_roles?: string[]
+          start_date: string
+          thumbnail_url?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          description?: string
+          duration_unit?: string
+          duration_value?: number
+          funding_status?: string
+          id?: string
+          location_label?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          name?: string
+          other_info?: string | null
+          proximity?: string
+          seeking_creator_types?: string[]
+          seeking_skills?: string | null
+          seeking_team_roles?: string[]
+          start_date?: string
+          thumbnail_url?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       quiz_match_progress: {
         Row: {
           bonus_awarded: boolean
@@ -3179,6 +3277,14 @@ export type Database = {
         Returns: boolean
       }
       is_match_participant: { Args: { _match_id: string }; Returns: boolean }
+      is_project_creator: {
+        Args: { _project: string; _user: string }
+        Returns: boolean
+      }
+      is_project_editor: {
+        Args: { _project: string; _user: string }
+        Returns: boolean
+      }
       list_my_active_matches: {
         Args: never
         Returns: {
