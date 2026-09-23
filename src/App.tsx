@@ -5,7 +5,7 @@ import UpdateAvailableBanner from "@/components/UpdateAvailableBanner";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -16,6 +16,17 @@ import Account from "./pages/Account";
 import PlanSelection from "./pages/enrollment/PlanSelection";
 import Signup from "./pages/enrollment/Signup";
 const Payment = lazy(() => import("./pages/enrollment/Payment"));
+
+// Plain /enroll visits go to the new storefront front page. Deep links that
+// still need the old flow (case-study invites, clinic referrals, practitioner
+// codes, community referral links, upgrade/discount handoffs) keep working.
+const ENROLL_DEEP_LINK_PARAMS = ["case_study", "clinic", "invite", "practitioner_code", "ref", "upgrade", "discount", "code"];
+function EnrollEntry() {
+  const [searchParams] = useSearchParams();
+  const isDeepLink = ENROLL_DEEP_LINK_PARAMS.some((k) => searchParams.has(k));
+  if (!isDeepLink) return <Navigate to="/" replace />;
+  return <PlanSelection />;
+}
 import PractitionerSelection from "./pages/enrollment/PractitionerSelection";
 import Details from "./pages/enrollment/Details";
 import Consent from "./pages/enrollment/Consent";
@@ -93,7 +104,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/enroll" element={<PlanSelection />} />
+                <Route path="/enroll" element={<EnrollEntry />} />
                 <Route path="/enroll/plan" element={<Navigate to="/enroll" replace />} />
                 <Route path="/enroll/signup" element={<Signup />} />
                 <Route path="/enroll/payment" element={<Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}><Payment /></Suspense>} />
