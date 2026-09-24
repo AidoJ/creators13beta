@@ -510,7 +510,7 @@ export default function AdminDashboard() {
                     <tr className="border-b border-border bg-muted/30">
                       <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Name</th>
                       <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Email</th>
-                      <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Tier</th>
+                      <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Access</th>
                       <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Cohort</th>
                       <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Enrollment</th>
                       <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Roles</th>
@@ -707,7 +707,11 @@ function UserTableRow({ user: u, isExpanded, onToggle, onAddRole, onRemoveRole, 
             <div className="flex flex-wrap gap-1">
               {u.access.map(a => <Badge key={a.level_key} variant="secondary" className="text-[10px]">{a.display_name}</Badge>)}
             </div>
-          ) : u.tier ? <Badge variant="outline" className="text-[10px] capitalize">{u.tier}</Badge> : <span className="text-xs text-muted-foreground">—</span>}
+          ) : u.tier ? (
+            <Badge variant="outline" className="text-[10px] capitalize">
+              {u.tier === "wren" ? "Free access" : u.tier}
+            </Badge>
+          ) : <span className="text-xs text-muted-foreground">—</span>}
         </td>
         <td className="px-4 py-2.5">
           {cohortLabel ? <Badge variant="outline" className="text-[10px]">{cohortLabel}</Badge> : <span className="text-xs text-muted-foreground">—</span>}
