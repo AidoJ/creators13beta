@@ -248,7 +248,7 @@ export default function PractitionerSelection() {
                       {p.practitioner_code && (
                         <span className="text-xs text-muted-foreground font-mono">{p.practitioner_code}</span>
                       )}
-                      <Badge
+                      {p.practitioner_status && <Badge
                         variant="outline"
                         className={cn(
                           "text-[10px] capitalize",
@@ -257,8 +257,8 @@ export default function PractitionerSelection() {
                             : "bg-orange-500/10 text-orange-600 border-orange-500/20"
                         )}
                       >
-                        {(p.practitioner_status || "unknown").replace(/_/g, " ")}
-                      </Badge>
+                        {p.practitioner_status.replace(/_/g, " ")}
+                      </Badge>}
                     </div>
                   </div>
                   {isSelected && (
