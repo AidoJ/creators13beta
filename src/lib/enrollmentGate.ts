@@ -8,7 +8,8 @@ export interface EnrollmentState {
   isStaff: boolean; // practitioner/trainee/trainer/admin → bypass client gate
   isCaseStudySubject: boolean;
   isPlayerOnly: boolean; // signed up just for the game — skips profiling pipeline
-  hasSubscription: boolean;
+  hasSubscription: boolean; // legacy plan record OR any active paid access record
+  hasPaidAccess: boolean;   // any active non-free access record (storefront, course, clinic, admin grant)
   hasPractitioner: boolean;
   practitionerIsTrainer: boolean;
   hasDetails: boolean;
@@ -41,6 +42,12 @@ export async function loadEnrollmentState(userId: string): Promise<EnrollmentSta
       .eq("active", true),
     supabase.from("case_studies").select("id").eq("subject_user_id", userId).limit(1),
   ]);
+
+  // Paid access from the new access records. Storefront/course/admin grants
+  // never write the legacy subscriptions row, so "no plan row" must NOT be
+  // read as "hasn't chosen a plan" — that caused the / <-> /enroll loop.
+  const { data: accessRows } = await (supabase as any).rpc("get_access_summary", { _user_ids: [userId] });
+  const hasPaidAccess = !!(accessRows && accessRows.length > 0);
 
   const roles = (rolesRes.data || []).map((r: any) => r.role);
   // NOTE: "trainee" is NOT staff — trainees are paying clients (e.g. Owl tier)
@@ -78,7 +85,8 @@ export async function loadEnrollmentState(userId: string): Promise<EnrollmentSta
     isStaff,
     isCaseStudySubject,
     isPlayerOnly,
-    hasSubscription: !!subRes.data?.tier,
+    hasSubscription: !!subRes.data?.tier || hasPaidAccess,
+    hasPaidAccess,
     hasPractitioner: practIds.length > 0,
     practitionerIsTrainer,
     hasDetails: !!(
