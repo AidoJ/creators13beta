@@ -1890,6 +1890,7 @@ export type Database = {
           project_top_skills: string | null
           pronouns: string | null
           reached_checkout_at: string | null
+          receives_unassigned_clients: boolean
           shoe_size: string | null
           state: string | null
           stock_avatar: string | null
@@ -1974,6 +1975,7 @@ export type Database = {
           project_top_skills?: string | null
           pronouns?: string | null
           reached_checkout_at?: string | null
+          receives_unassigned_clients?: boolean
           shoe_size?: string | null
           state?: string | null
           stock_avatar?: string | null
@@ -2058,6 +2060,7 @@ export type Database = {
           project_top_skills?: string | null
           pronouns?: string | null
           reached_checkout_at?: string | null
+          receives_unassigned_clients?: boolean
           shoe_size?: string | null
           state?: string | null
           stock_avatar?: string | null
@@ -3049,6 +3052,7 @@ export type Database = {
         }
       }
       bump_types_seen: { Args: { _types: string[] }; Returns: undefined }
+      can_profile_clients: { Args: { _uid: string }; Returns: boolean }
       cancel_lobby_match: { Args: { _match_id: string }; Returns: undefined }
       claim_nominatim_slot: {
         Args: { _min_interval_ms?: number }
@@ -3163,6 +3167,7 @@ export type Database = {
           client_phone: string
           client_user_id: string
           creator_types_assigned: number
+          entry_kind: string
           invitation_id: string
           paid_at: string
           photos_uploaded: number
@@ -3388,6 +3393,17 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      list_unassigned_eligibility: {
+        Args: never
+        Returns: {
+          certification_level: number
+          eligible: boolean
+          email: string
+          is_trainer: boolean
+          name: string
+          user_id: string
+        }[]
+      }
       lookup_clinic_invitation: { Args: { _token: string }; Returns: Json }
       lookup_practitioner_by_code: {
         Args: { _code: string }
@@ -3424,6 +3440,10 @@ export type Database = {
       reap_abandoned_matches: {
         Args: { _active_idle_minutes?: number; _lobby_idle_minutes?: number }
         Returns: Json
+      }
+      reassign_client_profiler: {
+        Args: { _client_id: string; _practitioner_id: string }
+        Returns: undefined
       }
       recompute_match_scores_for_user: {
         Args: { _user_id: string }
@@ -3476,6 +3496,10 @@ export type Database = {
           _status?: Database["public"]["Enums"]["practitioner_status"]
           _user_id: string
         }
+        Returns: undefined
+      }
+      set_unassigned_eligibility: {
+        Args: { _eligible: boolean; _user_id: string }
         Returns: undefined
       }
       submit_quiz_answer: {
