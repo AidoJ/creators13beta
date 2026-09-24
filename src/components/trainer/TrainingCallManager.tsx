@@ -773,7 +773,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       location: location.trim() || null,
     };
 
-    const { error } = await supabase.from("training_calls").update(updatePayload).eq("id", editingCallId);
+    const { error } = await supabase.from("training_calls").update(updatePayload as never).eq("id", editingCallId);
     if (error) {
       toast({ title: "Error saving event", description: error.message, variant: "destructive" });
       setSubmitting(false);

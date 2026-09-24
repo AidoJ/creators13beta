@@ -210,7 +210,7 @@ export default function CardEditorDialog({ open, onOpenChange }: Props) {
       payload.type_a = typeA;
       payload.type_b = typeB;
     }
-    const { error } = await supabase.from(selected.table).update(payload).eq("id", selected.id);
+    const { error } = await supabase.from(selected.table).update(payload as never).eq("id", selected.id);
     setSaving(false);
     if (error) {
       toast({ title: "Save failed", description: error.message, variant: "destructive" });

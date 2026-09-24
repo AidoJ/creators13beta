@@ -99,7 +99,7 @@ export default function ProductsPanel() {
   }
 
   async function toggle(row: ProductRow, field: "active" | "is_visible_on_storefront", value: boolean) {
-    const { error } = await supabase.from("products").update({ [field]: value }).eq("id", row.id);
+    const { error } = await supabase.from("products").update({ [field]: value } as never).eq("id", row.id);
     if (error) { toast({ title: "Could not update", description: error.message, variant: "destructive" }); return; }
     setRows((r) => r.map((x) => (x.id === row.id ? { ...x, [field]: value } : x)));
   }
