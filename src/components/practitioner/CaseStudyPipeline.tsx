@@ -34,8 +34,8 @@ interface CaseStudyPipelineProps {
 const PIPELINE_STAGES = [
   {
     key: "not_started" as const,
-    label: "Not Started",
-    description: "Clients awaiting assessment",
+    label: "Assessment Not Started",
+    description: "Awaiting your practitioner review",
     icon: UserPlus,
     color: "bg-muted/60 text-muted-foreground border-border",
     dotColor: "bg-muted-foreground",

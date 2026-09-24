@@ -104,8 +104,15 @@ export default function ClientList({ onSelectClient, selectedClientId }: ClientL
       if (isCaseStudy) return "Case Study Complete";
       return "Partial Profile";
     }
-    if (!step) return "Not Started";
-    return step.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+    // Everyone in this list already has access through this practitioner, so any
+    // step before photos (including the legacy wizard's "plan_selected") means
+    // their real next step is uploading photos.
+    switch (step) {
+      case "photos_uploaded": return "Photos Uploaded";
+      case "booking_made": return "Consult Booked";
+      case "awaiting_profiling": return "Awaiting Profiling";
+      default: return "Awaiting Photos";
+    }
   };
 
   const stepColor = (step: string | null, typeCount: number) => {

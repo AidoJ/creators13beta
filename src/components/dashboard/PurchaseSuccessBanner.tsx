@@ -68,15 +68,18 @@ export default function PurchaseSuccessBanner() {
     if (isCourse) {
       body = "Your training place is confirmed. Your trainer will be in touch with your cohort and start date.";
     } else if (isRecurring) {
-      body = "Your membership is active and renews monthly. You can manage or cancel it any time from \"What you have\" below.";
+      title = `Welcome to the community — you now have ${item.display_name}`;
+      body = "Your membership is active. Start exploring: meet other members, join events and see what people are creating. It renews monthly — manage or cancel any time from \"What you have\" below.";
     } else {
-      body = "Your profile is paid for. Next, complete the steps below so your practitioner can begin.";
+      title = `Your ${item.display_name} is paid for`;
+      body = "Next you'll work with a practitioner. Choose who you'd like to profile you, add your details, then upload your photos so they can prepare for your consult.";
     }
   } else if (waiting) {
     body = "Confirming your purchase…";
   }
 
   const showNext = !!item && !isCourse && !isRecurring && nextStep && nextStep.key !== "plan" && nextStep.key !== "paygate";
+  const showExplore = !!item && !isCourse && isRecurring;
 
   return (
     <div role="status" className="rounded-2xl border border-primary/30 bg-primary/5 p-5 flex gap-4">
@@ -84,6 +87,12 @@ export default function PurchaseSuccessBanner() {
       <div className="flex-1 space-y-2">
         <p className="font-display text-lg text-foreground">{title}</p>
         <p className="text-sm text-muted-foreground">{body}</p>
+        {showExplore && (
+          <Button size="sm" onClick={() => navigate("/community/dashboard")}>
+            Explore the community
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        )}
         {showNext && (
           <Button size="sm" onClick={() => navigate(nextStep!.route)}>
             Next: {nextStep!.label}
