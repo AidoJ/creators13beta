@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
-import { Mail, KeyRound } from "lucide-react";
+import { Mail, KeyRound, CreditCard } from "lucide-react";
+import { loadMyAccess, type AccessItem } from "@/lib/accessSummary";
+import AccessList from "@/components/access/AccessList";
 
 const emailSchema = z.string().trim().email({ message: "Enter a valid email address" }).max(255);
 const passwordSchema = z.string().min(8, { message: "Password must be at least 8 characters" }).max(72);
@@ -23,9 +25,12 @@ export default function Account() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
 
+  const [access, setAccess] = useState<AccessItem[] | null>(null);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setCurrentEmail(data.user?.email ?? "");
+      if (data.user) loadMyAccess(data.user.id).then(setAccess);
     });
   }, []);
 
@@ -93,6 +98,23 @@ export default function Account() {
           <h1 className="text-2xl font-display">Account Settings</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your login email and password.</p>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <CreditCard className="h-4 w-4 text-primary" /> What you have
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {access === null ? (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : access.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Free access — no paid memberships or profiles yet.</p>
+            ) : (
+              <AccessList items={access} />
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>

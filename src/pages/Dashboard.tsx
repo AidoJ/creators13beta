@@ -13,6 +13,7 @@ import SessionCard from "@/components/dashboard/SessionCard";
 import CreatorProfileCard from "@/components/dashboard/CreatorProfileCard";
 import AnimalMatchesCard from "@/components/dashboard/AnimalMatchesCard";
 import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
+import PurchaseSuccessBanner from "@/components/dashboard/PurchaseSuccessBanner";
 import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
 import { loadMyAccess, type AccessItem } from "@/lib/accessSummary";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
@@ -235,6 +236,7 @@ export default function Dashboard() {
 
         {/* Plan / access card — shown to every member who holds anything,
             not only those who can see the profile section (Connect buyers). */}
+        <PurchaseSuccessBanner />
         <SubscriptionCard />
 
 
