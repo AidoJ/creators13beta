@@ -41,7 +41,11 @@ const Index = () => {
     })();
   }, [user, loading]);
 
-  if (loading || !destination) return null;
+  // Never leave the public root visually blank while auth or enrollment
+  // checks are resolving. This is especially important for installed/mobile
+  // browsers, where restoring a session can take several seconds. Signed-in
+  // members are still redirected as soon as their destination is known.
+  if (loading || !destination) return <FrontPage />;
   if (destination === "__front") return <FrontPage />;
   return <Navigate to={destination} replace />;
 };
