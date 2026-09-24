@@ -278,7 +278,7 @@ export default function TrainerDashboard() {
             <TabsTrigger value="cases-profile"><FileText className="h-3.5 w-3.5 mr-1" />CS (Profile) {profilingCaseStudies > 0 && <Badge className="ml-1 h-5 text-[10px]" variant="secondary">{profilingCaseStudies}</Badge>}</TabsTrigger>
             <TabsTrigger value="cases-pr"><FileText className="h-3.5 w-3.5 mr-1" />CS (Approve) {pendingCaseStudies > 0 && <Badge className="ml-1 h-5 text-[10px]" variant="destructive">{pendingCaseStudies}</Badge>}</TabsTrigger>
             <TabsTrigger value="cases-dt"><FileText className="h-3.5 w-3.5 mr-1" />CS (Draft) {draftCaseStudies > 0 && <Badge className="ml-1 h-5 text-[10px]" variant="outline">{draftCaseStudies}</Badge>}</TabsTrigger>
-            <TabsTrigger value="clinic"><Stethoscope className="h-3.5 w-3.5 mr-1" />Clinic Queue</TabsTrigger>
+            <TabsTrigger value="clinic"><Stethoscope className="h-3.5 w-3.5 mr-1" />Profiling Queue</TabsTrigger>
             <TabsTrigger value="minor-consent"><ShieldCheck className="h-3.5 w-3.5 mr-1" />Minor Consent</TabsTrigger>
             <TabsTrigger value="invitations"><Mail className="h-3.5 w-3.5 mr-1" />Invitations</TabsTrigger>
             <TabsTrigger value="face-split"><Scissors className="h-3.5 w-3.5 mr-1" />Face Split</TabsTrigger>
