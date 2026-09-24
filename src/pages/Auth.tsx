@@ -137,7 +137,7 @@ export default function Auth() {
                   password: values.password,
                   options: {
                     emailRedirectTo: getAppOrigin(),
-                    data: { first_name: values.firstName, last_name: values.lastName },
+                    data: { first_name: values.firstName, last_name: values.lastName, phone: values.phone, marketing_opt_in: values.marketingOptIn, ...(refCode.trim() ? { invitation_ref: refCode.trim() } : {}) },
                   },
                 });
                 if (error) {

@@ -127,7 +127,7 @@ export default function Signup() {
       password: values.password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: { first_name: values.firstName, last_name: values.lastName },
+        data: { first_name: values.firstName, last_name: values.lastName, phone: values.phone, marketing_opt_in: values.marketingOptIn },
       },
     });
     if (authError) {
