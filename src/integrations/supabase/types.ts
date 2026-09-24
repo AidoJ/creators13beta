@@ -2943,6 +2943,10 @@ export type Database = {
         Args: { _creator_types: string[]; _user_id: string }
         Returns: string
       }
+      _sync_practitioner_certification: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       accept_game_invite: {
         Args: { _guest_name: string; _token: string }
         Returns: string
