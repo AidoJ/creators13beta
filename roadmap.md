@@ -7,4 +7,5 @@
 - [x] Fix case-study access wording and no-renewal clarification
 - [x] Verify administrator and trainer member lists in live staff sessions
 - [x] Publish after staff-list verification
+- [x] Confirm and replace legacy "Wren" labels with "Free access" in staff lists
 - [ ] Course channel test (blocked: no course products in catalogue)
