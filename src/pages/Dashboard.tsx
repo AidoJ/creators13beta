@@ -233,6 +233,10 @@ export default function Dashboard() {
 
         {user && <CreatorsSeenPrompt userId={user.id} />}
 
+        {/* Plan / access card — shown to every member who holds anything,
+            not only those who can see the profile section (Connect buyers). */}
+        <SubscriptionCard />
+
 
         {/* PROFILE section: visible for paid tiers AND case-study subscribers */}
         {showProfileSection && (
@@ -299,7 +303,6 @@ export default function Dashboard() {
 
             {user && <DiscountCodesCard userId={user.id} />}
             <ZoomRecordingsCard />
-            <SubscriptionCard />
             {user && <CreatorProfileCard userId={user.id} />}
             {user && <AnimalMatchesCard userId={user.id} />}
           </section>
