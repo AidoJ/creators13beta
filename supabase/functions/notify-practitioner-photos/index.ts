@@ -69,6 +69,7 @@ serve(async (req) => {
     }
 
     const practitionerIds = [...new Set(assignments.map(a => a.practitioner_id))];
+    await notifyHandoff(supabaseAdmin, RESEND_API_KEY, practitionerIds, clientName);
     return await sendNotifications(supabaseAdmin, RESEND_API_KEY, practitionerIds, clientName, corsHeaders);
 
   } catch (e) {
@@ -157,6 +158,40 @@ async function sendNotifications(
   return new Response(JSON.stringify({ success: true, results }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+// L1/L2 handoff: if no assigned practitioner can assign Creator Types (not L3
+// certified, trainer or admin), alert every trainer — the client now sits in
+// the Clinic Profile queue for them to profile or reassign.
+async function notifyHandoff(supabaseAdmin: any, resendApiKey: string, practitionerIds: string[], clientName: string) {
+  try {
+    for (const id of practitionerIds) {
+      const { data: ok } = await supabaseAdmin.rpc("can_profile_clients", { _uid: id });
+      if (ok) return;
+    }
+    const { data: practs } = await supabaseAdmin.from("profiles").select("first_name,last_name,email").in("user_id", practitionerIds);
+    const practName = (practs || []).map((p: any) => [p.first_name, p.last_name].filter(Boolean).join(" ") || p.email).join(", ") || "their practitioner";
+    const { data: trainerRows } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "trainer");
+    const ids = (trainerRows || []).map((r: any) => r.user_id);
+    if (!ids.length) return;
+    const { data: trainers } = await supabaseAdmin.from("profiles").select("email,first_name").in("user_id", ids);
+    for (const t of trainers || []) {
+      if (!t.email) continue;
+      await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: "13 Creators <noreply@connect.13creators.com>",
+          to: [t.email],
+          subject: `Profiling handoff: ${clientName} is ready to profile`,
+          html: `<div style="font-family:Questrial,Arial,sans-serif;color:#5A3A28;max-width:520px;margin:32px auto;"><h2>Profiling handoff</h2><p>Hi ${t.first_name || "there"},</p><p><strong>${clientName}</strong> has uploaded their profiling photos. Their practitioner (${practName}) isn't Level 3 certified, so they can't assign Creator Types — this client is now in your Clinic Profile queue.</p><p>You can profile them yourself or reassign them to a Level 3 practitioner from the queue.</p><p><a href="https://creators13.lovable.app/trainer" style="background:#BB1B56;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;">Open the queue</a></p></div>`,
+        }),
+      });
+      await new Promise((r) => setTimeout(r, 600));
+    }
+  } catch (e) {
+    console.error("notifyHandoff error:", e);
+  }
 }
 
 function getDefaultHtml(): string {
