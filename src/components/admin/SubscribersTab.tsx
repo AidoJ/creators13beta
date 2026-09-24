@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Search, BarChart3 } from "lucide-react";
 import { isPaidTier, buildCaseStudySubjectSet } from "@/lib/clientClassification";
+import type { AccessItem } from "@/lib/accessSummary";
 import QuizStatsCard from "@/components/dashboard/QuizStatsCard";
 
 interface UserRow {
@@ -15,6 +16,7 @@ interface UserRow {
   enrollment_step: string | null;
   roles: string[];
   tier: string | null;
+  access?: AccessItem[];
   sub_status: string | null;
 }
 
@@ -47,7 +49,9 @@ export default function SubscribersTab({ users, caseStudies, assignedPracMap }: 
   // Paying subscribers = users with a paid tier (robin/cockatoo/owl)
   // Case study subjects on Wren are NOT subscribers — they appear under Practitioners
   const subscribers = useMemo(() => {
-    return users.filter(u => isPaidTier(u.tier));
+    // Also includes anyone holding access they paid for through checkout
+    // (storefront, courses) — those never write the legacy tier.
+    return users.filter(u => isPaidTier(u.tier) || (u.access || []).some(a => a.source === "stripe"));
   }, [users]);
 
   const filtered = useMemo(() => {
@@ -57,6 +61,7 @@ export default function SubscribersTab({ users, caseStudies, assignedPracMap }: 
       `${u.first_name || ""} ${u.last_name || ""}`.toLowerCase().includes(q)
       || (u.email || "").toLowerCase().includes(q)
       || (u.tier || "").toLowerCase().includes(q)
+      || (u.access || []).some(a => a.display_name.toLowerCase().includes(q))
     );
   }, [subscribers, search]);
 
@@ -107,7 +112,13 @@ export default function SubscribersTab({ users, caseStudies, assignedPracMap }: 
                       </td>
                       <td className="px-4 py-2.5 text-muted-foreground text-xs">{u.email || "—"}</td>
                       <td className="px-4 py-2.5">
-                        {u.tier ? (
+                        {(u.access || []).length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {(u.access || []).map(a => (
+                              <Badge key={a.level_key} variant="outline" className="text-[10px]">{a.display_name}</Badge>
+                            ))}
+                          </div>
+                        ) : u.tier ? (
                           <Badge variant="outline" className={`text-[10px] capitalize ${tierColors[u.tier] || ""}`}>
                             {u.tier}
                           </Badge>
@@ -164,7 +175,7 @@ export default function SubscribersTab({ users, caseStudies, assignedPracMap }: 
       </Dialog>
 
       <p className="text-[10px] text-muted-foreground">
-        Showing {filtered.length} paying subscriber{filtered.length !== 1 ? "s" : ""} (Robin, Cockatoo, or Owl tier).
+        Showing {filtered.length} paying subscriber{filtered.length !== 1 ? "s" : ""} (paid checkout purchases, or a legacy Robin, Cockatoo or Owl plan).
       </p>
     </div>
   );

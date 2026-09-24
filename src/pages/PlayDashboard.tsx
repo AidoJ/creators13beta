@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { loadMyAccess, primaryAccess } from "@/lib/accessSummary";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import GameDashboardSection from "@/components/dashboard/game/GameDashboardSection";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,14 +36,20 @@ export default function PlayDashboard() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const [profRes, subRes] = await Promise.all([
+      const [profRes, subRes, access] = await Promise.all([
         supabase.from("profiles").select("first_name").eq("user_id", user.id).maybeSingle(),
         supabase.from("subscriptions").select("tier, signup_path").eq("user_id", user.id).maybeSingle(),
+        loadMyAccess(user.id),
       ]);
       const sub = subRes.data;
-      let tierLabel = "Wren";
+      // Real access records win; legacy plan name only as a fallback.
+      const top = primaryAccess(access);
+      let tierLabel = "Free";
       let isPaidTier = false;
-      if (sub?.signup_path === "player") {
+      if (top) {
+        tierLabel = top.display_name;
+        isPaidTier = access.some((a) => a.level_key !== "case_study");
+      } else if (sub?.signup_path === "player") {
         tierLabel = "Player";
       } else if (sub?.tier) {
         tierLabel = sub.tier.charAt(0).toUpperCase() + sub.tier.slice(1);

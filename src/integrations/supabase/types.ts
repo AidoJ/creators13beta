@@ -3136,6 +3136,21 @@ export type Database = {
       generate_practitioner_code:
         | { Args: never; Returns: string }
         | { Args: { _first_name?: string }; Returns: string }
+      get_access_summary: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          billing_shape: string
+          display_name: string
+          ends_at: string
+          level_key: string
+          product_name: string
+          sort_order: number
+          source: string
+          starts_at: string
+          stripe_ref: string
+          user_id: string
+        }[]
+      }
       get_clinic_profile_queue: {
         Args: never
         Returns: {

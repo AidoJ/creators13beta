@@ -75,6 +75,21 @@ Deno.serve(async (req) => {
     const pathByUser = new Map<string, string>();
     for (const s of subs ?? []) pathByUser.set(s.user_id as string, (s.signup_path as string) ?? "");
 
+    // 5b. Current paid access (new access records) per user.
+    const { data: ents } = await admin
+      .from("entitlements")
+      .select("user_id, level_key, ends_at")
+      .in("user_id", userIds.length ? userIds : ["00000000-0000-0000-0000-000000000000"])
+      .eq("status", "active")
+      .neq("level_key", "free");
+    const accessByUser = new Map<string, string[]>();
+    for (const e of ents ?? []) {
+      if (e.ends_at && new Date(e.ends_at as string).getTime() <= Date.now()) continue;
+      const arr = accessByUser.get(e.user_id as string) ?? [];
+      arr.push(e.level_key as string);
+      accessByUser.set(e.user_id as string, arr);
+    }
+
     // 6. Per-user games count = multiplayer game_matches finished + bot_match_stats totals.
     const { data: gm } = await admin
       .from("game_matches")
@@ -125,6 +140,7 @@ Deno.serve(async (req) => {
         "first_name",
         "signup_date",
         "signup_path",
+        "access",
         "games_played",
         "creators_mastered",
         "profiling_status",
@@ -148,6 +164,7 @@ Deno.serve(async (req) => {
         p.first_name ?? "",
         (p.created_at ?? "").slice(0, 10),
         pathByUser.get(p.user_id) ?? "",
+        (accessByUser.get(p.user_id) ?? []).join(" "),
         String(gamesByUser.get(p.user_id) ?? 0),
         String(masteredByUser.get(p.user_id)?.size ?? 0),
         profilingStatus,

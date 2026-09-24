@@ -36,7 +36,9 @@ function nextStep(row: any): StepInfo | null {
   const isPlayerOnly = row.signup_path === "player";
   if (isStaff || isPlayerOnly) return null;
 
-  const hasSub = !!row.tier;
+  // Any active paid access record counts as "has a plan" (storefront/course/
+  // admin grants never write the legacy subscriptions row).
+  const hasSub = !!row.tier || row.has_paid_access === true;
   const hasPract = row.has_practitioner === true;
   const hasDetails =
     !!row.first_name && !!row.date_of_birth && !!row.gender && !!row.height_cm;
@@ -224,6 +226,17 @@ serve(async (req) => {
       admin.from("enrollment_recovery_episodes").select("*").in("user_id", userIds),
       admin.from("suppressed_emails").select("email").in("email", emails.length ? emails : ["__none__"]),
     ]);
+    const { data: entRows } = await admin
+      .from("entitlements")
+      .select("user_id, level_key, ends_at")
+      .in("user_id", userIds)
+      .eq("status", "active")
+      .neq("level_key", "free");
+    const paidAccessSet = new Set<string>(
+      (entRows || [])
+        .filter((e: any) => !e.ends_at || new Date(e.ends_at).getTime() > Date.now())
+        .map((e: any) => e.user_id),
+    );
 
     const subs = new Map<string, any>();
     (subsRes.data || []).forEach((r: any) => subs.set(r.user_id, r));
@@ -280,6 +293,7 @@ serve(async (req) => {
         is_case_study: csSet.has(p.user_id) || !!sub?.referral_code,
         practitioner_is_trainer: cpMap.has(p.user_id) && trainerSet.has(cpMap.get(p.user_id)!),
         reached_checkout_at: p.reached_checkout_at,
+        has_paid_access: paidAccessSet.has(p.user_id),
       };
 
       const step = nextStep(row);

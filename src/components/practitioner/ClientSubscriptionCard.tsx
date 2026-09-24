@@ -4,6 +4,8 @@ import { TIERS } from "@/lib/tiers";
 import type { TierKey } from "@/lib/tiers";
 import { CreditCard, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { loadMyAccess, type AccessItem } from "@/lib/accessSummary";
+import AccessList from "@/components/access/AccessList";
 
 interface SubData {
   tier: TierKey;
@@ -20,8 +22,10 @@ interface ClientSubscriptionCardProps {
 export default function ClientSubscriptionCard({ clientId }: ClientSubscriptionCardProps) {
   const [sub, setSub] = useState<SubData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [access, setAccess] = useState<AccessItem[]>([]);
 
   useEffect(() => {
+    loadMyAccess(clientId).then(setAccess);
     (supabase
       .from("client_subscription_summary" as any)
       .select("tier, status, billing_period, current_period_end, current_period_start")
@@ -34,11 +38,22 @@ export default function ClientSubscriptionCard({ clientId }: ClientSubscriptionC
   }, [clientId]);
 
   if (loading) return null;
+  if (!sub && access.length > 0) {
+    return (
+      <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <CreditCard className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-display font-bold text-foreground">Access</h3>
+        </div>
+        <AccessList items={access} />
+      </div>
+    );
+  }
   if (!sub) {
     return (
       <div className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
         <AlertCircle className="h-5 w-5 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">No subscription found for this client.</p>
+        <p className="text-sm text-muted-foreground">No paid access or subscription found for this client.</p>
       </div>
     );
   }
@@ -76,6 +91,8 @@ export default function ClientSubscriptionCard({ clientId }: ClientSubscriptionC
           <p className="font-medium text-foreground capitalize">{sub.billing_period || "monthly"}</p>
         </div>
       </div>
+
+      {access.length > 0 && <AccessList items={access} />}
 
       {sub.current_period_end && (
         <div className="text-xs text-muted-foreground">

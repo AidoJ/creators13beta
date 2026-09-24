@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { loadAccessSummary, type AccessItem } from "@/lib/accessSummary";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,6 +45,7 @@ interface UserRow {
   training_started_at: string | null;
   roles: AppRole[];
   tier: string | null;
+  access: AccessItem[];
   sub_status: string | null;
 }
 
@@ -92,12 +94,13 @@ export default function TrainerDashboard() {
     roles.forEach(r => { if (!roleMap[r.user_id]) roleMap[r.user_id] = []; roleMap[r.user_id].push(r.role); });
     const subMap: Record<string, { tier: string; status: string }> = {};
     subs.forEach(s => { subMap[s.user_id] = { tier: s.tier, status: s.status }; });
+    const accessMap = await loadAccessSummary(profiles.map(p => p.user_id));
     setUsers(profiles.map(p => ({
       user_id: p.user_id, first_name: p.first_name, last_name: p.last_name, email: p.email,
       enrollment_step: p.enrollment_step, practitioner_code: p.practitioner_code,
       practitioner_status: (p as any).practitioner_status || null,
       training_started_at: (p as any).training_started_at || null,
-      roles: roleMap[p.user_id] || [], tier: subMap[p.user_id]?.tier || null, sub_status: subMap[p.user_id]?.status || null,
+      roles: roleMap[p.user_id] || [], tier: subMap[p.user_id]?.tier || null, access: accessMap[p.user_id] || [], sub_status: subMap[p.user_id]?.status || null,
     })));
   }, []);
 
