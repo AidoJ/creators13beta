@@ -541,8 +541,12 @@ export default function AdminDashboard() {
                           for (const a of existing) {
                             await supabase.from("client_practitioner").update({ active: false }).eq("id", a.id);
                           }
-                          // Insert new assignment
-                          const { error } = await supabase.from("client_practitioner").insert({ client_id: clientId, practitioner_id: pracId });
+                          // Insert new assignment, or reactivate a previous link to the same
+                          // practitioner (a plain insert failed with a duplicate-key error and
+                          // left the client with no active practitioner at all).
+                          const { error } = await supabase
+                            .from("client_practitioner")
+                            .upsert({ client_id: clientId, practitioner_id: pracId, active: true }, { onConflict: "client_id,practitioner_id" });
                           if (error) {
                             toast({ title: "Error", description: error.message, variant: "destructive" });
                           } else {
