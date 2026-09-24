@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { loadAccessSummary, type AccessItem } from "@/lib/accessSummary";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,7 @@ interface UserRow {
   training_started_at: string | null;
   roles: AppRole[];
   tier: string | null;
+  access: AccessItem[];
   sub_status: string | null;
 }
 
@@ -129,6 +131,8 @@ export default function AdminDashboard() {
     const subMap: Record<string, { tier: string; status: string }> = {};
     subs.forEach(s => { subMap[s.user_id] = { tier: s.tier, status: s.status }; });
 
+    const accessMap = await loadAccessSummary(profiles.map(p => p.user_id));
+
     setUsers(profiles.map(p => ({
       user_id: p.user_id,
       first_name: p.first_name,
@@ -141,6 +145,7 @@ export default function AdminDashboard() {
       training_started_at: (p as any).training_started_at || null,
       roles: roleMap[p.user_id] || [],
       tier: subMap[p.user_id]?.tier || null,
+      access: accessMap[p.user_id] || [],
       sub_status: subMap[p.user_id]?.status || null,
     })));
   }, []);
@@ -698,7 +703,11 @@ function UserTableRow({ user: u, isExpanded, onToggle, onAddRole, onRemoveRole, 
         <td className="px-4 py-2.5 font-medium text-foreground">{u.first_name || "—"} {u.last_name || ""}</td>
         <td className="px-4 py-2.5 text-muted-foreground text-xs">{u.email || "—"}</td>
         <td className="px-4 py-2.5">
-          {u.tier ? <Badge variant="secondary" className="text-[10px] capitalize">{u.tier}</Badge> : <span className="text-xs text-muted-foreground">—</span>}
+          {u.access.length > 0 ? (
+            <div className="flex flex-wrap gap-1">
+              {u.access.map(a => <Badge key={a.level_key} variant="secondary" className="text-[10px]">{a.display_name}</Badge>)}
+            </div>
+          ) : u.tier ? <Badge variant="outline" className="text-[10px] capitalize">{u.tier}</Badge> : <span className="text-xs text-muted-foreground">—</span>}
         </td>
         <td className="px-4 py-2.5">
           {cohortLabel ? <Badge variant="outline" className="text-[10px]">{cohortLabel}</Badge> : <span className="text-xs text-muted-foreground">—</span>}
@@ -724,7 +733,7 @@ function UserTableRow({ user: u, isExpanded, onToggle, onAddRole, onRemoveRole, 
                 );
               }
               return <Badge key={r} variant="secondary" className="text-[10px] capitalize">{r.replace(/_/g, " ")}</Badge>;
-            }) : <span className="text-[10px] text-muted-foreground">No roles</span>}
+            }) : u.access.length > 0 || u.tier ? <span className="text-[10px] text-muted-foreground">Customer</span> : <span className="text-[10px] text-muted-foreground">—</span>}
           </div>
         </td>
         <td className="px-4 py-2.5 text-xs font-mono text-muted-foreground">{u.practitioner_code || assignedPracCode || "—"}</td>
