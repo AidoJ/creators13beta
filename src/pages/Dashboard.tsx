@@ -14,6 +14,7 @@ import CreatorProfileCard from "@/components/dashboard/CreatorProfileCard";
 import AnimalMatchesCard from "@/components/dashboard/AnimalMatchesCard";
 import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
+import { loadMyAccess, type AccessItem } from "@/lib/accessSummary";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
 import DiscountCodesCard from "@/components/dashboard/DiscountCodesCard";
 import ProfilingJourneyBlock from "@/components/dashboard/ProfilingJourneyBlock";
@@ -78,6 +79,7 @@ export default function Dashboard() {
   /** Profile-complete gate for the Community teaser card (visibility is a
    * "be seen" gate, not a "see" gate — so we only need profile_completed_at). */
   const [profileComplete, setProfileComplete] = useState(false);
+  const [myAccess, setMyAccess] = useState<AccessItem[]>([]);
 
 
   useEffect(() => {
@@ -93,6 +95,7 @@ export default function Dashboard() {
         supabase.from("profiling_photos").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         supabase.from("profiles").select("profile_completed_at").eq("user_id", user.id).maybeSingle(),
       ]);
+      loadMyAccess(user.id).then(setMyAccess);
       if (profileRes.data) setProfile(profileRes.data);
       if (bookingRes.data) setBooking(bookingRes.data);
       setPhotoCount(photosRes.count || 0);
@@ -166,7 +169,11 @@ export default function Dashboard() {
     );
   }
 
-  const isPaidTier = !!subscription?.tier && subscription.tier !== "wren";
+  // Paid = legacy paid plan OR any real paid access record (storefront,
+  // course, clinic). Case-study-only access is not "paid".
+  const isPaidTier =
+    (!!subscription?.tier && subscription.tier !== "wren") ||
+    myAccess.some((a) => a.level_key !== "case_study");
   // Access decision — the grid decides who sees Creator Profiles (Owl,
   // practitioners, case_study, profile buyers, existing_profiled). Paid
   // membership alone no longer qualifies, and the profiling footprint
