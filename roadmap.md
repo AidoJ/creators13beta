@@ -4,5 +4,7 @@
 - [x] Part D: shared status lookup; status screens + reminder emails + export use it
 - [x] Re-test bp150 and connect1; fresh accounts for Connect, Body Profile, Clinic, case study, player
 - [x] Part E: post-purchase banner + Account "What you have"
-- [ ] Publish (waiting for user's go-ahead after Part D report)
+- [x] Fix case-study access wording and no-renewal clarification
+- [ ] Verify administrator and trainer member lists in live staff sessions
+- [ ] Publish after staff-list verification
 - [ ] Course channel test (blocked: no course products in catalogue)
