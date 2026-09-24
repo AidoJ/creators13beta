@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Leaf, ArrowRight, ArrowLeft, Check, Upload } from "lucide-react";
 import { CREATOR_TYPE_NAMES, CREATOR_TYPE_COLORS } from "@/lib/creatorTypes";
 import { avatarStorageKey, resolveAvatarUrl } from "@/lib/avatar";
+import { loadMyAccess } from "@/lib/accessSummary";
 
 const TOTAL_STEPS = 4;
 
@@ -55,10 +56,10 @@ export default function ProfileWizard() {
     if (!user) return;
     let cancelled = false;
     (async () => {
-      const [profileRes, typeRes] = await Promise.all([
+      const [profileRes, typeRes, access] = await Promise.all([
         supabase
           .from("profiles")
-          .select("display_name, first_name, last_name, location_label, city, state, country, avatar_url, bio_superpower, bio_where_i_live, bio_intriguing, community_visible, member_preferences, profile_completed_at, enrollment_step")
+          .select("display_name, first_name, last_name, location_label, city, state, country, avatar_url, bio_superpower, bio_where_i_live, bio_intriguing, community_visible, member_preferences, profile_completed_at")
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase
@@ -66,6 +67,8 @@ export default function ProfileWizard() {
           .select("primary_type, source")
           .eq("user_id", user.id)
           .maybeSingle(),
+        // Real-access lookup: storefront/course/clinic buyers have no enrollment_step.
+        loadMyAccess(user.id).catch(() => []),
       ]);
       if (cancelled) return;
       const p = profileRes.data;
@@ -86,7 +89,7 @@ export default function ProfileWizard() {
         setVisible(!!p.community_visible);
         const prefs = (p.member_preferences as Record<string, unknown>) ?? {};
         setAcceptsMessages(prefs?.accepts_messages === true);
-        setIsPaidUser(p.enrollment_step != null);
+        setIsPaidUser(access.length > 0);
         if (p.avatar_url) {
           const url = await resolveAvatarUrl(p.avatar_url);
           if (!cancelled) setAvatarPreview(url);
