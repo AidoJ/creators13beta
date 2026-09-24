@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { loadAccessSummary } from "@/lib/accessSummary";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -191,16 +192,27 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       .in("role", ["practitioner", "trainee"]);
     if (!roles || roles.length === 0) { setPractLoading(false); return; }
     const userIds = [...new Set(roles.map(r => r.user_id))];
-    const [{ data: profiles }, { data: subs }] = await Promise.all([
+    const [{ data: profiles }, { data: subs }, accessMap] = await Promise.all([
       supabase.from("profiles").select("user_id, email, first_name, last_name").in("user_id", userIds),
       supabase.from("subscriptions").select("user_id, tier, status, current_period_end").in("user_id", userIds),
+      loadAccessSummary(userIds),
     ]);
     const tierByUser = new Map<string, PractitionerOption["tier"]>();
+    // Access records first (mapped to the community tier grid via the
+    // access_levels.subscription_tier link); legacy plan row fills gaps.
+    const LEVEL_TO_TIER: Record<string, PractitionerOption["tier"]> = { owl: "owl", co_creator: "cockatoo", creator: "robin" };
+    const RANK = { wren: 0, robin: 1, cockatoo: 2, owl: 3 } as const;
+    for (const [uid, items] of Object.entries(accessMap)) {
+      for (const a of items) {
+        const t = LEVEL_TO_TIER[a.level_key];
+        if (t && (!tierByUser.has(uid) || RANK[t] > RANK[tierByUser.get(uid)!])) tierByUser.set(uid, t);
+      }
+    }
     const validTiers = new Set(["wren","robin","cockatoo","owl"]);
     const activeStatuses = new Set(["active","trialing","past_due"]);
     (subs || []).forEach((s: any) => {
       const periodOk = !s.current_period_end || new Date(s.current_period_end) > new Date();
-      if (s.tier && validTiers.has(s.tier) && activeStatuses.has(s.status) && periodOk) {
+      if (s.tier && validTiers.has(s.tier) && activeStatuses.has(s.status) && periodOk && !tierByUser.has(s.user_id)) {
         tierByUser.set(s.user_id, s.tier);
       }
     });
