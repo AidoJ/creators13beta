@@ -845,6 +845,14 @@ function UserTableRow({ user: u, isExpanded, onToggle, onAddRole, onRemoveRole, 
               </div>
 
               {/* Practitioner certification status */}
+              {!isPractitioner && (
+                <div className="pt-2 border-t border-border space-y-1">
+                  <p className="text-xs font-medium text-foreground">Certification Status</p>
+                  <p className="text-xs text-muted-foreground">
+                    To certify this person, add the <strong>trainee</strong> or <strong>practitioner</strong> role above first — the certification controls will then appear here.
+                  </p>
+                </div>
+              )}
               {isPractitioner && (
                 <div className="pt-2 border-t border-border space-y-2">
                   <p className="text-xs font-medium text-foreground">Certification Status</p>
