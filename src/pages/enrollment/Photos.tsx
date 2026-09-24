@@ -138,16 +138,16 @@ export default function Photos() {
   useEffect(() => {
     if (!user) return;
     const checkPractitioner = async () => {
-      const { data: assignment } = await supabase
+      const { data: rows, error } = await supabase
         .from("client_practitioner")
         .select("id")
         .eq("client_id", user.id)
         .eq("active", true)
-        .maybeSingle();
-      if (!assignment) {
-        toast({ title: "Practitioner required", description: "Please select a practitioner before uploading photos.", variant: "destructive" });
-        const nextParams = new URLSearchParams({ tier, billing });
-        navigate(`/enroll/practitioner?${nextParams.toString()}`, { replace: true });
+        .limit(1);
+      if (error) return; // never bounce on a failed lookup
+      if (!rows || rows.length === 0) {
+        // Quiet redirect to the practitioner step — that page explains why.
+        navigate(`/enroll/practitioner`, { replace: true });
       }
     };
     checkPractitioner();

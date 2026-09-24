@@ -24,7 +24,9 @@ export default function PractitionerSelection() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { ready: gateReady } = useEnrollmentGate();
+  const { ready: gateReady, state: gateState } = useEnrollmentGate();
+  // Direct storefront profile buyer: paid access but no old plan record.
+  const isProfileBuyer = !!gateState?.hasPaidAccess && !gateState?.tier && !gateState?.isCaseStudySubject;
   const { toast } = useToast();
 
   const tier = (params.get("tier") as TierKey) || "wren";
@@ -129,7 +131,11 @@ export default function PractitionerSelection() {
 
     setSaving(false);
 
-    const nextParams = new URLSearchParams({ tier, billing });
+    const nextParams = new URLSearchParams(isProfileBuyer ? {} : { tier, billing });
+    if (isProfileBuyer) {
+      navigate(`/enroll/details${nextParams.toString() ? `?${nextParams}` : ""}`);
+      return;
+    }
 
     // If upgrading, skip details/photos → go to booking
     if (isUpgrade) {
@@ -174,12 +180,14 @@ export default function PractitionerSelection() {
             <UserCheck className="h-7 w-7 text-primary" />
           </div>
           <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-            {lockedPractitioner ? "Your Practitioner" : isUpgrade ? "Confirm Your Practitioner" : "Select Your Practitioner"}
+            {lockedPractitioner ? "Your Practitioner" : isProfileBuyer ? "Choose Your Practitioner" : isUpgrade ? "Confirm Your Practitioner" : "Select Your Practitioner"}
           </h1>
           <p className="text-muted-foreground">
             {lockedPractitioner
               ? "You've been invited by this practitioner."
-              : "Choose a certified practitioner for your profiling session."}
+              : isProfileBuyer
+                ? "Your profile is paid for. Now pick the practitioner you'd like to work with — they'll review your photos and hold your consult with you. Next you'll add your details, then upload your photos."
+                : "Choose a certified practitioner for your profiling session."}
           </p>
         </div>
 
