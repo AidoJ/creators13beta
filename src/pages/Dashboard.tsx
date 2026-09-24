@@ -96,7 +96,7 @@ export default function Dashboard() {
         supabase.from("profiling_photos").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         supabase.from("profiles").select("profile_completed_at").eq("user_id", user.id).maybeSingle(),
       ]);
-      loadMyAccess(user.id).then(setMyAccess);
+      setMyAccess(await loadMyAccess(user.id).catch(() => []));
       if (profileRes.data) setProfile(profileRes.data);
       if (bookingRes.data) setBooking(bookingRes.data);
       setPhotoCount(photosRes.count || 0);
@@ -157,7 +157,10 @@ export default function Dashboard() {
   // Case-study subjects (referral_code) and anyone who has uploaded profiling
   // photos should see the full client dashboard even if their subscription
   // tier is still "wren" — otherwise their profile/photos never surface.
-  const hasProfilingFootprint = isCaseStudySubject || photoCount > 0 || creatorTypes.length > 0;
+  // A free player who later buys anything (e.g. Connect) leaves the game-only view,
+  // so they see their purchase confirmation and "What you have".
+  const hasProfilingFootprint =
+    isCaseStudySubject || photoCount > 0 || creatorTypes.length > 0 || myAccess.length > 0;
 
   if (isPlayerOnly && !hasProfilingFootprint && user) {
     return (
