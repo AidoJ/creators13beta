@@ -1,10 +1,8 @@
 # Roadmap
 
-- [ ] Part D3: signup-progress counts any paid entitlement as "has a plan" (stop / <-> /enroll loop) — URGENT
-- [ ] Part D1/D2: shared status lookup; point status screens at it
-- [ ] Part D3b: reminder emails use same rule
-- [ ] Part D4: Roles column shows holdings for customers
-- [ ] Re-test real accounts bp150 and connect1
-- [ ] Fresh account per testable channel (Connect, Body Profile, Clinic, case study, player)
-- [ ] Part E: post-purchase acknowledgment banner
-- [ ] Report Part D results before publishing
+- [x] Part D: signup-progress counts paid access as "has a plan" (loop fixed)
+- [x] Part D: shared status lookup; status screens + reminder emails + export use it
+- [x] Re-test bp150 and connect1; fresh accounts for Connect, Body Profile, Clinic, case study, player
+- [x] Part E: post-purchase banner + Account "What you have"
+- [ ] Publish (waiting for user's go-ahead after Part D report)
+- [ ] Course channel test (blocked: no course products in catalogue)
