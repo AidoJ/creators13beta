@@ -129,6 +129,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
   // Edit mode: when set, the form acts as an Edit dialog for an existing call.
   const [editingCallId, setEditingCallId] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
   // Snapshot of original values for change detection when notifying invitees.
   const [editOriginal, setEditOriginal] = useState<{ scheduled_at: string; zoom_link: string | null; ends_at: string | null } | null>(null);
   // Off by default: an edit only emails invitees when the trainer explicitly ticks the box.
@@ -326,6 +327,9 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     setEditingCallId(call.id);
     setNotifyOnEdit(false);
     setShowForm(true);
+    // The form renders at the top of the list; bring it into view so the
+    // click visibly does something when the user is scrolled down.
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   }
 
 
@@ -923,7 +927,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
       {/* Create form */}
       {showForm && (
-        <div className="rounded-xl border border-primary/20 bg-card p-5 space-y-4">
+        <div ref={formRef} className="rounded-xl border border-primary/20 bg-card p-5 space-y-4 scroll-mt-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">{editingCallId ? "Edit Event" : "New Event"}</h3>
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={resetForm}>
