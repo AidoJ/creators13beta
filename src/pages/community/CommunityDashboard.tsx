@@ -32,6 +32,7 @@ import filterIcon from "@/assets/community-icons/filter-icon.png.asset.json";
 import memberMatchIcon from "@/assets/icon-Member_Matcxh_icon.png.asset.json";
 import shopIcon from "@/assets/community-icons/shop-icon.png.asset.json";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useFeatures } from "@/hooks/useFeatures";
 import type { MapMember } from "@/components/community/CommunityMapView";
 
 // Lazy: Maps JS API only loads when the user actually toggles to Map view.
@@ -120,6 +121,17 @@ function formatCycleDate(iso: string, includeYear: boolean) {
 
 export default function CommunityDashboard() {
   const { user, signOut } = useAuth();
+  const { has: hasFeature } = useFeatures();
+  const [isAdminViewer, setIsAdminViewer] = useState(false);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("user_roles").select("role").eq("user_id", user.id).then(({ data }) => {
+      setIsAdminViewer((data || []).some((r) => r.role === "admin" || r.role === "trainer"));
+    });
+  }, [user]);
+  const canFilter = hasFeature("community_matching_filters") || isAdminViewer;
+  const canMessage = hasFeature("community_message_members") || isAdminViewer;
+  const canProjects = hasFeature("projects_view") || isAdminViewer;
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
@@ -517,6 +529,7 @@ export default function CommunityDashboard() {
 
             <TooltipProvider delayDuration={150}>
               <nav aria-label="Community quick nav" className="flex flex-col items-center gap-3">
+                {canFilter && (<>
                 {/* Filters — gold circular button with funnel icon, opens compact popover */}
                 <Popover>
                   <Tooltip>
@@ -589,11 +602,13 @@ export default function CommunityDashboard() {
                     </p>
                   </PopoverContent>
                 </Popover>
+                </>)}
 
                 {[
-                  { label: "Events", img: eventsIcon.url, soon: false, onClick: () => navigate("/community/events"), badge: 0 },
-                  { label: "Projects", Icon: FolderKanban, soon: false, onClick: () => navigate("/community/projects"), badge: 0 },
+                  { label: "Events", img: eventsIcon.url, soon: false, onClick: () => navigate("/community/events"), badge: 0, show: true },
+                  { label: "Projects", Icon: FolderKanban, soon: false, onClick: () => navigate("/community/projects"), badge: 0, show: canProjects },
                   {
+                    show: canMessage,
                     label: "Connections",
                     img: connectionsIcon.url,
                     soon: false,
@@ -606,9 +621,10 @@ export default function CommunityDashboard() {
                     soon: false,
                     onClick: () => navigate("/dashboard"),
                     badge: 0,
+                    show: true,
                   },
-                  { label: "Shop", img: shopIcon.url, soon: false, onClick: () => navigate("/shop"), badge: 0 },
-                ].map(({ label, Icon, img, soon, onClick, badge }) => {
+                  { label: "Shop", img: shopIcon.url, soon: false, onClick: () => navigate("/shop"), badge: 0, show: true },
+                ].filter((item) => item.show).map(({ label, Icon, img, soon, onClick, badge }) => {
                   // Gold to match the enrollment "Case Study Volunteer / Paying Client" cards.
                   const color = "#c9a84c";
                   return (
@@ -663,6 +679,7 @@ export default function CommunityDashboard() {
 
       <div className="lg:hidden container mx-auto px-4 pt-3">
         <div className="flex items-center gap-2 overflow-x-auto pb-2" aria-label="Community tools">
+          {canFilter && (
           <Popover>
             <PopoverTrigger asChild>
               <button
@@ -690,13 +707,14 @@ export default function CommunityDashboard() {
               )}
             </PopoverContent>
           </Popover>
+          )}
           {[
-            { label: "Events", img: eventsIcon.url, onClick: () => navigate("/community/events") },
-            { label: "Projects", Icon: FolderKanban, onClick: () => navigate("/community/projects") },
-            { label: "Connections", img: connectionsIcon.url, onClick: () => navigate("/community/connections") },
-            { label: "Dashboard", img: memberMatchIcon.url, onClick: () => navigate("/dashboard") },
-            { label: "Shop", img: shopIcon.url, onClick: () => navigate("/shop") },
-          ].map(({ label, Icon, img, onClick }) => (
+            { label: "Events", img: eventsIcon.url, onClick: () => navigate("/community/events"), show: true },
+            { label: "Projects", Icon: FolderKanban, onClick: () => navigate("/community/projects"), show: canProjects },
+            { label: "Connections", img: connectionsIcon.url, onClick: () => navigate("/community/connections"), show: canMessage },
+            { label: "Dashboard", img: memberMatchIcon.url, onClick: () => navigate("/dashboard"), show: true },
+            { label: "Shop", img: shopIcon.url, onClick: () => navigate("/shop"), show: true },
+          ].filter((item) => item.show).map(({ label, Icon, img, onClick }) => (
             <button key={label} type="button" onClick={onClick} aria-label={label} className="min-h-11 min-w-11 shrink-0 rounded-full border-2 border-gold bg-card/80 flex items-center justify-center">
               {img ? <img src={img} alt="" aria-hidden className="h-6 w-6 object-contain" style={{ filter: "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)" }} /> : Icon ? <Icon className="h-5 w-5 text-gold" /> : null}
             </button>
