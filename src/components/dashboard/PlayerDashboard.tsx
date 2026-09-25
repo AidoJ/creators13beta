@@ -53,16 +53,18 @@ export default function PlayerDashboard({ userId, email, firstName, onSignOut }:
             tabIndex={0}
             onClick={() => navigate("/play")}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate("/play"); }}
-            className="cursor-pointer p-5 flex items-center gap-4 hover:border-primary/40 hover:bg-primary/5 transition-colors group"
+            className="cursor-pointer overflow-hidden border-secondary/60 bg-gradient-to-br from-secondary/15 via-secondary/10 to-primary/10 p-5 flex items-center gap-4 shadow-sm hover:border-secondary hover:shadow-md transition-all group"
           >
-            <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Gamepad2 className="h-5 w-5 text-primary" />
+            <div className="w-12 h-12 rounded-xl border border-secondary/30 bg-secondary/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+              <Gamepad2 className="h-6 w-6 text-secondary-foreground" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground">Play</p>
-              <p className="text-xs text-muted-foreground">Your game dashboard, recent matches & stats.</p>
+              <p className="text-lg font-display font-bold text-foreground leading-tight">Let&apos;s Play</p>
+              <p className="text-xs text-muted-foreground mt-1">Your game dashboard, recent matches & stats.</p>
             </div>
-            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+            </div>
           </Card>
           {profileComplete && (
             <Card
