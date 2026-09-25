@@ -11,6 +11,6 @@
 - [ ] Course channel test (blocked: no course products in catalogue)
 - [x] Restyle the player welcome Play panel to match the Warm Up palette, with stronger emphasis and “Let’s Play” title
 - [x] Hide EnrollmentHeader step bar only for player-path signup; verify all other paths and publish
-- [ ] Replace Community/top-navigation icons and floating Play button with A'Hara's supplied artwork
-- [ ] Add signed-in `/shop` using the shared storefront; remove Gumroad links and prevent duplicate purchases
-- [ ] Verify desktop/mobile, checkout handoff, held-product state, signed-out front page; publish
+- [x] Replace Community/top-navigation icons and floating Play button with A'Hara's supplied artwork
+- [x] Add signed-in `/shop` using the shared storefront; remove Gumroad links and prevent duplicate purchases
+- [x] Verify desktop/mobile, checkout handoff, held-product state, signed-out front page; publish
