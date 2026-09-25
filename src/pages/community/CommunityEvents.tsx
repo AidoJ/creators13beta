@@ -106,6 +106,7 @@ export default function CommunityEvents() {
   const [events, setEvents] = useState<CommunityEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [accessName, setAccessName] = useState<string>("");
+  const [joinableIds, setJoinableIds] = useState<Set<string>>(new Set());
   useEffect(() => {
     if (!user) return;
     loadMyAccess(user.id).then((items) => setAccessName(accessLabel(items) ?? "Free access"));
@@ -124,6 +125,8 @@ export default function CommunityEvents() {
       } else {
         const rows = ((data || []) as unknown) as CommunityEvent[];
         setEvents(rows);
+        const { data: ids } = await (supabase.rpc as any)("get_joinable_event_ids");
+        if (active) setJoinableIds(new Set(((ids || []) as unknown[]).map((r: any) => typeof r === "string" ? r : r?.get_joinable_event_ids)));
       }
       setLoading(false);
     }
@@ -170,7 +173,7 @@ export default function CommunityEvents() {
               <section className="space-y-3">
                 <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Upcoming</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {upcoming.map(ev => <EventTile key={ev.id} ev={ev} />)}
+                  {upcoming.map(ev => <EventTile key={ev.id} ev={ev} joinable={joinableIds.has(ev.id)} />)}
                 </div>
               </section>
             )}
@@ -189,7 +192,7 @@ export default function CommunityEvents() {
   );
 }
 
-function EventTile({ ev, past }: { ev: CommunityEvent; past?: boolean }) {
+function EventTile({ ev, past, joinable }: { ev: CommunityEvent; past?: boolean; joinable?: boolean }) {
   const start = eventStart(ev);
   const end = eventEnd(ev);
   const descText = stripHtml(ev.description);
@@ -226,10 +229,14 @@ function EventTile({ ev, past }: { ev: CommunityEvent; past?: boolean }) {
                   Join Zoom
                 </a>
               </Button>
+            ) : ev.has_access ? (
+              <div className="text-[11px] text-muted-foreground">
+                {ev.location ? `Open to you · in person at ${ev.location}` : "Open to you"}
+              </div>
             ) : (
               <div className="text-[11px] text-muted-foreground flex items-center gap-1.5">
                 <Lock className="h-3 w-3" />
-                Upgrade to join
+                {joinable ? "Upgrade to join" : "Viewing only"}
               </div>
             )}
             {ev.has_access && (
