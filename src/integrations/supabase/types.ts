@@ -3262,6 +3262,7 @@ export type Database = {
           practitioner_id: string
         }[]
       }
+      get_joinable_event_ids: { Args: never; Returns: string[] }
       get_match_state: { Args: { _match_id: string }; Returns: Json }
       get_my_approved_contacts: {
         Args: never
