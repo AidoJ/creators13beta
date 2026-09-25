@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Gamepad2, Globe, Users, GraduationCap, Settings, Menu, X, UserCog } from "lucide-react";
+import { LogOut, User, Users, GraduationCap, Settings, Menu, X, UserCog } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/13creators-logo.png";
 import type { Database } from "@/integrations/supabase/types";
+import gameIcon from "@/assets/community-icons/game-icon.png.asset.json";
+import communityIcon from "@/assets/community-icons/community-icon.png.asset.json";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -17,7 +19,8 @@ interface DashboardHeaderProps {
 interface NavItem {
   label: string;
   path: string;
-  icon: typeof User;
+  icon?: typeof User;
+  imageUrl?: string;
   show: boolean;
   /** Match nested routes (e.g. /play also active on /play/new). */
   nested?: boolean;
@@ -53,8 +56,8 @@ export default function DashboardHeader({ email, onSignOut }: DashboardHeaderPro
   // always reach it so they can support / moderate.
   const coreNav: NavItem[] = [
     { label: "Me", path: "/dashboard", icon: User, show: true },
-    { label: "Play", path: "/play", icon: Gamepad2, show: true, nested: true },
-    { label: "Community", path: "/community/dashboard", icon: Globe, show: profileComplete || isStaff, nested: true },
+    { label: "Play", path: "/play", imageUrl: gameIcon.url, show: true, nested: true },
+    { label: "Community", path: "/community/dashboard", imageUrl: communityIcon.url, show: profileComplete || isStaff, nested: true },
     { label: "Account", path: "/account", icon: UserCog, show: true },
   ];
 
@@ -91,7 +94,21 @@ export default function DashboardHeader({ email, onSignOut }: DashboardHeaderPro
         if (mobile) setMobileOpen(false);
       }}
     >
-      <item.icon className={cn("h-3.5 w-3.5", mobile ? "mr-2" : "mr-1")} />
+      {item.imageUrl ? (
+        <img
+          src={item.imageUrl}
+          alt=""
+          aria-hidden
+          className={cn("h-4 w-4 object-contain", mobile ? "mr-2" : "mr-1")}
+          style={{
+            filter: isActive(item)
+              ? "brightness(0) invert(1)"
+              : "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)",
+          }}
+        />
+      ) : item.icon ? (
+        <item.icon className={cn("h-3.5 w-3.5", mobile ? "mr-2" : "mr-1")} />
+      ) : null}
       {item.label}
     </Button>
   );

@@ -19,16 +19,18 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, Map as MapIcon, Users, MessageCircle, Calendar, ShoppingBag, Copy, Check, LayoutDashboard, Menu, X, EyeOff, SlidersHorizontal, FolderKanban } from "lucide-react";
+import { Settings, Map as MapIcon, Users, Copy, Check, LayoutDashboard, Menu, X, EyeOff, FolderKanban } from "lucide-react";
 import { capitaliseTypeName, CREATOR_TYPE_NAMES, getCreatorTypeColor } from "@/lib/creatorTypes";
 import { isStockAvatarRef, stockAvatarUrl } from "@/lib/avatar";
 import { glyphForType } from "@/lib/game/glyphs";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { backgroundForSeason } from "@/lib/seasonalBackgrounds";
-import eventsIcon from "@/assets/icon-Events_icon.png.asset.json";
+import eventsIcon from "@/assets/community-icons/event-calendar-icon.png.asset.json";
+import connectionsIcon from "@/assets/community-icons/connect-icon.png.asset.json";
+import filterIcon from "@/assets/community-icons/filter-icon.png.asset.json";
 import memberMatchIcon from "@/assets/icon-Member_Matcxh_icon.png.asset.json";
-import shopIcon from "@/assets/icon-Shop_icon.png.asset.json";
+import shopIcon from "@/assets/community-icons/shop-icon.png.asset.json";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { MapMember } from "@/components/community/CommunityMapView";
 
@@ -526,7 +528,13 @@ export default function CommunityDashboard() {
                           className="relative h-14 w-14 rounded-full flex items-center justify-center bg-card/80 backdrop-blur transition-transform hover:scale-110 active:scale-95"
                           style={{ border: `2.5px solid #c9a84c`, color: "#c9a84c" }}
                         >
-                          <SlidersHorizontal className="h-7 w-7" strokeWidth={2.25} style={{ color: "#c9a84c" }} />
+                          <img
+                            src={filterIcon.url}
+                            alt=""
+                            aria-hidden
+                            className="h-8 w-8 object-contain"
+                            style={{ filter: "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)" }}
+                          />
                           {filterMode !== "month" && (
                             <span
                               aria-hidden
@@ -587,7 +595,7 @@ export default function CommunityDashboard() {
                   { label: "Projects", Icon: FolderKanban, soon: false, onClick: () => navigate("/community/projects"), badge: 0 },
                   {
                     label: "Connections",
-                    Icon: MessageCircle,
+                    img: connectionsIcon.url,
                     soon: false,
                     onClick: () => navigate("/community/connections"),
                     badge: pendingCount,
@@ -599,7 +607,7 @@ export default function CommunityDashboard() {
                     onClick: () => navigate("/dashboard"),
                     badge: 0,
                   },
-                  { label: "Shop", img: shopIcon.url, soon: false, onClick: () => window.open("https://creatortypes.gumroad.com/l/Creatorblueprint", "_blank", "noopener,noreferrer"), badge: 0 },
+                  { label: "Shop", img: shopIcon.url, soon: false, onClick: () => navigate("/shop"), badge: 0 },
                 ].map(({ label, Icon, img, soon, onClick, badge }) => {
                   // Gold to match the enrollment "Case Study Volunteer / Paying Client" cards.
                   const color = "#c9a84c";
@@ -662,7 +670,7 @@ export default function CommunityDashboard() {
                 aria-label="Filter community members"
                 className="relative min-h-11 min-w-11 shrink-0 rounded-full flex items-center justify-center bg-card/80 border-2 border-gold"
               >
-                <SlidersHorizontal className="h-5 w-5 text-gold" strokeWidth={2.25} />
+                <img src={filterIcon.url} alt="" aria-hidden className="h-6 w-6 object-contain" style={{ filter: "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)" }} />
                 {filterMode !== "month" && <span aria-hidden className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-gold" />}
               </button>
             </PopoverTrigger>
@@ -685,9 +693,9 @@ export default function CommunityDashboard() {
           {[
             { label: "Events", img: eventsIcon.url, onClick: () => navigate("/community/events") },
             { label: "Projects", Icon: FolderKanban, onClick: () => navigate("/community/projects") },
-            { label: "Connections", Icon: MessageCircle, onClick: () => navigate("/community/connections") },
+            { label: "Connections", img: connectionsIcon.url, onClick: () => navigate("/community/connections") },
             { label: "Dashboard", img: memberMatchIcon.url, onClick: () => navigate("/dashboard") },
-            { label: "Shop", img: shopIcon.url, onClick: () => window.open("https://creatortypes.gumroad.com/l/Creatorblueprint", "_blank", "noopener,noreferrer") },
+            { label: "Shop", img: shopIcon.url, onClick: () => navigate("/shop") },
           ].map(({ label, Icon, img, onClick }) => (
             <button key={label} type="button" onClick={onClick} aria-label={label} className="min-h-11 min-w-11 shrink-0 rounded-full border-2 border-gold bg-card/80 flex items-center justify-center">
               {img ? <img src={img} alt="" aria-hidden className="h-6 w-6 object-contain" style={{ filter: "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)" }} /> : Icon ? <Icon className="h-5 w-5 text-gold" /> : null}

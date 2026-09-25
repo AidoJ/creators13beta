@@ -64,6 +64,7 @@ const Connections = lazy(() => import("./pages/community/Connections"));
 const CommunityEvents = lazy(() => import("./pages/community/CommunityEvents"));
 const Projects = lazy(() => import("./pages/community/Projects"));
 const ProjectDetail = lazy(() => import("./pages/community/ProjectDetail"));
+const Shop = lazy(() => import("./pages/Shop"));
 const LotusPreview = import.meta.env.DEV
   ? lazy(() => import("./pages/_preview/LotusPreview"))
   : null;
@@ -120,6 +121,7 @@ const App = () => (
                 <Route path="/settings/contact" element={<ProtectedRoute><ContactSettings /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><RequiresCompletedProfile><Dashboard /></RequiresCompletedProfile></ProtectedRoute>} />
                 <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+                <Route path="/shop" element={<ProtectedRoute><Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}><Shop /></Suspense></ProtectedRoute>} />
                 <Route
                   path="/community/dashboard"
                   element={
