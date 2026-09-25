@@ -927,7 +927,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
       {/* Create form */}
       {showForm && (
-        <div ref={formRef} className="rounded-xl border border-primary/20 bg-card p-5 space-y-4 scroll-mt-4">
+        <div ref={formRef} className="rounded-xl border border-primary/20 bg-card p-5 space-y-4 scroll-mt-28">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">{editingCallId ? "Edit Event" : "New Event"}</h3>
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={resetForm}>
