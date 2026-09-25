@@ -334,7 +334,7 @@ export default function Signup() {
   if (arrivedVerified) {
     return (
       <div className="min-h-screen bg-background">
-        <EnrollmentHeader currentStep={1} />
+        <EnrollmentHeader currentStep={1} hideSteps={isPlayer} />
         <main className="container mx-auto px-4 py-10 max-w-md text-center">
           <div className="bg-card border border-border rounded-2xl p-8 space-y-6">
             <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -356,7 +356,7 @@ export default function Signup() {
   if (showVerification) {
     return (
       <div className="min-h-screen bg-background">
-        <EnrollmentHeader currentStep={1} />
+        <EnrollmentHeader currentStep={1} hideSteps={isPlayer} />
         <main className="container mx-auto px-4 py-10 max-w-md text-center">
           <div className="bg-card border border-border rounded-2xl p-8 space-y-6">
             <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -391,7 +391,7 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen bg-background">
-      <EnrollmentHeader currentStep={1} />
+      <EnrollmentHeader currentStep={1} hideSteps={isPlayer} />
       <main className="container mx-auto px-4 py-10 max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-display font-bold text-foreground mb-2">Create Your Account</h1>
