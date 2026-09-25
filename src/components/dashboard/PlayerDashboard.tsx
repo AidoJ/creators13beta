@@ -45,21 +45,6 @@ export default function PlayerDashboard({ userId, email, firstName, onSignOut }:
           <h1 className="font-display text-2xl text-foreground">Welcome, {firstName}.</h1>
         )}
 
-        {/* The profiling journey block replaces the ad-hoc "discount waiting"
-            card as the single, always-visible enrolment-status surface for
-            player-path users. It renders the discovery framing + one-tap
-            route to the two-option chooser, and surfaces any active discount
-            code inline. Funnel events (shown/tapped) are logged inside the
-            block for surface-conversion comparison against the milestone
-            dialog. */}
-        <ProfilingJourneyBlock
-          userId={userId}
-          isPlayerPath={true}
-          isCaseStudy={false}
-          isPaidTier={false}
-          creatorTypes={[]}
-        />
-
         {/* Section teasers — Play & Community surfaces without duplicating
             their content. Matches the paid-tier Me page for nav consistency. */}
         <div className={`grid gap-4 ${profileComplete ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
@@ -100,7 +85,16 @@ export default function PlayerDashboard({ userId, email, firstName, onSignOut }:
         </div>
 
         <PracticeRungCard userId={userId} />
-        <CreatorsSeenPrompt userId={userId} />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-stretch [&>*]:h-full">
+          <CreatorsSeenPrompt userId={userId} />
+          <ProfilingJourneyBlock
+            userId={userId}
+            isPlayerPath={true}
+            isCaseStudy={false}
+            isPaidTier={false}
+            creatorTypes={[]}
+          />
+        </div>
         <QuizStatsCard userId={userId} />
         {!promptDismissed && <DiscountCodesCard userId={userId} />}
 
