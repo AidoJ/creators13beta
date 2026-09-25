@@ -436,7 +436,7 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
       {!shopMode && <Link
         to={user ? "/play" : "/enroll/signup?path=player&tier=wren&billing=monthly"}
         aria-label="Play now - free card game"
-        className="fixed right-3 bottom-4 sm:right-5 sm:bottom-5 z-50 w-36 sm:w-44 drop-shadow-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+  className="fixed right-3 bottom-4 sm:right-5 sm:bottom-5 z-50 w-20 sm:w-44 drop-shadow-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <img src={floatingGameButton.url} alt="" aria-hidden className="block h-auto w-full" />
       </Link>}
