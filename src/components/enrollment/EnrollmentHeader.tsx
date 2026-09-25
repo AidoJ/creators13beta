@@ -20,9 +20,10 @@ const STEP_ROUTES: Record<number, string> = {
 
 interface EnrollmentHeaderProps {
   currentStep: number; // 0-indexed
+  hideSteps?: boolean;
 }
 
-export default function EnrollmentHeader({ currentStep }: EnrollmentHeaderProps) {
+export default function EnrollmentHeader({ currentStep, hideSteps = false }: EnrollmentHeaderProps) {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -44,40 +45,42 @@ export default function EnrollmentHeader({ currentStep }: EnrollmentHeaderProps)
         <a href="/" className="flex items-center gap-3">
           <img src={logo} alt="13 Creators" className="h-10" />
         </a>
-        <div className="hidden xl:flex items-center gap-1 text-sm text-muted-foreground min-w-0">
-          {STEPS.map((step, i) => {
-            const isCurrent = i === currentStep;
-            const isCompleted = i < currentStep;
-            const clickable = isCompleted;
-            return (
-              <span key={step} className="flex items-center gap-1">
-                {i > 0 && <span className="mx-0.5 hidden sm:inline">→</span>}
-                {isCurrent ? (
-                  <>
-                    <span className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
-                      {i + 1}
-                    </span>
-                    <span className="text-foreground font-medium hidden sm:inline">{step}</span>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={!clickable}
-                    onClick={() => goToStep(i)}
-                    className={cn(
-                      "hidden sm:inline bg-transparent p-0 m-0 border-0",
-                      isCompleted && "text-primary hover:underline cursor-pointer",
-                      !clickable && "cursor-default opacity-70",
-                    )}
-                    aria-label={clickable ? `Go back to ${step}` : step}
-                  >
-                    {step}
-                  </button>
-                )}
-              </span>
-            );
-          })}
-        </div>
+        {!hideSteps && (
+          <div className="hidden xl:flex items-center gap-1 text-sm text-muted-foreground min-w-0">
+            {STEPS.map((step, i) => {
+              const isCurrent = i === currentStep;
+              const isCompleted = i < currentStep;
+              const clickable = isCompleted;
+              return (
+                <span key={step} className="flex items-center gap-1">
+                  {i > 0 && <span className="mx-0.5 hidden sm:inline">→</span>}
+                  {isCurrent ? (
+                    <>
+                      <span className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
+                        {i + 1}
+                      </span>
+                      <span className="text-foreground font-medium hidden sm:inline">{step}</span>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={!clickable}
+                      onClick={() => goToStep(i)}
+                      className={cn(
+                        "hidden sm:inline bg-transparent p-0 m-0 border-0",
+                        isCompleted && "text-primary hover:underline cursor-pointer",
+                        !clickable && "cursor-default opacity-70",
+                      )}
+                      aria-label={clickable ? `Go back to ${step}` : step}
+                    >
+                      {step}
+                    </button>
+                  )}
+                </span>
+              );
+            })}
+          </div>
+        )}
         {!user ? (
           <Link
             to={`/auth?returnTo=${returnTo}`}
