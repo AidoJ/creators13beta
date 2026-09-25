@@ -59,6 +59,7 @@ import GlobalFooter from "@/components/shared/GlobalFooter";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import RecoveryRedirect from "@/components/auth/RecoveryRedirect";
 const MemberProfile = lazy(() => import("./pages/member/MemberProfile"));
+import CommunityProfilePrompt from "@/components/community/CommunityProfilePrompt";
 const CommunityDashboard = lazy(() => import("./pages/community/CommunityDashboard"));
 const Connections = lazy(() => import("./pages/community/Connections"));
 const CommunityEvents = lazy(() => import("./pages/community/CommunityEvents"));
@@ -126,11 +127,11 @@ const App = () => (
                   path="/community/dashboard"
                   element={
                     <ProtectedRoute>
-                      <RequiresCompletedProfile>
+                      <CommunityProfilePrompt>
                         <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
                           <CommunityDashboard />
                         </Suspense>
-                      </RequiresCompletedProfile>
+                      </CommunityProfilePrompt>
                     </ProtectedRoute>
                   }
                 />
@@ -138,11 +139,11 @@ const App = () => (
                   path="/community/connections"
                   element={
                     <ProtectedRoute>
-                      <RequiresCompletedProfile>
+                      <CommunityProfilePrompt>
                         <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
                           <Connections />
                         </Suspense>
-                      </RequiresCompletedProfile>
+                      </CommunityProfilePrompt>
                     </ProtectedRoute>
                   }
                 />
@@ -150,11 +151,11 @@ const App = () => (
                   path="/community/events"
                   element={
                     <ProtectedRoute>
-                      <RequiresCompletedProfile>
+                      <CommunityProfilePrompt>
                         <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
                           <CommunityEvents />
                         </Suspense>
-                      </RequiresCompletedProfile>
+                      </CommunityProfilePrompt>
                     </ProtectedRoute>
                   }
                 />
@@ -162,11 +163,11 @@ const App = () => (
                   path="/community/projects"
                   element={
                     <ProtectedRoute>
-                      <RequiresCompletedProfile>
+                      <CommunityProfilePrompt>
                         <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
                           <Projects />
                         </Suspense>
-                      </RequiresCompletedProfile>
+                      </CommunityProfilePrompt>
                     </ProtectedRoute>
                   }
                 />
@@ -174,11 +175,11 @@ const App = () => (
                   path="/community/projects/:projectId"
                   element={
                     <ProtectedRoute>
-                      <RequiresCompletedProfile>
+                      <CommunityProfilePrompt>
                         <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
                           <ProjectDetail />
                         </Suspense>
-                      </RequiresCompletedProfile>
+                      </CommunityProfilePrompt>
                     </ProtectedRoute>
                   }
                 />

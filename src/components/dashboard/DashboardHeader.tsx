@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import logo from "@/assets/13creators-logo.png";
 import type { Database } from "@/integrations/supabase/types";
 import gameIcon from "@/assets/community-icons/game-icon.png.asset.json";
+import { useFeatures } from "@/hooks/useFeatures";
 import communityIcon from "@/assets/community-icons/community-icon.png.asset.json";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
@@ -32,6 +33,8 @@ export default function DashboardHeader({ email, onSignOut }: DashboardHeaderPro
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [profileComplete, setProfileComplete] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { features } = useFeatures();
+  const hasCommunityAccess = Array.from(features).some((f) => f.startsWith("community_"));
 
   useEffect(() => {
     (async () => {
@@ -57,7 +60,7 @@ export default function DashboardHeader({ email, onSignOut }: DashboardHeaderPro
   const coreNav: NavItem[] = [
     { label: "Me", path: "/dashboard", icon: User, show: true },
     { label: "Play", path: "/play", imageUrl: gameIcon.url, show: true, nested: true },
-    { label: "Community", path: "/community/dashboard", imageUrl: communityIcon.url, show: profileComplete || isStaff, nested: true },
+    { label: "Community", path: "/community/dashboard", imageUrl: communityIcon.url, show: hasCommunityAccess || profileComplete || isStaff, nested: true },
     { label: "Account", path: "/account", icon: UserCog, show: true },
   ];
 
