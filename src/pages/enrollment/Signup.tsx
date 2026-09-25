@@ -365,7 +365,9 @@ export default function Signup() {
             <h1 className="text-2xl font-display font-bold text-foreground">Check Your Email</h1>
             <p className="text-muted-foreground">
               We've sent a verification link to{" "}
-              <span className="font-semibold text-foreground">{createdEmail}</span>. Please verify your email to complete enrollment.
+              <span className="font-semibold text-foreground">{createdEmail}</span>. {isPlayer
+                ? "Please verify your email to complete enrollment to begin playing."
+                : "Please verify your email to complete enrollment."}
             </p>
             <div className="bg-muted/50 rounded-xl p-4 text-sm text-muted-foreground">
               <p className="font-medium text-foreground mb-1">What happens next?</p>
