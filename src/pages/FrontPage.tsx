@@ -134,6 +134,7 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [applyLevel, setApplyLevel] = useState<1 | 2 | 3 | null>(null);
   const [heldLevels, setHeldLevels] = useState<Set<string>>(new Set());
+  const [showMobilePlay, setShowMobilePlay] = useState(true);
 
   useEffect(() => {
     supabase
@@ -148,6 +149,14 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
     if (!shopMode || !user) return;
     loadMyAccess(user.id).then((items) => setHeldLevels(new Set(items.map((item) => item.level_key))));
   }, [shopMode, user]);
+
+  useEffect(() => {
+    if (shopMode) return;
+    const updateMobilePlay = () => setShowMobilePlay(window.scrollY < 32);
+    updateMobilePlay();
+    window.addEventListener("scroll", updateMobilePlay, { passive: true });
+    return () => window.removeEventListener("scroll", updateMobilePlay);
+  }, [shopMode]);
 
   const byLevel = useMemo(() => {
     const m: Record<string, Product> = {};
@@ -296,8 +305,8 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
 
       {/* Chooser */}
       {!shopMode && <div className="max-w-6xl mx-auto px-6 pt-10">
-        <h2 className="font-display text-3xl md:text-4xl text-center">I want to…</h2>
-        <p className="text-center text-muted-foreground mb-7">Pick one to jump straight there, or just scroll.</p>
+        <h2 className="font-display text-3xl md:text-4xl text-center max-sm:text-left max-sm:max-w-[12rem]">I want to…</h2>
+        <p className="text-center text-muted-foreground mb-7 max-sm:text-left max-sm:max-w-[13rem]">Pick one to jump straight there, or just scroll.</p>
         <div className="grid md:grid-cols-3 gap-4">
           {([
             ["community", "Join the Co-Creators community", "Meet other Creators and join projects."],
@@ -436,7 +445,7 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
       {!shopMode && <Link
         to={user ? "/play" : "/enroll/signup?path=player&tier=wren&billing=monthly"}
         aria-label="Play now - free card game"
-  className="fixed right-3 bottom-4 sm:right-5 sm:bottom-5 z-50 w-20 sm:w-44 drop-shadow-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+  className={`fixed right-3 bottom-4 sm:right-5 sm:bottom-5 z-50 w-20 sm:w-44 drop-shadow-xl transition-all hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${showMobilePlay ? "opacity-100" : "max-sm:opacity-0 max-sm:pointer-events-none"}`}
       >
         <img src={floatingGameButton.url} alt="" aria-hidden className="block h-auto w-full" />
       </Link>}
