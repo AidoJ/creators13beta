@@ -305,8 +305,8 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
 
       {/* Chooser */}
       {!shopMode && <div className="max-w-6xl mx-auto px-6 pt-10">
-        <h2 className="font-display text-3xl md:text-4xl text-center max-sm:text-left max-sm:max-w-[12rem]">I want to…</h2>
-        <p className="text-center text-muted-foreground mb-7 max-sm:text-left max-sm:max-w-[13rem]">Pick one to jump straight there, or just scroll.</p>
+        <h2 className="font-display text-3xl md:text-4xl text-center max-sm:text-left max-sm:max-w-[8rem]">I want to…</h2>
+        <p className="text-center text-muted-foreground mb-7 max-sm:text-left max-sm:max-w-[8rem]">Pick one to jump straight there, or just scroll.</p>
         <div className="grid md:grid-cols-3 gap-4">
           {([
             ["community", "Join the Co-Creators community", "Meet other Creators and join projects."],
