@@ -59,6 +59,7 @@ import GlobalFooter from "@/components/shared/GlobalFooter";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import RecoveryRedirect from "@/components/auth/RecoveryRedirect";
 const MemberProfile = lazy(() => import("./pages/member/MemberProfile"));
+import FeatureGate from "@/components/community/FeatureGate";
 import CommunityProfilePrompt from "@/components/community/CommunityProfilePrompt";
 const CommunityDashboard = lazy(() => import("./pages/community/CommunityDashboard"));
 const Connections = lazy(() => import("./pages/community/Connections"));
@@ -141,7 +142,7 @@ const App = () => (
                     <ProtectedRoute>
                       <CommunityProfilePrompt>
                         <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
-                          <Connections />
+                          <FeatureGate feature="community_message_members" title="Connections"><Connections /></FeatureGate>
                         </Suspense>
                       </CommunityProfilePrompt>
                     </ProtectedRoute>

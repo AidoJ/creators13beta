@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ArrowLeft, Calendar, Video, Clock, Lock, CalendarPlus, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { sanitizeEventHtml } from "@/components/ui/rich-text-editor";
+import { loadMyAccess, accessLabel } from "@/lib/accessSummary";
 import { EventCover } from "@/components/events/EventCover";
 
 
@@ -104,7 +105,11 @@ export default function CommunityEvents() {
   const navigate = useNavigate();
   const [events, setEvents] = useState<CommunityEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tier, setTier] = useState<string>("wren");
+  const [accessName, setAccessName] = useState<string>("");
+  useEffect(() => {
+    if (!user) return;
+    loadMyAccess(user.id).then((items) => setAccessName(accessLabel(items) ?? "Free access"));
+  }, [user]);
 
   useEffect(() => {
     let active = true;
@@ -119,7 +124,6 @@ export default function CommunityEvents() {
       } else {
         const rows = ((data || []) as unknown) as CommunityEvent[];
         setEvents(rows);
-        if (rows[0]?.caller_tier) setTier(rows[0].caller_tier);
       }
       setLoading(false);
     }
@@ -138,7 +142,7 @@ export default function CommunityEvents() {
             <ArrowLeft className="h-4 w-4" />
             Community
           </Button>
-          <Badge variant="outline" className="capitalize">Tier: {tier}</Badge>
+          {accessName && <Badge variant="outline">Your access: {accessName}</Badge>}
         </div>
 
         <header className="mb-6">
@@ -147,7 +151,7 @@ export default function CommunityEvents() {
             Community Events
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Live sessions and gatherings open to your tier.
+            Live sessions and gatherings open to your membership.
           </p>
         </header>
 
@@ -157,7 +161,7 @@ export default function CommunityEvents() {
           <Card className="p-8 text-center">
             <Calendar className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">
-              No community events scheduled for your tier yet. Check back soon.
+              No community events scheduled for your membership yet. Check back soon.
             </p>
           </Card>
         ) : (

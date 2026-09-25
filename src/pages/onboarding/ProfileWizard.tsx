@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useFeatures } from "@/hooks/useFeatures";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,8 @@ export default function ProfileWizard() {
   const { toast } = useToast();
 
   const [step, setStep] = useState(1);
+  const { has: hasFeature } = useFeatures();
+  const canMessage = hasFeature("community_message_members");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -167,7 +170,7 @@ export default function ProfileWizard() {
       bio_intriguing: bioIntriguing.trim(),
       primary_type: primaryType,
       community_visible: visible,
-      member_preferences: { accepts_messages: acceptsMessages },
+      member_preferences: { accepts_messages: canMessage && acceptsMessages },
     };
     if (uploadedKey) payload.avatar_url = uploadedKey;
 
@@ -379,6 +382,7 @@ export default function ProfileWizard() {
                 </div>
               </div>
 
+              {canMessage && (
               <div className="space-y-3 rounded-xl border border-border p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -390,6 +394,7 @@ export default function ProfileWizard() {
                   <Switch checked={acceptsMessages} onCheckedChange={setAcceptsMessages} />
                 </div>
               </div>
+              )}
 
               <div className="flex justify-between">
                 <Button variant="outline" onClick={() => setStep(3)} disabled={submitting}>
