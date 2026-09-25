@@ -11,6 +11,9 @@ import { getAppOrigin } from "@/lib/appOrigin";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import ApplyDialog from "@/components/frontpage/ApplyDialog";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import { loadMyAccess } from "@/lib/accessSummary";
+import floatingGameButton from "@/assets/community-icons/floating-game-button.png.asset.json";
 
 interface Product {
   id: string;
@@ -118,14 +121,19 @@ function priceLabel(p: Product) {
 
 const hexClip = { clipPath: "polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)" };
 
-export default function FrontPage() {
-  const { user } = useAuth();
+interface FrontPageProps {
+  shopMode?: boolean;
+}
+
+export default function FrontPage({ shopMode = false }: FrontPageProps) {
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [path, setPath] = useState<PathKey | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [applyLevel, setApplyLevel] = useState<1 | 2 | 3 | null>(null);
+  const [heldLevels, setHeldLevels] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     supabase
@@ -135,6 +143,11 @@ export default function FrontPage() {
       .eq("is_visible_on_storefront", true)
       .then(({ data }) => setProducts((data as Product[]) ?? []));
   }, []);
+
+  useEffect(() => {
+    if (!shopMode || !user) return;
+    loadMyAccess(user.id).then((items) => setHeldLevels(new Set(items.map((item) => item.level_key))));
+  }, [shopMode, user]);
 
   const byLevel = useMemo(() => {
     const m: Record<string, Product> = {};
@@ -199,6 +212,7 @@ export default function FrontPage() {
   const ProductCard = ({ levelKey, cta }: { levelKey: string; cta: string }) => {
     const product = byLevel[levelKey];
     const copy = COPY[levelKey];
+    const isHeld = heldLevels.has(levelKey);
     if (!product || !copy) return null;
     return (
       <div className={`flex flex-col rounded-3xl bg-card p-6 border ${copy.feature ? "border-2 border-primary shadow-lg" : "border-border"}`}>
@@ -216,12 +230,14 @@ export default function FrontPage() {
         </ul>
         <button
           onClick={() => buy(product.id)}
-          disabled={busyId === product.id}
+          disabled={busyId === product.id || isHeld}
           className={`mt-auto rounded-full px-5 py-3 font-medium border-2 border-primary transition-colors ${
-            copy.feature ? "bg-primary text-primary-foreground hover:opacity-90" : "bg-card text-primary hover:bg-muted"
+            isHeld
+              ? "bg-muted text-muted-foreground border-border cursor-default"
+              : copy.feature ? "bg-primary text-primary-foreground hover:opacity-90" : "bg-card text-primary hover:bg-muted"
           }`}
         >
-          {busyId === product.id ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : cta}
+          {busyId === product.id ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : isHeld ? "You have this" : cta}
         </button>
         {copy.after && <p className="text-xs text-muted-foreground text-center mt-2">{copy.after}</p>}
       </div>
@@ -231,7 +247,9 @@ export default function FrontPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Nav */}
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
+      {shopMode ? (
+        <DashboardHeader email={user?.email} onSignOut={signOut} />
+      ) : <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center gap-2">
           <a href="#top" className="mr-auto flex items-center gap-2 font-display text-xl text-primary">
             <span className="h-7 w-6 bg-primary" style={hexClip} />13Creators
@@ -266,18 +284,18 @@ export default function FrontPage() {
             </div>
           </div>
         )}
-      </header>
+      </header>}
 
       {/* Hero */}
-      <div id="top" className="text-center py-16 px-6 bg-gradient-to-b from-muted to-background">
+      {!shopMode && <div id="top" className="text-center py-16 px-6 bg-gradient-to-b from-muted to-background">
         <h1 className="font-display text-4xl md:text-5xl max-w-[15ch] mx-auto mb-3">Discover the 13 Creator Types</h1>
         <p className="text-muted-foreground max-w-[46ch] mx-auto">
           Play the card game for free. Meet other Creators. Find out your own type — or train to profile others.
         </p>
-      </div>
+      </div>}
 
       {/* Chooser */}
-      <div className="max-w-6xl mx-auto px-6 pt-10">
+      {!shopMode && <div className="max-w-6xl mx-auto px-6 pt-10">
         <h2 className="font-display text-3xl md:text-4xl text-center">I want to…</h2>
         <p className="text-center text-muted-foreground mb-7">Pick one to jump straight there, or just scroll.</p>
         <div className="grid md:grid-cols-3 gap-4">
@@ -297,7 +315,13 @@ export default function FrontPage() {
             </button>
           ))}
         </div>
-      </div>
+      </div>}
+
+      {shopMode && (
+        <div id="top" className="max-w-6xl mx-auto px-6 pt-10">
+          <h1 className="font-display text-4xl text-foreground">Shop</h1>
+        </div>
+      )}
 
       {/* Community */}
       <section id="community" className={`border-t border-border mt-12 py-14 transition-opacity ${dim("community")}`}>
@@ -402,21 +426,20 @@ export default function FrontPage() {
         </div>
       </section>
 
-      <footer className="border-t border-border py-12 pb-40 text-sm text-muted-foreground">
+      {!shopMode && <footer className="border-t border-border py-12 pb-40 text-sm text-muted-foreground">
         <div className="max-w-6xl mx-auto px-6">
           <p>Still deciding? Play the card game first — it's free, and you can join anything else later.</p>
         </div>
-      </footer>
+      </footer>}
 
       {/* Floating play button */}
-      <Link
+      {!shopMode && <Link
         to={user ? "/play" : "/enroll/signup?path=player&tier=wren&billing=monthly"}
-        className="fixed right-5 bottom-5 z-50 w-32 h-36 sm:w-36 sm:h-40 bg-secondary text-secondary-foreground flex flex-col items-center justify-center text-center no-underline drop-shadow-xl hover:opacity-90"
-        style={hexClip}
+        aria-label="Play now - free card game"
+        className="fixed right-3 bottom-4 sm:right-5 sm:bottom-5 z-50 w-36 sm:w-44 drop-shadow-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
-        <b className="font-display text-lg leading-tight">Play now</b>
-        <i className="not-italic text-xs">Card game · free</i>
-      </Link>
+        <img src={floatingGameButton.url} alt="" aria-hidden className="block h-auto w-full" />
+      </Link>}
 
       <ApplyDialog level={applyLevel} onClose={() => setApplyLevel(null)} />
     </div>
