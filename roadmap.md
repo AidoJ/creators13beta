@@ -9,3 +9,4 @@
 - [x] Publish after staff-list verification
 - [x] Confirm and replace legacy "Wren" labels with "Free access" in staff lists
 - [ ] Course channel test (blocked: no course products in catalogue)
+- [ ] Restyle the player welcome Play panel to match the Warm Up palette, with stronger emphasis and “Let’s Play” title
