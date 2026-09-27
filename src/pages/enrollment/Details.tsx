@@ -419,7 +419,7 @@ export default function Details() {
                   We take child safety very seriously. Your parent or guardian must complete BOTH steps:
                 </p>
                 <p className="text-foreground">(a) Click the confirmation link we'll email them when you save this page.</p>
-                <p className="text-foreground">(b) Call A'Hara on <span className="font-semibold">0412 293255</span> to confirm consent verbally.</p>
+                <p className="text-foreground">(b) Call A'Hara on <span className="font-semibold">+61 412 293 255</span> to confirm consent verbally.</p>
                 <p className="text-foreground mt-1">
                   Photo uploads stay locked until both are done.
                 </p>
