@@ -91,7 +91,10 @@ export default function AdminDashboard() {
   const [search, setSearch] = useState("");
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [addingRole, setAddingRole] = useState<{ userId: string; role: AppRole } | null>(null);
-  const [activeTab, setActiveTab] = useState("practitioners");
+  // Deep links from emails, e.g. /admin?tab=applications&application=<id>
+  const [activeTab, setActiveTab] = useState(
+    () => new URLSearchParams(window.location.search).get("tab") || "practitioners",
+  );
   const [expandedCaseStudy, setExpandedCaseStudy] = useState<string | null>(null);
   const [revisionNotes, setRevisionNotes] = useState<Record<string, string>>({});
   const [cohortFilter, setCohortFilter] = useState<string>("all");
