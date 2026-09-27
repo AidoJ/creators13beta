@@ -8,7 +8,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const APP_ORIGIN = "https://creators13.lovable.app";
+const APP_ORIGIN = "https://creators13beta.lovable.app";
 
 function replaceVars(template: string, vars: Record<string, string>): string {
   let out = template;

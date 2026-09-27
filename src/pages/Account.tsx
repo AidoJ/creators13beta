@@ -26,6 +26,21 @@ export default function Account() {
   const [passwordLoading, setPasswordLoading] = useState(false);
 
   const [access, setAccess] = useState<AccessItem[] | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const hasRecurring = (access ?? []).some(
+    (a) => !!a.stripe_ref && (a.billing_shape === "recurring" || a.billing_shape === "fixed_term"),
+  );
+
+  const openPortal = async () => {
+    setPortalLoading(true);
+    const { data, error } = await supabase.functions.invoke("customer-portal");
+    setPortalLoading(false);
+    if (error || !(data as any)?.url) {
+      toast({ title: "Couldn't open billing", description: (data as any)?.message || error?.message || "Please try again.", variant: "destructive" });
+      return;
+    }
+    window.location.href = (data as any).url;
+  };
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -36,7 +51,7 @@ export default function Account() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate("/auth");
+    navigate("/");
   };
 
   const handleEmailChange = async (e: React.FormEvent) => {
@@ -111,7 +126,19 @@ export default function Account() {
             ) : access.length === 0 ? (
               <p className="text-sm text-muted-foreground">Free access — no paid memberships or profiles yet.</p>
             ) : (
-              <AccessList items={access} />
+              <div className="space-y-4">
+                <AccessList items={access} />
+                {hasRecurring && (
+                  <div className="space-y-1">
+                    <Button variant="outline" onClick={openPortal} disabled={portalLoading} className="w-full">
+                      {portalLoading ? "Opening…" : "Manage or cancel subscription"}
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center">
+                      If you cancel, you keep access until the end of the period you've paid for.
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>

@@ -69,7 +69,7 @@ serve(async (req) => {
       .eq("template_key", "full_profile_complete")
       .maybeSingle();
 
-    const loginLink = "https://creators13.lovable.app/auth";
+    const loginLink = "https://creators13beta.lovable.app/auth";
 
     let subject = template?.subject || "Your full Creator Profile is complete, {{clientName}}!";
     let htmlBody = template?.html_body || getDefaultHtml();

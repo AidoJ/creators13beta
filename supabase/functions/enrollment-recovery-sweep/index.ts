@@ -18,7 +18,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const APP_ORIGIN = "https://creators13.lovable.app";
+const APP_ORIGIN = "https://creators13beta.lovable.app";
 const FROM_ADDRESS = "Creators 13 <notify@creators13.com>";
 
 interface StepInfo {

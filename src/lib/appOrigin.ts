@@ -1,4 +1,4 @@
-export const APP_PUBLIC_ORIGIN = "https://creators13.lovable.app";
+export const APP_PUBLIC_ORIGIN = "https://creators13beta.lovable.app";
 
 export function getAppOrigin(): string {
   if (typeof window === "undefined") return APP_PUBLIC_ORIGIN;

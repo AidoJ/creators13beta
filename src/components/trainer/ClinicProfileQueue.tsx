@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Stethoscope, RefreshCw, Users } from "lucide-react";
 
 interface QueueRow {
-  entry_kind: "clinic" | "handoff";
+  entry_kind: "clinic" | "handoff" | "direct";
   invitation_id: string | null;
   client_name: string | null;
   client_email: string | null;
@@ -103,7 +103,7 @@ export default function ClinicProfileQueue({ onOpenClient }: { onOpenClient?: (u
           </Button>
         </div>
         <p className="px-4 pt-3 text-xs text-muted-foreground">
-          Clinic Profile referrals, plus handoffs — clients whose practitioner is Level 1 or 2 and can't assign Creator Types.
+          Everyone waiting for Creator Types: your own clients whose photos are in, Clinic Profile referrals, and handoffs — clients whose practitioner is Level 1 or 2 and can't assign Creator Types.
         </p>
         {rows.length === 0 ? (
           <p className="p-6 text-sm text-muted-foreground text-center">Nothing in the queue.</p>
@@ -118,12 +118,12 @@ export default function ClinicProfileQueue({ onOpenClient }: { onOpenClient?: (u
                     <p className="text-sm font-medium text-foreground truncate">{r.client_name || r.client_email}</p>
                     <p className="text-xs text-muted-foreground truncate">
                       {r.client_email}
-                      {r.practitioner_name ? ` • ${r.entry_kind === "handoff" ? "practitioner" : "referred by"} ${r.practitioner_name}` : ""}
+                      {r.practitioner_name && r.entry_kind !== "direct" ? ` • ${r.entry_kind === "handoff" ? "practitioner" : "referred by"} ${r.practitioner_name}` : ""}
                       {typeof r.photos_uploaded === "number" ? ` • ${r.photos_uploaded} photos` : ""}
                     </p>
                   </div>
                   <Badge variant="outline" className="text-[10px] flex-shrink-0">
-                    {r.entry_kind === "handoff" ? "Handoff" : "Clinic Profile"}
+                    {r.entry_kind === "handoff" ? "Handoff" : r.entry_kind === "direct" ? "Your client" : "Clinic Profile"}
                   </Badge>
                   <Badge variant="outline" className={`text-[10px] flex-shrink-0 ${s.cls}`}>{s.label}</Badge>
                   {r.entry_kind === "handoff" && r.client_user_id && (

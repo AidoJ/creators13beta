@@ -7,7 +7,7 @@
  */
 import { EMAIL_FOOTER_HTML } from "./email-footer.ts";
 
-export const AHARA_PHONE = "0412 293255";
+export const AHARA_PHONE = "+61 412 293 255";
 
 const SAFETY_PANEL = `
   <div style="border:2px solid #C0392B;background:#FDECEA;border-radius:10px;padding:16px 18px;margin:20px 0;">

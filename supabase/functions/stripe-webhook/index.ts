@@ -120,7 +120,7 @@ serve(async (req) => {
             .eq("id", invite.id);
         }
 
-        const origin = session.metadata?.app_origin || "https://creators13.lovable.app";
+        const origin = session.metadata?.app_origin || "https://creators13beta.lovable.app";
         const inviteLink = `${origin}/enroll?tier=wren&billing=monthly&clinic=true&invite=${invite.invite_token}`;
 
         const resendKey = Deno.env.get("RESEND_API_KEY");
@@ -349,10 +349,12 @@ serve(async (req) => {
           .update({ status: "canceled" })
           .eq("user_id", subRecord.user_id);
 
-        // Stripe has given up retrying (or the customer cancelled): end access.
-        await expireEntitlementsByRef(supabase, subscription.id);
-        logStep("Subscription canceled — entitlements expired", { userId: subRecord.user_id });
       }
+      // Stripe has given up retrying (or the customer cancelled): end access.
+      // Storefront purchases have no legacy subscriptions row, so this must run
+      // regardless — entitlements carry the subscription id as stripe_ref.
+      await expireEntitlementsByRef(supabase, subscription.id);
+      logStep("Subscription canceled — entitlements expired", { subscriptionId: subscription.id });
     }
 
     return new Response(JSON.stringify({ received: true }), {

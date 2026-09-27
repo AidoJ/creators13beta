@@ -122,9 +122,9 @@ export default function EmailTemplateEditor() {
     email: "sarah@example.com",
     practitionerName: "Sarah Johnson",
     caseStudyTitle: "Assessment for Jane Doe on 2026-03-12",
-    viewLink: "https://creators13.lovable.app/trainer",
-    photosLink: "https://creators13.lovable.app/enroll/photos",
-    loginLink: "https://creators13.lovable.app/auth",
+    viewLink: "https://creators13beta.lovable.app/trainer",
+    photosLink: "https://creators13beta.lovable.app/enroll/photos",
+    loginLink: "https://creators13beta.lovable.app/auth",
   };
   let previewHtml = htmlBody;
   for (const [key, value] of Object.entries(previewReplacements)) {

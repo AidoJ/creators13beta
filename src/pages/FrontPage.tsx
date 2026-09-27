@@ -145,10 +145,11 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
       .then(({ data }) => setProducts((data as Product[]) ?? []));
   }, []);
 
+  // Mark held products for any signed-in visitor (front page and /shop).
   useEffect(() => {
-    if (!shopMode || !user) return;
+    if (!user) { setHeldLevels(new Set()); return; }
     loadMyAccess(user.id).then((items) => setHeldLevels(new Set(items.map((item) => item.level_key))));
-  }, [shopMode, user]);
+  }, [user]);
 
   useEffect(() => {
     if (shopMode) return;
@@ -176,10 +177,13 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
     });
     setBusyId(null);
     if (error || (data as any)?.error) {
+      let body: any = data;
+      try { if (!body && (error as any)?.context?.json) body = await (error as any).context.json(); } catch { /* ignore */ }
+      const held = body?.error === "already_held";
       toast({
-        title: "Couldn't open payment",
-        description: (data as any)?.message || error?.message || "Please try again.",
-        variant: "destructive",
+        title: held ? "You already have this" : "Couldn't open payment",
+        description: body?.message || error?.message || "Please try again.",
+        variant: held ? "default" : "destructive",
       });
       return;
     }
@@ -224,7 +228,10 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
     const isHeld = heldLevels.has(levelKey);
     if (!product || !copy) return null;
     return (
-      <div className={`flex flex-col rounded-3xl bg-card p-6 border ${copy.feature ? "border-2 border-primary shadow-lg" : "border-border"}`}>
+      <div className={`relative flex flex-col rounded-3xl p-6 border ${isHeld ? "bg-secondary/10 border-2 border-secondary" : `bg-card ${copy.feature ? "border-2 border-primary shadow-lg" : "border-border"}`}`}>
+        {isHeld && (
+          <span className="absolute -top-3 left-6 rounded-full bg-secondary px-3 py-0.5 text-xs font-medium text-secondary-foreground">Your plan</span>
+        )}
         {copy.bird && <div className="text-3xl leading-none mb-1">{copy.bird}</div>}
         <h3 className="font-display text-2xl text-foreground">{copy.title}</h3>
         <p className="text-lg font-semibold text-primary mt-2">{priceLabel(product)}</p>
@@ -242,7 +249,7 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
           disabled={busyId === product.id || isHeld}
           className={`mt-auto rounded-full px-5 py-3 font-medium border-2 border-primary transition-colors ${
             isHeld
-              ? "bg-muted text-muted-foreground border-border cursor-default"
+              ? "bg-secondary text-secondary-foreground border-secondary cursor-default"
               : copy.feature ? "bg-primary text-primary-foreground hover:opacity-90" : "bg-card text-primary hover:bg-muted"
           }`}
         >

@@ -20,6 +20,7 @@ const STATUSES = ["new", "contacted", "accepted", "declined"];
 export default function PractitionerApplicationsPanel() {
   const [rows, setRows] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const focusId = new URLSearchParams(window.location.search).get("application");
 
   const load = useCallback(async () => {
     const { data } = await supabase
@@ -31,6 +32,11 @@ export default function PractitionerApplicationsPanel() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!focusId || loading) return;
+    document.getElementById(`application-${focusId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [focusId, loading]);
 
   async function setStatus(id: string, status: string) {
     const { error } = await supabase
@@ -50,7 +56,7 @@ export default function PractitionerApplicationsPanel() {
   return (
     <div className="space-y-3">
       {rows.map((a) => (
-        <div key={a.id} className="rounded-2xl border border-border bg-card p-4">
+        <div key={a.id} id={`application-${a.id}`} className={`rounded-2xl bg-card p-4 scroll-mt-28 ${a.id === focusId ? "border-2 border-primary" : "border border-border"}`}>
           <div className="flex flex-wrap items-center gap-2 mb-1">
             <span className="font-semibold text-foreground">{a.name}</span>
             <Badge variant="outline">Level {a.level}</Badge>

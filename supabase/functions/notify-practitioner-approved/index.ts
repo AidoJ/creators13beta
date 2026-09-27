@@ -57,7 +57,7 @@ serve(async (req) => {
       .eq("template_key", "case_study_approved_practitioner")
       .single();
 
-    const viewLink = "https://creators13.lovable.app/practitioner";
+    const viewLink = "https://creators13beta.lovable.app/practitioner";
 
     let subject = template?.subject || "Case study approved: {{caseStudyTitle}}";
     let htmlBody = template?.html_body || getDefaultHtml();

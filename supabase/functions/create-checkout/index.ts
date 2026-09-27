@@ -97,6 +97,24 @@ serve(async (req) => {
         logStep("Referral purchase", { invitationId: referralInvitationId });
       }
 
+      // Never sell a level the buyer already actively holds (double-charge guard).
+      if (levelKey && !referralInvitationId) {
+        const nowIso = new Date().toISOString();
+        const { data: held } = await supabaseClient
+          .from("entitlements").select("id")
+          .eq("user_id", userId).eq("level_key", levelKey).eq("status", "active")
+          .lte("starts_at", nowIso)
+          .or(`ends_at.is.null,ends_at.gt.${nowIso}`)
+          .limit(1).maybeSingle();
+        if (held) {
+          logStep("Rejected: level already held", { userId, levelKey });
+          return new Response(JSON.stringify({
+            error: "already_held",
+            message: `You already have ${product.name}. There's no need to buy it again.`,
+          }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      }
+
       // Seat cap: check-and-hold happens atomically inside reserve_seat, which
       // takes a per-level lock. Two simultaneous checkouts for the last seat
       // cannot both succeed. Re-checked in the webhook before granting.

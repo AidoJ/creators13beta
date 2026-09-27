@@ -13,7 +13,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const DEFAULT_ORIGIN = "https://creators13.lovable.app";
+const DEFAULT_ORIGIN = "https://creators13beta.lovable.app";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
