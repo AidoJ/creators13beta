@@ -66,7 +66,7 @@ serve(async (req) => {
       .eq("template_key", "case_study_submitted")
       .single();
 
-    const viewLink = "https://creators13.lovable.app/trainer";
+    const viewLink = "https://creators13beta.lovable.app/trainer";
     const results: { user_id: string; status: string; error?: string }[] = [];
 
     for (const trainer of trainerRoles) {

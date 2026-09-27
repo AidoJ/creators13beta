@@ -113,7 +113,7 @@ async function sendNotifications(
       }
 
       const practFirstName = practProfile.first_name || "Practitioner";
-      const viewLink = "https://creators13.lovable.app/practitioner";
+      const viewLink = "https://creators13beta.lovable.app/practitioner";
 
       let subject = template?.subject || "Your client {{clientName}} has uploaded their photos";
       let htmlBody = template?.html_body || getDefaultHtml();
@@ -184,7 +184,7 @@ async function notifyHandoff(supabaseAdmin: any, resendApiKey: string, practitio
           from: "13 Creators <noreply@connect.13creators.com>",
           to: [t.email],
           subject: `Profiling handoff: ${clientName} is ready to profile`,
-          html: `<div style="font-family:Questrial,Arial,sans-serif;color:#5A3A28;max-width:520px;margin:32px auto;"><h2>Profiling handoff</h2><p>Hi ${t.first_name || "there"},</p><p><strong>${clientName}</strong> has uploaded their profiling photos. Their practitioner (${practName}) isn't Level 3 certified, so they can't assign Creator Types — this client is now in your Clinic Profile queue.</p><p>You can profile them yourself or reassign them to a Level 3 practitioner from the queue.</p><p><a href="https://creators13.lovable.app/trainer" style="background:#BB1B56;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;">Open the queue</a></p></div>`,
+          html: `<div style="font-family:Questrial,Arial,sans-serif;color:#5A3A28;max-width:520px;margin:32px auto;"><h2>Profiling handoff</h2><p>Hi ${t.first_name || "there"},</p><p><strong>${clientName}</strong> has uploaded their profiling photos. Their practitioner (${practName}) isn't Level 3 certified, so they can't assign Creator Types — this client is now in your Clinic Profile queue.</p><p>You can profile them yourself or reassign them to a Level 3 practitioner from the queue.</p><p><a href="https://creators13beta.lovable.app/trainer" style="background:#BB1B56;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;">Open the queue</a></p></div>`,
         }),
       });
       await new Promise((r) => setTimeout(r, 600));

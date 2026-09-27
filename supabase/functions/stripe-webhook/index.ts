@@ -120,7 +120,7 @@ serve(async (req) => {
             .eq("id", invite.id);
         }
 
-        const origin = session.metadata?.app_origin || "https://creators13.lovable.app";
+        const origin = session.metadata?.app_origin || "https://creators13beta.lovable.app";
         const inviteLink = `${origin}/enroll?tier=wren&billing=monthly&clinic=true&invite=${invite.invite_token}`;
 
         const resendKey = Deno.env.get("RESEND_API_KEY");

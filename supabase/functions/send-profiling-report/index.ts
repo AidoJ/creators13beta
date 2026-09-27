@@ -287,7 +287,7 @@ function buildDefaultHtml(data: ReportData): string {
           </div>
 
           <div style="margin-top:24px;padding-top:20px;border-top:1px solid #e8ddd4;text-align:center;">
-            <a href="https://creators13.lovable.app/dashboard" style="display:inline-block;background:#b5314e;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">
+            <a href="https://creators13beta.lovable.app/dashboard" style="display:inline-block;background:#b5314e;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">
               View Your Dashboard
             </a>
           </div>

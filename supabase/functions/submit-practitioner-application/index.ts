@@ -96,7 +96,7 @@ serve(async (req) => {
                 ${phone ? `Phone: ${esc(phone)}<br>` : ""}
               </p>
               ${message ? `<p style="background:#F7EFF8;padding:12px;border-radius:10px">${esc(message)}</p>` : ""}
-              <p><a href="https://creators13.lovable.app/admin?tab=applications"
+              <p><a href="https://creators13beta.lovable.app/admin?tab=applications"
                     style="background:#B21E4B;color:#fff;padding:10px 18px;border-radius:99px;text-decoration:none">
                 Review applications</a></p>
             </div>`;

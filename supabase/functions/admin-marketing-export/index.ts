@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
       return pathFilter === "*" ? true : sp === pathFilter;
     });
 
-    const appOrigin = url.searchParams.get("app_origin") ?? "https://creators13.lovable.app";
+    const appOrigin = url.searchParams.get("app_origin") ?? "https://creators13beta.lovable.app";
 
     const rows: string[][] = [
       [

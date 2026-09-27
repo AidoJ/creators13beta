@@ -57,7 +57,7 @@ serve(async (req) => {
       .eq("template_key", "case_study_approved")
       .single();
 
-    const loginLink = "https://creators13.lovable.app/auth";
+    const loginLink = "https://creators13beta.lovable.app/auth";
 
     let subject = template?.subject || "Your Creator Types are ready, {{clientName}}!";
     let htmlBody = template?.html_body || getDefaultHtml();
