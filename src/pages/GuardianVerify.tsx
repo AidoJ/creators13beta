@@ -21,13 +21,12 @@ export default function GuardianVerify() {
   // page first can't use it up or trigger it.
   const confirm = () => {
     setState("loading");
-    let cancelled = false;
     (async () => {
       const { data, error } = await (supabase as never as {
         rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
       }).rpc("confirm_guardian_email", { _token: token });
 
-      if (cancelled) return;
+
       const res = data as { ok?: boolean; child_name?: string; verbal_done?: boolean } | null;
       if (error || !res?.ok) {
         setState("invalid");
