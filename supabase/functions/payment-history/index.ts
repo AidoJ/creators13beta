@@ -34,6 +34,7 @@ Deno.serve(async (req) => {
 
     const customers = await stripe.customers.list({ email: user.email, limit: 10 });
     const items: HistoryItem[] = [];
+    const productNames = new Map<string, string>();
 
     for (const c of customers.data) {
       const charges = await stripe.charges.list({ customer: c.id, limit: 100, expand: ["data.invoice"] as any });
@@ -65,10 +66,17 @@ Deno.serve(async (req) => {
         }
       }
 
-      const subs = await stripe.subscriptions.list({ customer: c.id, status: "all", limit: 100, expand: ["data.items.data.price.product"] as any });
+      // Stripe allows at most 4 expansion levels, so look product names up separately.
+      const subs = await stripe.subscriptions.list({ customer: c.id, status: "all", limit: 100 });
       for (const s of subs.data) {
-        const prod: any = s.items.data[0]?.price?.product;
-        const name = (prod && typeof prod === "object" ? prod.name : null) || "Subscription";
+        const prodRef: any = s.items.data[0]?.price?.product;
+        let name = "Subscription";
+        if (typeof prodRef === "string") {
+          if (!productNames.has(prodRef)) {
+            try { productNames.set(prodRef, (await stripe.products.retrieve(prodRef)).name); } catch { productNames.set(prodRef, "Subscription"); }
+          }
+          name = productNames.get(prodRef)!;
+        } else if (prodRef?.name) name = prodRef.name;
         const periodEnd = (s.items.data[0] as any)?.current_period_end ?? (s as any).current_period_end ?? null;
         if (s.status === "canceled" && s.canceled_at) {
           items.push({
