@@ -18,13 +18,13 @@ type Pay = {
   member_email: string | null; member_name: string | null; product_name: string | null; billing_shape: string | null;
   term_months: number | null; amount_cents: number | null; currency: string | null; fee_cents: number | null;
   net_cents: number | null; status: string | null; stripe_charge_id: string | null; stripe_invoice_id: string | null;
-  stripe_subscription_id: string | null; referring_practitioner_id: string | null;
+  stripe_subscription_id: string | null; referring_practitioner_id: string | null; product_id: string | null;
 };
 type Sub = {
   stripe_subscription_id: string; livemode: boolean; user_id: string | null; member_name: string | null; member_email: string | null;
   product_name: string | null; billing_shape: string | null; term_months: number | null; amount_cents: number | null;
   currency: string | null; billing_interval: string | null; interval_count: number | null; status: string | null;
-  cancel_at_period_end: boolean; cancel_at: string | null; started_at: string | null; current_period_end: string | null;
+  product_id: string | null; cancel_at_period_end: boolean; cancel_at: string | null; started_at: string | null; current_period_end: string | null;
 };
 type Gst = { registered: boolean; registered_from: string | null };
 
