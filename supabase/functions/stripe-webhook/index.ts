@@ -3,6 +3,7 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { recordCharge, fillFee, recordFailedInvoice, syncSubscription } from "../_shared/paymentsLedger.ts";
 import { grantEntitlement, expireEntitlementsByRef, levelKeyForTier } from "../_shared/entitlements.ts";
+import { replaceLowerMemberships } from "../_shared/membership.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -227,6 +228,14 @@ serve(async (req) => {
           userId, levelKey, source: "stripe", stripeRef: subscriptionId || session.id, endsAt,
         });
         logStep("Entitlement", { userId, levelKey, result });
+
+        // Upgrade: a higher membership replaces any lower one (cancel now + pro-rata refund).
+        const custId = typeof session.customer === "string" ? session.customer : (session.customer as any)?.id;
+        if (custId) {
+          try {
+            await replaceLowerMemberships(stripe, { customerId: custId, newSubscriptionId: subscriptionId, newLevelKey: levelKey, log: logStep });
+          } catch (e) { logStep("ERROR replacing lower memberships", { message: String(e) }); }
+        }
 
         // Fixed-term course: convert the subscription into a schedule that
         // cancels at the end. Verified with a Stripe test clock: `iterations`
