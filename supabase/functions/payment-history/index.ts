@@ -50,6 +50,8 @@ Deno.serve(async (req) => {
       for (const ch of charges.data) {
         if (ch.status !== "succeeded" || !ch.captured) continue;
         if (isOtherBusiness(ch)) continue;
+        // Creators 13 only sells in AUD; the other business bills in USD.
+        if ((ch.currency ?? "").toLowerCase() !== "aud") continue;
         const inv: any = (ch as any).invoice;
         const line = inv && typeof inv === "object" ? inv.lines?.data?.[0]?.description : null;
         const desc = line || ch.description || (ch.metadata as any)?.product_name || "Creators 13 purchase";
@@ -79,6 +81,7 @@ Deno.serve(async (req) => {
       // Stripe allows at most 4 expansion levels, so look product names up separately.
       const subs = await stripe.subscriptions.list({ customer: c.id, status: "all", limit: 100 });
       for (const s of subs.data) {
+        if ((s.currency ?? "").toLowerCase() !== "aud") continue;
         const prodRef: any = s.items.data[0]?.price?.product;
         let name = "Subscription";
         if (typeof prodRef === "string") {
