@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, Map as MapIcon, Users, Copy, Check, LayoutDashboard, Menu, X, EyeOff, FolderKanban } from "lucide-react";
+import { Settings, Map as MapIcon, Users, Copy, Check, LayoutDashboard, Menu, X, EyeOff } from "lucide-react";
 import { capitaliseTypeName, CREATOR_TYPE_NAMES, getCreatorTypeColor } from "@/lib/creatorTypes";
 import { isStockAvatarRef, stockAvatarUrl } from "@/lib/avatar";
 import { glyphForType } from "@/lib/game/glyphs";
@@ -31,6 +31,7 @@ import connectionsIcon from "@/assets/community-icons/connect-icon.png.asset.jso
 import filterIcon from "@/assets/community-icons/filter-icon.png.asset.json";
 import memberMatchIcon from "@/assets/icon-Member_Matcxh_icon.png.asset.json";
 import shopIcon from "@/assets/community-icons/shop-icon.png.asset.json";
+import projectsIcon from "@/assets/community-icons/projects-icon.png.asset.json";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeatures } from "@/hooks/useFeatures";
 import type { MapMember } from "@/components/community/CommunityMapView";
@@ -610,7 +611,7 @@ export default function CommunityDashboard() {
 
                 {[
                   { label: "Events", img: eventsIcon.url, soon: false, onClick: () => navigate("/community/events"), badge: 0, show: true },
-                  { label: "Projects", Icon: FolderKanban, soon: false, onClick: () => navigate("/community/projects"), badge: 0, show: canProjects },
+                  { label: "Projects", img: projectsIcon.url, soon: false, onClick: () => navigate("/community/projects"), badge: 0, show: canProjects },
                   {
                     show: canMessage,
                     label: "Connections",
@@ -628,7 +629,7 @@ export default function CommunityDashboard() {
                     show: true,
                   },
                   { label: "Shop", img: shopIcon.url, soon: false, onClick: () => navigate("/shop"), badge: 0, show: true },
-                ].filter((item) => item.show).map(({ label, Icon, img, soon, onClick, badge }) => {
+                ].filter((item) => item.show).map(({ label, img, soon, onClick, badge }) => {
                   // Gold to match the enrollment "Case Study Volunteer / Paying Client" cards.
                   const color = "#c9a84c";
                   return (
@@ -645,21 +646,17 @@ export default function CommunityDashboard() {
                           )}
                           style={{ border: `2.5px solid ${color}`, color }}
                         >
-                          {img ? (
-                            <img
-                              src={img}
-                              alt=""
-                              aria-hidden
-                              className="h-8 w-8 object-contain"
-                              style={{
-                                // Recolour the PNG to the gold accent so it sits cleanly on every family background.
-                                filter:
-                                  "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)",
-                              }}
-                            />
-                          ) : Icon ? (
-                            <Icon className="h-7 w-7" strokeWidth={2.25} style={{ color }} />
-                          ) : null}
+                          <img
+                            src={img}
+                            alt=""
+                            aria-hidden
+                            className="h-8 w-8 object-contain"
+                            style={{
+                              // Recolour the PNG to the gold accent so it sits cleanly on every family background.
+                              filter:
+                                "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)",
+                            }}
+                          />
                           {badge > 0 && (
                             <span
                               aria-label={`${badge} pending`}
@@ -714,13 +711,13 @@ export default function CommunityDashboard() {
           )}
           {[
             { label: "Events", img: eventsIcon.url, onClick: () => navigate("/community/events"), show: true },
-            { label: "Projects", Icon: FolderKanban, onClick: () => navigate("/community/projects"), show: canProjects },
+            { label: "Projects", img: projectsIcon.url, onClick: () => navigate("/community/projects"), show: canProjects },
             { label: "Connections", img: connectionsIcon.url, onClick: () => navigate("/community/connections"), show: canMessage },
             { label: "Dashboard", img: memberMatchIcon.url, onClick: () => navigate("/dashboard"), show: true },
             { label: "Shop", img: shopIcon.url, onClick: () => navigate("/shop"), show: true },
-          ].filter((item) => item.show).map(({ label, Icon, img, onClick }) => (
+          ].filter((item) => item.show).map(({ label, img, onClick }) => (
             <button key={label} type="button" onClick={onClick} aria-label={label} className="min-h-11 min-w-11 shrink-0 rounded-full border-2 border-gold bg-card/80 flex items-center justify-center">
-              {img ? <img src={img} alt="" aria-hidden className="h-6 w-6 object-contain" style={{ filter: "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)" }} /> : Icon ? <Icon className="h-5 w-5 text-gold" /> : null}
+              <img src={img} alt="" aria-hidden className="h-6 w-6 object-contain" style={{ filter: "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)" }} />
             </button>
           ))}
         </div>
