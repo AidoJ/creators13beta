@@ -81,6 +81,17 @@ interface AssignmentRow {
   active: boolean;
 }
 
+// Colour-code access levels by family using the site palette.
+function levelBadgeClass(key: string): string {
+  if (key.startsWith("prac_")) return "bg-forest/15 text-forest border-forest/40";
+  if (key.startsWith("profile_") || key === "existing_profiled") return "bg-ocean/15 text-ocean border-ocean/40";
+  if (key === "taster") return "bg-gold/20 text-gold-dark border-gold/50";
+  if (key === "creator") return "bg-terracotta/15 text-terracotta border-terracotta/40";
+  if (key === "co_creator" || key === "owl") return "bg-magenta/15 text-magenta border-magenta/40";
+  if (key.startsWith("case_study") || key.startsWith("clinic")) return "bg-sage/15 text-sage border-sage/40";
+  return "bg-muted text-muted-foreground border-border";
+}
+
 export default function AdminDashboard() {
   const { user, signOut } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -712,7 +723,7 @@ function UserTableRow({ user: u, isExpanded, onToggle, onAddRole, onRemoveRole, 
         <td className="px-4 py-2.5">
           {u.access.length > 0 ? (
             <div className="flex flex-wrap gap-1">
-              {u.access.map(a => <Badge key={a.level_key} variant="secondary" className="text-[10px]">{a.display_name}</Badge>)}
+              {u.access.map(a => <Badge key={a.level_key} variant="outline" className={`text-[10px] ${levelBadgeClass(a.level_key)}`}>{a.display_name}</Badge>)}
             </div>
           ) : u.tier ? (
             <Badge variant="outline" className="text-[10px] capitalize">
