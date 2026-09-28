@@ -1618,6 +1618,174 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_subscriptions: {
+        Row: {
+          amount_cents: number | null
+          billing_interval: string | null
+          billing_shape: string | null
+          cancel_at: string | null
+          cancel_at_period_end: boolean
+          canceled_at: string | null
+          created_at: string
+          currency: string | null
+          current_period_end: string | null
+          interval_count: number | null
+          livemode: boolean
+          member_email: string | null
+          member_name: string | null
+          product_id: string | null
+          product_name: string | null
+          started_at: string | null
+          status: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string
+          term_months: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_cents?: number | null
+          billing_interval?: string | null
+          billing_shape?: string | null
+          cancel_at?: string | null
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          created_at?: string
+          currency?: string | null
+          current_period_end?: string | null
+          interval_count?: number | null
+          livemode: boolean
+          member_email?: string | null
+          member_name?: string | null
+          product_id?: string | null
+          product_name?: string | null
+          started_at?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id: string
+          term_months?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_cents?: number | null
+          billing_interval?: string | null
+          billing_shape?: string | null
+          cancel_at?: string | null
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          created_at?: string
+          currency?: string | null
+          current_period_end?: string | null
+          interval_count?: number | null
+          livemode?: boolean
+          member_email?: string | null
+          member_name?: string | null
+          product_id?: string | null
+          product_name?: string | null
+          started_at?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string
+          term_months?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount_cents: number | null
+          billing_shape: string | null
+          created_at: string
+          currency: string | null
+          dedupe_key: string
+          event_type: string
+          fee_cents: number | null
+          id: string
+          invitation_id: string | null
+          livemode: boolean
+          member_email: string | null
+          member_name: string | null
+          net_cents: number | null
+          occurred_at: string
+          product_id: string | null
+          product_name: string | null
+          referring_practitioner_id: string | null
+          source: string
+          status: string | null
+          stripe_charge_id: string | null
+          stripe_customer_id: string | null
+          stripe_event_id: string | null
+          stripe_invoice_id: string | null
+          stripe_object_id: string | null
+          stripe_subscription_id: string | null
+          term_months: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_cents?: number | null
+          billing_shape?: string | null
+          created_at?: string
+          currency?: string | null
+          dedupe_key: string
+          event_type: string
+          fee_cents?: number | null
+          id?: string
+          invitation_id?: string | null
+          livemode: boolean
+          member_email?: string | null
+          member_name?: string | null
+          net_cents?: number | null
+          occurred_at: string
+          product_id?: string | null
+          product_name?: string | null
+          referring_practitioner_id?: string | null
+          source?: string
+          status?: string | null
+          stripe_charge_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_event_id?: string | null
+          stripe_invoice_id?: string | null
+          stripe_object_id?: string | null
+          stripe_subscription_id?: string | null
+          term_months?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_cents?: number | null
+          billing_shape?: string | null
+          created_at?: string
+          currency?: string | null
+          dedupe_key?: string
+          event_type?: string
+          fee_cents?: number | null
+          id?: string
+          invitation_id?: string | null
+          livemode?: boolean
+          member_email?: string | null
+          member_name?: string | null
+          net_cents?: number | null
+          occurred_at?: string
+          product_id?: string | null
+          product_name?: string | null
+          referring_practitioner_id?: string | null
+          source?: string
+          status?: string | null
+          stripe_charge_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_event_id?: string | null
+          stripe_invoice_id?: string | null
+          stripe_object_id?: string | null
+          stripe_subscription_id?: string | null
+          term_months?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       player_progress: {
         Row: {
           badges: string[]

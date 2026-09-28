@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { recordCharge, fillFee, recordFailedInvoice, syncSubscription } from "../_shared/paymentsLedger.ts";
 import { grantEntitlement, expireEntitlementsByRef, levelKeyForTier } from "../_shared/entitlements.ts";
 
 const corsHeaders = {
@@ -355,6 +356,24 @@ serve(async (req) => {
       // regardless — entitlements carry the subscription id as stripe_ref.
       await expireEntitlementsByRef(supabase, subscription.id);
       logStep("Subscription canceled — entitlements expired", { subscriptionId: subscription.id });
+    }
+
+    // ---- Payments reporting ledger (never blocks access handling) ----------
+    try {
+      const obj: any = event.data.object;
+      if (event.type === "charge.succeeded" || event.type === "charge.refunded") {
+        const charge = await stripe.charges.retrieve(obj.id, { expand: ["refunds", "balance_transaction"] });
+        await recordCharge(supabase, stripe, charge, { eventId: event.id });
+      } else if (event.type === "charge.updated") {
+        const charge = await stripe.charges.retrieve(obj.id, { expand: ["balance_transaction"] });
+        await fillFee(supabase, stripe, charge);
+      } else if (event.type === "invoice.payment_failed") {
+        await recordFailedInvoice(supabase, obj, event.id);
+      } else if (event.type.startsWith("customer.subscription.")) {
+        await syncSubscription(supabase, obj, { eventId: event.id });
+      }
+    } catch (e) {
+      logStep("Ledger error (ignored)", { message: String(e) });
     }
 
     return new Response(JSON.stringify({ received: true }), {
