@@ -41,8 +41,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Signing out always lands on the public homepage (not "Welcome back").
+  // A full navigation avoids protected pages bouncing to sign-in first.
   const signOut = async () => {
     await supabase.auth.signOut();
+    window.location.replace("/");
   };
 
   return (
