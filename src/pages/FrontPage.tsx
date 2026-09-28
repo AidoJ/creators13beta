@@ -124,6 +124,9 @@ function priceLabel(p: Product) {
 
 const hexClip = { clipPath: "polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)" };
 
+// Membership order — must match supabase/functions/_shared/membership.ts.
+const MEMBERSHIP_RANK: Record<string, number> = { taster: 1, creator: 2, co_creator: 3 };
+
 interface FrontPageProps {
   shopMode?: boolean;
 }

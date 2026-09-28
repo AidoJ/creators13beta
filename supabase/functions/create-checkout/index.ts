@@ -114,7 +114,25 @@ serve(async (req) => {
             error: "already_held",
             message: `You already have ${product.name}. There's no need to buy it again.`,
           }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        // A higher membership already includes this lower one.
+        const myRank = MEMBERSHIP_RANK[levelKey] ?? 0;
+        if (myRank) {
+          const higher = Object.keys(MEMBERSHIP_RANK).filter((k) => MEMBERSHIP_RANK[k] > myRank);
+          const { data: higherHeld } = await supabaseClient
+            .from("entitlements").select("id")
+            .eq("user_id", userId).in("level_key", higher).eq("status", "active")
+            .lte("starts_at", nowIso)
+            .or(`ends_at.is.null,ends_at.gt.${nowIso}`)
+            .limit(1).maybeSingle();
+          if (higherHeld) {
+            logStep("Rejected: included in higher plan", { userId, levelKey });
+            return new Response(JSON.stringify({
+              error: "already_held",
+              message: `${product.name} is included in your plan.`,
+            }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
         }
+      }
       }
 
       // Seat cap: check-and-hold happens atomically inside reserve_seat, which
