@@ -18,11 +18,14 @@ import floatingGameButton from "@/assets/community-icons/floating-game-button.pn
 interface Product {
   id: string;
   name: string;
+  description: string | null;
   price_cents: number | null;
   currency: string | null;
   billing_shape: string | null;
   term_months: number | null;
   grants_level_key: string | null;
+  storefront_placement: string;
+  display_order: number;
 }
 
 type PathKey = "community" | "profiling" | "practitioner";
@@ -139,12 +142,23 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
   useEffect(() => {
     supabase
       .from("products")
-      .select("id, name, price_cents, currency, billing_shape, term_months, grants_level_key")
+      .select("id, name, description, price_cents, currency, billing_shape, term_months, grants_level_key, storefront_placement, display_order")
       .eq("active", true)
       .eq("is_visible_on_storefront", true)
+      .order("display_order", { ascending: true })
       .order("created_at", { ascending: true })
       .then(({ data }) => setProducts((data as Product[]) ?? []));
   }, []);
+
+  const [levelNames, setLevelNames] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("access_levels").select("key, display_name").then(({ data }) => {
+      const m: Record<string, string> = {};
+      (data ?? []).forEach((l: any) => { m[l.key] = l.display_name; });
+      setLevelNames(m);
+    });
+  }, [user]);
 
   // Mark held products for any signed-in visitor (front page and /shop).
   useEffect(() => {
@@ -160,13 +174,17 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
     return () => window.removeEventListener("scroll", updateMobilePlay);
   }, [shopMode]);
 
+  // Main card per level: lowest display order wins, then oldest.
   const byLevel = useMemo(() => {
     const m: Record<string, Product> = {};
-    // Oldest product per level owns the card, so a newer product granting the
-    // same level (e.g. an admin test product) can't silently replace it.
-    for (const p of products) if (p.grants_level_key && !m[p.grants_level_key]) m[p.grants_level_key] = p;
+    for (const p of products) {
+      if (p.storefront_placement === "extra") continue;
+      if (p.grants_level_key && !m[p.grants_level_key]) m[p.grants_level_key] = p;
+    }
     return m;
   }, [products]);
+
+  const extras = useMemo(() => products.filter((p) => p.storefront_placement === "extra"), [products]);
 
   const startCheckout = useCallback(async (productId: string) => {
     setBusyId(productId);
