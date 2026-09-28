@@ -8,6 +8,7 @@ import logo from "@/assets/13creators-logo.png";
 import type { Database } from "@/integrations/supabase/types";
 import gameIcon from "@/assets/community-icons/game-icon.png.asset.json";
 import { useFeatures } from "@/hooks/useFeatures";
+import { useProfilePromptBanner } from "@/components/community/CommunityProfilePrompt";
 import communityIcon from "@/assets/community-icons/community-icon.png.asset.json";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
@@ -116,7 +117,9 @@ export default function DashboardHeader({ email, onSignOut }: DashboardHeaderPro
     </Button>
   );
 
+  const profileBanner = useProfilePromptBanner();
   return (
+    <>
     <header className="border-b border-primary/20 bg-gradient-to-r from-primary/5 via-card/95 to-secondary/5 backdrop-blur-sm sticky top-0 z-30 shadow-sm">
       <div className="container mx-auto flex items-center justify-between h-14 px-4">
         <div className="flex items-center gap-4">
@@ -166,5 +169,7 @@ export default function DashboardHeader({ email, onSignOut }: DashboardHeaderPro
         </nav>
       )}
     </header>
+    {profileBanner}
+    </>
   );
 }
