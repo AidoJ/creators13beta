@@ -2,3 +2,6 @@ project_id = "kbcxvycgwtoxqkbpcesi"
 
 [functions.agent-db-query]
 verify_jwt = false
+
+[functions.geocode-location]
+verify_jwt = false
