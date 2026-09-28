@@ -361,7 +361,7 @@ serve(async (req) => {
     // ---- Payments reporting ledger (never blocks access handling) ----------
     try {
       const obj: any = event.data.object;
-      if (event.type === "charge.succeeded" || event.type === "charge.failed" || event.type === "charge.refunded") {
+      if (event.type === "charge.succeeded" || event.type === "charge.refunded") {
         const charge = await stripe.charges.retrieve(obj.id, { expand: ["refunds", "balance_transaction"] });
         await recordCharge(supabase, stripe, charge, { eventId: event.id });
       } else if (event.type === "charge.updated") {
