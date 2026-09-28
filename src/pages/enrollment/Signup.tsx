@@ -402,7 +402,9 @@ export default function Signup() {
               ? "Your Creator Type profiling has already been paid for by your practitioner."
               : isPlayer
                 ? "Set up your free player account"
-                : <>Setting up your <span className="font-semibold text-foreground">{tierInfo.name}</span> membership</>}
+                : caseStudy
+                  ? "Set up your account for your free case study"
+                  : <>Setting up your <span className="font-semibold text-foreground">{tierInfo.name}</span> membership</>}
           </p>
         </div>
 
