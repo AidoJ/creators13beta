@@ -28,7 +28,9 @@ async function loadImage(url: string): Promise<{ data: string; w: number; h: num
     await img.decode();
     const c = document.createElement("canvas");
     c.width = img.naturalWidth; c.height = img.naturalHeight;
-    c.getContext("2d")!.drawImage(img, 0, 0);
+    const context = c.getContext("2d");
+    if (!context) return null;
+    context.drawImage(img, 0, 0);
     return { data: c.toDataURL("image/png"), w: img.naturalWidth, h: img.naturalHeight };
   } catch { return null; }
 }
@@ -89,16 +91,34 @@ export async function downloadReceipt(item: ReceiptItem, customerEmail: string, 
   doc.setFontSize(11); doc.setTextColor(...INK);
   const lines = doc.splitTextToSize(item.description, 120);
   doc.text(lines, M + 4, y);
-  const amt = item.amount != null && item.currency ? formatMoney(item.amount, item.currency) : "—";
-  doc.text(isRefund ? `-${amt}` : amt, W - M - 4, y, { align: "right" });
+  const totalAmount = item.amount;
+  const amt = totalAmount != null && item.currency ? formatMoney(totalAmount, item.currency) : "—";
+  const signedAmount = (value: string) => isRefund ? `-${value}` : value;
+  doc.text(signedAmount(amt), W - M - 4, y, { align: "right" });
   y += lines.length * 6 + 6;
   doc.setDrawColor(220, 220, 220);
   doc.line(M, y, W - M, y);
-  y += 10;
-  doc.setFont("helvetica", "bold"); doc.setFontSize(13);
-  doc.text(isRefund ? "Total refunded" : "Total paid", W - M - 60, y);
-  doc.setTextColor(...GOLD);
-  doc.text(isRefund ? `-${amt}` : amt, W - M - 4, y, { align: "right" });
+  y += 9;
+
+  if (totalAmount != null && item.currency) {
+    const gstAmount = Math.round(totalAmount / 11);
+    const netAmount = totalAmount - gstAmount;
+    const summaryRow = (label: string, value: string, bold = false) => {
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.setFontSize(bold ? 13 : 10);
+      doc.setTextColor(...(bold ? GOLD : INK));
+      doc.text(label, W - M - 60, y);
+      doc.text(signedAmount(value), W - M - 4, y, { align: "right" });
+      y += bold ? 7 : 6;
+    };
+    summaryRow("Net", formatMoney(netAmount, item.currency));
+    summaryRow("GST (10%)", formatMoney(gstAmount, item.currency));
+    summaryRow(isRefund ? "Total refunded" : "Total paid", amt, true);
+  } else {
+    doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(...GOLD);
+    doc.text(isRefund ? "Total refunded" : "Total paid", W - M - 60, y);
+    doc.text(signedAmount(amt), W - M - 4, y, { align: "right" });
+  }
 
   // Footer
   doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(...MUTED);
