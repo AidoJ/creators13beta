@@ -2942,6 +2942,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      _member_holds_feature: {
+        Args: { _feature_key: string; _uid: string }
+        Returns: boolean
+      }
       _pick_quiz_question: {
         Args: { _creator_types: string[]; _user_id: string }
         Returns: string
