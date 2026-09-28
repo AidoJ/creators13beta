@@ -142,6 +142,7 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
       .select("id, name, price_cents, currency, billing_shape, term_months, grants_level_key")
       .eq("active", true)
       .eq("is_visible_on_storefront", true)
+      .order("created_at", { ascending: true })
       .then(({ data }) => setProducts((data as Product[]) ?? []));
   }, []);
 
@@ -161,7 +162,9 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
 
   const byLevel = useMemo(() => {
     const m: Record<string, Product> = {};
-    for (const p of products) if (p.grants_level_key) m[p.grants_level_key] = p;
+    // Oldest product per level owns the card, so a newer product granting the
+    // same level (e.g. an admin test product) can't silently replace it.
+    for (const p of products) if (p.grants_level_key && !m[p.grants_level_key]) m[p.grants_level_key] = p;
     return m;
   }, [products]);
 
