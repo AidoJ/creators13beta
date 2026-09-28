@@ -31,6 +31,7 @@ import connectionsIcon from "@/assets/community-icons/connect-icon.png.asset.jso
 import filterIcon from "@/assets/community-icons/filter-icon.png.asset.json";
 import memberMatchIcon from "@/assets/icon-Member_Matcxh_icon.png.asset.json";
 import shopIcon from "@/assets/community-icons/shop-icon.png.asset.json";
+import projectsIcon from "@/assets/community-icons/projects-icon.png.asset.json";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeatures } from "@/hooks/useFeatures";
 import type { MapMember } from "@/components/community/CommunityMapView";
@@ -610,7 +611,7 @@ export default function CommunityDashboard() {
 
                 {[
                   { label: "Events", img: eventsIcon.url, soon: false, onClick: () => navigate("/community/events"), badge: 0, show: true },
-                  { label: "Projects", Icon: FolderKanban, soon: false, onClick: () => navigate("/community/projects"), badge: 0, show: canProjects },
+                  { label: "Projects", img: projectsIcon.url, soon: false, onClick: () => navigate("/community/projects"), badge: 0, show: canProjects },
                   {
                     show: canMessage,
                     label: "Connections",
@@ -714,7 +715,7 @@ export default function CommunityDashboard() {
           )}
           {[
             { label: "Events", img: eventsIcon.url, onClick: () => navigate("/community/events"), show: true },
-            { label: "Projects", Icon: FolderKanban, onClick: () => navigate("/community/projects"), show: canProjects },
+            { label: "Projects", img: projectsIcon.url, onClick: () => navigate("/community/projects"), show: canProjects },
             { label: "Connections", img: connectionsIcon.url, onClick: () => navigate("/community/connections"), show: canMessage },
             { label: "Dashboard", img: memberMatchIcon.url, onClick: () => navigate("/dashboard"), show: true },
             { label: "Shop", img: shopIcon.url, onClick: () => navigate("/shop"), show: true },
