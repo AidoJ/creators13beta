@@ -255,6 +255,22 @@ export default function Photos() {
     loadExisting();
   }, [user, navigate, toast, tier, billing]);
 
+  // Save each photo as soon as it's chosen, so someone who leaves partway
+  // comes back to the photos they already added.
+  const persistPhoto = useCallback(async (key: PhotoKey, file: File) => {
+    if (!user) return;
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${user.id}/${key}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("profiling-photos").upload(path, file, { upsert: true });
+    if (upErr) { console.warn("Early photo save failed:", upErr.message); return; }
+    const { error: dbErr } = await supabase.from("profiling_photos").upsert(
+      { user_id: user.id, photo_type: key, storage_path: path },
+      { onConflict: "user_id,photo_type" },
+    );
+    if (dbErr) { console.warn("Early photo record failed:", dbErr.message); return; }
+    setPhotos((p) => (p[key].file === file ? { ...p, [key]: { ...p[key], existingPath: path, uploaded: true } } : p));
+  }, [user]);
+
   const reviewPhoto = useCallback(async (key: PhotoKey, file: File) => {
     setPhotos((p) => ({ ...p, [key]: { ...p[key], reviewing: true, review: null } }));
 
@@ -330,6 +346,7 @@ export default function Photos() {
             review: { pass: true, feedback: "Photo accepted (your practitioner will check it manually)." },
           },
         }));
+        persistPhoto(key, rawFile);
         return;
       }
     } else {
@@ -371,6 +388,7 @@ export default function Photos() {
     const preview = URL.createObjectURL(file);
     setPhotos((p) => ({ ...p, [key]: { ...initialPhotoState, file, preview } }));
     reviewPhoto(key, file);
+    persistPhoto(key, file);
   };
 
   const removePhoto = (key: PhotoKey) => {
@@ -388,14 +406,9 @@ export default function Photos() {
     if (currentStep > 0) setCurrentStep(currentStep - 1);
   };
 
-  // Block submission only when one of the 3 body photos fails AI review.
-  // Face / hands / feet remain advisory.
-  const hasBlockingFailures = (["body_front", "body_back", "body_side"] as PhotoKey[]).some(
-    (key) => {
-      const p = photos[key];
-      return p?.review && p.review.pass === false;
-    }
-  );
+  // Submission stays locked while ANY photo is flagged by the review.
+  const flaggedLabels = PHOTO_SLOTS.filter((s) => photos[s.key]?.review?.pass === false).map((s) => s.label);
+  const hasBlockingFailures = flaggedLabels.length > 0;
 
   const handleSubmitAll = async () => {
     if (!user) {
@@ -689,8 +702,8 @@ export default function Photos() {
            <div className="text-center mb-6">
              <h1 className="text-2xl font-display font-bold text-foreground mb-2">Review Your Photos</h1>
            <p className="text-sm text-muted-foreground">
-                {anyFailed
-                  ? "Some photos have AI suggestions below. The AI review is only a guide — if the photos look right to you, go ahead and submit."
+                {hasBlockingFailures
+                  ? `Please retake ${flaggedLabels.length === 1 ? "this photo" : "these photos"} before submitting: ${flaggedLabels.join(", ")}. Submit unlocks once ${flaggedLabels.length === 1 ? "it's" : "they're"} replaced.`
                   : "All photos look good! Check the layout below and submit when ready."}
               </p>
            </div>
@@ -809,7 +822,7 @@ export default function Photos() {
               {submitting ? (
                 <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Uploading {uploadedCount}/{PHOTO_SLOTS.length}...</>
               ) : hasBlockingFailures ? (
-                <>Fix Flagged Photos First</>
+                <>Retake {flaggedLabels.length} flagged photo{flaggedLabels.length === 1 ? "" : "s"} first</>
               ) : (
                 <>Submit All Photos <ArrowRight className="ml-2 h-4 w-4" /></>
               )}
