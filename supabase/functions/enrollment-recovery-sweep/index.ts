@@ -39,6 +39,8 @@ function nextStep(row: any): StepInfo | null {
   // Any active paid access record counts as "has a plan" (storefront/course/
   // admin grants never write the legacy subscriptions row).
   const hasSub = !!row.tier || row.has_paid_access === true;
+  // Community-only buyers have nothing left to do after paying.
+  if (hasSub && row.needs_profiling === false) return null;
   const hasPract = row.has_practitioner === true;
   const hasDetails =
     !!row.first_name && !!row.date_of_birth && !!row.gender && !!row.height_cm;
@@ -232,6 +234,11 @@ serve(async (req) => {
       .in("user_id", userIds)
       .eq("status", "active")
       .neq("level_key", "free");
+    const profileAccessSet = new Set<string>(
+      (entRows ?? [])
+        .filter((e: any) => String(e.level_key).startsWith("profile_") || e.level_key === "case_study")
+        .map((e: any) => e.user_id),
+    );
     const paidAccessSet = new Set<string>(
       (entRows || [])
         .filter((e: any) => !e.ends_at || new Date(e.ends_at).getTime() > Date.now())
@@ -294,6 +301,7 @@ serve(async (req) => {
         practitioner_is_trainer: cpMap.has(p.user_id) && trainerSet.has(cpMap.get(p.user_id)!),
         reached_checkout_at: p.reached_checkout_at,
         has_paid_access: paidAccessSet.has(p.user_id),
+        needs_profiling: profileAccessSet.has(p.user_id) || !!sub?.tier || csSet.has(p.user_id) || !!sub?.referral_code,
       };
 
       const step = nextStep(row);
