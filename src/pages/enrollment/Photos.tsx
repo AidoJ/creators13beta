@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import EnrollmentHeader from "@/components/enrollment/EnrollmentHeader";
 import { useEnrollmentGate } from "@/hooks/useEnrollmentGate";
+import { loadEnrollmentState } from "@/lib/enrollmentGate";
 import { useToast } from "@/hooks/use-toast";
 
 import guidePhoto1 from "@/assets/guide-photo-1.png";
@@ -163,11 +164,9 @@ export default function Photos() {
         supabase.from("profiles").select("case_study_consent_at").eq("user_id", user.id).maybeSingle(),
       ]);
       if (!profile?.case_study_consent_at) {
-        const isCaseStudy =
-          params.get("case_study") === "true" ||
-          !!sub?.referral_code ||
-          !sub?.tier ||
-          sub?.tier === "wren";
+        // Only real case-study volunteers get case-study wording. Storefront
+        // buyers have no legacy plan row, so "no plan" must not mean case study.
+        const isCaseStudy = (await loadEnrollmentState(user.id)).isCaseStudySubject;
         const nextParams = new URLSearchParams({ tier, billing });
         if (isCaseStudy) nextParams.set("case_study", "true");
         navigate(`/enroll/consent?${nextParams.toString()}`, { replace: true });
@@ -466,7 +465,7 @@ export default function Photos() {
     setSubmitting(false);
 
     const returnTo = params.get("returnTo");
-    const isCaseStudy = params.get("case_study") === "true";
+    const isCaseStudy = (await loadEnrollmentState(user.id)).isCaseStudySubject;
 
     if (returnTo) {
       navigate(returnTo);
