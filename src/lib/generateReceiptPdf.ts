@@ -48,8 +48,9 @@ export async function downloadReceipt(item: ReceiptItem, customerEmail: string, 
   doc.rect(0, 0, W, 42, "F");
   const logo = await loadImage(logoUrl);
   if (logo) {
-    const h = 26, w = Math.min(70, (logo.w / logo.h) * h);
-    doc.addImage(logo.data, "PNG", M, 8, w, (w / logo.w) * logo.h > h ? h : (w / logo.w) * logo.h);
+    let h = 26, w = (logo.w / logo.h) * h;
+    if (w > 70) { w = 70; h = (logo.h / logo.w) * w; }
+    doc.addImage(logo.data, "PNG", M, 21 - h / 2, w, h);
   }
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
