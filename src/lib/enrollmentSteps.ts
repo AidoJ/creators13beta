@@ -72,7 +72,7 @@ export function getNextEnrollmentStep(
       key: "paygate",
       label: "Complete your payment",
       route: `/enroll/payment${qs}`,
-      applies: !state.hasSubscription && !!reachedCheckoutAt,
+      applies: !state.isCaseStudySubject && !state.hasSubscription && !!reachedCheckoutAt,
       done: state.hasSubscription,
       isPaygate: true,
     },

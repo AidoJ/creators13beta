@@ -23,6 +23,15 @@ type HistoryItem = {
   period_end: number | null;
 };
 
+// The test Stripe account is shared with a massage business. Its charges always
+// carry booking/gift-card metadata or booking wording; Creators 13 charges never do.
+const OTHER_META = ["service_name", "therapist_fee", "booking_id", "booking_time", "gift_card_code", "orderId", "occurrence_number"];
+const OTHER_DESC = /massage|booking authori[sz]ation|occurrence authori[sz]ation|gift card|sound healing/i;
+function isOtherBusiness(ch: any): boolean {
+  const md = ch.metadata ?? {};
+  return OTHER_META.some((k) => k in md) || OTHER_DESC.test(ch.description ?? "");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -39,7 +48,10 @@ Deno.serve(async (req) => {
     for (const c of customers.data) {
       const charges = await stripe.charges.list({ customer: c.id, limit: 100, expand: ["data.invoice"] as any });
       for (const ch of charges.data) {
-        if (ch.status !== "succeeded") continue;
+        if (ch.status !== "succeeded" || !ch.captured) continue;
+        if (isOtherBusiness(ch)) continue;
+        // Creators 13 only sells in AUD; the other business bills in USD.
+        if ((ch.currency ?? "").toLowerCase() !== "aud") continue;
         const inv: any = (ch as any).invoice;
         const line = inv && typeof inv === "object" ? inv.lines?.data?.[0]?.description : null;
         const desc = line || ch.description || (ch.metadata as any)?.product_name || "Creators 13 purchase";
@@ -69,6 +81,7 @@ Deno.serve(async (req) => {
       // Stripe allows at most 4 expansion levels, so look product names up separately.
       const subs = await stripe.subscriptions.list({ customer: c.id, status: "all", limit: 100 });
       for (const s of subs.data) {
+        if ((s.currency ?? "").toLowerCase() !== "aud") continue;
         const prodRef: any = s.items.data[0]?.price?.product;
         let name = "Subscription";
         if (typeof prodRef === "string") {

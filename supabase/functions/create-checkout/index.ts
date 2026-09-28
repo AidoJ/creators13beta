@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { grantEntitlement, levelKeyForTier } from "../_shared/entitlements.ts";
+import { MEMBERSHIP_RANK } from "../_shared/membership.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -114,6 +115,24 @@ serve(async (req) => {
             error: "already_held",
             message: `You already have ${product.name}. There's no need to buy it again.`,
           }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        // A higher membership already includes this lower one.
+        const myRank = MEMBERSHIP_RANK[levelKey] ?? 0;
+        if (myRank) {
+          const higher = Object.keys(MEMBERSHIP_RANK).filter((k) => MEMBERSHIP_RANK[k] > myRank);
+          const { data: higherHeld } = await supabaseClient
+            .from("entitlements").select("id")
+            .eq("user_id", userId).in("level_key", higher).eq("status", "active")
+            .lte("starts_at", nowIso)
+            .or(`ends_at.is.null,ends_at.gt.${nowIso}`)
+            .limit(1).maybeSingle();
+          if (higherHeld) {
+            logStep("Rejected: included in higher plan", { userId, levelKey });
+            return new Response(JSON.stringify({
+              error: "already_held",
+              message: `${product.name} is included in your plan.`,
+            }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
         }
       }
 

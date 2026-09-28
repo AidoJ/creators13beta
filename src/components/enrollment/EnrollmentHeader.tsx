@@ -2,6 +2,8 @@ import logo from "@/assets/13creators-logo.png";
 import { cn } from "@/lib/utils";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { loadEnrollmentState } from "@/lib/enrollmentGate";
 
 const STEPS = ["Plan", "Signup", "Payment", "Practitioner", "Details", "Consent", "Photos", "Booking"] as const;
 
@@ -30,6 +32,24 @@ export default function EnrollmentHeader({ currentStep, hideSteps = false }: Enr
   const returnTo = encodeURIComponent(location.pathname + location.search);
   const qs = location.search || "";
 
+  // Show only the steps that apply to this person's path:
+  // case-study volunteers are free (no Payment) and don't book a session;
+  // paying clients book only when linked to a trainer-role practitioner.
+  const urlCaseStudy = new URLSearchParams(location.search).get("case_study") === "true";
+  const [path, setPath] = useState<{ caseStudy: boolean; booking: boolean }>({ caseStudy: urlCaseStudy, booking: !urlCaseStudy });
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    loadEnrollmentState(user.id).then((st: any) => {
+      if (!alive) return;
+      const caseStudy = urlCaseStudy || !!st?.isCaseStudySubject;
+      setPath({ caseStudy, booking: !caseStudy && (st?.practitionerIsTrainer ?? true) });
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [user, urlCaseStudy]);
+  const visible = STEPS.map((step, i) => ({ step, i })).filter(({ i }) =>
+    !(i === 2 && path.caseStudy) && !(i === 7 && !path.booking));
+
   const goToStep = (i: number) => {
     // Only allow navigation to earlier / completed steps.
     if (i >= currentStep) return;
@@ -47,17 +67,17 @@ export default function EnrollmentHeader({ currentStep, hideSteps = false }: Enr
         </a>
         {!hideSteps && (
           <div className="hidden xl:flex items-center gap-1 text-sm text-muted-foreground min-w-0">
-            {STEPS.map((step, i) => {
+            {visible.map(({ step, i }, pos) => {
               const isCurrent = i === currentStep;
               const isCompleted = i < currentStep;
               const clickable = isCompleted;
               return (
                 <span key={step} className="flex items-center gap-1">
-                  {i > 0 && <span className="mx-0.5 hidden sm:inline">→</span>}
+                  {pos > 0 && <span className="mx-0.5 hidden sm:inline">→</span>}
                   {isCurrent ? (
                     <>
                       <span className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
-                        {i + 1}
+                        {pos + 1}
                       </span>
                       <span className="text-foreground font-medium hidden sm:inline">{step}</span>
                     </>

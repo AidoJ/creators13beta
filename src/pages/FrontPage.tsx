@@ -124,6 +124,9 @@ function priceLabel(p: Product) {
 
 const hexClip = { clipPath: "polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)" };
 
+// Membership order — must match supabase/functions/_shared/membership.ts.
+const MEMBERSHIP_RANK: Record<string, number> = { taster: 1, creator: 2, co_creator: 3 };
+
 interface FrontPageProps {
   shopMode?: boolean;
 }
@@ -161,6 +164,7 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
   }, [user]);
 
   // Mark held products for any signed-in visitor (front page and /shop).
+  // A higher membership includes the lower ones (Connect < Create < Co-Create).
   useEffect(() => {
     if (!user) { setHeldLevels(new Set()); return; }
     loadMyAccess(user.id).then((items) => setHeldLevels(new Set(items.map((item) => item.level_key))));
@@ -246,7 +250,10 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
   const ProductCard = ({ levelKey, cta }: { levelKey: string; cta: string }) => {
     const product = byLevel[levelKey];
     const copy = COPY[levelKey];
-    const isHeld = heldLevels.has(levelKey);
+    const rank = MEMBERSHIP_RANK[levelKey] ?? 0;
+    const included = !heldLevels.has(levelKey) && rank > 0 &&
+      Object.entries(MEMBERSHIP_RANK).some(([k, r]) => r > rank && heldLevels.has(k));
+    const isHeld = heldLevels.has(levelKey) || included;
     if (!product || !copy) return null;
     return (
       <div className={`relative flex flex-col rounded-3xl p-6 border ${isHeld ? "bg-secondary/10 border-2 border-secondary" : `bg-card ${copy.feature ? "border-2 border-primary shadow-lg" : "border-border"}`}`}>
@@ -274,7 +281,7 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
               : copy.feature ? "bg-primary text-primary-foreground hover:opacity-90" : "bg-card text-primary hover:bg-muted"
           }`}
         >
-          {busyId === product.id ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : isHeld ? "You have this" : cta}
+          {busyId === product.id ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : included ? "Included in your plan" : isHeld ? "You have this" : cta}
         </button>
         {copy.after && <p className="text-xs text-muted-foreground text-center mt-2">{copy.after}</p>}
       </div>
