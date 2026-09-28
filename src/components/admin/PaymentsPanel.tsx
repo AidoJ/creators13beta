@@ -42,7 +42,7 @@ const monthlyAmount = (s: Sub) => {
   return Math.round(a / n);
 };
 
-type Preset = "this_month" | "last_month" | "quarter" | "ytd" | "custom";
+type Preset = "this_month" | "last_month" | "quarter" | "ytd" | "cal_ytd" | "custom";
 
 export default function PaymentsPanel() {
   const [mode, setMode] = useState<"test" | "live">("test");
