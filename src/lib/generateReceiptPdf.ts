@@ -40,7 +40,16 @@ const INK: [number, number, number] = [28, 28, 32];
 const MUTED: [number, number, number] = [110, 110, 118];
 const GOLD: [number, number, number] = [196, 150, 60];
 
-export async function downloadReceipt(item: ReceiptItem, customerEmail: string, customerName?: string | null) {
+export type GstSetting = { registered: boolean; registered_from: string | null };
+
+/** GST applies only when registered AND the payment is on/after the registration date (Brisbane). */
+export function gstApplies(gst: GstSetting | null | undefined, unix: number): boolean {
+  if (!gst?.registered || !gst.registered_from) return false;
+  const brisbaneDay = new Date(unix * 1000 + 10 * 3600 * 1000).toISOString().slice(0, 10);
+  return brisbaneDay >= gst.registered_from;
+}
+
+export async function downloadReceipt(item: ReceiptItem, customerEmail: string, customerName?: string | null, gst?: GstSetting | null) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const W = 210, M = 20;
   const isRefund = item.kind === "refund";
@@ -100,7 +109,7 @@ export async function downloadReceipt(item: ReceiptItem, customerEmail: string, 
   doc.line(M, y, W - M, y);
   y += 9;
 
-  if (totalAmount != null && item.currency) {
+  if (totalAmount != null && item.currency && gstApplies(gst, item.date)) {
     const gstAmount = Math.round(totalAmount / 11);
     const netAmount = totalAmount - gstAmount;
     const summaryRow = (label: string, value: string, bold = false) => {

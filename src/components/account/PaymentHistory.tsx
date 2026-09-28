@@ -24,7 +24,8 @@ export default function PaymentHistory() {
 
   const onDownload = async (it: ReceiptItem) => {
     setBusy(it.id);
-    try { await downloadReceipt(it, email, name); }
+    try { const { data: gst } = await supabase.rpc("get_gst_setting" as any);
+      await downloadReceipt(it, email, name, (gst as any) ?? null); }
     catch { toast({ title: "Couldn't create receipt", variant: "destructive" }); }
     setBusy(null);
   };
