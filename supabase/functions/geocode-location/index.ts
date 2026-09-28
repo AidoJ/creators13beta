@@ -121,9 +121,30 @@ Deno.serve(async (req) => {
     console.warn("[geocode] slot claim threw; proceeding without throttle", e);
   }
 
-  // Geocode via Nominatim
+  // Geocode: Google (via the Google Maps connector) first — Nominatim
+  // blocks cloud-hosted callers with 403, which silently left every typed
+  // location without a map pin. Nominatim stays as a fallback.
   let result: NominatimResult | null = null;
-  try {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  const GMAPS_KEY = Deno.env.get("GOOGLE_MAPS_API_KEY");
+  if (LOVABLE_API_KEY && GMAPS_KEY) {
+    try {
+      const res = await fetch(
+        `https://connector-gateway.lovable.dev/google_maps/maps/api/geocode/json?address=${encodeURIComponent(label)}`,
+        { headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "X-Connection-Api-Key": GMAPS_KEY } },
+      );
+      const body = await res.json().catch(() => null);
+      const loc = body?.results?.[0]?.geometry?.location;
+      if (res.ok && loc && typeof loc.lat === "number") {
+        result = { lat: String(loc.lat), lon: String(loc.lng) };
+      } else {
+        console.warn(`[geocode] google status ${res.status} ${body?.status ?? ""} for "${label}"`);
+      }
+    } catch (e) {
+      console.warn("[geocode] google fetch failed", e);
+    }
+  }
+  if (!result) try {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(label)}&format=json&limit=1&addressdetails=0`;
     const res = await fetch(url, { headers: { "User-Agent": NOMINATIM_UA, Accept: "application/json" } });
     if (!res.ok) {
