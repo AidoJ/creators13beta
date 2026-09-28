@@ -41,16 +41,16 @@ Deno.serve(async (req) => {
       let phase: string = PHASES.includes(body.phase) ? body.phase : "charges";
       let cursor: string | undefined = body.cursor || undefined;
       let processed = 0;
-      while (Date.now() - started < 90_000) {
+      while (Date.now() - started < 45_000) {
         let page: any;
         if (phase === "charges") {
-          page = await stripe.charges.list({ limit: 50, starting_after: cursor, expand: ["data.refunds", "data.balance_transaction"] });
+          page = await stripe.charges.list({ limit: 15, starting_after: cursor, expand: ["data.refunds", "data.balance_transaction"] });
           for (const ch of page.data) { if (ch.status === "succeeded") { await recordCharge(sb, stripe, ch, { source: "import" }); processed++; } }
         } else if (phase === "subscriptions") {
           page = await stripe.subscriptions.list({ limit: 50, status: "all", starting_after: cursor });
           for (const s of page.data) { await syncSubscription(sb, s, { source: "import" }); processed++; }
         } else {
-          page = await stripe.invoices.list({ limit: 50, starting_after: cursor });
+          page = await stripe.invoices.list({ limit: 15, starting_after: cursor });
           for (const inv of page.data) {
             if ((inv.status === "open" || inv.status === "uncollectible") && (inv.attempt_count ?? 0) > 0) {
               await recordFailedInvoice(sb, inv); processed++;
