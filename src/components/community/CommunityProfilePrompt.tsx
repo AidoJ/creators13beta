@@ -4,13 +4,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
+import { useFeatures } from "@/hooks/useFeatures";
 
 /**
  * Wraps Community pages. Members with access but no community profile can
  * still browse; they see a clear prompt to create one. Staff never see it.
  */
-export default function CommunityProfilePrompt({ children }: { children: ReactNode }) {
+export default function CommunityProfilePrompt({ children, requireCommunityAccess = false }: { children: ReactNode; requireCommunityAccess?: boolean }) {
   const { user } = useAuth();
+  const { features, ready } = useFeatures();
+  const hasCommunity = [...features].some((f) => f.startsWith("community_"));
   const location = useLocation();
   const [show, setShow] = useState(false);
 
@@ -33,7 +36,7 @@ export default function CommunityProfilePrompt({ children }: { children: ReactNo
 
   return (
     <>
-      {show && (
+      {show && (!requireCommunityAccess || (ready && hasCommunity)) && (
         <div className="bg-primary/10 border-b border-primary/30">
           <div className="container mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
             <UserPlus className="h-5 w-5 text-primary flex-none" />

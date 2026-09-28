@@ -13,6 +13,7 @@ import { Leaf, ArrowRight, ArrowLeft, Check, Upload } from "lucide-react";
 import { CREATOR_TYPE_NAMES, CREATOR_TYPE_COLORS } from "@/lib/creatorTypes";
 import { avatarStorageKey, resolveAvatarUrl } from "@/lib/avatar";
 import { loadMyAccess } from "@/lib/accessSummary";
+import { PlacesAutocompleteInput } from "@/components/community/PlacesAutocompleteInput";
 
 const TOTAL_STEPS = 4;
 
@@ -248,10 +249,10 @@ export default function ProfileWizard() {
 
               <div className="space-y-2">
                 <Label htmlFor="location">Where you're based</Label>
-                <Input
+                <PlacesAutocompleteInput
                   id="location"
                   value={locationLabel}
-                  onChange={(e) => setLocationLabel(e.target.value)}
+                  onChange={setLocationLabel}
                   placeholder="Byron Bay, NSW, AU"
                 />
                 <p className="text-xs text-muted-foreground">City and country.</p>

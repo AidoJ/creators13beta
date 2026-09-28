@@ -35,6 +35,9 @@ interface PublicProfile {
   creator_types: Array<{ type: string; source: LotusCreatorType["source"] }>;
   open_to_contact: boolean;
   enabled_channels: string[];
+  project_seek_me_for?: string | null;
+  project_top_skills?: string | null;
+  project_dream?: string | null;
 }
 
 type RelationState =
@@ -176,6 +179,10 @@ export default function MemberProfile() {
     { key: "superpower", label: "Superpower", value: profile.bio_superpower },
     { key: "where", label: "What I love about where I live", value: profile.bio_where_i_live },
     { key: "intriguing", label: "What's intriguing about me", value: profile.bio_intriguing },
+    // Project answers are only returned while the member holds project-profile access.
+    { key: "seek", label: "Seek me for", value: profile.project_seek_me_for ?? null },
+    { key: "skills", label: "My top skills", value: profile.project_top_skills ?? null },
+    { key: "dream", label: "My dream project", value: profile.project_dream ?? null },
   ];
 
   return (
