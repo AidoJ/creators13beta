@@ -240,14 +240,22 @@ export default function Photos() {
               preview: url,
               uploaded: true,
               existingPath: row.storage_path,
-              review: { pass: true, feedback: "Previously uploaded" },
+              review: (() => {
+                try {
+                  const saved = localStorage.getItem(`photoReview:${user.id}:${key}`);
+                  if (saved) return JSON.parse(saved) as ReviewResult;
+                } catch { /* ignore */ }
+                return { pass: true, feedback: "Previously uploaded" };
+              })(),
             };
           }
         }
         if (Object.keys(updates).length > 0) {
           setPhotos((p) => ({ ...p, ...updates }));
-          // Skip guidelines if returning to edit
+          // Skip guidelines if returning to edit; resume at the first photo still missing.
           setViewMode("wizard");
+          const firstMissing = PHOTO_SLOTS.findIndex((s) => !updates[s.key]);
+          if (firstMissing > 0) setCurrentStep(firstMissing);
         }
       }
       setLoadingExisting(false);
@@ -286,6 +294,7 @@ export default function Photos() {
         ...p,
         [key]: { ...p[key], reviewing: false, review: data as ReviewResult },
       }));
+      try { if (user) localStorage.setItem(`photoReview:${user.id}:${key}`, JSON.stringify(data)); } catch { /* ignore */ }
     } catch (err) {
       console.error("AI review error:", err);
       // On error, auto-pass so user isn't blocked
@@ -293,8 +302,9 @@ export default function Photos() {
         ...p,
         [key]: { ...p[key], reviewing: false, review: { pass: true, feedback: "Review unavailable — photo accepted." } },
       }));
+      try { if (user) localStorage.removeItem(`photoReview:${user.id}:${key}`); } catch { /* ignore */ }
     }
-  }, []);
+  }, [user]);
 
   const handleFileSelect = async (rawFile: File) => {
     const key = slot.key;
