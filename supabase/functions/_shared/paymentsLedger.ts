@@ -191,6 +191,6 @@ export async function syncSubscription(sb: SupabaseClient, sub: any, opts: { eve
       status: type === "course_completed" ? "Course completed" : "Cancelled" });
   } else if (cancelAt && !isCourse) {
     await upsert(sb, { ...base, dedupe_key: `cancel_scheduled:${sub.id}:${cancelAt}`, event_type: "cancellation_scheduled",
-      occurred_at: new Date().toISOString(), status: `Scheduled to cancel ${cancelAt.slice(0, 10)}` });
+      occurred_at: iso(sub.canceled_at) ?? new Date().toISOString(), status: `Scheduled to cancel ${cancelAt.slice(0, 10)}` });
   }
 }
