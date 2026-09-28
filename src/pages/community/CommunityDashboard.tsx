@@ -29,7 +29,6 @@ import { backgroundForSeason } from "@/lib/seasonalBackgrounds";
 import eventsIcon from "@/assets/community-icons/event-calendar-icon.png.asset.json";
 import connectionsIcon from "@/assets/community-icons/connect-icon.png.asset.json";
 import filterIcon from "@/assets/community-icons/filter-icon.png.asset.json";
-import memberMatchIcon from "@/assets/icon-Member_Matcxh_icon.png.asset.json";
 import shopIcon from "@/assets/community-icons/shop-icon.png.asset.json";
 import projectsIcon from "@/assets/community-icons/projects-icon.png.asset.json";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -620,14 +619,6 @@ export default function CommunityDashboard() {
                     onClick: () => navigate("/community/connections"),
                     badge: pendingCount,
                   },
-                  {
-                    label: "Match (Dashboard)",
-                    img: memberMatchIcon.url,
-                    soon: false,
-                    onClick: () => navigate("/dashboard"),
-                    badge: 0,
-                    show: true,
-                  },
                   { label: "Shop", img: shopIcon.url, soon: false, onClick: () => navigate("/shop"), badge: 0, show: true },
                 ].filter((item) => item.show).map(({ label, img, soon, onClick, badge }) => {
                   // Gold to match the enrollment "Case Study Volunteer / Paying Client" cards.
@@ -713,7 +704,6 @@ export default function CommunityDashboard() {
             { label: "Events", img: eventsIcon.url, onClick: () => navigate("/community/events"), show: true },
             { label: "Projects", img: projectsIcon.url, onClick: () => navigate("/community/projects"), show: canProjects },
             { label: "Connections", img: connectionsIcon.url, onClick: () => navigate("/community/connections"), show: canMessage },
-            { label: "Dashboard", img: memberMatchIcon.url, onClick: () => navigate("/dashboard"), show: true },
             { label: "Shop", img: shopIcon.url, onClick: () => navigate("/shop"), show: true },
           ].filter((item) => item.show).map(({ label, img, onClick }) => (
             <button key={label} type="button" onClick={onClick} aria-label={label} className="min-h-11 min-w-11 shrink-0 rounded-full border-2 border-gold bg-card/80 flex items-center justify-center">
