@@ -198,7 +198,7 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
   // purchase resumes here automatically.
   const buy = useCallback((productId: string) => {
     if (!user) {
-      navigate(`/auth?returnTo=${encodeURIComponent(`/?buy=${productId}`)}`);
+      navigate(`/auth?mode=signup&returnTo=${encodeURIComponent(`/?buy=${productId}`)}`);
       return;
     }
     startCheckout(productId);

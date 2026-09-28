@@ -13,7 +13,10 @@ import { ForgotPasswordDialog } from "@/components/auth/ForgotPasswordDialog";
 import { getAppOrigin } from "@/lib/appOrigin";
 
 export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
+  // ?mode=signup opens the new-account form (every "sign up"/"buy" button uses it).
+  const [isLogin, setIsLogin] = useState(
+    () => new URLSearchParams(window.location.search).get("mode") !== "signup",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -136,7 +139,9 @@ export default function Auth() {
                   email: values.email,
                   password: values.password,
                   options: {
-                    emailRedirectTo: getAppOrigin(),
+                    // Verification link lands on sign-in; if the link signs
+                    // them in, the effect above forwards to their next step.
+                    emailRedirectTo: `${getAppOrigin()}/auth?returnTo=${encodeURIComponent(returnTo)}`,
                     data: { first_name: values.firstName, last_name: values.lastName, phone: values.phone, marketing_opt_in: values.marketingOptIn, ...(refCode.trim() ? { invitation_ref: refCode.trim() } : {}) },
                   },
                 });
