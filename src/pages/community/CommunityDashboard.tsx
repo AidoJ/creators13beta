@@ -414,13 +414,17 @@ export default function CommunityDashboard() {
       )}
 
 
+      {/* Everything below the menu/banners lives in this relative box, so the
+          rail and top-right controls are anchored under the nav and can never
+          cover it (they used to be fixed to the window at a guessed offset). */}
+      <div className="relative">
       {/* Desktop rail. Phone and tablet controls render in-flow below so they
           can never cover navigation, banners, headings, or member content. */}
       {(() => {
         const collapsed = isMobile && view === "map" && !mobileNavOpen;
         if (collapsed) {
           return (
-            <div className="hidden lg:flex fixed top-20 left-3 z-30 items-center gap-2">
+            <div className="hidden lg:flex absolute top-4 left-3 z-20 items-center gap-2">
               <button
                 type="button"
                 onClick={() => setMobileNavOpen(true)}
@@ -455,7 +459,7 @@ export default function CommunityDashboard() {
           );
         }
         return (
-          <div className="fixed top-20 left-3 z-30 hidden lg:flex flex-col items-center gap-4">
+          <div className="absolute top-4 left-3 z-20 hidden lg:flex flex-col items-center gap-5 pb-4">
             {isMobile && view === "map" && (
               <button
                 type="button"
@@ -716,7 +720,7 @@ export default function CommunityDashboard() {
 
       {/* Top-right: Face/Map toggle + Settings */}
       <TooltipProvider delayDuration={150}>
-        <div className="container mx-auto px-4 pt-1 lg:pt-0 lg:px-0 lg:fixed lg:top-20 lg:right-4 lg:z-30 lg:w-auto flex items-center justify-end gap-3">
+        <div className="container mx-auto px-4 pt-1 lg:pt-0 lg:px-0 lg:absolute lg:top-4 lg:right-4 lg:z-20 lg:w-auto flex items-center justify-end gap-3">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -838,6 +842,7 @@ export default function CommunityDashboard() {
           />
         )}
       </main>
+      </div>
       </div>
     </div>
   );
