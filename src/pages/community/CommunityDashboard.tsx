@@ -646,21 +646,17 @@ export default function CommunityDashboard() {
                           )}
                           style={{ border: `2.5px solid ${color}`, color }}
                         >
-                          {img ? (
-                            <img
-                              src={img}
-                              alt=""
-                              aria-hidden
-                              className="h-8 w-8 object-contain"
-                              style={{
-                                // Recolour the PNG to the gold accent so it sits cleanly on every family background.
-                                filter:
-                                  "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)",
-                              }}
-                            />
-                          ) : Icon ? (
-                            <Icon className="h-7 w-7" strokeWidth={2.25} style={{ color }} />
-                          ) : null}
+                          <img
+                            src={img}
+                            alt=""
+                            aria-hidden
+                            className="h-8 w-8 object-contain"
+                            style={{
+                              // Recolour the PNG to the gold accent so it sits cleanly on every family background.
+                              filter:
+                                "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)",
+                            }}
+                          />
                           {badge > 0 && (
                             <span
                               aria-label={`${badge} pending`}
@@ -721,7 +717,7 @@ export default function CommunityDashboard() {
             { label: "Shop", img: shopIcon.url, onClick: () => navigate("/shop"), show: true },
           ].filter((item) => item.show).map(({ label, img, onClick }) => (
             <button key={label} type="button" onClick={onClick} aria-label={label} className="min-h-11 min-w-11 shrink-0 rounded-full border-2 border-gold bg-card/80 flex items-center justify-center">
-              {img ? <img src={img} alt="" aria-hidden className="h-6 w-6 object-contain" style={{ filter: "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)" }} /> : Icon ? <Icon className="h-5 w-5 text-gold" /> : null}
+              <img src={img} alt="" aria-hidden className="h-6 w-6 object-contain" style={{ filter: "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)" }} />
             </button>
           ))}
         </div>
