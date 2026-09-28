@@ -135,7 +135,6 @@ serve(async (req) => {
           }
         }
       }
-      }
 
       // Seat cap: check-and-hold happens atomically inside reserve_seat, which
       // takes a per-level lock. Two simultaneous checkouts for the last seat
