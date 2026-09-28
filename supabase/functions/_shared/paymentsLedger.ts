@@ -187,7 +187,9 @@ export async function syncSubscription(sb: SupabaseClient, sub: any, opts: { eve
       if (term && (count ?? 0) >= term) type = "course_completed";
     }
     await upsert(sb, { ...base, dedupe_key: `cancel:${sub.id}`, event_type: type,
-      occurred_at: iso(sub.canceled_at ?? sub.ended_at) ?? new Date().toISOString(),
+      // ended_at = when it actually stopped. Stripe sets canceled_at when a course's
+      // automatic end date is scheduled at purchase, so it can't be used here.
+      occurred_at: iso(sub.ended_at ?? sub.canceled_at) ?? new Date().toISOString(),
       status: type === "course_completed" ? "Course completed" : "Cancelled" });
   } else if (cancelAt && !isCourse) {
     await upsert(sb, { ...base, dedupe_key: `cancel_scheduled:${sub.id}:${cancelAt}`, event_type: "cancellation_scheduled",
