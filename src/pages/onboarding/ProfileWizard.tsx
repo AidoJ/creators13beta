@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Leaf, ArrowRight, ArrowLeft, Check, Upload } from "lucide-react";
+import { Leaf, ArrowRight, ArrowLeft, Check, Upload, X } from "lucide-react";
 import { CREATOR_TYPE_NAMES, CREATOR_TYPE_COLORS } from "@/lib/creatorTypes";
 import { avatarStorageKey, resolveAvatarUrl } from "@/lib/avatar";
 import { loadMyAccess } from "@/lib/accessSummary";
@@ -49,6 +49,7 @@ export default function ProfileWizard() {
 
   const [isPaidUser, setIsPaidUser] = useState(false);
   const [alreadyHasCreatorType, setAlreadyHasCreatorType] = useState(false);
+  const [step1Tried, setStep1Tried] = useState(false);
 
   // Redirect away if not signed in
   useEffect(() => {
@@ -108,15 +109,50 @@ export default function ProfileWizard() {
         setPrimaryType(typeRes.data.primary_type.toLowerCase());
         setAlreadyHasCreatorType(true);
       }
+      // Restore an in-progress draft (from "Save & exit" or a reload).
+      try {
+        const raw = localStorage.getItem(`profileWizardDraft:${user.id}`);
+        if (raw) {
+          const d = JSON.parse(raw);
+          if (typeof d.displayName === "string" && d.displayName) setDisplayName(d.displayName);
+          if (typeof d.locationLabel === "string" && d.locationLabel) setLocationLabel(d.locationLabel);
+          if (typeof d.bioSuper === "string") setBioSuper(d.bioSuper);
+          if (typeof d.bioWhere === "string") setBioWhere(d.bioWhere);
+          if (typeof d.bioIntriguing === "string") setBioIntriguing(d.bioIntriguing);
+          if (!typeRes.data?.primary_type && typeof d.primaryType === "string") setPrimaryType(d.primaryType);
+          if (typeof d.visible === "boolean") setVisible(d.visible);
+          if (typeof d.acceptsMessages === "boolean") setAcceptsMessages(d.acceptsMessages);
+          if (typeof d.step === "number" && d.step >= 1 && d.step <= TOTAL_STEPS) setStep(d.step);
+        }
+      } catch { /* corrupt draft — ignore */ }
       setLoading(false);
     })();
     return () => { cancelled = true; };
   }, [user, navigate]);
 
-  const canAdvanceStep1 =
-    displayName.trim().length >= 2 &&
-    displayName.trim().length <= 40 &&
-    locationLabel.trim().length > 0;
+  // Location: typed text is accepted (the map geocodes it server-side); a
+  // picked suggestion is just more precise. Needs at least 2 letters so a
+  // stray space or single character can't pass.
+  const nameValid = displayName.trim().length >= 2 && displayName.trim().length <= 40;
+  const locationValid = (locationLabel.trim().match(/\p{L}/gu)?.length ?? 0) >= 2;
+  const canAdvanceStep1 = nameValid && locationValid;
+
+  // Draft persistence — "Save & exit" (and any reload) keeps their answers.
+  const draftKey = `profileWizardDraft:${user?.id ?? "anon"}`;
+  useEffect(() => {
+    if (loading || !user) return;
+    try {
+      localStorage.setItem(draftKey, JSON.stringify({
+        step, displayName, locationLabel, bioSuper, bioWhere, bioIntriguing,
+        primaryType: alreadyHasCreatorType ? null : primaryType, visible, acceptsMessages,
+      }));
+    } catch { /* storage full/blocked — non-fatal */ }
+  }, [loading, user, draftKey, step, displayName, locationLabel, bioSuper, bioWhere, bioIntriguing, primaryType, alreadyHasCreatorType, visible, acceptsMessages]);
+
+  const exitWizard = () => {
+    toast({ title: "Saved for later", description: "Your answers are kept. Come back any time to finish." });
+    navigate("/dashboard");
+  };
 
   const canAdvanceStep2 =
     bioSuper.trim().length > 0 && bioSuper.length <= 500 &&
@@ -178,9 +214,21 @@ export default function ProfileWizard() {
     const { error } = await supabase.rpc("complete_profile", { _payload: payload as never });
     setSubmitting(false);
     if (error) {
-      toast({ title: "Could not save profile", description: error.message, variant: "destructive" });
+      // Everything they typed stays in state (and the saved draft). Send them
+      // to the step that needs fixing with plain words, never a column name.
+      const m = (error.message || "").toLowerCase();
+      let target = step;
+      let msg = "Something went wrong saving your profile. Your answers are kept — please try again.";
+      if (m.includes("location")) { target = 1; msg = "Please add where you're based (town or city and country)."; setStep1Tried(true); }
+      else if (m.includes("display_name")) { target = 1; msg = "Please enter your name (2 to 40 characters)."; setStep1Tried(true); }
+      else if (m.includes("bio")) { target = 2; msg = "Please answer all three questions (up to 500 characters each)."; }
+      else if (m.includes("primary_type")) { target = 3; msg = "Please choose the Creator Type you resonate with."; }
+      setStep(target);
+      toast({ title: "Almost there", description: msg, variant: "destructive" });
+      if (target === 1) setTimeout(() => document.getElementById(m.includes("location") ? "location" : "display_name")?.focus(), 50);
       return;
     }
+    try { localStorage.removeItem(draftKey); } catch { /* ignore */ }
     toast({ title: "Welcome to the community!" });
     navigate("/community/dashboard", { replace: true });
   };
@@ -197,7 +245,12 @@ export default function ProfileWizard() {
     <div className="min-h-screen bg-background py-10 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
-          <p className="text-sm text-muted-foreground mb-1">Step {step} of {TOTAL_STEPS}</p>
+          <div className="flex items-center justify-between mb-1 gap-3">
+            <p className="text-sm text-muted-foreground">Step {step} of {TOTAL_STEPS}</p>
+            <Button variant="ghost" size="sm" onClick={exitWizard} disabled={submitting}>
+              <X className="mr-1 h-4 w-4" /> Save & exit
+            </Button>
+          </div>
           <div className="h-1.5 rounded-full bg-muted overflow-hidden">
             <div
               className="h-full bg-primary transition-all"
@@ -243,8 +296,11 @@ export default function ProfileWizard() {
                   onChange={(e) => setDisplayName(e.target.value)}
                   maxLength={40}
                   placeholder="Jane Smith"
+                  aria-invalid={step1Tried && !nameValid}
                 />
-                <p className="text-xs text-muted-foreground">{displayName.length}/40</p>
+                <p className={`text-xs ${step1Tried && !nameValid ? "text-destructive" : "text-muted-foreground"}`}>
+                  {step1Tried && !nameValid ? "Please enter your name (2 to 40 characters). " : ""}{displayName.length}/40
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -253,13 +309,25 @@ export default function ProfileWizard() {
                   id="location"
                   value={locationLabel}
                   onChange={setLocationLabel}
-                  placeholder="Byron Bay, NSW, AU"
+                  placeholder="e.g. Byron Bay, NSW, Australia"
                 />
-                <p className="text-xs text-muted-foreground">City and country.</p>
+                {step1Tried && !locationValid ? (
+                  <p className="text-xs text-destructive" role="alert">
+                    Please type your town or city and country, e.g. "Byron Bay, Australia". You can pick from the list or just type it.
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Town or city and country. Pick from the list or type it in.</p>
+                )}
               </div>
 
               <div className="flex justify-end">
-                <Button onClick={() => setStep(2)} disabled={!canAdvanceStep1}>
+                <Button
+                  onClick={() => {
+                    setStep1Tried(true);
+                    if (canAdvanceStep1) setStep(2);
+                    else document.getElementById(nameValid ? "location" : "display_name")?.focus();
+                  }}
+                >
                   Continue <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
               </div>

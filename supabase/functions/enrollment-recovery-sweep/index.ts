@@ -301,7 +301,7 @@ serve(async (req) => {
         practitioner_is_trainer: cpMap.has(p.user_id) && trainerSet.has(cpMap.get(p.user_id)!),
         reached_checkout_at: p.reached_checkout_at,
         has_paid_access: paidAccessSet.has(p.user_id),
-        needs_profiling: profileAccessSet.has(p.user_id) || !!sub?.tier || csSet.has(p.user_id) || !!sub?.referral_code,
+        needs_profiling: profileAccessSet.has(p.user_id) || (!!sub?.tier && sub.tier !== "wren") || csSet.has(p.user_id) || !!sub?.referral_code,
       };
 
       const step = nextStep(row);

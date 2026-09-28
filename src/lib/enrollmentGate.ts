@@ -92,7 +92,9 @@ export async function loadEnrollmentState(userId: string): Promise<EnrollmentSta
     hasPaidAccess,
     // Community-only buyers (Connect, Creator, Co-Creator) don't need a
     // practitioner or photos. Legacy plan rows and case studies still do.
-    needsProfiling: holdsProfileProduct || !!subRes.data?.tier || isCaseStudySubject,
+    // 'wren' is the default placeholder row every signup gets — it is NOT a
+    // profiling purchase (it was making Connect buyers see "Link your practitioner").
+    needsProfiling: holdsProfileProduct || (!!subRes.data?.tier && subRes.data.tier !== "wren") || isCaseStudySubject,
     hasPractitioner: practIds.length > 0,
     practitionerIsTrainer,
     hasDetails: !!(
