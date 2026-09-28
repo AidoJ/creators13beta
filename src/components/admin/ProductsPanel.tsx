@@ -23,6 +23,8 @@ interface ProductRow {
   seat_cap: number | null;
   active: boolean | null;
   is_visible_on_storefront: boolean;
+  storefront_placement: string;
+  display_order: number;
 }
 
 const BLANK: Omit<ProductRow, "id"> = {
@@ -36,6 +38,8 @@ const BLANK: Omit<ProductRow, "id"> = {
   seat_cap: null,
   active: true,
   is_visible_on_storefront: false,
+  storefront_placement: "main",
+  display_order: 100,
 };
 
 const SHAPES = [
@@ -87,12 +91,26 @@ export default function ProductsPanel() {
       seat_cap: editing.seat_cap ? Number(editing.seat_cap) : null,
       active: editing.active ?? true,
       is_visible_on_storefront: editing.is_visible_on_storefront ?? false,
+      storefront_placement: editing.storefront_placement || "main",
+      display_order: Number(editing.display_order ?? 100),
     };
+    // Replace rule: a visible main card for a level takes over from any other
+    // visible main card for that level, which is taken off the shop.
+    const rivals = payload.is_visible_on_storefront && payload.storefront_placement === "main" && payload.grants_level_key
+      ? rows.filter((r) => r.id !== editing.id && r.is_visible_on_storefront && r.storefront_placement === "main" && r.grants_level_key === payload.grants_level_key)
+      : [];
+    if (rivals.length) {
+      const levelName = levels.find((l) => l.key === payload.grants_level_key)?.display_name || payload.grants_level_key;
+      if (!confirm(`"${rivals.map((r) => r.name).join(", ")}" is currently the ${levelName} card on the shop. Saving will replace it and take it off the shop. Continue?`)) return;
+    }
     const { error } = editing.id
       ? await supabase.from("products").update(payload).eq("id", editing.id)
       : await supabase.from("products").insert(payload);
     setBusy(false);
     if (error) { toast({ title: "Could not save", description: error.message, variant: "destructive" }); return; }
+    if (rivals.length) {
+      await supabase.from("products").update({ is_visible_on_storefront: false } as never).in("id", rivals.map((r) => r.id));
+    }
     toast({ title: editing.id ? "Product updated" : "Product added" });
     setEditing(null);
     load();
@@ -179,6 +197,25 @@ export default function ProductsPanel() {
                 onChange={(e) => setEditing({ ...editing, seat_cap: e.target.value ? Number(e.target.value) : null })} />
             </div>
           </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Where it shows in the shop</Label>
+              <Select value={editing.storefront_placement || "main"}
+                onValueChange={(v) => setEditing({ ...editing, storefront_placement: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="main">Main card for its access level (replaces the current one)</SelectItem>
+                  <SelectItem value="extra">Its own card in the Extras section</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[0.65rem] text-muted-foreground">Extras can be bought by people who already hold the access; they see a notice first.</p>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Display order (lowest shows first)</Label>
+              <Input type="number" value={editing.display_order ?? 100}
+                onChange={(e) => setEditing({ ...editing, display_order: Number(e.target.value) })} />
+            </div>
+          </div>
           <div className="flex flex-wrap items-center gap-6 pt-1">
             <label className="flex items-center gap-2 text-xs">
               <Switch checked={editing.active ?? true} onCheckedChange={(v) => setEditing({ ...editing, active: v })} />
@@ -208,6 +245,9 @@ export default function ProductsPanel() {
                   <Badge variant="secondary" className="text-[0.6rem]">
                     {SHAPES.find((s) => s.value === row.billing_shape)?.label || row.billing_shape}
                   </Badge>
+                  {row.storefront_placement === "extra" && (
+                    <Badge variant="outline" className="text-[0.6rem]">Extras · #{row.display_order}</Badge>
+                  )}
                   {row.grants_level_key && (
                     <Badge variant="outline" className="text-[0.6rem]">
                       {levels.find((l) => l.key === row.grants_level_key)?.display_name || row.grants_level_key}

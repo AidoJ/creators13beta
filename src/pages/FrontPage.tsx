@@ -18,11 +18,14 @@ import floatingGameButton from "@/assets/community-icons/floating-game-button.pn
 interface Product {
   id: string;
   name: string;
+  description: string | null;
   price_cents: number | null;
   currency: string | null;
   billing_shape: string | null;
   term_months: number | null;
   grants_level_key: string | null;
+  storefront_placement: string;
+  display_order: number;
 }
 
 type PathKey = "community" | "profiling" | "practitioner";
@@ -139,12 +142,23 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
   useEffect(() => {
     supabase
       .from("products")
-      .select("id, name, price_cents, currency, billing_shape, term_months, grants_level_key")
+      .select("id, name, description, price_cents, currency, billing_shape, term_months, grants_level_key, storefront_placement, display_order")
       .eq("active", true)
       .eq("is_visible_on_storefront", true)
+      .order("display_order", { ascending: true })
       .order("created_at", { ascending: true })
       .then(({ data }) => setProducts((data as Product[]) ?? []));
   }, []);
+
+  const [levelNames, setLevelNames] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("access_levels").select("key, display_name").then(({ data }) => {
+      const m: Record<string, string> = {};
+      (data ?? []).forEach((l: any) => { m[l.key] = l.display_name; });
+      setLevelNames(m);
+    });
+  }, [user]);
 
   // Mark held products for any signed-in visitor (front page and /shop).
   useEffect(() => {
@@ -160,13 +174,17 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
     return () => window.removeEventListener("scroll", updateMobilePlay);
   }, [shopMode]);
 
+  // Main card per level: lowest display order wins, then oldest.
   const byLevel = useMemo(() => {
     const m: Record<string, Product> = {};
-    // Oldest product per level owns the card, so a newer product granting the
-    // same level (e.g. an admin test product) can't silently replace it.
-    for (const p of products) if (p.grants_level_key && !m[p.grants_level_key]) m[p.grants_level_key] = p;
+    for (const p of products) {
+      if (p.storefront_placement === "extra") continue;
+      if (p.grants_level_key && !m[p.grants_level_key]) m[p.grants_level_key] = p;
+    }
     return m;
   }, [products]);
+
+  const extras = useMemo(() => products.filter((p) => p.storefront_placement === "extra"), [products]);
 
   const startCheckout = useCallback(async (productId: string) => {
     setBusyId(productId);
@@ -403,6 +421,43 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
           </div>
         </div>
       </section>
+
+      {/* Extras — admin-chosen products shown as their own cards */}
+      {extras.length > 0 && (
+        <section id="extras" className="border-t border-border py-14">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="flex gap-3 items-start mb-7">
+              <span className="mt-2 h-6 w-5 flex-none bg-secondary" style={hexClip} />
+              <h2 className="font-display text-3xl">Extras</h2>
+            </div>
+            <div className="grid md:grid-cols-3 gap-4">
+              {extras.map((p) => {
+                const held = !!p.grants_level_key && heldLevels.has(p.grants_level_key);
+                const levelName = p.grants_level_key ? (levelNames[p.grants_level_key] || COPY[p.grants_level_key]?.title || p.grants_level_key) : null;
+                return (
+                  <div key={p.id} className="flex flex-col rounded-3xl bg-card p-6 border border-border">
+                    <h3 className="font-display text-2xl text-foreground">{p.name}</h3>
+                    <p className="text-lg font-semibold text-primary mt-2">{priceLabel(p)}</p>
+                    {levelName && <p className="text-sm text-muted-foreground">Includes {levelName} access</p>}
+                    {p.description && <p className="text-sm text-foreground mt-3 mb-6">{p.description}</p>}
+                    <button
+                      onClick={() => {
+                        if (held) toast({ title: "You already have this access", description: `You already hold ${levelName}, which this product includes. You can still buy it.` });
+                        buy(p.id);
+                      }}
+                      disabled={busyId === p.id}
+                      className="mt-auto rounded-full px-5 py-3 font-medium border-2 border-primary bg-card text-primary hover:bg-muted"
+                    >
+                      {busyId === p.id ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : "Buy"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
 
       {/* Practitioner */}
       <section id="practitioner" className={`border-t border-border py-14 transition-opacity ${dim("practitioner")}`}>

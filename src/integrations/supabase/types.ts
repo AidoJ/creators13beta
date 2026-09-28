@@ -1718,6 +1718,7 @@ export type Database = {
           created_at: string
           currency: string | null
           description: string | null
+          display_order: number
           grants_level_key: string | null
           id: string
           image_url: string | null
@@ -1727,6 +1728,7 @@ export type Database = {
           product_type: Database["public"]["Enums"]["product_type"] | null
           seat_cap: number | null
           shopify_product_id: string | null
+          storefront_placement: string
           stripe_price_id: string | null
           stripe_product_id: string | null
           term_months: number | null
@@ -1738,6 +1740,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           description?: string | null
+          display_order?: number
           grants_level_key?: string | null
           id?: string
           image_url?: string | null
@@ -1747,6 +1750,7 @@ export type Database = {
           product_type?: Database["public"]["Enums"]["product_type"] | null
           seat_cap?: number | null
           shopify_product_id?: string | null
+          storefront_placement?: string
           stripe_price_id?: string | null
           stripe_product_id?: string | null
           term_months?: number | null
@@ -1758,6 +1762,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           description?: string | null
+          display_order?: number
           grants_level_key?: string | null
           id?: string
           image_url?: string | null
@@ -1767,6 +1772,7 @@ export type Database = {
           product_type?: Database["public"]["Enums"]["product_type"] | null
           seat_cap?: number | null
           shopify_product_id?: string | null
+          storefront_placement?: string
           stripe_price_id?: string | null
           stripe_product_id?: string | null
           term_months?: number | null

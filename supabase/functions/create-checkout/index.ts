@@ -98,7 +98,9 @@ serve(async (req) => {
       }
 
       // Never sell a level the buyer already actively holds (double-charge guard).
-      if (levelKey && !referralInvitationId) {
+      // Extras-section products are exempt: admins mark them as sellable to
+      // existing holders (the shop warns the buyer first).
+      if (levelKey && !referralInvitationId && product.storefront_placement !== "extra") {
         const nowIso = new Date().toISOString();
         const { data: held } = await supabaseClient
           .from("entitlements").select("id")
