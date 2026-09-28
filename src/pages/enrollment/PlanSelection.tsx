@@ -197,9 +197,7 @@ export default function PlanSelection() {
   useEffect(() => {
     if (signupPath === "case_study") {
       setSelectedTier("wren");
-      setTimeout(() => {
-        caseStudyRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 100);
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     } else if (signupPath === "player") {
       setSelectedTier("wren");
     }
@@ -484,10 +482,9 @@ export default function PlanSelection() {
           <div ref={caseStudyRef} className="max-w-md mx-auto mb-10">
             <div className="bg-primary/5 border-2 border-primary rounded-2xl p-6 shadow-md">
               <div className="flex items-center gap-2 mb-4">
-                <img src={birdWren} alt="Wren" className="h-10 w-auto" />
                 <div>
-                  <h3 className="text-sm font-display font-bold text-foreground">Wren — Free</h3>
-                  <p className="text-xs text-muted-foreground">Case study participation</p>
+                  <h3 className="text-sm font-display font-bold text-foreground">Free case study</h3>
+                  <p className="text-xs text-muted-foreground">Be profiled by a practitioner in training, at no cost</p>
                 </div>
               </div>
               <div>
