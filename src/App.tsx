@@ -58,6 +58,7 @@ import RequiresCompletedProfile from "@/components/RequiresCompletedProfile";
 import GlobalFooter from "@/components/shared/GlobalFooter";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import RecoveryRedirect from "@/components/auth/RecoveryRedirect";
+import ScrollToTop from "@/components/ScrollToTop";
 const MemberProfile = lazy(() => import("./pages/member/MemberProfile"));
 import FeatureGate from "@/components/community/FeatureGate";
 import CommunityProfilePrompt from "@/components/community/CommunityProfilePrompt";
@@ -98,6 +99,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+        <ScrollToTop />
 
         <UpdateAvailableBanner />
         <AuthProvider>
