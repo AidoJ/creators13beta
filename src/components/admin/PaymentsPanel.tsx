@@ -18,13 +18,13 @@ type Pay = {
   member_email: string | null; member_name: string | null; product_name: string | null; billing_shape: string | null;
   term_months: number | null; amount_cents: number | null; currency: string | null; fee_cents: number | null;
   net_cents: number | null; status: string | null; stripe_charge_id: string | null; stripe_invoice_id: string | null;
-  stripe_subscription_id: string | null; referring_practitioner_id: string | null;
+  stripe_subscription_id: string | null; referring_practitioner_id: string | null; product_id: string | null;
 };
 type Sub = {
   stripe_subscription_id: string; livemode: boolean; user_id: string | null; member_name: string | null; member_email: string | null;
   product_name: string | null; billing_shape: string | null; term_months: number | null; amount_cents: number | null;
   currency: string | null; billing_interval: string | null; interval_count: number | null; status: string | null;
-  cancel_at_period_end: boolean; cancel_at: string | null; started_at: string | null; current_period_end: string | null;
+  product_id: string | null; cancel_at_period_end: boolean; cancel_at: string | null; started_at: string | null; current_period_end: string | null;
 };
 type Gst = { registered: boolean; registered_from: string | null };
 
@@ -42,13 +42,17 @@ const monthlyAmount = (s: Sub) => {
   return Math.round(a / n);
 };
 
-type Preset = "this_month" | "last_month" | "quarter" | "ytd" | "custom";
+type Preset = "this_month" | "last_month" | "quarter" | "ytd" | "cal_ytd" | "custom";
 
 export default function PaymentsPanel() {
   const [mode, setMode] = useState<"test" | "live">("test");
   const [preset, setPreset] = useState<Preset>("this_month");
   const [from, setFrom] = useState(""); const [to, setTo] = useState("");
-  const [pays, setPays] = useState<Pay[]>([]); const [subs, setSubs] = useState<Sub[]>([]);
+  const [allPays, setPays] = useState<Pay[]>([]); const [allSubs, setSubs] = useState<Sub[]>([]);
+  const [hideUnmatched, setHideUnmatched] = useState(true);
+  const pays = useMemo(() => hideUnmatched ? allPays.filter((p) => p.user_id && p.product_id) : allPays, [allPays, hideUnmatched]);
+  const subs = useMemo(() => hideUnmatched ? allSubs.filter((s) => s.user_id && s.product_id) : allSubs, [allSubs, hideUnmatched]);
+  const hiddenPays = allPays.length - pays.length; const hiddenSubs = allSubs.length - subs.length;
   const [gst, setGst] = useState<Gst>({ registered: false, registered_from: null });
   const [gstDraft, setGstDraft] = useState<Gst>({ registered: false, registered_from: null });
   const [loading, setLoading] = useState(true); const [busy, setBusy] = useState<string | null>(null);
@@ -78,7 +82,8 @@ export default function PaymentsPanel() {
     if (preset === "this_month") return [monthStart(y, m), monthStart(y, m + 1)];
     if (preset === "last_month") return [monthStart(y, m - 1), monthStart(y, m)];
     if (preset === "quarter") { const q = Math.floor(m / 3) * 3; return [monthStart(y, q), monthStart(y, q + 3)]; }
-    if (preset === "ytd") return [monthStart(y, 0), now];
+    if (preset === "ytd") return [monthStart(m >= 6 ? y : y - 1, 6), now];
+    if (preset === "cal_ytd") return [monthStart(y, 0), now];
     const s = from ? dayStart(from) : monthStart(y, m);
     const e = to ? dayStart(to) + 86400000 : now;
     return [s, e];
@@ -280,7 +285,8 @@ export default function PaymentsPanel() {
               <SelectItem value="this_month">This month</SelectItem>
               <SelectItem value="last_month">Last month</SelectItem>
               <SelectItem value="quarter">This quarter</SelectItem>
-              <SelectItem value="ytd">Year to date</SelectItem>
+              <SelectItem value="ytd">Financial year to date</SelectItem>
+              <SelectItem value="cal_ytd">Calendar year to date</SelectItem>
               <SelectItem value="custom">Custom</SelectItem>
             </SelectContent>
           </Select>
@@ -289,6 +295,10 @@ export default function PaymentsPanel() {
           <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-40" aria-label="From" />
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-40" aria-label="To" />
         </>)}
+        <label className="flex items-center gap-2 text-sm text-foreground pb-1.5">
+          <Switch checked={hideUnmatched} onCheckedChange={setHideUnmatched} aria-label="Hide unmatched" />
+          Hide unmatched
+        </label>
         <div className="ml-auto flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={runImport} disabled={!!busy || modeMismatch}>{busy === "import" ? "Importing…" : "Import from Stripe"}</Button>
           <Button variant="outline" size="sm" onClick={() => runAction("fill_fees", "Fees")} disabled={!!busy || modeMismatch}>Fill in fees</Button>
@@ -296,6 +306,11 @@ export default function PaymentsPanel() {
           <Button variant="ghost" size="sm" onClick={load}><RefreshCw className="h-4 w-4" /></Button>
         </div>
       </div>
+      {hideUnmatched && (hiddenPays > 0 || hiddenSubs > 0) && (
+        <p className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground" role="status">
+          Hiding {hiddenPays} payment record{hiddenPays === 1 ? "" : "s"}{hiddenSubs ? ` and ${hiddenSubs} subscription${hiddenSubs === 1 ? "" : "s"}` : ""} not matched to a member or product. All totals below exclude them. Turn off "Hide unmatched" to include them.
+        </p>
+      )}
 
       {mode === "test"
         ? <div className="rounded-md border-2 border-dashed border-gold bg-gold/10 px-4 py-2 text-sm font-semibold text-gold">TEST DATA — test-card payments only. Not real money.</div>
@@ -321,7 +336,7 @@ export default function PaymentsPanel() {
         <p className="text-xs text-muted-foreground">Guide only — confirm with your accountant. {gst.registered ? "Figures exclude GST." : "Not GST registered: figures are the full amounts paid."}</p>
         <div className="grid md:grid-cols-2 gap-3">
           <Tracker label="Rolling 12 months" value={rolling12} note="This month so far + previous 11 months, after refunds." />
-          <Tracker label="Projected 12 months" value={projected} note="This month so far + next 11 months of expected memberships (excluding scheduled cancellations) and remaining course instalments." />
+          <Tracker label="Projected 12 months" value={projected} note="Includes committed memberships and course instalments only - not future one-off sales. Add expected profile and other sales when checking against the $75,000 threshold." />
         </div>
         <div className="rounded-lg border border-border bg-card p-4 flex flex-wrap items-center gap-4">
           <label className="flex items-center gap-2 text-sm text-foreground">
