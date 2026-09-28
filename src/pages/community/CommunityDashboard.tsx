@@ -385,13 +385,17 @@ export default function CommunityDashboard() {
           <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm">
             <EyeOff className="h-4 w-4 text-primary flex-shrink-0" />
             <p className="flex-1 text-foreground">
-              Your profile is private — other Creators can&apos;t see you in their matches.{" "}
+              Your profile is private, so other members can&apos;t find you yet.{" "}
               <button
                 type="button"
-                onClick={() => navigate("/settings/community")}
+                onClick={async () => {
+                  if (!user) return;
+                  const { error } = await supabase.from("profiles").update({ community_visible: true } as never).eq("user_id", user.id);
+                  if (!error) setIsCommunityVisible(true);
+                }}
                 className="font-semibold text-primary hover:underline"
               >
-                Enable visibility →
+                Make me visible
               </button>
             </p>
             <button
