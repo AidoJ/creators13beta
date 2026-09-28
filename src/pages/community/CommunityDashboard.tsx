@@ -475,7 +475,7 @@ export default function CommunityDashboard() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div
-                      className="w-20 h-20 flex items-center justify-center cursor-help"
+                      className="w-16 h-16 mb-2 flex items-center justify-center cursor-help"
                       aria-label={`Creator of the Month: ${capitaliseTypeName(featured.creator_type)}`}
                     >
                       {(() => {
@@ -763,8 +763,8 @@ export default function CommunityDashboard() {
         className={cn(
           "container mx-auto py-4 sm:py-6 space-y-4",
           view === "map"
-            ? "max-w-none px-2 sm:px-4 lg:pl-20"
-            : "px-4 max-w-6xl lg:pl-20"
+            ? "max-w-none px-2 sm:px-4 lg:pl-24"
+            : "px-4 max-w-6xl lg:pl-24"
         )}
       >
         <h1 className="font-display font-normal text-2xl sm:text-3xl md:text-4xl text-gold text-center drop-shadow-sm lg:px-32">

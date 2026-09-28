@@ -194,6 +194,8 @@ export default function Dashboard() {
         {/* Continue where you left off — appears only for users mid-enrolment.
             Silent when complete/staff/player-only. Same resolver as the
             enrollment gate + the recovery sweep so the surfaces never diverge. */}
+        {/* Post-purchase thank-you always sits at the very top. */}
+        <PurchaseSuccessBanner />
         {user && <ContinueEnrollmentBlock userId={user.id} />}
 
         {/* Section teasers — surface Play & Community without duplicating
@@ -240,7 +242,6 @@ export default function Dashboard() {
 
         {/* Plan / access card — shown to every member who holds anything,
             not only those who can see the profile section (Connect buyers). */}
-        <PurchaseSuccessBanner />
         <SubscriptionCard />
 
 
