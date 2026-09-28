@@ -121,7 +121,7 @@ const App = () => (
                 <Route path="/enroll/photos" element={<ProtectedRoute><Photos /></ProtectedRoute>} />
                 <Route path="/enroll/booking" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
                 <Route path="/onboarding/profile" element={<ProtectedRoute><ProfileWizard /></ProtectedRoute>} />
-                <Route path="/settings/community" element={<ProtectedRoute><RequiresCompletedProfile><CommunitySettings /></RequiresCompletedProfile></ProtectedRoute>} />
+                <Route path="/settings/community" element={<ProtectedRoute><RequiresCompletedProfile anyPath><CommunitySettings /></RequiresCompletedProfile></ProtectedRoute>} />
                 <Route path="/settings/contact" element={<ProtectedRoute><ContactSettings /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><RequiresCompletedProfile><Dashboard /></RequiresCompletedProfile></ProtectedRoute>} />
                 <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
