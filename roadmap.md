@@ -24,5 +24,8 @@
 - [ ] B1 S6 manage/cancel subscription
 - [ ] B2 signup buttons, verify redirect, signout -> home, scroll top, clickable events
 - [ ] B3 wording/boxes for paying customers, one profile flow, visibility prompt, guardian phone
-- [ ] B4 project fields, location lookup, dashboard prompt, product report
-- [ ] B5 cosmetics (Project icon blocked: needs file from Dropbox)
+- [x] B4 project fields, location lookup, dashboard prompt, product report
+- [x] B5 cosmetics (icon, game icon on Play buttons, puzzle removed, admin level colours, held-card colour)
+- [x] Cancel test2's duplicate Connect subscription
+- [ ] Publish Round 1 (awaiting go-ahead)
+- [ ] B1–B3 real-inbox re-tests (guardian email, application email) need a real inbox
