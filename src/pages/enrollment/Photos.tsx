@@ -554,7 +554,7 @@ export default function Photos() {
         </div>
         {!state.review.pass && (
           <p className="text-xs text-muted-foreground px-3">
-            💡 If the photo looks correct to you, you can still proceed — the AI check is just a guide. You'll be able to submit all photos regardless.
+            Please retake this photo. You can carry on with the others, but you won't be able to submit until every flagged photo has been replaced.
           </p>
         )}
       </div>
