@@ -11,6 +11,7 @@ import { z } from "zod";
 import { Mail, KeyRound, CreditCard } from "lucide-react";
 import { loadMyAccess, type AccessItem } from "@/lib/accessSummary";
 import AccessList from "@/components/access/AccessList";
+import PaymentHistory from "@/components/account/PaymentHistory";
 
 const emailSchema = z.string().trim().email({ message: "Enter a valid email address" }).max(255);
 const passwordSchema = z.string().min(8, { message: "Password must be at least 8 characters" }).max(72);
@@ -142,6 +143,8 @@ export default function Account() {
             )}
           </CardContent>
         </Card>
+
+        <PaymentHistory />
 
         <Card>
           <CardHeader>
