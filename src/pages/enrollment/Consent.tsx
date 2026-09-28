@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 import EnrollmentHeader from "@/components/enrollment/EnrollmentHeader";
 import { useEnrollmentGate } from "@/hooks/useEnrollmentGate";
+import { loadEnrollmentState } from "@/lib/enrollmentGate";
 
 const CONSENT_ITEMS = [
   "I understand that my photos will be used for body-type profiling as part of a practitioner training case study.",
@@ -36,23 +37,22 @@ export default function Consent() {
   // Clinic context comes from the invite link, but the enrollment gate can
   // redirect here without the link params — so fall back to the signup path
   // recorded on the plan row when the referral was redeemed.
-  const [clinicSignup, setClinicSignup] = useState(false);
-  const isClinic = params.get("clinic") === "true" || clinicSignup;
+  // Case-study wording ONLY for real case-study volunteers; every paying
+  // client (Clinic referral or direct Body Profile) gets profile wording.
+  const [caseStudySubject, setCaseStudySubject] = useState<boolean | null>(null);
+  const isClinic = caseStudySubject === false;
   const consentItems = isClinic ? CLINIC_CONSENT_ITEMS : CONSENT_ITEMS;
 
   const [checked, setChecked] = useState<boolean[]>(CONSENT_ITEMS.map(() => false));
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!user || params.get("clinic") === "true") return;
+    if (!user) return;
+    if (params.get("clinic") === "true") { setCaseStudySubject(false); return; }
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("signup_path")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (!cancelled && data?.signup_path === "clinic") setClinicSignup(true);
+      const st = await loadEnrollmentState(user.id);
+      if (!cancelled) setCaseStudySubject(st.isCaseStudySubject);
     })();
     return () => {
       cancelled = true;
@@ -87,7 +87,7 @@ export default function Consent() {
     toast({ title: "Consent recorded" });
     const nextParams = new URLSearchParams({ tier, billing });
     if (params.get("case_study") === "true") nextParams.set("case_study", "true");
-    if (isClinic) {
+    if (params.get("clinic") === "true") {
       nextParams.set("clinic", "true");
       const t = params.get("invite");
       if (t) nextParams.set("invite", t);
@@ -95,7 +95,7 @@ export default function Consent() {
     navigate(`/enroll/photos?${nextParams.toString()}`);
   };
 
-  if (!gateReady) {
+  if (!gateReady || caseStudySubject === null) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

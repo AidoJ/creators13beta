@@ -16,7 +16,7 @@ import { Leaf } from "lucide-react";
  *   - Enrollment funnel still has a required step (paid funnel pages) → let through
  *   - Otherwise                  → redirect to /onboarding/profile
  */
-export function RequiresCompletedProfile({ children }: { children: ReactNode }) {
+export function RequiresCompletedProfile({ children, anyPath = false }: { children: ReactNode; anyPath?: boolean }) {
   const { user, loading: authLoading } = useAuth();
   const location = useLocation();
   const [checking, setChecking] = useState(true);
@@ -50,6 +50,13 @@ export function RequiresCompletedProfile({ children }: { children: ReactNode }) 
       // Only users who signed up via the community path are gated by the
       // community wizard. Paid-funnel users, player-only users, and any
       // legacy user without an explicit community signup_path go through.
+      // anyPath: one profile-creation flow for everyone (e.g. the Community
+      // settings gear) — never a second, different form.
+      if (anyPath && !completed) {
+        setNeedsWizard(true);
+        setChecking(false);
+        return;
+      }
       if (state.signupPath !== "community") {
         setNeedsWizard(false);
         setChecking(false);
@@ -63,7 +70,7 @@ export function RequiresCompletedProfile({ children }: { children: ReactNode }) 
       setChecking(false);
     })();
     return () => { cancelled = true; };
-  }, [user, authLoading, location.pathname]);
+  }, [user, authLoading, location.pathname, anyPath]);
 
   if (authLoading || checking) {
     return (

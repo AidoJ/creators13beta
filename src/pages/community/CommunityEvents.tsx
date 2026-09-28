@@ -11,6 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { sanitizeEventHtml } from "@/components/ui/rich-text-editor";
 import { loadMyAccess, accessLabel } from "@/lib/accessSummary";
 import { EventCover } from "@/components/events/EventCover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 
 interface EventSession {
@@ -196,9 +197,27 @@ function EventTile({ ev, past, joinable }: { ev: CommunityEvent; past?: boolean;
   const start = eventStart(ev);
   const end = eventEnd(ev);
   const descText = stripHtml(ev.description);
+  const [open, setOpen] = useState(false);
+  const when = `${start.toLocaleString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" })}`;
 
   return (
     <Card className={`flex flex-col overflow-hidden ${past ? "opacity-70" : ""}`}>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{ev.title}</DialogTitle>
+            <DialogDescription>
+              {when}{ev.location ? ` · ${ev.location}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          {ev.description ? (
+            <div className="prose prose-sm max-w-none text-foreground" dangerouslySetInnerHTML={{ __html: sanitizeEventHtml(ev.description) }} />
+          ) : (
+            <p className="text-sm text-muted-foreground">No further details yet.</p>
+          )}
+        </DialogContent>
+      </Dialog>
+      <button type="button" onClick={() => setOpen(true)} className="text-left" aria-label={`Open details: ${ev.title}`}>
       <EventCover
         coverImageUrl={ev.cover_image_url}
         coverImageFit={ev.cover_image_fit}
@@ -211,14 +230,18 @@ function EventTile({ ev, past, joinable }: { ev: CommunityEvent; past?: boolean;
         location={ev.location}
         accessBadge={ev.has_access ? "joinable" : "preview"}
       />
+      </button>
 
 
       {/* Body */}
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="text-base font-semibold text-foreground leading-snug line-clamp-2">{ev.title}</h3>
-        {descText && (
-          <p className="text-xs text-muted-foreground mt-1.5 line-clamp-3">{descText}</p>
-        )}
+        <button type="button" onClick={() => setOpen(true)} className="text-left">
+          <h3 className="text-base font-semibold text-foreground leading-snug line-clamp-2 hover:text-primary">{ev.title}</h3>
+          {descText && (
+            <p className="text-xs text-muted-foreground mt-1.5 line-clamp-3">{descText}</p>
+          )}
+          <span className="text-xs text-primary mt-1 inline-block">View details</span>
+        </button>
 
         {!past && (
           <div className="mt-auto flex flex-wrap items-center gap-2 pt-3">
