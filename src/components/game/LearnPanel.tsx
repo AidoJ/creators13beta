@@ -12,6 +12,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, GraduationCap, BookOpen, Lightbulb, Gamepad2 } from "lucide-react";
+import gameIcon from "@/assets/community-icons/game-icon.png.asset.json";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { topicsFor, topicById } from "@/lib/game/learnContent";
@@ -126,7 +127,7 @@ export default function LearnPanel({ open, onOpenChange, firstRun = false }: Pro
                 <GraduationCap className="mr-2 h-5 w-5" /> Yes — teach me as I play
               </Button>
               <Button variant="outline" size="lg" className="w-full min-h-12 whitespace-normal h-auto py-3" onClick={close}>
-                <Gamepad2 className="mr-2 h-5 w-5" /> I'll explore myself
+                <img src={gameIcon.url} alt="" aria-hidden="true" className="mr-2 h-5 w-5 object-contain" /> I'll explore myself
               </Button>
               <button
                 type="button"

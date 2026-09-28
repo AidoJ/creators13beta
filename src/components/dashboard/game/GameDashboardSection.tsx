@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Gamepad2, Flame, Trophy, Sparkles, Copy, Loader2, Info, Bot, ChevronDown, ChevronUp } from "lucide-react";
+import gameIcon from "@/assets/community-icons/game-icon.png.asset.json";
 
 import { toast } from "sonner";
 import { CREATOR_TYPE_NAMES, getCreatorTypeColor } from "@/lib/creatorTypes";
@@ -274,7 +275,7 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
               className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/25"
               onClick={() => navigate("/play/new")}
             >
-              <Gamepad2 className="mr-2 h-5 w-5" /> Play now
+              <img src={gameIcon.url} alt="" aria-hidden="true" className="mr-2 h-5 w-5 object-contain" /> Play now
             </Button>
             <p className="text-xs text-muted-foreground">
               Solo or multiplayer — choose once you're in. {activeGames.length} active · {openInvites.length} open invite{openInvites.length === 1 ? "" : "s"}
@@ -531,7 +532,7 @@ export default function GameDashboardSection({ userId, firstName, tierLabel, isP
           </h3>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={() => navigate("/play/new")}>
-              <Gamepad2 className="h-3.5 w-3.5 mr-1" /> New game
+              <img src={gameIcon.url} alt="" aria-hidden="true" className="h-3.5 w-3.5 mr-1 object-contain" /> New game
             </Button>
           </div>
         </div>
