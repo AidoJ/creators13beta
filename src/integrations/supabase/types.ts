@@ -3405,6 +3405,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_gst_setting: { Args: never; Returns: Json }
       get_guardian_consent_queue: {
         Args: never
         Returns: {
