@@ -87,7 +87,7 @@ export default function Consent() {
     toast({ title: "Consent recorded" });
     const nextParams = new URLSearchParams({ tier, billing });
     if (params.get("case_study") === "true") nextParams.set("case_study", "true");
-    if (isClinic) {
+    if (params.get("clinic") === "true") {
       nextParams.set("clinic", "true");
       const t = params.get("invite");
       if (t) nextParams.set("invite", t);
@@ -95,7 +95,7 @@ export default function Consent() {
     navigate(`/enroll/photos?${nextParams.toString()}`);
   };
 
-  if (!gateReady) {
+  if (!gateReady || caseStudySubject === null) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

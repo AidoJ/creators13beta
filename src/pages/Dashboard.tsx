@@ -295,7 +295,7 @@ export default function Dashboard() {
                       <span className="text-green-600 text-sm">✓</span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-foreground">Case Study Consent Given</p>
+                      <p className="text-sm font-medium text-foreground">{isCaseStudySubject ? "Case Study Consent Given" : "Profile Consent Given"}</p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(profile.case_study_consent_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}
                       </p>
