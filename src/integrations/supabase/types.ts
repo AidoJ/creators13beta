@@ -3326,6 +3326,9 @@ export type Database = {
           enabled_channels: string[]
           location_label: string
           open_to_contact: boolean
+          project_dream: string
+          project_seek_me_for: string
+          project_top_skills: string
           tier: Database["public"]["Enums"]["subscription_tier"]
           user_id: string
         }[]
