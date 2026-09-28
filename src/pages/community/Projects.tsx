@@ -9,7 +9,10 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ArrowLeft, FolderKanban, Plus, SlidersHorizontal } from "lucide-react";
+import { ArrowLeft, Plus, SlidersHorizontal } from "lucide-react";
+import projectsIcon from "@/assets/community-icons/projects-icon.png.asset.json";
+
+const GOLD_ICON_FILTER = "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)";
 import { toast } from "@/hooks/use-toast";
 import ProjectForm, { MemberOption } from "@/components/projects/ProjectForm";
 import {
@@ -108,7 +111,7 @@ export default function Projects() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <Card className="p-8 max-w-md text-center space-y-3">
-          <FolderKanban className="h-10 w-10 text-muted-foreground/40 mx-auto" />
+          <img src={projectsIcon.url} alt="" aria-hidden className="h-10 w-10 object-contain mx-auto opacity-40" style={{ filter: GOLD_ICON_FILTER }} />
           <h1 className="text-xl font-display">Projects</h1>
           <p className="text-sm text-muted-foreground">
             Your current membership doesn't include the Projects space yet.
@@ -136,7 +139,7 @@ export default function Projects() {
 
         <header className="mb-6">
           <h1 className="text-2xl font-display text-foreground flex items-center gap-2">
-            <FolderKanban className="h-6 w-6 text-primary" />
+            <img src={projectsIcon.url} alt="" aria-hidden className="h-6 w-6 object-contain" style={{ filter: GOLD_ICON_FILTER }} />
             Projects
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -210,7 +213,7 @@ export default function Projects() {
           <p className="text-sm text-muted-foreground text-center py-12">Loading projects…</p>
         ) : filtered.length === 0 ? (
           <Card className="p-8 text-center">
-            <FolderKanban className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+            <img src={projectsIcon.url} alt="" aria-hidden className="h-10 w-10 object-contain mx-auto mb-3 opacity-40" style={{ filter: GOLD_ICON_FILTER }} />
             <p className="text-sm text-muted-foreground">
               {projects.length === 0 ? "No projects yet." : "No projects match these filters."}
             </p>
@@ -230,7 +233,7 @@ export default function Projects() {
                   <img src={thumbs[p.id]} alt={p.name} className="h-36 w-full object-cover" />
                 ) : (
                   <div className="h-36 w-full bg-muted flex items-center justify-center">
-                    <FolderKanban className="h-8 w-8 text-muted-foreground/40" />
+                    <img src={projectsIcon.url} alt="" aria-hidden className="h-8 w-8 object-contain opacity-40" style={{ filter: GOLD_ICON_FILTER }} />
                   </div>
                 )}
                 <div className="p-4 space-y-2">

@@ -11,7 +11,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, ExternalLink, FolderKanban, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import projectsIcon from "@/assets/community-icons/projects-icon.png.asset.json";
 import { toast } from "@/hooks/use-toast";
 import ProjectForm, { MemberOption } from "@/components/projects/ProjectForm";
 import { Project, formatDuration, signedThumbnailUrl } from "@/lib/projects";
@@ -165,7 +166,7 @@ export default function ProjectDetail() {
           <img src={thumb} alt={project.name} className="w-full h-56 object-cover rounded-lg border border-border" />
         ) : (
           <div className="w-full h-56 rounded-lg bg-muted flex items-center justify-center">
-            <FolderKanban className="h-10 w-10 text-muted-foreground/40" />
+            <img src={projectsIcon.url} alt="" aria-hidden className="h-10 w-10 object-contain opacity-40" style={{ filter: "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)" }} />
           </div>
         )}
 
