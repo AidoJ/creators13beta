@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFeatures } from "@/hooks/useFeatures";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,11 @@ export default function CommunitySettings() {
   const [bioSuper, setBioSuper] = useState("");
   const [bioWhere, setBioWhere] = useState("");
   const [bioIntriguing, setBioIntriguing] = useState("");
+  const { has: hasFeature } = useFeatures();
+  const canProject = hasFeature("community_create_profile_project");
+  const [projSeek, setProjSeek] = useState("");
+  const [projSkills, setProjSkills] = useState("");
+  const [projDream, setProjDream] = useState("");
   const [primaryType, setPrimaryType] = useState<string | null>(null);
   const [ctSource, setCtSource] = useState<string | null>(null);
   const [visible, setVisible] = useState(true);
@@ -63,7 +69,7 @@ export default function CommunitySettings() {
       const [profileRes, typeRes] = await Promise.all([
         supabase
           .from("profiles")
-          .select("display_name, location_label, bio_superpower, bio_where_i_live, bio_intriguing, community_visible, community_joined_at, member_preferences, avatar_url, hide_avatar, stock_avatar, open_to_contact, contact_channels")
+          .select("display_name, location_label, bio_superpower, bio_where_i_live, bio_intriguing, community_visible, community_joined_at, member_preferences, avatar_url, hide_avatar, stock_avatar, open_to_contact, contact_channels, project_seek_me_for, project_top_skills, project_dream")
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase
@@ -80,6 +86,9 @@ export default function CommunitySettings() {
         setBioSuper(p.bio_superpower ?? "");
         setBioWhere(p.bio_where_i_live ?? "");
         setBioIntriguing(p.bio_intriguing ?? "");
+        setProjSeek((p as any).project_seek_me_for ?? "");
+        setProjSkills((p as any).project_top_skills ?? "");
+        setProjDream((p as any).project_dream ?? "");
         setVisible(p.community_visible === true);
         setHadJoinedAt(!!p.community_joined_at);
         const prefs = (p.member_preferences as Record<string, unknown>) ?? {};
@@ -118,7 +127,7 @@ export default function CommunitySettings() {
       toast({ title: "Name must be 2–40 characters", variant: "destructive" });
       return;
     }
-    if (bioSuper.length > 500 || bioWhere.length > 500 || bioIntriguing.length > 500) {
+    if ([bioSuper, bioWhere, bioIntriguing, projSeek, projSkills, projDream].some((v) => v.length > 500)) {
       toast({ title: "Bio fields capped at 500 characters", variant: "destructive" });
       return;
     }
@@ -168,6 +177,12 @@ export default function CommunitySettings() {
       hide_avatar: hideAvatar,
       stock_avatar: stockAvatar,
     };
+    // Only write project answers while access is held; never clear them otherwise.
+    if (canProject) {
+      update.project_seek_me_for = projSeek.trim() || null;
+      update.project_top_skills = projSkills.trim() || null;
+      update.project_dream = projDream.trim() || null;
+    }
     if (visible && !hadJoinedAt) {
       (update as Record<string, unknown>).community_joined_at = new Date().toISOString();
     }
@@ -390,6 +405,22 @@ export default function CommunitySettings() {
             <Textarea value={bioIntriguing} onChange={(e) => setBioIntriguing(e.target.value)} rows={3} maxLength={600} />
             <p className="text-xs text-muted-foreground">{bioIntriguing.length}/500</p>
           </div>
+          {canProject && (
+            <div className="space-y-4 pt-2 border-t border-border">
+              <h3 className="font-display font-semibold">Projects</h3>
+              {([
+                ["Seek me for…", projSeek, setProjSeek],
+                ["My top skills…", projSkills, setProjSkills],
+                ["My dream project…", projDream, setProjDream],
+              ] as const).map(([label, val, set]) => (
+                <div key={label} className="space-y-2">
+                  <Label>{label}</Label>
+                  <Textarea value={val} onChange={(e) => set(e.target.value)} rows={3} maxLength={600} />
+                  <p className="text-xs text-muted-foreground">{val.length}/500</p>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {!creatorTypeLocked && (
