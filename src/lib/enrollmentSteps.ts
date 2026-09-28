@@ -41,6 +41,8 @@ export function getNextEnrollmentStep(
 ): EnrollmentStep | null {
   if (state.isStaff) return null;
   if (state.isPlayerOnly) return null;
+  // Community-only buyers have nothing left once they've paid.
+  if (state.hasSubscription && !state.needsProfiling) return null;
 
   const qs = (() => {
     const p = new URLSearchParams();
