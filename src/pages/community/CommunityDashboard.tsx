@@ -629,7 +629,7 @@ export default function CommunityDashboard() {
                     show: true,
                   },
                   { label: "Shop", img: shopIcon.url, soon: false, onClick: () => navigate("/shop"), badge: 0, show: true },
-                ].filter((item) => item.show).map(({ label, Icon, img, soon, onClick, badge }) => {
+                ].filter((item) => item.show).map(({ label, img, soon, onClick, badge }) => {
                   // Gold to match the enrollment "Case Study Volunteer / Paying Client" cards.
                   const color = "#c9a84c";
                   return (
@@ -719,7 +719,7 @@ export default function CommunityDashboard() {
             { label: "Connections", img: connectionsIcon.url, onClick: () => navigate("/community/connections"), show: canMessage },
             { label: "Dashboard", img: memberMatchIcon.url, onClick: () => navigate("/dashboard"), show: true },
             { label: "Shop", img: shopIcon.url, onClick: () => navigate("/shop"), show: true },
-          ].filter((item) => item.show).map(({ label, Icon, img, onClick }) => (
+          ].filter((item) => item.show).map(({ label, img, onClick }) => (
             <button key={label} type="button" onClick={onClick} aria-label={label} className="min-h-11 min-w-11 shrink-0 rounded-full border-2 border-gold bg-card/80 flex items-center justify-center">
               {img ? <img src={img} alt="" aria-hidden className="h-6 w-6 object-contain" style={{ filter: "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)" }} /> : Icon ? <Icon className="h-5 w-5 text-gold" /> : null}
             </button>
