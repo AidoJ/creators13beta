@@ -60,6 +60,12 @@
     --zoom-blue: 220 100% 52%;
     --lemon: 55 75% 65%;
     --terracotta: 20 55% 50%;
+    --prospectus-paper: 0 0% 100%;
+    --prospectus-ink: 330 18% 15%;
+    --prospectus-pink: 331 55% 88%;
+    --prospectus-magenta: 337 82% 41%;
+    --prospectus-yellow: 42 95% 73%;
+    --prospectus-green: 83 70% 38%;
 
     /* Game board honeycomb */
     --board-surface: 45 40% 97%;
@@ -225,3 +231,56 @@
 
 /* Tints black line-art PNG icons to the brand gold used by the other icons. */
 .icon-gold { filter: brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%); }
+
+/* The prospectus intentionally mirrors A'Hara's landscape print design. */
+.prospectus-shell { padding: 1rem 0 2rem; }
+.prospectus-toolbar { width: min(94vw, 1280px); margin: 0 auto 1rem; display: flex; align-items: center; gap: .5rem; }
+.prospectus-pages { display: grid; gap: 1.2rem; width: min(94vw, 1280px); margin: auto; }
+.prospectus-page { position: relative; aspect-ratio: 297 / 210; overflow: hidden; background: hsl(var(--prospectus-paper)); color: hsl(var(--prospectus-ink)); box-shadow: 0 10px 35px hsl(var(--foreground) / .14); font-family: "Questrial", sans-serif; container-type: inline-size; }
+.prospectus-page h1, .prospectus-page h2, .prospectus-page h3 { font-family: "Questrial", sans-serif; letter-spacing: 0; }
+.prospectus-paper { padding: 3.8cqw 4cqw; }
+.prospectus-brand { width: 16cqw; height: 12cqw; object-fit: contain; }
+.prospectus-title-chip { display: inline-block; margin: 1.2cqw 0 3cqw; padding: .7cqw 1.4cqw; border-radius: 1.5cqw; background: hsl(var(--prospectus-yellow)); color: hsl(var(--prospectus-magenta)); font-size: 3.1cqw; font-weight: 700; line-height: 1.05; }
+.prospectus-copy { font-size: 1.45cqw; line-height: 1.34; }
+.prospectus-copy p { margin: 0 0 1.4cqw; white-space: pre-line; }
+.prospectus-copy ul, .prospectus-copy ol { margin: 0 0 1.3cqw; padding-left: 2.1cqw; list-style: disc; }
+.prospectus-copy ol { list-style: decimal; }
+.prospectus-copy-wide { max-width: 91cqw; }
+.prospectus-cover { background: linear-gradient(105deg, hsl(24 93% 69%), hsl(var(--prospectus-magenta) / .68)), url('/placeholder.svg'); }
+.prospectus-cover-quotes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8cqw; padding: 5.4cqw 7cqw 0; text-align: center; font-size: 1.75cqw; font-weight: 700; }
+.prospectus-cover-main { display: grid; grid-template-columns: 32cqw 1fr; align-items: center; padding: 6cqw 7cqw 0; }
+.prospectus-cover-main img { width: 26cqw; height: 25cqw; object-fit: contain; }
+.prospectus-cover h1 { color: hsl(var(--prospectus-paper)); font-size: 5.5cqw; line-height: 1.05; font-weight: 700; text-shadow: 0 0 1.2cqw hsl(var(--prospectus-yellow) / .55); }
+.prospectus-cover-main p { margin-top: 2cqw; font-size: 2.1cqw; line-height: 1.3; font-weight: 700; text-align: center; }
+.prospectus-figures { position: absolute; left: 5cqw; right: 5cqw; bottom: 0; width: 90cqw; height: 23cqw; object-fit: contain; object-position: bottom; }
+.prospectus-split-header { display: grid; grid-template-columns: 35cqw 1fr; gap: 5cqw; align-items: center; }
+.prospectus-wide-photo { width: 48cqw; height: 24cqw; object-fit: cover; }
+.prospectus-journey { display: grid; grid-template-columns: 69% 31%; padding: 0; }
+.prospectus-journey-main { padding: 3cqw 3.8cqw; }
+.prospectus-journey-main .prospectus-brand { position: absolute; width: 9cqw; height: 8cqw; left: 3cqw; top: 2.5cqw; }
+.prospectus-journey-main .prospectus-title-chip { margin-left: 19cqw; text-align: center; }
+.prospectus-two-copy .prospectus-copy { columns: 2; column-gap: 3cqw; }
+.prospectus-photo-rail { border-left: .6cqw solid hsl(var(--prospectus-magenta)); display: grid; grid-template-rows: 35% 28% 37%; }
+.prospectus-photo-rail img { width: 100%; height: 100%; object-fit: cover; }
+.prospectus-learning { padding: 1.5cqw; text-align: center; font-size: 1.55cqw; line-height: 1.42; }
+.prospectus-learning strong { font-size: 2cqw; font-style: italic; }.prospectus-learning p { margin: .55cqw 0; }.prospectus-learning b { color: hsl(var(--prospectus-green)); }
+.prospectus-training-grid { display: grid; grid-template-columns: repeat(3, 1fr); height: 100%; background: hsl(var(--prospectus-pink)); }
+.prospectus-training-grid article { position: relative; padding: 3cqw 2.7cqw 7cqw; background-color: hsl(var(--prospectus-pink) / .72); background-size: cover; }
+.prospectus-training-grid .prospectus-brand { display: block; margin: 0 auto; }
+.prospectus-training-grid article:nth-child(2) { border-inline: 1px solid hsl(var(--prospectus-magenta) / .14); }
+.prospectus-training-grid .prospectus-copy { font-size: 1.45cqw; }.prospectus-training-grid .prospectus-copy p:first-child { color: hsl(var(--prospectus-green)); font-size: 1.8cqw; font-weight: 700; }
+.prospectus-training-grid footer { position: absolute; left: 0; right: 0; bottom: 0; height: 5cqw; display: grid; place-items: center; background: hsl(var(--prospectus-magenta)); color: hsl(var(--prospectus-paper)); font-size: 1.8cqw; font-weight: 700; }
+.prospectus-qa { display: grid; grid-template-columns: 67% 33%; padding: 0; }.prospectus-qa main { padding: 3cqw 4cqw; }.prospectus-qa main > h2 { margin-left: 25cqw; }
+.prospectus-qa-list h3 { font-size: 1.48cqw; margin: 1.5cqw 0 .75cqw; font-weight: 700; }.prospectus-qa-list p { font-size: 1.42cqw; line-height: 1.35; }
+.prospectus-qa aside { padding: 4cqw 3cqw; background-color: hsl(var(--prospectus-magenta)); background-size: cover; color: hsl(var(--prospectus-paper)); }.prospectus-qa aside .prospectus-brand { display: block; margin: 0 auto 3cqw; }
+.prospectus-copy-light { color: hsl(var(--prospectus-paper)); }
+.prospectus-contact { display: grid; grid-template-columns: 31% 69%; padding: 0; }.prospectus-contact > aside { padding: 4cqw; background-color: hsl(var(--prospectus-magenta)); background-size: cover; }
+.prospectus-contact-card { height: 100%; padding: 3cqw 2cqw; border-radius: 1.6cqw; background: hsl(var(--prospectus-paper)); text-align: center; }.prospectus-contact-card .prospectus-brand { width: 18cqw; }.prospectus-contact-card h2 { color: hsl(var(--prospectus-magenta)); font-size: 2.6cqw; line-height: 1.08; margin: 2cqw 0; }
+.prospectus-contact > main { padding: 5cqw 5.5cqw; }.prospectus-contact > main h3 { margin: 0 0 1cqw; font-size: 1.7cqw; }.prospectus-contact > main h3:nth-of-type(2) { margin-top: 3.3cqw; }
+.prospectus-actions { width: min(94vw, 1280px); margin: 1rem auto 0; padding: 1.25rem; display: flex; align-items: center; justify-content: center; gap: 1rem; border: 1px solid hsl(var(--border)); background: hsl(var(--card)); }
+@media (max-width: 700px) {
+  .prospectus-shell { padding-top: .5rem; }.prospectus-toolbar { align-items: flex-start; flex-wrap: wrap; }.prospectus-toolbar > div { width: 100%; margin-left: 0; }.prospectus-toolbar button { flex: 1; font-size: .6rem; }
+  .prospectus-pages { width: 100%; gap: .5rem; }.prospectus-page { box-shadow: none; }
+  .prospectus-actions { width: 94vw; flex-direction: column; text-align: center; }
+}
+@media print { .prospectus-page { break-after: page; box-shadow: none; } }

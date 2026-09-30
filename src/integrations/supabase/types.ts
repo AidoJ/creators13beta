@@ -2393,6 +2393,8 @@ export type Database = {
           created_at: string
           heading: string
           id: string
+          image_urls: Json
+          layout_key: string | null
           sort_order: number
           updated_at: string
         }
@@ -2401,6 +2403,8 @@ export type Database = {
           created_at?: string
           heading?: string
           id?: string
+          image_urls?: Json
+          layout_key?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -2409,6 +2413,8 @@ export type Database = {
           created_at?: string
           heading?: string
           id?: string
+          image_urls?: Json
+          layout_key?: string | null
           sort_order?: number
           updated_at?: string
         }
