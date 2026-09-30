@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { Calendar, Clock, Lock, MapPin, Globe } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { resolveEventCoverUrl } from "@/lib/eventCovers";
 
 const TIER_GRADIENTS: Record<string, string> = {
   wren: "from-emerald-500/30 via-teal-500/20 to-cyan-500/30",
@@ -49,7 +51,18 @@ export function EventCover({
   const sameDay = start.toDateString() === end.toDateString();
   const showMulti = !!isMultiDay && !sameDay;
 
-  const img = coverImageUrl || extractFirstImage(descriptionHtml);
+  const [resolvedCover, setResolvedCover] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    resolveEventCoverUrl(coverImageUrl).then((url) => {
+      if (!cancelled) setResolvedCover(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [coverImageUrl]);
+
+  const img = resolvedCover || extractFirstImage(descriptionHtml);
   const gradient = TIER_GRADIENTS[(tier || "wren").toLowerCase()] ?? TIER_GRADIENTS.wren;
   // Always contain so uploaded flyers/posters are fully visible and never crop.
   const fit = "object-contain";

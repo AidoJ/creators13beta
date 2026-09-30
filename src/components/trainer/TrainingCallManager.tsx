@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Calendar, Plus, Video, Clock, Repeat, Send, Trash2, X, Users, UserPlus, Mail, CheckCircle, Bell, XCircle, Edit, CircleDot, ChevronDown, CalendarClock, Copy, MoreHorizontal } from "lucide-react";
+import { Calendar, Plus, Video, Clock, Repeat, Send, Trash2, X, Users, UserPlus, Mail, CheckCircle, Bell, XCircle, Edit, CircleDot, ChevronDown, CalendarClock, Copy, MoreHorizontal, Upload, Loader2 } from "lucide-react";
+import { EVENT_COVER_BUCKET, MAX_EVENT_COVER_BYTES, ALLOWED_EVENT_COVER_TYPES, resolveEventCoverUrl } from "@/lib/eventCovers";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
@@ -101,6 +102,46 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [recurrence, setRecurrence] = useState("none");
   const [recurrenceEnd, setRecurrenceEnd] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState("");
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const coverFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Resolve storage paths (private bucket) to signed URLs for the preview.
+  useEffect(() => {
+    let cancelled = false;
+    resolveEventCoverUrl(coverImageUrl.trim() || null).then((url) => {
+      if (!cancelled) setCoverPreviewUrl(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [coverImageUrl]);
+
+  async function handleCoverFilePick(f: File | null) {
+    if (!f || !user) return;
+    if (!ALLOWED_EVENT_COVER_TYPES.includes(f.type)) {
+      toast({ title: "Unsupported image", description: "Please use a JPG, PNG or WebP image.", variant: "destructive" });
+      return;
+    }
+    if (f.size > MAX_EVENT_COVER_BYTES) {
+      toast({ title: "Image too large", description: "Cover images must be 5 MB or smaller.", variant: "destructive" });
+      return;
+    }
+    setCoverUploading(true);
+    try {
+      const ext = f.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from(EVENT_COVER_BUCKET).upload(path, f, { upsert: false });
+      if (error) throw error;
+      setCoverImageUrl(path);
+      toast({ title: "Image uploaded", description: "Remember to save the event." });
+    } catch (e: any) {
+      toast({ title: "Upload failed", description: e?.message || "Could not upload the image.", variant: "destructive" });
+    } finally {
+      setCoverUploading(false);
+      if (coverFileInputRef.current) coverFileInputRef.current.value = "";
+    }
+  }
   const [coverImageFit, setCoverImageFit] = useState<"cover" | "contain">("cover");
   const [coverImagePosition, setCoverImagePosition] = useState("center");
   const [promoLink, setPromoLink] = useState("");
@@ -974,6 +1015,25 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
             {/* Cover image — sized to the community tile panel */}
             <div className="sm:col-span-2 rounded-lg border border-border bg-muted/20 p-3 space-y-2">
               <p className="text-xs font-semibold text-foreground">Cover image (community tile)</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  ref={coverFileInputRef}
+                  type="file"
+                  accept={ALLOWED_EVENT_COVER_TYPES.join(",")}
+                  className="hidden"
+                  onChange={(e) => handleCoverFilePick(e.target.files?.[0] ?? null)}
+                />
+                <Button type="button" variant="outline" size="sm" disabled={coverUploading} onClick={() => coverFileInputRef.current?.click()}>
+                  {coverUploading ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Upload className="h-4 w-4 mr-1.5" />}
+                  {coverUploading ? "Uploading…" : "Upload image"}
+                </Button>
+                {coverImageUrl && (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setCoverImageUrl("")}>
+                    Remove
+                  </Button>
+                )}
+                <span className="text-[10px] text-muted-foreground">JPG, PNG or WebP, up to 5 MB — or paste a link below.</span>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_140px] gap-2">
                 <Input value={coverImageUrl} onChange={e => setCoverImageUrl(e.target.value)} placeholder="https://…/cover.jpg" />
                 <Select value={coverImageFit} onValueChange={(v) => setCoverImageFit(v as "cover" | "contain")}>
@@ -996,11 +1056,11 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
                   </SelectContent>
                 </Select>
               </div>
-              {coverImageUrl && (
+              {coverPreviewUrl && (
                 <div className="rounded-md overflow-hidden border border-border max-w-sm">
                   <div className="relative aspect-[16/10] w-full bg-muted">
                     <img
-                      src={coverImageUrl}
+                      src={coverPreviewUrl}
                       alt=""
                       className={`absolute inset-0 h-full w-full ${coverImageFit === "contain" ? "object-contain" : "object-cover"}`}
                       style={{ objectPosition: coverImagePosition }}
