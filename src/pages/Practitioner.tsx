@@ -32,7 +32,15 @@ export default function PractitionerDashboard() {
   const [codeCopied, setCodeCopied] = useState(false);
   const { has: hasFeature } = useFeatures();
   const canClinicRefer = hasFeature("prac_clinic_referral");
-  const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get("tab") || "pipeline");
+  const [activeTab, setActiveTab] = useState(() => {
+    const requested = new URLSearchParams(window.location.search).get("tab");
+    const allowed = new Set(["pipeline", "calendar", "clients", "invitations", "clinic", "cases", "resources", "charts", "faqs"]);
+    return requested && allowed.has(requested) ? requested : "pipeline";
+  });
+
+  useEffect(() => {
+    if (activeTab === "clinic" && !canClinicRefer) setActiveTab("pipeline");
+  }, [activeTab, canClinicRefer]);
   const [searchFilterCaseStudyId, setSearchFilterCaseStudyId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [clientHasCaseStudy, setClientHasCaseStudy] = useState(false);
