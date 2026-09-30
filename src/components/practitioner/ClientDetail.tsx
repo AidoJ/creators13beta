@@ -1,3 +1,5 @@
+import { ageFromDob } from "@/lib/age";
+import { isCaseStudySubject as checkCaseStudySubject } from "@/lib/caseStudySubject";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -114,7 +116,8 @@ export default function ClientDetail({ clientId, onClientNameLoaded }: ClientDet
       }
       if (bookingRes.data) setBooking(bookingRes.data);
       if (ctRes.data) setCreatorType(ctRes.data);
-      setIsCaseStudySubject(!!(csRes.data && csRes.data.length > 0));
+      void csRes;
+      setIsCaseStudySubject(await checkCaseStudySubject(clientId));
       setLoading(false);
     }
     fetchClientData();
@@ -225,12 +228,8 @@ export default function ClientDetail({ clientId, onClientNameLoaded }: ClientDet
       {/* Parent/Guardian consent — only for under-18 clients */}
       {(() => {
         if (!profile.date_of_birth) return null;
-        const dob = new Date(profile.date_of_birth);
-        const now = new Date();
-        let age = now.getFullYear() - dob.getFullYear();
-        const m = now.getMonth() - dob.getMonth();
-        if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
-        if (age >= 18) return null;
+        const age = ageFromDob(profile.date_of_birth);
+        if (age === null || age >= 18) return null;
         const declared = !!profile.guardian_consent_declared;
         const verified = profile.guardian_consent_status === "verified";
         const statusLabel = verified ? "Verified (email + phone)" : declared ? "Declared by the young person" : "Declaration Missing";

@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, MailCheck } from "lucide-react";
-import { TIERS, TierKey } from "@/lib/tiers";
+import { planNameSync, type TierKey } from "@/lib/plans";
 import { getAppOrigin } from "@/lib/appOrigin";
 import EnrollmentHeader from "@/components/enrollment/EnrollmentHeader";
 import { SignupFields } from "@/components/auth/SignupFields";
@@ -31,7 +31,7 @@ export default function Signup() {
   // OWN new account" apart from "a different already-logged-in user (e.g.
   // the inviting practitioner) opened this link."
   const expectedEmail = (params.get("email") || "").toLowerCase();
-  const tierInfo = TIERS[tier] || TIERS.wren;
+  const tierInfo = { name: planNameSync(tier) };
   const authReturnParams = new URLSearchParams({ tier, billing });
   if (caseStudy) {
     authReturnParams.set("case_study", "true");
@@ -170,7 +170,7 @@ export default function Signup() {
     // redemption creates the free plan record plus the practitioner link.
     // Paid tiers: nothing is written here — the product checkout + webhook handle it.
     if (!isClinic && tier === "wren") {
-      const priceId = tierInfo.stripe?.price_id || null;
+      const priceId = null;
       const { error: fnError } = await supabase.functions.invoke("create-checkout", {
         body: {
           priceId,
@@ -257,7 +257,7 @@ export default function Signup() {
     if (tier !== "wren") return;
 
     const appOrigin = getAppOrigin();
-    const priceId = tierInfo.stripe?.price_id || null;
+    const priceId = null;
     const signupPath = isPlayer ? "player" : caseStudy ? "case_study" : "paying";
 
 

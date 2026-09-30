@@ -1,3 +1,4 @@
+import { isCaseStudySubject as isCaseStudySubjectRule } from "@/lib/caseStudySubject";
 // Centralised enrollment gate. Single source of truth for "what step is this user
 // allowed to be on right now?". Used by Dashboard + every enrollment page so that
 // users can never skip a step by URL-hopping, stale links, or bookmarks.
@@ -58,7 +59,7 @@ export async function loadEnrollmentState(userId: string): Promise<EnrollmentSta
   const holdsProfileProduct = heldKeys.some((k) => k.startsWith("profile_") || k === "case_study");
 
   const roles = (rolesRes.data || []).map((r: any) => r.role);
-  // NOTE: "trainee" is NOT staff — trainees are paying clients (e.g. Owl tier)
+  // NOTE: "trainee" is NOT staff — trainees are paying clients (e.g. practitioner training)
   // still required to complete consent/photos/booking. Only practitioner/
   // trainer/admin bypass the client enrolment gate.
   const isStaff = roles.some((r: string) =>
@@ -78,11 +79,8 @@ export async function loadEnrollmentState(userId: string): Promise<EnrollmentSta
     .rpc("get_inviting_practitioners_for_current_user");
   const hasInvitation = !!(invitingPractitioners && invitingPractitioners.length > 0);
 
-  const isCaseStudySubject = !!(
-    subRes.data?.referral_code ||
-    hasInvitation ||
-    (csRes.data && csRes.data.length > 0)
-  );
+  void hasInvitation; void csRes;
+  const isCaseStudySubject = await isCaseStudySubjectRule(userId);
 
   const signupPath = (subRes.data as any)?.signup_path ?? null;
   const isPlayerOnly = signupPath === "player";

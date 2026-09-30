@@ -52,7 +52,7 @@ interface BotStatRow {
 interface Props {
   userId: string;
   firstName: string | null;
-  tierLabel: string; // "Player" | "Wren" | "Robin" ...
+  tierLabel: string; // "Player" | "Free" | "Create" ...
   isPaidTier: boolean;
 }
 

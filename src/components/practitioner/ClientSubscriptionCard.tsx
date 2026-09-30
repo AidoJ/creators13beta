@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { TIERS } from "@/lib/tiers";
-import type { TierKey } from "@/lib/tiers";
+import { planNameSync } from "@/lib/plans";
+import type { TierKey } from "@/lib/plans";
 import { CreditCard, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { loadMyAccess, type AccessItem } from "@/lib/accessSummary";
@@ -58,8 +58,7 @@ export default function ClientSubscriptionCard({ clientId }: ClientSubscriptionC
     );
   }
 
-  const tierInfo = TIERS[sub.tier];
-  const monthlyPrice = tierInfo?.monthlyPrice || 0;
+  const planName = planNameSync(sub.tier);
   const statusColor = sub.status === "active"
     ? "bg-green-500/10 text-green-600 border-green-500/20"
     : sub.status === "past_due"
@@ -76,7 +75,7 @@ export default function ClientSubscriptionCard({ clientId }: ClientSubscriptionC
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
         <div>
           <span className="text-muted-foreground text-xs">Plan</span>
-          <p className="font-semibold text-foreground capitalize">{tierInfo?.name || sub.tier} — {tierInfo?.subtitle || ""}</p>
+          <p className="font-semibold text-foreground capitalize">{planName}</p>
         </div>
         <div>
           <span className="text-muted-foreground text-xs">Status</span>
@@ -84,7 +83,7 @@ export default function ClientSubscriptionCard({ clientId }: ClientSubscriptionC
         </div>
         <div>
           <span className="text-muted-foreground text-xs">Monthly Fee</span>
-          <p className="font-semibold text-foreground">{monthlyPrice === 0 ? "Free" : `$${monthlyPrice} AUD`}</p>
+          <p className="font-semibold text-foreground">{sub.tier === "wren" ? "Free" : "Paid"}</p>
         </div>
         <div>
           <span className="text-muted-foreground text-xs">Billing</span>

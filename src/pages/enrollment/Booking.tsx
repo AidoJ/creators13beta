@@ -1,6 +1,6 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { TIERS, TierKey } from "@/lib/tiers";
+import { planNameSync, type TierKey } from "@/lib/plans";
 import { Calendar, ArrowRight, AlertCircle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,7 @@ export default function Booking() {
   const { ready: gateReady } = useEnrollmentGate();
 
   const tier = (params.get("tier") as TierKey) || "wren";
-  const tierInfo = TIERS[tier] || TIERS.wren;
+  const tierInfo = { name: planNameSync(tier) };
   const [calendlyEventTime, setCalendlyEventTime] = useState<string | null>(null);
   const [calendlyZoomLink, setCalendlyZoomLink] = useState<string | null>(null);
   const [calendlyBooked, setCalendlyBooked] = useState(false);

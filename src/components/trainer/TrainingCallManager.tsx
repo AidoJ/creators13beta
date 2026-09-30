@@ -1,3 +1,4 @@
+import { planNameSync } from "@/lib/plans";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { loadAccessSummary } from "@/lib/accessSummary";
@@ -116,7 +117,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   // Community audience tier grid (Wren/Robin/Cockatoo/Owl × visible/access)
   type TierKey = "wren" | "robin" | "cockatoo" | "owl";
   const TIER_KEYS: TierKey[] = ["wren", "robin", "cockatoo", "owl"];
-  const TIER_LABELS: Record<TierKey, string> = { wren: "Wren (free)", robin: "Robin", cockatoo: "Cockatoo", owl: "Owl" };
+  const TIER_LABELS: Record<TierKey, string> = { wren: "Free", robin: "Create", cockatoo: "Co-Create", owl: "Practitioner Membership" };
   type TierGrid = Record<TierKey, { visible: boolean; access: boolean }>;
   const emptyTierGrid = (): TierGrid => ({
     wren: { visible: false, access: false },
@@ -1198,7 +1199,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
                       <span className="text-foreground text-xs font-medium truncate block">{p.name}</span>
                       <span className="text-muted-foreground text-[10px] truncate block">{p.email}</span>
                     </div>
-                    <Badge variant="outline" className="text-[9px] capitalize h-4 px-1">{p.tier}</Badge>
+                    <Badge variant="outline" className="text-[9px] capitalize h-4 px-1">{planNameSync(p.tier)}</Badge>
                   </label>
                 ))}
               </div>

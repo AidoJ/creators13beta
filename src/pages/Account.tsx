@@ -32,9 +32,10 @@ export default function Account() {
     (a) => !!a.stripe_ref && (a.billing_shape === "recurring" || a.billing_shape === "fixed_term"),
   );
 
-  const openPortal = async () => {
+  const openPortal = async (flow?: "cancel") => {
     setPortalLoading(true);
-    const { data, error } = await supabase.functions.invoke("customer-portal");
+    // "cancel" opens Stripe's cancel step, which returns to the dashboard once confirmed.
+    const { data, error } = await supabase.functions.invoke("customer-portal", { body: flow ? { flow } : {} });
     setPortalLoading(false);
     if (error || !(data as any)?.url) {
       toast({ title: "Couldn't open billing", description: (data as any)?.message || error?.message || "Please try again.", variant: "destructive" });
@@ -131,9 +132,14 @@ export default function Account() {
                 <AccessList items={access} />
                 {hasRecurring && (
                   <div className="space-y-1">
-                    <Button variant="outline" onClick={openPortal} disabled={portalLoading} className="w-full">
-                      {portalLoading ? "Opening…" : "Manage or cancel subscription"}
-                    </Button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button variant="outline" onClick={() => openPortal()} disabled={portalLoading}>
+                        {portalLoading ? "Opening…" : "Manage billing"}
+                      </Button>
+                      <Button variant="outline" onClick={() => openPortal("cancel")} disabled={portalLoading}>
+                        Cancel subscription
+                      </Button>
+                    </div>
                     <p className="text-xs text-muted-foreground text-center">
                       If you cancel, you keep access until the end of the period you've paid for.
                     </p>

@@ -1,3 +1,4 @@
+import { ageFromDob } from "@/lib/age";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -53,10 +54,7 @@ export default function GettingStartedCard({ userId, firstName, purchaseSuccess 
       const journey = rows.find((row) => row.key === "profiling_journey");
       if (journey && enrollment) {
         const p = profileRes.data;
-        const dob = p?.date_of_birth ? new Date(`${p.date_of_birth}T00:00:00`) : null;
-        const now = new Date();
-        let age = dob ? now.getFullYear() - dob.getFullYear() : 99;
-        if (dob && (now.getMonth() < dob.getMonth() || (now.getMonth() === dob.getMonth() && now.getDate() < dob.getDate()))) age -= 1;
+        const age = ageFromDob(p?.date_of_birth) ?? 99;
         const minorWaiting = age < 18 && p?.guardian_consent_status !== "verified";
         if (minorWaiting) {
           const waitingForEmail = p?.guardian_consent_status === "pending";

@@ -11,19 +11,9 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { TIERS, TierKey } from "@/lib/tiers";
+import type { TierKey } from "@/lib/plans";
 import EnrollmentHeader from "@/components/enrollment/EnrollmentHeader";
-import birdWren from "@/assets/bird-wren.png";
-import birdRobin from "@/assets/bird-robin.png";
-import birdCockatoo from "@/assets/bird-cockatoo.png";
-import birdOwl from "@/assets/bird-owl.png";
 
-const birdImages: Record<TierKey, string> = {
-  wren: birdWren,
-  robin: birdRobin,
-  cockatoo: birdCockatoo,
-  owl: birdOwl,
-};
 
 type SignupPath = "paying" | "case_study" | "player" | null;
 
@@ -543,117 +533,19 @@ export default function PlanSelection() {
         )}
 
 
-        {/* ── Paying Client: tier selection ── */}
+        {/* ── Paying Client: memberships are bought on the main page ── */}
         {signupPath === "paying" && (
-          <>
-            {/* Billing toggle */}
-            <div className="flex justify-center mb-10">
-              <div className="inline-flex items-center gap-1 bg-muted rounded-full p-1">
-                <button
-                  onClick={() => setAnnual(false)}
-                  className={cn(
-                    "px-5 py-2 rounded-full text-sm font-semibold transition-all",
-                    !annual ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Monthly
-                </button>
-                <button
-                  onClick={() => setAnnual(true)}
-                  className={cn(
-                    "px-5 py-2 rounded-full text-sm font-semibold transition-all",
-                    annual ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Annual <span className="text-xs opacity-75 ml-1">Save 17%</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Tier cards — exclude free Wren for paying clients */}
-            <div className="grid gap-5 mb-8 sm:grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto">
-              {(Object.entries(TIERS) as [TierKey, typeof TIERS[TierKey]][])
-                .filter(([key]) => key !== "wren")
-                .map(([key, tier]) => {
-                const isSelected = selectedTier === key;
-                const price = annual ? Math.round(tier.annualPrice / 12) : tier.monthlyPrice;
-
-                const tierBg: Record<string, string> = {
-                  robin: "bg-gradient-to-b from-pink-100/60 via-pink-50/40 to-white",
-                  cockatoo: "bg-gradient-to-b from-blue-100/40 via-pink-50/30 to-white",
-                  owl: "bg-gradient-to-b from-purple-100/40 via-pink-50/20 to-white",
-                };
-
-                return (
-                  <button
-                    key={key}
-                    onClick={() => setSelectedTier(key)}
-                    className={cn(
-                      "relative flex flex-col rounded-2xl overflow-hidden border text-left transition-all duration-200 hover:shadow-lg focus:outline-none",
-                      tierBg[key] || "bg-card",
-                      isSelected
-                        ? "border-primary ring-2 ring-primary/30 shadow-lg"
-                        : "border-border hover:border-primary/40"
-                    )}
-                  >
-                    {key === "robin" && (
-                      <span className="absolute top-3 right-3 z-10 bg-primary text-primary-foreground text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                        Popular
-                      </span>
-                    )}
-                    {key === "owl" && (
-                      <span className="absolute top-3 right-3 z-10 bg-amber-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                        For Certified Practitioners
-                      </span>
-                    )}
-
-                    <div className="flex items-center justify-center p-6 pb-2">
-                      <img src={birdImages[key]} alt={tier.name} className="h-28 w-auto object-contain" />
-                    </div>
-
-                    <div className="p-5 pt-2 flex flex-col flex-1">
-                      <h3 className="text-lg font-display font-bold text-foreground">{tier.name}</h3>
-                      <p className="text-xs text-muted-foreground mb-3">{tier.subtitle}</p>
-
-                      <div className="mb-4">
-                        <span className="text-2xl font-display font-bold text-foreground">${price}</span>
-                        <span className="text-muted-foreground text-sm ml-1">/mo</span>
-                        {annual && tier.annualPrice > 0 && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            ${tier.annualPrice} billed annually
-                          </p>
-                        )}
-                      </div>
-
-                      <ul className="space-y-1.5 flex-1">
-                        {tier.features.map((f) => (
-                          <li key={f} className="flex items-start gap-2 text-xs text-foreground">
-                            <Check className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
-                            {f}
-                          </li>
-                        ))}
-                      </ul>
-
-                      <div className={cn(
-                        "mt-4 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all",
-                        isSelected
-                          ? "bg-primary text-primary-foreground shadow-md"
-                          : key === "robin"
-                            ? "border-2 border-primary text-primary font-bold hover:bg-primary hover:text-primary-foreground"
-                            : "bg-primary/15 text-primary hover:bg-primary/25"
-                      )}>
-                        {isSelected ? "Selected ✓" : "Select"}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </>
+          <div className="max-w-xl mx-auto mb-8 rounded-2xl border border-border bg-card p-6 text-center space-y-3">
+            <h3 className="text-lg font-display font-bold text-foreground">Choose your membership or profile</h3>
+            <p className="text-sm text-muted-foreground">Connect, Create, Co-Create and the profiling options are all on our main page.</p>
+            <Button className="rounded-full" onClick={() => navigate("/#profiling")}>
+              See memberships and profiles <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         )}
 
         {/* Continue button — only show once a path is selected */}
-        {signupPath && (
+        {signupPath && signupPath !== "paying" && (
           <div className="text-center space-y-3">
             <Button
               onClick={handleContinue}

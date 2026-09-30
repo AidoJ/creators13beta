@@ -1,3 +1,4 @@
+import { planNameSync } from "@/lib/plans";
 import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -120,7 +121,7 @@ export default function SubscribersTab({ users, caseStudies, assignedPracMap }: 
                           </div>
                         ) : u.tier ? (
                           <Badge variant="outline" className={`text-[10px] capitalize ${tierColors[u.tier] || ""}`}>
-                            {u.tier}
+                            {planNameSync(u.tier)}
                           </Badge>
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
@@ -175,7 +176,7 @@ export default function SubscribersTab({ users, caseStudies, assignedPracMap }: 
       </Dialog>
 
       <p className="text-[10px] text-muted-foreground">
-        Showing {filtered.length} paying subscriber{filtered.length !== 1 ? "s" : ""} (paid checkout purchases, or a legacy Robin, Cockatoo or Owl plan).
+        Showing {filtered.length} paying subscriber{filtered.length !== 1 ? "s" : ""} (paid checkout purchases, or an older Create, Co-Create or Practitioner plan).
       </p>
     </div>
   );

@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { TIERS, type TierKey } from "@/lib/tiers";
+import { planNameSync, type TierKey } from "@/lib/plans";
 import { CHANNEL_LABEL } from "@/lib/contacts";
 
 interface PublicProfile {
@@ -172,7 +172,7 @@ export default function MemberProfile() {
   if (!profile) return <NotFoundView />;
 
   const memberSince = formatMemberSince(profile.community_joined_at);
-  const tier = profile.tier ? TIERS[profile.tier] : null;
+  const tier = profile.tier ? { name: planNameSync(profile.tier) } : null;
   const isOwn = user?.id === profile.user_id;
   const practitioner = profile.creator_types.find((type) => type.practitioner_status === "certified");
 

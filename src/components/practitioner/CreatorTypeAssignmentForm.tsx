@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Sparkles, Save, Loader2, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { TierKey } from "@/lib/tiers";
+import type { TierKey } from "@/lib/plans";
 import { getCreatorTypeColor } from "@/lib/creatorTypes";
 
 interface CreatorType {
