@@ -51,9 +51,9 @@ const COPY: Record<string, { bird?: string; title: string; terms: string; featur
   creator: {
     bird: "🐤",
     title: "Create",
-    terms: "Cancel anytime",
+    terms: "13 monthly payments, then Connect at A$8 a month until you cancel",
     feature: true,
-    after: "After 13 months you move to Connect at A$8 a month.",
+    after: "13 monthly payments of A$28, then your plan continues as Connect at A$8 a month until you cancel.",
     bullets: [
       "Everything in Connect",
       "Monthly live Zoom call: 13 Creators Q&A",
@@ -62,8 +62,8 @@ const COPY: Record<string, { bird?: string; title: string; terms: string; featur
   co_creator: {
     bird: "🦜",
     title: "Co-Create",
-    terms: "Cancel anytime",
-    after: "After 13 months you move to Connect at A$8 a month.",
+    terms: "13 monthly payments, then Connect at A$8 a month until you cancel",
+    after: "13 monthly payments of A$88, then your plan continues as Connect at A$8 a month until you cancel.",
     bullets: [
       "Everything in Create",
       "Monthly live Zoom call: Co-Creator Jam",
