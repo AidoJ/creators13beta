@@ -77,7 +77,7 @@ export function stripInlineHtml(html: string): string {
   return box.innerHTML;
 }
 
-const TEXT_PROPS = ["font-size", "font-weight", "font-style", "color", "line-height", "text-align", "font-family", "letter-spacing", "text-transform"];
+const TEXT_PROPS = ["font-size", "font-weight", "font-style", "color", "line-height", "text-align", "font-family", "letter-spacing", "text-transform", "padding"];
 
 function inlineStyles(source: Element, clone: Element) {
   const cs = getComputedStyle(source);
