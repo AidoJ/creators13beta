@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { TIERS } from "@/lib/tiers";
-import type { TierKey } from "@/lib/tiers";
+import { usePlanName } from "@/lib/plans";
+import type { TierKey } from "@/lib/plans";
 import { CreditCard, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { loadMyAccess, type AccessItem } from "@/lib/accessSummary";
@@ -76,7 +76,7 @@ export default function ClientSubscriptionCard({ clientId }: ClientSubscriptionC
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
         <div>
           <span className="text-muted-foreground text-xs">Plan</span>
-          <p className="font-semibold text-foreground capitalize">{tierInfo?.name || sub.tier} — {tierInfo?.subtitle || ""}</p>
+          <p className="font-semibold text-foreground capitalize">{planName}</p>
         </div>
         <div>
           <span className="text-muted-foreground text-xs">Status</span>

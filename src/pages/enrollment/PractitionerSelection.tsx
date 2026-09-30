@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import EnrollmentHeader from "@/components/enrollment/EnrollmentHeader";
 import { useEnrollmentGate } from "@/hooks/useEnrollmentGate";
-import type { TierKey } from "@/lib/tiers";
+import type { TierKey } from "@/lib/plans";
 
 interface PractitionerOption {
   user_id: string;

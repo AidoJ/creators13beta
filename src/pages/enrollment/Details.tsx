@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, Loader2, CheckCircle } from "lucide-react";
-import { TIERS, TierKey } from "@/lib/tiers";
+import { planNameSync, type TierKey } from "@/lib/plans";
 import EnrollmentHeader from "@/components/enrollment/EnrollmentHeader";
 import { useEnrollmentGate } from "@/hooks/useEnrollmentGate";
 import { getAppOrigin } from "@/lib/appOrigin";
@@ -24,7 +24,7 @@ export default function Details() {
   const tier = (params.get("tier") as TierKey) || "wren";
   const billing = params.get("billing") || "monthly";
   const paymentStatus = params.get("payment");
-  const tierInfo = TIERS[tier] || TIERS.wren;
+  const tierInfo = { name: planNameSync(tier) };
 
   // Determine if user just arrived from payment/signup
   const isPaymentSuccess = paymentStatus === "success" || paymentStatus === "skipped";

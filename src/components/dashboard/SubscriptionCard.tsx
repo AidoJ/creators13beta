@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { TIERS } from "@/lib/tiers";
-import type { TierKey } from "@/lib/tiers";
+import { usePlanName } from "@/lib/plans";
+import type { TierKey } from "@/lib/plans";
 import { ArrowRight, CreditCard, ExternalLink, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -132,9 +132,7 @@ export default function SubscriptionCard() {
     );
   }
 
-  const tierInfo = TIERS[sub.tier];
-  const monthlyPrice = tierInfo?.monthlyPrice || 0;
-  const isPaid = monthlyPrice > 0;
+  const isPaid = sub.tier !== "wren";
 
   const statusColor = sub.status === "active"
     ? "bg-green-500/10 text-green-600 border-green-500/20"
@@ -157,11 +155,11 @@ export default function SubscriptionCard() {
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div>
           <span className="text-muted-foreground text-xs">Plan</span>
-          <p className="font-semibold text-foreground">{tierInfo?.name || sub.tier} — {tierInfo?.subtitle || ""}</p>
+          <p className="font-semibold text-foreground">{planName}</p>
         </div>
         <div>
           <span className="text-muted-foreground text-xs">Monthly Fee</span>
-          <p className="font-semibold text-foreground">{isPaid ? `$${monthlyPrice} AUD / ${sub.billing_period || "month"}` : "Free"}</p>
+          <p className="font-semibold text-foreground">{isPaid ? `Paid ${sub.billing_period === "annual" ? "yearly" : "monthly"}` : "Free"}</p>
         </div>
       </div>
 

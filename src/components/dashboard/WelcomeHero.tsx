@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TIERS, type TierKey } from "@/lib/tiers";
+import { usePlanName, type TierKey } from "@/lib/plans";
 import { ArrowRight, BookOpen, CircleHelp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { sortCreatorTypes } from "@/lib/creatorTypes";
@@ -49,7 +49,8 @@ interface WelcomeHeroProps {
 }
 
 export default function WelcomeHero({ firstName, tier, subscriptionStatus, statusLabel, statusColor, creatorTypes = [], showStatusBadge = true, enrollmentStep, country, showBooking = false }: WelcomeHeroProps) {
-  const tierData = tier ? TIERS[tier] : null;
+  const planName = usePlanName(tier);
+  const tierData = tier ? { name: planName } : null;
   const birdSrc = tier ? TIER_BIRDS[tier] : null;
 
   const [glyphs, setGlyphs] = useState<{ name: string; url: string; color: string }[]>([]);
@@ -150,7 +151,7 @@ export default function WelcomeHero({ firstName, tier, subscriptionStatus, statu
                 />
               )}
               <span className="text-sm font-semibold text-foreground">
-                {tierData.name} <span className="text-muted-foreground font-normal">· {tierData.subtitle}</span>
+                {tierData.name}
               </span>
               {subscriptionStatus && (
                 <span className="text-xs text-muted-foreground capitalize">({subscriptionStatus})</span>
