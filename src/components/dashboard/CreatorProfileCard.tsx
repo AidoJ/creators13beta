@@ -86,10 +86,10 @@ export default function CreatorProfileCard({ userId }: CreatorProfileCardProps) 
 
     async function fetchTypeInfo() {
       const names: string[] = [];
-      if (profile!.primary_type) names.push(profile!.primary_type);
-      if (profile!.secondary_type) names.push(profile!.secondary_type);
-      if (profile!.type_3) names.push(profile!.type_3);
-      if (profile!.type_4) names.push(profile!.type_4);
+      if (profile.primary_type) names.push(profile.primary_type);
+      if (profile.secondary_type) names.push(profile.secondary_type);
+      if (profile.type_3) names.push(profile.type_3);
+      if (profile.type_4) names.push(profile.type_4);
 
       // Names may be stored lowercase; creator_types uses Title Case — match both
       const capitalised = names.map(n => n.charAt(0).toUpperCase() + n.slice(1).toLowerCase());

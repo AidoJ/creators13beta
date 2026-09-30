@@ -210,7 +210,7 @@ export default function CommunityDashboard() {
         supabase.from("profiles").select("invitation_code, community_visible").eq("user_id", user.id).maybeSingle(),
         supabase
           .from("creator_type_profiles")
-          .select("primary_type, secondary_type, type_3, type_4")
+          .select("primary_type, secondary_type, type_3, type_4, source")
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase.from("creator_types").select("name, family, team_role, element"),
@@ -223,7 +223,7 @@ export default function CommunityDashboard() {
       setMatches(rows);
       if (myProfileRes.data && mineRes.data) {
         const mine = mineRes.data;
-        setMyMapProfile({ ...myProfileRes.data, creator_types: [mine.primary_type, mine.secondary_type, mine.type_3, mine.type_4].filter(Boolean).map((type) => ({ type, source: "self_selected" })) } as MyMapProfile);
+        setMyMapProfile({ ...myProfileRes.data, creator_types: [mine.primary_type, mine.secondary_type, mine.type_3, mine.type_4].filter(Boolean).map((type) => ({ type, source: mine.source })) } as MyMapProfile);
       }
 
       // Batch-sign avatars in a single storage round-trip. Skip absolute URLs
