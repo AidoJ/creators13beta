@@ -86,7 +86,7 @@ export default function SubscriptionCard() {
         return;
       }
       if (data?.url) {
-        window.open(data.url, "_blank");
+        window.location.href = data.url;
       }
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Could not open subscription portal.", variant: "destructive" });
