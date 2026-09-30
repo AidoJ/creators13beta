@@ -25,12 +25,14 @@ export interface EnrollmentState {
 
 export const REQUIRED_PHOTO_COUNT = 8;
 
+const PHOTO_SUBMITTED_STEPS = ["photos_uploaded", "booking_made", "awaiting_profiling", "complete"];
+
 export async function loadEnrollmentState(userId: string): Promise<EnrollmentState> {
   const [rolesRes, profileRes, subRes, photosRes, bookingRes, cpRes, csRes] = await Promise.all([
     supabase.from("user_roles").select("role").eq("user_id", userId),
     supabase
       .from("profiles")
-      .select("first_name, date_of_birth, gender, height_cm, case_study_consent_at, email")
+      .select("first_name, date_of_birth, gender, height_cm, case_study_consent_at, email, enrollment_step")
       .eq("user_id", userId)
       .maybeSingle(),
     supabase.from("subscriptions").select("tier, billing_period, referral_code, signup_path").eq("user_id", userId).maybeSingle(),
@@ -107,9 +109,12 @@ export async function loadEnrollmentState(userId: string): Promise<EnrollmentSta
       profileRes.data?.height_cm
     ),
     hasConsent: !!profileRes.data?.case_study_consent_at,
-    // All 8 photos are needed before the photo step counts as done; a
-    // partial upload must stay resumable (not bounce the member onward).
-    hasPhotos: (photosRes.count || 0) >= REQUIRED_PHOTO_COUNT,
+    // Photos are saved one by one, so 8 saved photos is not enough: the step
+    // is only done once the member has reviewed and submitted them (which
+    // advances enrollment_step). Otherwise they return to review + submit.
+    hasPhotos:
+      (photosRes.count || 0) >= REQUIRED_PHOTO_COUNT &&
+      PHOTO_SUBMITTED_STEPS.includes(String((profileRes.data as any)?.enrollment_step ?? "")),
     photoCount: photosRes.count || 0,
     hasBooking: !!bookingRes.data,
     tier: subRes.data?.tier ?? null,
