@@ -114,6 +114,16 @@ Deno.serve(async (req) => {
       return json({ results });
     }
 
+    if (action === "inspect_schedule") {
+      const sub = await stripe.subscriptions.retrieve(body.subscription_id);
+      const sid = typeof sub.schedule === "string" ? sub.schedule : sub.schedule?.id;
+      if (!sid) return json({ schedule: null });
+      const sc = await stripe.subscriptionSchedules.retrieve(sid);
+      return json({ end_behavior: sc.end_behavior, phases: sc.phases.map((p: any) => ({
+        start: new Date(p.start_date * 1000).toISOString().slice(0, 10), end: new Date(p.end_date * 1000).toISOString().slice(0, 10),
+        amount: p.items?.[0]?.price, level: p.metadata?.level_key })) });
+    }
+
     return json({ error: "Unknown action" }, 400);
   } catch (e) {
     const r = authErrorResponse(e, corsHeaders);

@@ -64,7 +64,21 @@ export async function extendExistingSchedule(stripe: Stripe, sb: SupabaseClient,
   const sub = await stripe.subscriptions.retrieve(subscriptionId);
   if (sub.metadata?.level_key === CONTINUATION_LEVEL) return "already_connect";
   const schedId = typeof sub.schedule === "string" ? sub.schedule : sub.schedule?.id;
-  if (!schedId) return "no_schedule";
+  if (!schedId) {
+    // Course without its instalment schedule (attach failed at purchase):
+    // create one now. The current, already-paid period is the first phase
+    // cycle, so remaining cycles = term - paid + 1.
+    const { data: ps } = await sb.from("payment_subscriptions").select("term_months").eq("stripe_subscription_id", subscriptionId).maybeSingle();
+    const term = ps?.term_months ?? Number(sub.metadata?.term_months || 13);
+    const { count } = await sb.from("payments").select("id", { count: "exact", head: true })
+      .eq("stripe_subscription_id", subscriptionId).eq("event_type", "payment");
+    const iterations = Math.max(1, term - (count ?? 1) + 1);
+    await attachFixedTermSchedule(stripe, sb, {
+      subscriptionId, userId: sub.metadata?.user_id || "", levelKey: sub.metadata?.level_key || "",
+      productId: sub.metadata?.product_id || "", instalments: iterations,
+    });
+    return `schedule_created (${count ?? 0} paid, ${iterations} cycles incl. current)`;
+  }
   const sched = await stripe.subscriptionSchedules.retrieve(schedId);
   if (sched.end_behavior === "release" && sched.phases.length >= 2) return "already_extended";
   const userId = sub.metadata?.user_id || sched.metadata?.user_id || "";
