@@ -40,10 +40,10 @@ export default function CommunityProfilePrompt({ children, requireCommunityAcces
   }, [user]);
 
   const banner = show && (!requireCommunityAccess || (ready && hasCommunity)) ? (
-    <div className="bg-primary/10 border-b border-primary/30">
+    <div className="bg-banner text-banner-foreground border-b border-banner-border">
       <div className="container mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
-        <UserPlus className="h-5 w-5 text-primary flex-none" />
-        <p className="text-sm text-foreground flex-1 min-w-[12rem]">
+        <UserPlus className="h-5 w-5 flex-none" />
+        <p className="text-sm text-banner-foreground flex-1 min-w-[12rem]">
           Create your community profile so other members can see you.
         </p>
         <Button asChild size="sm">

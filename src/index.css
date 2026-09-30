@@ -6,6 +6,9 @@
 
 @layer base {
   :root {
+    --banner: 47 67% 75%;
+    --banner-foreground: 30 45% 16%;
+    --banner-border: 44 50% 58%;
     /* Warm ivory background */
     --background: 45 40% 97%;
     --foreground: 340 50% 18%;

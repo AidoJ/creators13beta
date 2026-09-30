@@ -51,21 +51,21 @@ export default function ContinueEnrollmentBlock({ userId }: Props) {
       tabIndex={0}
       onClick={() => navigate(step.route)}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate(step.route); }}
-      className="cursor-pointer p-5 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors flex items-center gap-4"
+      className="cursor-pointer p-5 border-banner-border bg-banner text-banner-foreground hover:brightness-95 transition-colors flex items-center gap-4"
       aria-label={`Continue enrolment: ${step.label}`}
     >
       <div className="flex-1 min-w-0">
-        <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-1">
+        <p className="text-xs uppercase tracking-widest font-semibold mb-1">
           Continue where you left off
         </p>
-        <p className="text-sm font-semibold text-foreground">
+        <p className="text-sm font-semibold">
           Next step: {step.label}
         </p>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <p className="text-xs opacity-80 mt-0.5">
           {remaining === 1 ? "One step to go — your progress is saved." : `${remaining} steps to go — your progress is saved.`}
         </p>
       </div>
-      <ArrowRight className="h-5 w-5 text-primary flex-shrink-0" />
+      <ArrowRight className="h-5 w-5 flex-shrink-0" />
     </Card>
   );
 }

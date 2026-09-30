@@ -82,11 +82,11 @@ export default function PurchaseSuccessBanner() {
   const showExplore = !!item && !isCourse && isRecurring;
 
   return (
-    <div role="status" className="rounded-2xl border border-primary/30 bg-primary/5 p-5 flex gap-4">
-      <CheckCircle2 className="h-6 w-6 text-primary shrink-0 mt-0.5" />
+    <div role="status" className="rounded-2xl border border-banner-border bg-banner text-banner-foreground p-5 flex gap-4">
+      <CheckCircle2 className="h-6 w-6 shrink-0 mt-0.5" />
       <div className="flex-1 space-y-2">
-        <p className="font-display text-lg text-foreground">{title}</p>
-        <p className="text-sm text-muted-foreground">{body}</p>
+        <p className="font-display text-lg">{title}</p>
+        <p className="text-sm opacity-90">{body}</p>
         {showExplore && (
           <Button size="sm" onClick={() => navigate("/community/dashboard")}>
             Explore the community
