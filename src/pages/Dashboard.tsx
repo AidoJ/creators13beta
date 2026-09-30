@@ -104,19 +104,16 @@ export default function Dashboard() {
       setProfileComplete(!!visRes.data?.profile_completed_at);
       if (subRes.data) setSubscription(subRes.data as SubData);
       const hasCsRecord = !!(csRes.data && csRes.data.length > 0);
-      const hasConsent = !!profileRes.data?.case_study_consent_at;
+      // Every client gives consent before photos, so consent alone does NOT
+      // make someone a case-study volunteer (it was hiding the consult step).
       const hasReferral = !!(subRes.data && (subRes.data as any).referral_code);
-      setIsCaseStudySubject(hasCsRecord || hasConsent || hasReferral);
+      setIsCaseStudySubject(hasCsRecord || hasReferral);
 
-      // Check if any linked practitioner has the trainer role
+      // Check if any linked practitioner has the trainer role (backend check:
+      // clients can't read other people's roles directly).
       if (cpRes.data && cpRes.data.length > 0) {
-        const practIds = cpRes.data.map(r => r.practitioner_id);
-        const { data: trainerRoles } = await supabase
-          .from("user_roles")
-          .select("user_id")
-          .in("user_id", practIds)
-          .eq("role", "trainer");
-        setHasTrainerPractitioner(!!(trainerRoles && trainerRoles.length > 0));
+        const { data: isTrainer } = await (supabase as any).rpc("my_practitioner_is_trainer");
+        setHasTrainerPractitioner(isTrainer === true);
       }
 
       if (ctpRes.data) {

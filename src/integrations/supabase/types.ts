@@ -3603,6 +3603,7 @@ export type Database = {
       }
       marketing_unsubscribe: { Args: { _token: string }; Returns: boolean }
       my_features: { Args: never; Returns: string[] }
+      my_practitioner_is_trainer: { Args: never; Returns: boolean }
       open_quiz_if_needed:
         | {
             Args: {
