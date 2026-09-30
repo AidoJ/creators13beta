@@ -268,16 +268,23 @@ serve(async (req) => {
     // "wren" and rewrite the caller's own plan to free. Both holes are closed:
     // the tier must be stated, and an existing live plan is never downgraded.
     // ------------------------------------------------------------------
-    const VALID_TIERS = ["wren", "robin", "cockatoo", "owl"];
-    if (typeof tier !== "string" || !VALID_TIERS.includes(tier)) {
-      logStep("Rejected: missing or invalid tier", { tier });
+    // SECURITY: the legacy tier path handles FREE signups only (wren: player,
+    // case study). Paid memberships must go through the product path above,
+    // where access is granted by the Stripe webhook after payment. Paid tiers
+    // are rejected outright so nothing is written on the caller's word.
+    if (tier !== "wren") {
+      const paid = ["robin", "cockatoo", "owl"].includes(tier);
+      logStep("Rejected: legacy tier path is free-only", { tier });
       return new Response(JSON.stringify({
-        error: "invalid_request",
-        message: "A product or a valid plan must be specified for checkout.",
+        error: paid ? "paid_tier_not_allowed" : "invalid_request",
+        message: paid
+          ? "Paid plans must be bought through a product checkout."
+          : "A product or a valid plan must be specified for checkout.",
       }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const tierValue = tier;
-    const role = tierValue === "owl" ? "trainee" : "client";
+    const tierValue = "wren";
+    // Checkout never grants practitioner roles — those come only from trainer certification.
+    const role = "client";
     const practitionerCode = body.practitioner_code || null;
     const inviteToken = body.invite_token || null;
 
