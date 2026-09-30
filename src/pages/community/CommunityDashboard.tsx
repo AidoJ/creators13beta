@@ -153,9 +153,15 @@ export default function CommunityDashboard() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [unplottable, setUnplottable] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
-  useEffect(() => {
-    if (filterMode !== "month" || filterValue) void markOnboardingVisited("matching_filters");
-  }, [filterMode, filterValue]);
+  const chooseFilterMode = (mode: FilterMode) => {
+    setFilterMode(mode);
+    void markOnboardingVisited("matching_filters");
+  };
+
+  const chooseFilterValue = (value: string) => {
+    setFilterValue(value);
+    void markOnboardingVisited("matching_filters");
+  };
 
   // Batch C — poll pending connection-request count for the badge. 60s,
   // and only while the tab is visible to avoid background churn.
@@ -546,7 +552,7 @@ export default function CommunityDashboard() {
                           type="button"
                           size="sm"
                           variant={filterMode === mode ? "default" : "outline"}
-                          onClick={() => setFilterMode(mode)}
+                          onClick={() => chooseFilterMode(mode)}
                           aria-pressed={filterMode === mode}
                           className="h-8 text-xs px-2"
                         >
@@ -560,7 +566,7 @@ export default function CommunityDashboard() {
                         <select
                           id="community-filter-value"
                           value={filterValue}
-                          onChange={(event) => setFilterValue(event.target.value)}
+                          onChange={(event) => chooseFilterValue(event.target.value)}
                           className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm text-foreground"
                         >
                           {filterOptions.map((option) => <option key={option} value={option}>{option}</option>)}
@@ -653,13 +659,13 @@ export default function CommunityDashboard() {
               <p className="text-xs font-semibold uppercase text-muted-foreground">Filter by</p>
               <div className="grid grid-cols-2 gap-1.5" role="group" aria-label="Filter by">
                 {(["month", "family", "element", "role", "type", "all"] as FilterMode[]).map((mode) => (
-                  <Button key={mode} type="button" size="sm" variant={filterMode === mode ? "default" : "outline"} onClick={() => setFilterMode(mode)} className="min-h-11 capitalize">
+                  <Button key={mode} type="button" size="sm" variant={filterMode === mode ? "default" : "outline"} onClick={() => chooseFilterMode(mode)} className="min-h-11 capitalize">
                     {mode}
                   </Button>
                 ))}
               </div>
               {filterOptions.length > 0 && (
-                <select value={filterValue} onChange={(event) => setFilterValue(event.target.value)} aria-label="Choose filter value" className="min-h-11 w-full rounded-md border border-input bg-background px-2 text-sm text-foreground">
+                <select value={filterValue} onChange={(event) => chooseFilterValue(event.target.value)} aria-label="Choose filter value" className="min-h-11 w-full rounded-md border border-input bg-background px-2 text-sm text-foreground">
                   {filterOptions.map((option) => <option key={option} value={option}>{option}</option>)}
                 </select>
               )}

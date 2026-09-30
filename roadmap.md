@@ -7,8 +7,8 @@
 - [x] 5a Resume unfinished photos (5b reminder banner)
 - [x] 6 Project questions in profile setup
 - [x] 7 Create / Co-Create names
-- [ ] 8 After 13 months -> Connect $8 (proposal; waiting on go-ahead)
+- [x] 8 After 13 months -> Connect $8
 - [x] 9 Calendly consult button
 - [ ] Live test each after publish
 
-- [ ] Build and validate Phase 1 Getting Started navigator, then publish.
+- [x] Build and validate Phase 1 Getting Started navigator, then publish.
