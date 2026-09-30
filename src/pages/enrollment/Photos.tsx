@@ -498,24 +498,10 @@ export default function Photos() {
       setSubmitting(false);
       return;
     } else {
-      // Only show booking page if client is linked to A'Hara (trainer)
-      const { data: trainerLink } = await supabase
-        .from("client_practitioner")
-        .select("practitioner_id")
-        .eq("client_id", user.id)
-        .eq("active", true)
-        .maybeSingle();
-
-      // Check if assigned practitioner has the 'trainer' role (i.e. A'Hara)
-      let isLinkedToTrainer = false;
-      if (trainerLink?.practitioner_id) {
-        const { data: roles } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", trainerLink.practitioner_id)
-          .eq("role", "trainer");
-        isLinkedToTrainer = !!(roles && roles.length > 0);
-      }
+      // Only show booking page if client is linked to A'Hara (trainer).
+      // Clients can't read others' roles, so the backend answers for us.
+      const { data: isTrainer } = await (supabase as any).rpc("my_practitioner_is_trainer");
+      const isLinkedToTrainer = isTrainer === true;
 
       if (isLinkedToTrainer) {
         const nextParams = new URLSearchParams({ tier, billing });

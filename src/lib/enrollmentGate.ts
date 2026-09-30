@@ -68,12 +68,10 @@ export async function loadEnrollmentState(userId: string): Promise<EnrollmentSta
   let practitionerIsTrainer = false;
   const practIds = (cpRes.data || []).map((r: any) => r.practitioner_id);
   if (practIds.length > 0) {
-    const { data: trainerRoles } = await supabase
-      .from("user_roles")
-      .select("user_id")
-      .in("user_id", practIds)
-      .eq("role", "trainer");
-    practitionerIsTrainer = !!(trainerRoles && trainerRoles.length > 0);
+    // Clients can't read other people's roles directly; ask the backend
+    // whether their own linked practitioner is a trainer (A'Hara).
+    const { data: isTrainer } = await (supabase as any).rpc("my_practitioner_is_trainer");
+    practitionerIsTrainer = isTrainer === true;
   }
 
   const { data: invitingPractitioners } = await (supabase as any)
