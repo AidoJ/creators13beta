@@ -135,7 +135,10 @@ export default function Dashboard() {
   const step = profile?.enrollment_step || null;
   // Derive progress from actual data, not just enrollment_step
   const isComplete = step === "complete" || creatorTypes.length >= 4;
-  const photosUploaded = photoCount >= 8 || step === "photos_uploaded" || step === "awaiting_profiling" || step === "booking_made" || isComplete;
+  const photosSubmitted = step === "photos_uploaded" || step === "awaiting_profiling" || step === "booking_made" || isComplete;
+  const photosUploaded = photosSubmitted;
+  // Photos save one by one; unfinished until the member reviews and submits.
+  const photosUnfinished = photoCount > 0 && !photosSubmitted;
   const bookingMade = step === "booking_made" || (isComplete && !!booking);
   const hasDetails = !!(profile?.first_name && profile?.date_of_birth && profile?.gender && profile?.height_cm);
 
@@ -196,7 +199,7 @@ export default function Dashboard() {
             enrollment gate + the recovery sweep so the surfaces never diverge. */}
         {/* Post-purchase thank-you always sits at the very top. */}
         <PurchaseSuccessBanner />
-        {photoCount > 0 && photoCount < 8 && (
+        {photosUnfinished && (
           <button
             type="button"
             onClick={() => navigate("/enroll/photos")}
@@ -205,12 +208,14 @@ export default function Dashboard() {
             <Camera className="h-5 w-5 flex-shrink-0" />
             <span className="flex-1 text-sm">
               <span className="font-semibold">Your photo upload isn't finished.</span>{" "}
-              You've added {photoCount} of 8 photos — tap to carry on where you left off.
+              {photoCount < 8
+                ? `You've added ${photoCount} of 8 photos — tap to carry on where you left off.`
+                : "All 8 photos are added — tap to review and submit them."}
             </span>
             <ArrowRight className="h-5 w-5 flex-shrink-0" />
           </button>
         )}
-        {user && !(photoCount > 0 && photoCount < 8) && <ContinueEnrollmentBlock userId={user.id} />}
+        {user && !photosUnfinished && <ContinueEnrollmentBlock userId={user.id} />}
 
         {/* Section teasers — surface Play & Community without duplicating
             their content here. Phase 2.1: simple label + arrow, no live data. */}
