@@ -60,7 +60,7 @@ serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const { priceId, successUrl, cancelUrl, tier, billing, embedded } = body;
+    const { successUrl, cancelUrl, tier, billing, embedded } = body;
 
 
     // ------------------------------------------------------------------
@@ -408,86 +408,13 @@ serve(async (req) => {
     // only when the user completes the Details step (i.e. they have a real, verified
     // account with profile information saved). See src/pages/enrollment/Details.tsx.
 
-    // FREE TIER: no Stripe needed, return success directly
-    if (!priceId || tierValue === "wren") {
-      logStep("Free tier — skipping Stripe checkout");
-      const origin = req.headers.get("origin") || "http://localhost:3000";
-      return new Response(JSON.stringify({
-        url: successUrl || `${origin}/enroll/details?tier=${tierValue}&billing=monthly&payment=skipped`,
-        free: true,
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
-
-    // PAID TIER: create Stripe checkout session
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-
-    // Find or create Stripe customer
-    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
-    let customerId: string | undefined;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-      logStep("Found existing customer", { customerId });
-
-      // Expire any open checkout sessions to avoid currency conflict
-      const openSessions = await stripe.checkout.sessions.list({
-        customer: customerId,
-        status: "open",
-        limit: 10,
-      });
-      for (const s of openSessions.data) {
-        await stripe.checkout.sessions.expire(s.id);
-        logStep("Expired open session", { sessionId: s.id });
-      }
-    }
-
+    // FREE TIER only (paid tiers rejected above): no Stripe session.
+    logStep("Free tier — no Stripe checkout");
     const origin = req.headers.get("origin") || "http://localhost:3000";
-
-    // EMBEDDED MODE: return client_secret instead of URL
-    if (embedded) {
-      const session = await stripe.checkout.sessions.create({
-        customer: customerId,
-        customer_email: customerId ? undefined : userEmail,
-        line_items: [{ price: priceId, quantity: 1 }],
-        mode: "subscription",
-        ui_mode: "embedded",
-        return_url: successUrl || `${origin}/enroll/details?session_id={CHECKOUT_SESSION_ID}&tier=${tierValue}&billing=${billing || "monthly"}&payment=success`,
-        payment_method_types: ["card"],
-        metadata: {
-          user_id: userId,
-        },
-      });
-
-      logStep("Embedded checkout session created", { sessionId: session.id });
-
-      return new Response(JSON.stringify({ clientSecret: session.client_secret }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
-
-    // REDIRECT MODE (legacy): return URL
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      customer_email: customerId ? undefined : userEmail,
-      line_items: [{ price: priceId, quantity: 1 }],
-      mode: "subscription",
-      success_url: successUrl || `${origin}/enroll/details?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancelUrl || `${origin}/enroll/payment?tier=${tierValue}&billing=${billing || "monthly"}&canceled=true`,
-      payment_method_types: ["card"],
-      metadata: {
-        user_id: userId,
-      },
-    });
-
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
-
-    return new Response(JSON.stringify({ url: session.url }), {
+    return new Response(JSON.stringify({
+      url: successUrl || `${origin}/enroll/details?tier=wren&billing=monthly&payment=skipped`,
+      free: true,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
