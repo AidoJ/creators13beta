@@ -2470,6 +2470,7 @@ export type Database = {
       prospectus_sections: {
         Row: {
           body: string
+          canvas_layout: Json | null
           created_at: string
           heading: string
           id: string
@@ -2480,6 +2481,7 @@ export type Database = {
         }
         Insert: {
           body?: string
+          canvas_layout?: Json | null
           created_at?: string
           heading?: string
           id?: string
@@ -2490,6 +2492,7 @@ export type Database = {
         }
         Update: {
           body?: string
+          canvas_layout?: Json | null
           created_at?: string
           heading?: string
           id?: string
@@ -2735,6 +2738,42 @@ export type Database = {
           name?: string
           slug?: string
           sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      staff_guide_steps: {
+        Row: {
+          audience: string[]
+          body: string
+          created_at: string
+          enabled: boolean
+          id: string
+          route: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          audience?: string[]
+          body?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          route?: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: string[]
+          body?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          route?: string
+          sort_order?: number
+          title?: string
           updated_at?: string
         }
         Relationships: []
@@ -3577,6 +3616,18 @@ export type Database = {
       }
       get_joinable_event_ids: { Args: never; Returns: string[] }
       get_match_state: { Args: { _match_id: string }; Returns: Json }
+      get_my_access_catalog: {
+        Args: never
+        Returns: {
+          feature_category: string
+          feature_key: string
+          feature_name: string
+          held: boolean
+          level_key: string
+          level_name: string
+          level_order: number
+        }[]
+      }
       get_my_approved_contacts: {
         Args: never
         Returns: {
@@ -3816,6 +3867,7 @@ export type Database = {
         }
         Returns: string
       }
+      reset_onboarding_tour: { Args: never; Returns: undefined }
       resolve_effective_tier: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["subscription_tier"]
