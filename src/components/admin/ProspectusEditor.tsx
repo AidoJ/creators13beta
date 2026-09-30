@@ -100,7 +100,13 @@ export default function ProspectusEditor() {
   }, [rows]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Pages without a saved canvas start as a conversion of the current design.
-  useEffect(() => { if (open && rows && !layouts[page] && seedPage === null) setSeedPage(page); }, [open, rows, page, layouts, seedPage]);
+  // Never seed a page that already has a saved canvas (avoids a race with the load effect above).
+  useEffect(() => {
+    if (!open || !rows || layouts[page] || seedPage !== null) return;
+    const row = rows.find((r) => r.layout_key === PAGE_PRIMARY_KEYS[page - 1]);
+    if (row?.canvas_layout?.elements?.length) return;
+    setSeedPage(page);
+  }, [open, rows, page, layouts, seedPage]);
   useEffect(() => {
     if (seedPage === null) return;
     let cancelled = false;
@@ -113,7 +119,7 @@ export default function ProspectusEditor() {
       if (cancelled) return;
       const urlToPath = Object.fromEntries(Object.entries(signed).map(([p, u]) => [u, p]));
       const seeded = seedFromPage(node, urlToPath);
-      setLayouts((prev) => ({ ...prev, [seedPage]: seeded }));
+      setLayouts((prev) => (prev[seedPage] ? prev : { ...prev, [seedPage]: seeded }));
       setSeedPage(null);
     };
     run();
@@ -296,7 +302,7 @@ export default function ProspectusEditor() {
       const { error } = await supabase.from("prospectus_sections" as any).update({ canvas_layout: clean as any }).eq("id", row.id);
       if (error) { failed = true; toast({ title: `Couldn't save ${PAGE_LABELS[p - 1]}`, description: error.message, variant: "destructive" }); }
     }
-    if (!failed) { setDirty(new Set()); toast({ title: "Prospectus saved", description: "The public page and PDF now show your changes." }); }
+    if (!failed) { setDirty(new Set()); await reload(); toast({ title: "Prospectus saved", description: "The public page and PDF now show your changes." }); }
     setBusy(null);
   }
   async function resetPage() {
