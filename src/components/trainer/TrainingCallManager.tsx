@@ -105,6 +105,43 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
   const [coverUploading, setCoverUploading] = useState(false);
   const coverFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Resolve storage paths (private bucket) to signed URLs for the preview.
+  useEffect(() => {
+    let cancelled = false;
+    resolveEventCoverUrl(coverImageUrl.trim() || null).then((url) => {
+      if (!cancelled) setCoverPreviewUrl(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [coverImageUrl]);
+
+  async function handleCoverFilePick(f: File | null) {
+    if (!f || !user) return;
+    if (!ALLOWED_EVENT_COVER_TYPES.includes(f.type)) {
+      toast({ title: "Unsupported image", description: "Please use a JPG, PNG or WebP image.", variant: "destructive" });
+      return;
+    }
+    if (f.size > MAX_EVENT_COVER_BYTES) {
+      toast({ title: "Image too large", description: "Cover images must be 5 MB or smaller.", variant: "destructive" });
+      return;
+    }
+    setCoverUploading(true);
+    try {
+      const ext = f.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from(EVENT_COVER_BUCKET).upload(path, f, { upsert: false });
+      if (error) throw error;
+      setCoverImageUrl(path);
+      toast({ title: "Image uploaded", description: "Remember to save the event." });
+    } catch (e: any) {
+      toast({ title: "Upload failed", description: e?.message || "Could not upload the image.", variant: "destructive" });
+    } finally {
+      setCoverUploading(false);
+      if (coverFileInputRef.current) coverFileInputRef.current.value = "";
+    }
+  }
   const [coverImageFit, setCoverImageFit] = useState<"cover" | "contain">("cover");
   const [coverImagePosition, setCoverImagePosition] = useState("center");
   const [promoLink, setPromoLink] = useState("");
