@@ -394,7 +394,7 @@ export default function ProspectusEditor() {
                       disableDragging={editing === el.id}
                       enableResizing={isSel && editing !== el.id}
                       lockAspectRatio={el.type === "image" && el.fit === "contain"}
-                      resizeHandleClasses={isSel ? Object.fromEntries(["top", "right", "bottom", "left", "topRight", "bottomRight", "bottomLeft", "topLeft"].map((k) => [k, "prospectus-handle"])) : undefined}
+                      resizeHandleClasses={isSel ? Object.fromEntries(["topRight", "bottomRight", "bottomLeft", "topLeft"].map((k) => [k, "prospectus-handle"])) : undefined}
                       onMouseDown={() => { if (selected !== el.id) { setSelected(el.id); setEditing(null); setInlineImg(null); } }}
                       onDoubleClick={() => el.type === "text" && setEditing(el.id)}
                       onDragStop={(_e, d) => { if (d.x !== el.x || d.y !== el.y) updateEl(el.id, { x: Math.round(d.x), y: Math.round(d.y) }); }}
