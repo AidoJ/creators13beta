@@ -302,7 +302,7 @@ export default function ProspectusEditor() {
       const { error } = await supabase.from("prospectus_sections" as any).update({ canvas_layout: clean as any }).eq("id", row.id);
       if (error) { failed = true; toast({ title: `Couldn't save ${PAGE_LABELS[p - 1]}`, description: error.message, variant: "destructive" }); }
     }
-    if (!failed) { setDirty(new Set()); toast({ title: "Prospectus saved", description: "The public page and PDF now show your changes." }); }
+    if (!failed) { setDirty(new Set()); await reload(); toast({ title: "Prospectus saved", description: "The public page and PDF now show your changes." }); }
     setBusy(null);
   }
   async function resetPage() {
