@@ -69,18 +69,20 @@ export async function extendExistingSchedule(stripe: Stripe, sb: SupabaseClient,
   if (sched.end_behavior === "release" && sched.phases.length >= 2) return "already_extended";
   const userId = sub.metadata?.user_id || sched.metadata?.user_id || "";
   const c = await connectInfo(stripe, sb);
-  const last = sched.phases[sched.phases.length - 1];
+  const now = Math.floor(Date.now() / 1000);
+  // Only current and future phases may be sent back to Stripe.
+  const keep = sched.phases.filter((p: any) => p.end_date > now);
   await stripe.subscriptionSchedules.update(schedId, {
     end_behavior: "release",
     phases: [
-      ...sched.phases.map((p: any) => ({
+      ...keep.map((p: any) => ({
         items: p.items.map((i: any) => ({ price: typeof i.price === "string" ? i.price : i.price.id, quantity: i.quantity ?? 1 })),
         start_date: p.start_date,
         end_date: p.end_date,
         metadata: p.metadata ?? {},
       })),
-      { ...continuationPhase(c, userId), start_date: last.end_date },
-    ].map((p: any, i: number, arr: any[]) => (i === arr.length - 1 ? (({ start_date, ...rest }) => rest)(p) : p)),
+      continuationPhase(c, userId),
+    ],
   });
   return "extended";
 }
