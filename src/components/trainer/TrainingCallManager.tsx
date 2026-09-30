@@ -1,3 +1,4 @@
+import { planNameSync } from "@/lib/plans";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { loadAccessSummary } from "@/lib/accessSummary";
@@ -1198,7 +1199,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
                       <span className="text-foreground text-xs font-medium truncate block">{p.name}</span>
                       <span className="text-muted-foreground text-[10px] truncate block">{p.email}</span>
                     </div>
-                    <Badge variant="outline" className="text-[9px] capitalize h-4 px-1">{p.tier}</Badge>
+                    <Badge variant="outline" className="text-[9px] capitalize h-4 px-1">{planNameSync(p.tier)}</Badge>
                   </label>
                 ))}
               </div>

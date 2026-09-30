@@ -1,3 +1,4 @@
+import { planNameSync } from "@/lib/plans";
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -743,7 +744,7 @@ function UserTableRow({ user: u, isExpanded, onToggle, onAddRole, onRemoveRole, 
             </div>
           ) : u.tier ? (
             <Badge variant="outline" className="text-[10px] capitalize">
-              {u.tier === "wren" ? "Free access" : u.tier}
+              {u.tier === "wren" ? "Free access" : planNameSync(u.tier)}
             </Badge>
           ) : <span className="text-xs text-muted-foreground">—</span>}
         </td>

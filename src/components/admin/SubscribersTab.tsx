@@ -1,3 +1,4 @@
+import { planNameSync } from "@/lib/plans";
 import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -120,7 +121,7 @@ export default function SubscribersTab({ users, caseStudies, assignedPracMap }: 
                           </div>
                         ) : u.tier ? (
                           <Badge variant="outline" className={`text-[10px] capitalize ${tierColors[u.tier] || ""}`}>
-                            {u.tier}
+                            {planNameSync(u.tier)}
                           </Badge>
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
