@@ -3839,6 +3839,7 @@ export type Database = {
           title: string
         }[]
       }
+      prospectus_asset_in_use: { Args: { _name: string }; Returns: boolean }
       reap_abandoned_matches: {
         Args: { _active_idle_minutes?: number; _lobby_idle_minutes?: number }
         Returns: Json
