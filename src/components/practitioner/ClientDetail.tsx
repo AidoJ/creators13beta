@@ -147,7 +147,7 @@ export default function ClientDetail({ clientId, onClientNameLoaded }: ClientDet
             <div className="flex flex-wrap gap-2 mt-2">
               {profile.enrollment_step && (() => {
                 const types = [creatorType?.primary_type, creatorType?.secondary_type, creatorType?.type_3, creatorType?.type_4].filter(Boolean) as string[];
-                const isCaseStudy = !!profile.case_study_consent_at;
+                const isCaseStudy = isCaseStudySubject;
                 const isComplete = profile.enrollment_step === "complete" || types.length >= 4;
                 const label = types.length >= 4
                   ? (isCaseStudy ? "Case Study Complete" : "Creator Blueprint Complete")

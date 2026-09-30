@@ -1,3 +1,4 @@
+import { ageFromDob } from "@/lib/age";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Pencil, MapPin, Ruler, Calendar as CalIcon, Phone, AlertCircle } from "lucide-react";
@@ -47,9 +48,7 @@ export default function PersonalDetailsCard({ profile, hasDetails }: PersonalDet
     );
   }
 
-  const age = profile?.date_of_birth
-    ? Math.floor((Date.now() - new Date(profile.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-    : null;
+  const age = ageFromDob(profile?.date_of_birth);
 
   const location = [profile?.city, profile?.state, profile?.country].filter(Boolean).join(", ");
   const guardianVerified = profile?.guardian_consent_status === "verified";

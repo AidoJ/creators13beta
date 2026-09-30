@@ -1,30 +1,31 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight, Sparkles } from "lucide-react";
-import { planNameSync, type TierKey } from "@/lib/plans";
+import { usePlanName, type TierKey } from "@/lib/plans";
 
 interface UpsellBannerProps {
   currentTier?: TierKey | null;
 }
 
-const UPGRADE_MAP: Record<string, { target: TierKey; message: string }> = {
+const UPGRADE_MAP: Record<string, { target: TierKey; message: (name: string) => string }> = {
   wren: {
     target: "robin",
-    message: "Upgrade to Create to unlock full Creator Type profiling, 1-on-1 Zoom sessions, and personalised insights.",
+    message: (name) => `Upgrade to ${name} to unlock full Creator Type profiling, 1-on-1 Zoom sessions, and personalised insights.`,
   },
   robin: {
     target: "cockatoo",
-    message: "Level up to Co-Create for ongoing coaching, advanced profiling insights, and priority booking.",
+    message: (name) => `Level up to ${name} for ongoing coaching, advanced profiling insights, and priority booking.`,
   },
 };
 
 export default function UpsellBanner({ currentTier }: UpsellBannerProps) {
   const navigate = useNavigate();
   const upgrade = currentTier ? UPGRADE_MAP[currentTier] : null;
+  const targetName = usePlanName(upgrade?.target ?? null);
 
   if (!upgrade) return null;
 
-  const targetTier = { name: planNameSync(upgrade.target) };
+  const targetTier = { name: targetName };
 
   return (
     <div className="rounded-2xl border border-secondary/30 bg-gradient-to-r from-secondary/5 via-secondary/10 to-primary/5 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -33,7 +34,7 @@ export default function UpsellBanner({ currentTier }: UpsellBannerProps) {
           <Sparkles className="h-4 w-4 text-secondary" />
           Unlock More with {targetTier.name}
         </h3>
-        <p className="text-xs text-muted-foreground max-w-md">{upgrade.message}</p>
+        <p className="text-xs text-muted-foreground max-w-md">{upgrade.message(targetName)}</p>
       </div>
       <Button
         size="sm"
