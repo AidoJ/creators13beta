@@ -21,9 +21,11 @@ export default function Prospectus() {
       .order("sort_order").then(async ({ data }) => {
         const loaded = (data as unknown as ProspectusSection[]) ?? [];
         setSections(loaded);
-        const paths = [...new Set(loaded.flatMap((section) => Object.values(section.image_urls ?? {})).filter(Boolean))];
+        const inlinePaths = loaded.flatMap((section) => Array.from(section.body.matchAll(/data-storage-path=["']([^"']+)["']/g), (match) => match[1]));
+        const paths = [...new Set([...loaded.flatMap((section) => Object.values(section.image_urls ?? {})).filter(Boolean), ...inlinePaths])];
         const { data: signed } = await supabase.storage.from("prospectus-assets").createSignedUrls(paths, 3600);
         const signedByPath = Object.fromEntries((signed ?? []).map((item) => [item.path, item.signedUrl]));
+        setSections(loaded.map((section) => ({ ...section, body: section.body.replace(/(<img\b[^>]*data-storage-path=["']([^"']+)["'][^>]*\bsrc=["'])[^"']*(["'])/gi, (_all, before, path, after) => `${before}${signedByPath[path] ?? ""}${after}`) })));
         setImageUrls(Object.fromEntries(loaded.map((section) => [section.layout_key, Object.fromEntries(Object.entries(section.image_urls ?? {}).map(([key, path]) => [key, signedByPath[path] ?? ""]))])));
       });
   }, []);

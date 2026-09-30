@@ -123,11 +123,12 @@ export function RichTextEditor({
     setImageOpen(true);
   }
 
-  function insertImageHtml(url: string, alt: string) {
+  function insertImageHtml(url: string, alt: string, storagePath?: string) {
     editorRef.current?.focus();
     restoreSelection();
     // width=100% as an HTML attribute survives sanitization; users can resize after insert.
-    const html = `<img src="${url}" alt="${escapeHtml(alt)}" width="100%" style="height:auto;border-radius:6px;" />`;
+    const pathAttr = storagePath ? ` data-storage-path="${escapeHtml(storagePath)}"` : "";
+    const html = `<img src="${url}"${pathAttr} alt="${escapeHtml(alt)}" width="100%" style="height:auto;border-radius:6px;" />`;
     document.execCommand("insertHTML", false, html);
     emitChange();
   }
@@ -156,8 +157,14 @@ export function RichTextEditor({
         upsert: false,
       });
       if (error) throw error;
-      const { data: pub } = supabase.storage.from(uploadBucket).getPublicUrl(path);
-      insertImageHtml(pub.publicUrl, file.name);
+      if (uploadBucket === "prospectus-assets") {
+        const { data: signed, error: signedError } = await supabase.storage.from(uploadBucket).createSignedUrl(path, 3600);
+        if (signedError || !signed?.signedUrl) throw signedError ?? new Error("Couldn't prepare the image preview");
+        insertImageHtml(signed.signedUrl, file.name, path);
+      } else {
+        const { data: pub } = supabase.storage.from(uploadBucket).getPublicUrl(path);
+        insertImageHtml(pub.publicUrl, file.name);
+      }
       setImageOpen(false);
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
@@ -300,7 +307,7 @@ export function RichTextEditor({
             const text = e.clipboardData.getData("text/html") || e.clipboardData.getData("text/plain");
             if (text) {
               e.preventDefault();
-              const clean = DOMPurify.sanitize(text, { ALLOWED_TAGS: ["b","strong","i","em","u","a","p","br","ul","ol","li","h2","h3","blockquote","img","span","div"], ALLOWED_ATTR: ["href","target","rel","src","alt","style","width","height"] });
+               const clean = DOMPurify.sanitize(text, { ALLOWED_TAGS: ["b","strong","i","em","u","a","p","br","ul","ol","li","h2","h3","blockquote","img","span","div"], ALLOWED_ATTR: ["href","target","rel","src","alt","style","width","height","data-storage-path"] });
               document.execCommand("insertHTML", false, clean);
               emitChange();
             }
