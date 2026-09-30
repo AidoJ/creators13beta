@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
 
-type Suggestion = {
-  placeId: string;
-  text: string;
-};
+type Suggestion = { placeId: string; text: string };
 
 type Props = {
   id?: string;
@@ -13,57 +11,19 @@ type Props = {
   placeholder?: string;
 };
 
-const BROWSER_KEY = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY as string | undefined;
+const newToken = () => crypto.randomUUID();
 
-let placesLibPromise: Promise<any> | null = null;
-function loadPlaces(): Promise<any> {
-  if (typeof window === "undefined") return Promise.reject(new Error("no window"));
-  if (!BROWSER_KEY) return Promise.reject(new Error("Missing Google Maps browser key"));
-  if ((window as any).google?.maps?.importLibrary) {
-    return (window as any).google.maps.importLibrary("places");
-  }
-  if (!placesLibPromise) {
-    placesLibPromise = new Promise((resolve, reject) => {
-      const existing = document.querySelector<HTMLScriptElement>("script[data-google-maps-loader]");
-      const done = () => {
-        (window as any).google.maps.importLibrary("places").then(resolve, reject);
-      };
-      if (existing) {
-        existing.addEventListener("load", done, { once: true });
-        existing.addEventListener("error", reject, { once: true });
-        return;
-      }
-      const s = document.createElement("script");
-      s.src = `https://maps.googleapis.com/maps/api/js?key=${BROWSER_KEY}&libraries=places&loading=async&v=weekly`;
-      s.async = true;
-      s.defer = true;
-      s.dataset.googleMapsLoader = "1";
-      s.addEventListener("load", done, { once: true });
-      s.addEventListener("error", reject, { once: true });
-      document.head.appendChild(s);
-    });
-  }
-  return placesLibPromise;
-}
-
+/**
+ * Location field with suggestions fetched from our own backend (Google Places).
+ * Typing without picking still works — the saved text is geocoded server-side.
+ */
 export function PlacesAutocompleteInput({ id, value, onChange, placeholder }: Props) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);
-  const sessionTokenRef = useRef<any>(null);
-  const placesRef = useRef<any>(null);
+  const sessionTokenRef = useRef<string>(newToken());
   const debounceRef = useRef<number | null>(null);
+  const reqIdRef = useRef(0);
   const wrapperRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    loadPlaces()
-      .then((lib) => {
-        placesRef.current = lib;
-        sessionTokenRef.current = new lib.AutocompleteSessionToken();
-      })
-      .catch(() => {
-        // Silent fallback: input still works as free text
-      });
-  }, []);
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -76,42 +36,28 @@ export function PlacesAutocompleteInput({ id, value, onChange, placeholder }: Pr
   function handleChange(next: string) {
     onChange(next);
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
-    if (!next.trim() || !placesRef.current) {
+    if (next.trim().length < 2) {
       setSuggestions([]);
       setOpen(false);
       return;
     }
     debounceRef.current = window.setTimeout(async () => {
-      try {
-        const { AutocompleteSuggestion } = placesRef.current;
-        const { suggestions: results } = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
-          input: next,
-          sessionToken: sessionTokenRef.current,
-          includedPrimaryTypes: ["(regions)"],
-        });
-        const mapped: Suggestion[] = (results ?? [])
-          .map((s: any) => {
-            const p = s.placePrediction;
-            if (!p) return null;
-            return { placeId: p.placeId, text: p.text?.toString?.() ?? "" };
-          })
-          .filter(Boolean) as Suggestion[];
-        setSuggestions(mapped);
-        setOpen(mapped.length > 0);
-      } catch {
-        setSuggestions([]);
-        setOpen(false);
-      }
-    }, 200);
+      const myId = ++reqIdRef.current;
+      const { data, error } = await supabase.functions.invoke("places-autocomplete", {
+        body: { input: next, sessionToken: sessionTokenRef.current },
+      });
+      if (myId !== reqIdRef.current) return; // stale
+      const list: Suggestion[] = !error && Array.isArray(data?.suggestions) ? data.suggestions : [];
+      setSuggestions(list);
+      setOpen(list.length > 0);
+    }, 300);
   }
 
   function pick(s: Suggestion) {
     onChange(s.text);
     setOpen(false);
     setSuggestions([]);
-    if (placesRef.current) {
-      sessionTokenRef.current = new placesRef.current.AutocompleteSessionToken();
-    }
+    sessionTokenRef.current = newToken();
   }
 
   return (
@@ -125,11 +71,12 @@ export function PlacesAutocompleteInput({ id, value, onChange, placeholder }: Pr
         autoComplete="off"
       />
       {open && suggestions.length > 0 && (
-        <ul className="absolute z-50 mt-1 w-full max-h-64 overflow-auto rounded-md border bg-popover shadow-md">
+        <ul role="listbox" className="absolute z-50 mt-1 w-full max-h-64 overflow-auto rounded-md border bg-popover shadow-md">
           {suggestions.map((s) => (
             <li key={s.placeId}>
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => pick(s)}
                 className="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
               >
