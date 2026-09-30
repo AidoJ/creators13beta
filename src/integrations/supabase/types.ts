@@ -1836,12 +1836,16 @@ export type Database = {
       }
       practitioner_applications: {
         Row: {
+          answers: Json | null
           created_at: string
           email: string
           id: string
           level: number
           message: string | null
           name: string
+          paid_at: string | null
+          payment_link_sent_at: string | null
+          payment_product_id: string | null
           phone: string | null
           review_notes: string | null
           reviewed_at: string | null
@@ -1850,12 +1854,16 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          answers?: Json | null
           created_at?: string
           email: string
           id?: string
           level: number
           message?: string | null
           name: string
+          paid_at?: string | null
+          payment_link_sent_at?: string | null
+          payment_product_id?: string | null
           phone?: string | null
           review_notes?: string | null
           reviewed_at?: string | null
@@ -1864,12 +1872,16 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          answers?: Json | null
           created_at?: string
           email?: string
           id?: string
           level?: number
           message?: string | null
           name?: string
+          paid_at?: string | null
+          payment_link_sent_at?: string | null
+          payment_product_id?: string | null
           phone?: string | null
           review_notes?: string | null
           reviewed_at?: string | null
@@ -1877,7 +1889,15 @@ export type Database = {
           status?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_applications_payment_product_id_fkey"
+            columns: ["payment_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -2364,6 +2384,33 @@ export type Database = {
           thumbnail_url?: string | null
           updated_at?: string
           url?: string | null
+        }
+        Relationships: []
+      }
+      prospectus_sections: {
+        Row: {
+          body: string
+          created_at: string
+          heading: string
+          id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          heading?: string
+          id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          heading?: string
+          id?: string
+          sort_order?: number
+          updated_at?: string
         }
         Relationships: []
       }
