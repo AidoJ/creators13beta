@@ -1,3 +1,4 @@
+import { ageFromDob } from "../_shared/age.ts";
 /**
  * Sends (or re-sends) the parent/guardian email-confirmation link for an
  * under-18 enrolment. Called by the young person's own browser after they save
@@ -48,9 +49,8 @@ serve(async (req) => {
       return json({ skipped: true, reason: "no_guardian" });
     }
 
-    const dob = new Date(profile.date_of_birth as string);
-    const age = Math.floor((Date.now() - dob.getTime()) / (365.25 * 24 * 3600 * 1000));
-    if (age >= 18) return json({ skipped: true, reason: "not_a_minor" });
+    const age = ageFromDob(profile.date_of_birth as string);
+    if (age === null || age >= 18) return json({ skipped: true, reason: "not_a_minor" });
     if (profile.guardian_consent_status === "verified") {
       return json({ skipped: true, reason: "already_verified" });
     }

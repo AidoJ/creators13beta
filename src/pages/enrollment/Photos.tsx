@@ -1,3 +1,4 @@
+import { ageFromDob } from "@/lib/age";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Camera, X, CheckCircle, AlertCircle, ArrowRight, ArrowLeft, Loader2, Eye, XCircle, Sparkles } from "lucide-react";
@@ -188,12 +189,8 @@ export default function Photos() {
         .maybeSingle();
 
       if (profileRow?.date_of_birth) {
-        const dob = new Date(profileRow.date_of_birth);
-        if (!isNaN(dob.getTime())) {
-          const now = new Date();
-          let age = now.getFullYear() - dob.getFullYear();
-          const m = now.getMonth() - dob.getMonth();
-          if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
+        const age = ageFromDob(profileRow.date_of_birth);
+        if (age !== null) {
           // Consent requires BOTH the guardian's email confirmation and A'Hara's
           // recorded verbal confirmation. Either alone leaves uploads blocked.
           const guardianVerified =
