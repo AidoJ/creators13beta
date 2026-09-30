@@ -505,17 +505,17 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
             Weave the Creator Types into your own expertise. Each level runs for 13 months in a group of no more than 13, and every level is by application.
           </p>
           <div className="flex flex-wrap gap-2 ml-9 mb-7 text-sm text-muted-foreground">
-            {["1. Apply", "2. We review", "3. Join the next intake", "4. Train for 13 months"].map((s) => (
+            {["1. Read the prospectus & apply", "2. Meet A'Hara on Zoom", "3. Join the next intake", "4. Train for 13 months"].map((s) => (
               <span key={s} className="rounded-full border border-border bg-card px-3.5 py-1.5">{s}</span>
             ))}
           </div>
-          <div className="grid md:grid-cols-3 gap-4">
-            {LEVELS.map((l) => (
+          <div className="grid md:grid-cols-2 gap-4">
+            {LEVELS.filter((l) => l.level === 1).map((l) => (
               <div key={l.level} className="flex flex-col rounded-3xl bg-card p-6 border border-border">
                 <h3 className="font-display text-2xl">Level {l.level}</h3>
                 <p className="text-lg font-semibold text-primary mt-2">{l.price}</p>
                 <p className="text-sm text-muted-foreground mb-4">{l.terms}</p>
-                <ul className="space-y-2 mb-6 text-sm">
+                <ul className="space-y-2 mb-4 text-sm">
                   {l.bullets.map((b) => (
                     <li key={b} className="flex gap-2.5">
                       <span className="mt-1.5 h-2 w-2 flex-none bg-secondary" style={hexClip} />
@@ -523,14 +523,41 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
                     </li>
                   ))}
                 </ul>
+                <Link to="/prospectus" className="text-sm text-primary underline mb-6">Read the Practitioner Prospectus</Link>
                 <button
-                  onClick={() => setApplyLevel(l.level)}
+                  onClick={() => setApplyLevel(1)}
                   className="mt-auto rounded-full px-5 py-3 font-medium border-2 border-primary bg-card text-primary hover:bg-muted"
                 >
-                  Apply for Level {l.level}
+                  Apply for Level 1
                 </button>
               </div>
             ))}
+            <div className="flex flex-col rounded-3xl bg-card p-6 border border-border">
+              <h3 className="font-display text-2xl">Level 2 &amp; Level 3</h3>
+              <p className="text-sm text-muted-foreground mt-2 mb-4">
+                Open by application to practitioners who have completed the previous level. Register your interest and we'll be in touch.
+              </p>
+              {LEVELS.filter((l) => l.level !== 1).map((l) => (
+                <div key={l.level} className="mb-4">
+                  <p className="font-semibold">Level {l.level} <span className="text-primary">· {l.price}</span></p>
+                  <p className="text-xs text-muted-foreground mb-1">{l.terms}</p>
+                  <ul className="space-y-1 text-sm">
+                    {l.bullets.map((b) => (
+                      <li key={b} className="flex gap-2.5">
+                        <span className="mt-1.5 h-2 w-2 flex-none bg-secondary" style={hexClip} />
+                        <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+              <button
+                onClick={() => setApplyLevel(2)}
+                className="mt-auto rounded-full px-5 py-3 font-medium border-2 border-primary bg-card text-primary hover:bg-muted"
+              >
+                Register interest
+              </button>
+            </div>
           </div>
         </div>
       </section>
