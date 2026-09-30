@@ -12,3 +12,13 @@
 - [ ] Live test each after publish
 
 - [x] Build and validate Phase 1 Getting Started navigator, then publish.
+
+## Current approved build
+- [ ] Complete Getting Started Phase 1 consolidation
+- [ ] Build Phase 2 guided first visits
+- [ ] Build Phase 3 access view and editable staff guide
+- [ ] Replace prospectus editor with six-page visual canvas
+- [ ] Add practitioner badge and own-profile/map access
+- [ ] Persist member filters in this browser
+- [ ] Correct official Creator Type source and enhance self-selected panel
+- [ ] Validate, security scan, publish, and live-check

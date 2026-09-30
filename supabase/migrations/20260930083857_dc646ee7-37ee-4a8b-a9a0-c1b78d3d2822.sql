@@ -1,0 +1,1 @@
+DROP FUNCTION public.get_member_profile_v2(uuid);

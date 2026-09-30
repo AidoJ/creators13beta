@@ -43,6 +43,7 @@ export type MapMember = {
   score: number;
   primary_type: string | null; // lowercase creator type or null
   featured: boolean;
+  isSelf?: boolean;
 };
 
 interface CommunityMapViewProps {
@@ -266,7 +267,7 @@ function createAvatarOverlay(opts: {
     div.style.cursor = "pointer";
     div.style.transform = "translate(-50%, -100%)";
     div.style.zIndex = String(100 + Math.round(member.score));
-    div.title = `${member.display_name ?? "Member"} — Match strength: ${member.score}`;
+    div.title = member.isSelf ? `${member.display_name ?? "You"} — your profile` : `${member.display_name ?? "Member"} — Match strength: ${member.score}`;
 
     const wrapper = document.createElement("div");
     wrapper.style.position = "relative";
@@ -312,7 +313,7 @@ function createAvatarOverlay(opts: {
 
     // Score badge — small chip in bottom-right.
     const badge = document.createElement("div");
-    badge.textContent = String(member.score);
+    badge.textContent = member.isSelf ? "YOU" : String(member.score);
     badge.style.position = "absolute";
     badge.style.right = "-4px";
     badge.style.bottom = "-4px";
@@ -322,7 +323,7 @@ function createAvatarOverlay(opts: {
     badge.style.borderRadius = "9999px";
     badge.style.background = "#111";
     badge.style.color = "#fff";
-    badge.style.fontSize = `${BADGE_FONT}px`;
+    badge.style.fontSize = `${member.isSelf ? Math.max(9, BADGE_FONT - 2) : BADGE_FONT}px`;
     badge.style.fontWeight = "600";
     badge.style.display = "flex";
     badge.style.alignItems = "center";

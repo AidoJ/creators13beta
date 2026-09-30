@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Lock, Zap, AlertTriangle, Eye, HelpCircle } from "lucide-react";
+import { Sparkles, Lock, Zap, AlertTriangle, Eye, HelpCircle, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { sortCreatorTypes } from "@/lib/creatorTypes";
 import { markOnboardingVisited } from "@/lib/onboarding";
@@ -30,6 +31,7 @@ interface ProfileResult {
   type_3: string | null;
   type_4: string | null;
   profiled_at: string | null;
+  source: "self_selected" | "practitioner" | "case_study" | null;
 }
 
 interface ProfileContent {
@@ -68,7 +70,7 @@ export default function CreatorProfileCard({ userId }: CreatorProfileCardProps) 
     async function load() {
       const { data } = await supabase
         .from("creator_type_profiles")
-        .select("primary_type, secondary_type, type_3, type_4, profiled_at")
+        .select("primary_type, secondary_type, type_3, type_4, profiled_at, source")
         .eq("user_id", userId)
         .order("updated_at", { ascending: false })
         .limit(1)
@@ -147,11 +149,12 @@ export default function CreatorProfileCard({ userId }: CreatorProfileCardProps) 
   }
 
   const defaultColor = primaryInfo.color_hex || "hsl(var(--primary))";
+  const selfSelected = profile.source === "self_selected";
 
   return (
     <div
-      className="rounded-2xl border bg-gradient-to-br from-card via-card to-secondary/5 p-6 space-y-4"
-      style={{ borderColor: `${defaultColor}30` }}
+      className="rounded-2xl border p-6 space-y-4"
+      style={{ borderColor: `${defaultColor}70`, background: selfSelected ? `linear-gradient(135deg, ${defaultColor}55, ${defaultColor}20)` : `linear-gradient(135deg, hsl(var(--card)), hsl(var(--card)), ${defaultColor}12)` }}
     >
       <div className="flex items-center gap-2">
         <Sparkles className="h-5 w-5 text-secondary" />
@@ -164,6 +167,16 @@ export default function CreatorProfileCard({ userId }: CreatorProfileCardProps) 
           </span>
         )}
       </div>
+
+      {selfSelected && (
+        <div className="rounded-xl border border-white/50 bg-white/75 p-4 shadow-sm backdrop-blur-sm sm:flex sm:items-center sm:gap-4">
+          <div className="flex-1">
+            <p className="font-display font-bold text-foreground">Does this feel like you?</p>
+            <p className="mt-1 text-sm text-foreground/75">You chose this Creator Type yourself. Get officially profiled by a practitioner to discover your full Creator profile.</p>
+          </div>
+          <Link to="/shop" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline sm:mt-0 sm:shrink-0">Explore profiling <ArrowRight className="h-4 w-4" /></Link>
+        </div>
+      )}
 
       {(() => {
         const MAX_SLOTS = 4;

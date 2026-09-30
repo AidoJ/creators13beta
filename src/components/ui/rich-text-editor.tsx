@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import DOMPurify from "dompurify";
-import { Bold, Italic, Underline, Link2, Image as ImageIcon, List, ListOrdered, Heading2, Upload, Undo2, Redo2, Quote, Trash2 } from "lucide-react";
+import { Bold, Italic, Underline, Link2, Image as ImageIcon, List, ListOrdered, Heading2, Upload, Undo2, Redo2, Quote, Trash2, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -201,6 +201,14 @@ export function RichTextEditor({
     setImgWidth(selectedImg, `${pct}%`);
   }
 
+  function floatImage(side: "left" | "right" | "none") {
+    if (!selectedImg) return;
+    selectedImg.style.float = side === "none" ? "" : side;
+    selectedImg.style.margin = side === "left" ? "0 1rem 0.75rem 0" : side === "right" ? "0 0 0.75rem 1rem" : "0.5rem 0";
+    refreshImgBox(selectedImg);
+    emitChange();
+  }
+
   function removeSelectedImg() {
     if (!selectedImg) return;
     selectedImg.remove();
@@ -262,6 +270,10 @@ export function RichTextEditor({
         <ToolbarBtn onClick={() => exec("formatBlock", "<blockquote>")} title="Quote"><Quote className="h-3.5 w-3.5" /></ToolbarBtn>
         <ToolbarBtn onClick={() => exec("insertUnorderedList")} title="Bulleted list"><List className="h-3.5 w-3.5" /></ToolbarBtn>
         <ToolbarBtn onClick={() => exec("insertOrderedList")} title="Numbered list"><ListOrdered className="h-3.5 w-3.5" /></ToolbarBtn>
+        <Divider />
+        <ToolbarBtn onClick={() => exec("justifyLeft")} title="Align left"><AlignLeft className="h-3.5 w-3.5" /></ToolbarBtn>
+        <ToolbarBtn onClick={() => exec("justifyCenter")} title="Align centre"><AlignCenter className="h-3.5 w-3.5" /></ToolbarBtn>
+        <ToolbarBtn onClick={() => exec("justifyRight")} title="Align right"><AlignRight className="h-3.5 w-3.5" /></ToolbarBtn>
         <Divider />
         <ToolbarBtn onClick={openLinkDialog} title="Insert link"><Link2 className="h-3.5 w-3.5" /></ToolbarBtn>
         {allowImages && <ToolbarBtn onClick={openImageDialog} title="Insert image"><ImageIcon className="h-3.5 w-3.5" /></ToolbarBtn>}
@@ -325,6 +337,9 @@ export function RichTextEditor({
                   className="rounded px-1.5 py-0.5 hover:bg-accent"
                 >{p}%</button>
               ))}
+              <button type="button" onClick={() => floatImage("left")} className="rounded px-1.5 py-0.5 hover:bg-accent">Wrap left</button>
+              <button type="button" onClick={() => floatImage("right")} className="rounded px-1.5 py-0.5 hover:bg-accent">Wrap right</button>
+              <button type="button" onClick={() => floatImage("none")} className="rounded px-1.5 py-0.5 hover:bg-accent">No wrap</button>
               <span className="mx-0.5 h-4 w-px bg-border" />
               <button
                 type="button"

@@ -67,7 +67,7 @@ export default function ProspectusEditor() {
       </div>
       {open && (
         <div className="mt-4 space-y-4">
-          <p className="text-xs text-muted-foreground">Edit the wording as it will appear in the prospectus. Select text to format it with the controls.</p>
+          <p className="text-xs text-muted-foreground">Edit each page visually. Align text with the toolbar; insert, resize and wrap pictures inside the page content. The named design pictures below remain available for the original six-page layout.</p>
           {rows.map((s) => (
             <div key={s.id} className="space-y-2 rounded-xl border border-border p-3">
               <p className="text-xs font-semibold uppercase text-primary">{s.layout_key === "cover" ? "Page 1 · Cover" : `${s.layout_key === "why" ? "Page 2" : s.layout_key === "journey" ? "Page 3" : s.layout_key === "training" ? "Page 4" : s.layout_key === "qa" || s.layout_key === "expertise" ? "Page 5" : "Page 6"} · ${s.layout_key}`}</p>
@@ -78,8 +78,9 @@ export default function ProspectusEditor() {
                   value={plainTextToRichHtml(s.body)}
                   onChange={(body) => edit(s.id, { body })}
                   placeholder="Write the page content…"
-                  minHeight={220}
-                  allowImages={false}
+                  minHeight={420}
+                  uploadBucket="prospectus-assets"
+                  allowImages
                 />
               </div>
               {(PROSPECTUS_IMAGE_SLOTS[s.layout_key ?? "cover"] ?? []).map((slot) => {
