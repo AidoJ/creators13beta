@@ -1,0 +1,15 @@
+ALTER FUNCTION public.get_my_onboarding() SECURITY INVOKER;
+GRANT SELECT ON public.profiles TO authenticated;
+GRANT SELECT ON public.entitlements TO authenticated;
+GRANT SELECT ON public.user_roles TO authenticated;
+GRANT SELECT ON public.access_grid TO authenticated;
+GRANT SELECT ON public.creator_type_profiles TO authenticated;
+GRANT SELECT ON public.contact_requests TO authenticated;
+GRANT SELECT ON public.projects TO authenticated;
+GRANT SELECT ON public.project_co_creators TO authenticated;
+GRANT SELECT ON public.game_matches TO authenticated;
+GRANT SELECT ON public.game_match_players TO authenticated;
+GRANT SELECT ON public.player_progress TO authenticated;
+GRANT SELECT ON public.client_practitioner TO authenticated;
+GRANT SELECT ON public.case_studies TO authenticated;
+GRANT SELECT ON public.client_invitations TO authenticated;
