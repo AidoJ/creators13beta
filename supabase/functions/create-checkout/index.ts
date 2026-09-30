@@ -209,6 +209,7 @@ serve(async (req) => {
         term_months: product.term_months ? String(product.term_months) : "",
         reservation_id: reservationId ?? "",
         invitation_id: referralInvitationId ?? "",
+        application_id: body.application_id ? String(body.application_id) : "",
         app_origin: origin,
       };
 
