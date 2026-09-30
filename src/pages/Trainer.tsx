@@ -29,6 +29,7 @@ import ClinicProfileQueue from "@/components/trainer/ClinicProfileQueue";
 import GuardianConsentQueue from "@/components/trainer/GuardianConsentQueue";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SignedProfilingImage } from "@/lib/profilingPhotoUrl";
+import StaffGuide from "@/components/admin/StaffGuide";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 type EnrollmentStep = Database["public"]["Enums"]["enrollment_step"];
@@ -284,6 +285,7 @@ export default function TrainerDashboard() {
             <TabsTrigger value="face-split"><Scissors className="h-3.5 w-3.5 mr-1" />Face Split</TabsTrigger>
             <TabsTrigger value="access"><KeyRound className="h-3.5 w-3.5 mr-1" />Access Levels</TabsTrigger>
             <TabsTrigger value="products"><ShoppingBag className="h-3.5 w-3.5 mr-1" />Products</TabsTrigger>
+            <TabsTrigger value="guide"><FileText className="h-3.5 w-3.5 mr-1" />Staff Guide</TabsTrigger>
           </TabsList>
 
           <TabsContent value="products" className="space-y-4">
@@ -292,6 +294,10 @@ export default function TrainerDashboard() {
 
           <TabsContent value="access" className="space-y-4">
             <EntitlementsPanel />
+          </TabsContent>
+
+          <TabsContent value="guide" className="space-y-4">
+            <StaffGuide audience="trainer" />
           </TabsContent>
 
 

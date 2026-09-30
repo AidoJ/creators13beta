@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { Save } from "lucide-react";
+import StaffGuide from "@/components/admin/StaffGuide";
 
 type Step = { key: string; feature_key: string; title: string; description: string; cta_label: string; route: string; sort_order: number; enabled: boolean };
 type Level = { key: string; display_name: string };
@@ -53,6 +54,7 @@ export default function OnboardingStepsPanel() {
         <p className="sm:col-span-3 text-xs text-muted-foreground">Feature: {step.feature_key}</p>
       </Card>)}</div>
       <Card className="p-5 space-y-4"><div><h4 className="font-display text-lg">Preview by access</h4><p className="text-sm text-muted-foreground">Choose any combination. This preview never reads a real member's progress.</p></div><div className="flex flex-wrap gap-4">{levels.map((level) => <label key={level.key} className="flex items-center gap-2 text-sm"><Checkbox checked={selected.includes(level.key)} onCheckedChange={(on) => setSelected(on ? [...selected, level.key] : selected.filter((key) => key !== level.key))} />{level.display_name}</label>)}</div><div className="border-t border-border pt-3 space-y-2">{preview.length ? preview.map((step, i) => <p key={step.key} className="text-sm"><span className="text-muted-foreground mr-2">{i + 1}.</span>{step.title}</p>) : <p className="text-sm text-muted-foreground">Choose access levels to preview the merged guide.</p>}</div></Card>
+      <StaffGuide audience="admin" editable />
     </div>
   );
 }
