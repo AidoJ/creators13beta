@@ -24,7 +24,7 @@ import ContinueEnrollmentBlock from "@/components/enrollment/ContinueEnrollmentB
 import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
 import CreatorsSeenPrompt from "@/components/dashboard/CreatorsSeenPrompt";
 import { Card } from "@/components/ui/card";
-import { Gamepad2, Globe, ArrowRight, Mail } from "lucide-react";
+import { Gamepad2, Globe, ArrowRight, Mail, Camera } from "lucide-react";
 import gameIcon from "@/assets/community-icons/game-icon.png.asset.json";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -135,7 +135,7 @@ export default function Dashboard() {
   const step = profile?.enrollment_step || null;
   // Derive progress from actual data, not just enrollment_step
   const isComplete = step === "complete" || creatorTypes.length >= 4;
-  const photosUploaded = photoCount > 0 || step === "photos_uploaded" || step === "awaiting_profiling" || step === "booking_made" || isComplete;
+  const photosUploaded = photoCount >= 8 || step === "photos_uploaded" || step === "awaiting_profiling" || step === "booking_made" || isComplete;
   const bookingMade = step === "booking_made" || (isComplete && !!booking);
   const hasDetails = !!(profile?.first_name && profile?.date_of_birth && profile?.gender && profile?.height_cm);
 
@@ -196,6 +196,20 @@ export default function Dashboard() {
             enrollment gate + the recovery sweep so the surfaces never diverge. */}
         {/* Post-purchase thank-you always sits at the very top. */}
         <PurchaseSuccessBanner />
+        {photoCount > 0 && photoCount < 8 && (
+          <button
+            type="button"
+            onClick={() => navigate("/enroll/photos")}
+            className="w-full text-left rounded-2xl border border-banner-border bg-banner text-banner-foreground p-4 flex items-center gap-3 hover:brightness-95 transition"
+          >
+            <Camera className="h-5 w-5 flex-shrink-0" />
+            <span className="flex-1 text-sm">
+              <span className="font-semibold">Your photo upload isn't finished.</span>{" "}
+              You've added {photoCount} of 8 photos — tap to carry on where you left off.
+            </span>
+            <ArrowRight className="h-5 w-5 flex-shrink-0" />
+          </button>
+        )}
         {user && <ContinueEnrollmentBlock userId={user.id} />}
 
         {/* Section teasers — surface Play & Community without duplicating
