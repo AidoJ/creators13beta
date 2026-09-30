@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { loadPlanNames, planNameSync, type TierKey } from "@/lib/plans";
 import { loadMyAccess, primaryAccess } from "@/lib/accessSummary";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import GameDashboardSection from "@/components/dashboard/game/GameDashboardSection";
@@ -52,7 +53,7 @@ export default function PlayDashboard() {
       } else if (sub?.signup_path === "player") {
         tierLabel = "Player";
       } else if (sub?.tier) {
-        tierLabel = sub.tier.charAt(0).toUpperCase() + sub.tier.slice(1);
+        tierLabel = (await loadPlanNames())[sub.tier as TierKey] ?? planNameSync(sub.tier);
         isPaidTier = sub.tier !== "wren";
       }
       setData({

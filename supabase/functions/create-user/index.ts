@@ -51,13 +51,24 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "email and password required" }), { status: 400, headers: corsHeaders });
     }
 
-    // Privilege-escalation guard: only admins may create admin/trainer accounts.
-    // Checked BEFORE creating the auth user so a rejection leaves no orphan.
-    if (!callerIsAdmin && Array.isArray(roles) && roles.some((r: string) => r === "admin" || r === "trainer")) {
-      return new Response(
-        JSON.stringify({ error: "Only admins can create admin or trainer accounts." }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Role rules (checked BEFORE creating the auth user so a rejection leaves no orphan):
+    //  - ordinary roles (client, community_participant, gamer) for any trainer/admin;
+    //  - trainee/practitioner NEVER here — only via set_practitioner_certification,
+    //    so role, status, level and access land together;
+    //  - trainer/admin only when the caller is an admin.
+    const ORDINARY = ["client", "community_participant", "gamer"];
+    const STAFF = ["trainer", "admin"];
+    const requested: string[] = Array.isArray(roles) && roles.length ? roles.map(String) : ["client"];
+    const json = { ...corsHeaders, "Content-Type": "application/json" };
+    if (requested.some((r) => r === "trainee" || r === "practitioner")) {
+      return new Response(JSON.stringify({ error: "Trainee and practitioner roles are set through certification, not account creation." }), { status: 400, headers: json });
+    }
+    if (requested.some((r) => STAFF.includes(r)) && !callerIsAdmin) {
+      return new Response(JSON.stringify({ error: "Only admins can create admin or trainer accounts." }), { status: 403, headers: json });
+    }
+    const unknown = requested.filter((r) => !ORDINARY.includes(r) && !STAFF.includes(r));
+    if (unknown.length) {
+      return new Response(JSON.stringify({ error: `Unknown role: ${unknown.join(", ")}` }), { status: 400, headers: json });
     }
 
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
@@ -79,9 +90,10 @@ serve(async (req) => {
         .eq("user_id", userId);
     }
 
-    if (roles && Array.isArray(roles)) {
-      const roleInserts = roles.map((role: string) => ({ user_id: userId, role }));
-      await supabaseAdmin.from("user_roles").insert(roleInserts);
+    const { error: roleErr } = await supabaseAdmin.from("user_roles")
+      .upsert(requested.map((role) => ({ user_id: userId, role })), { onConflict: "user_id,role", ignoreDuplicates: true });
+    if (roleErr) {
+      return new Response(JSON.stringify({ error: `Account created but roles failed: ${roleErr.message}`, user_id: userId }), { status: 500, headers: json });
     }
 
     return new Response(JSON.stringify({ user_id: userId, email }), {

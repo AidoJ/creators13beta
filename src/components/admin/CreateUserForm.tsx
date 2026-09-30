@@ -9,7 +9,8 @@ import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
-const ALL_ROLES: AppRole[] = ["trainer", "admin", "practitioner", "trainee", "client", "community_participant", "gamer"];
+// Trainee/practitioner are granted only through certification (Practitioners tab).
+const ALL_ROLES: AppRole[] = ["trainer", "admin", "client", "community_participant", "gamer"];
 
 interface CreateUserFormProps {
   onCreated?: () => void;
@@ -110,6 +111,7 @@ export default function CreateUserForm({ onCreated, isCallerAdmin = false }: Cre
             </label>
           ))}
         </div>
+        <p className="text-xs text-muted-foreground mt-2">Trainee and practitioner status is set through certification, so their access comes with it.</p>
       </div>
 
       <Button onClick={handleCreate} disabled={creating} className="w-full sm:w-auto">

@@ -1,4 +1,4 @@
-import { planNameSync } from "@/lib/plans";
+import { planNameSync, loadPlanNames } from "@/lib/plans";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { loadAccessSummary } from "@/lib/accessSummary";
@@ -158,7 +158,8 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   // Community audience tier grid (Wren/Robin/Cockatoo/Owl × visible/access)
   type TierKey = "wren" | "robin" | "cockatoo" | "owl";
   const TIER_KEYS: TierKey[] = ["wren", "robin", "cockatoo", "owl"];
-  const TIER_LABELS: Record<TierKey, string> = { wren: "Free", robin: "Create", cockatoo: "Co-Create", owl: "Practitioner Membership" };
+  const [TIER_LABELS, setTierLabels] = useState<Record<TierKey, string>>(() => ({ wren: planNameSync("wren"), robin: planNameSync("robin"), cockatoo: planNameSync("cockatoo"), owl: planNameSync("owl") }));
+  useEffect(() => { loadPlanNames().then(setTierLabels); }, []);
   type TierGrid = Record<TierKey, { visible: boolean; access: boolean }>;
   const emptyTierGrid = (): TierGrid => ({
     wren: { visible: false, access: false },
