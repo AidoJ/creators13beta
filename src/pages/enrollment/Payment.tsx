@@ -73,16 +73,17 @@ export default function Payment() {
   }, [userId]);
 
   const fetchClientSecret = useCallback(async () => {
-    const priceId = tierInfo.stripe?.price_id;
-    if (!priceId) throw new Error("No Stripe price configured for this tier.");
+    // Paid plans go through the product checkout only (access granted by the
+    // payment webhook). Resolve the product that grants this legacy tier's level.
+    const { data: level } = await supabase.from("access_levels").select("key").eq("subscription_tier", tier).maybeSingle();
+    const { data: product } = level?.key
+      ? await supabase.from("products").select("id").eq("grants_level_key", level.key).eq("active", true).limit(1).maybeSingle()
+      : { data: null };
+    if (!product?.id) throw new Error("This plan isn't available to buy online. Please contact us.");
 
     const { data, error } = await supabase.functions.invoke("create-checkout", {
       body: {
-        priceId,
-        email: userEmail,
-        user_id: userId,
-        tier,
-        billing,
+        product_id: product.id,
         embedded: true,
         successUrl: `${window.location.origin}/enroll/practitioner?tier=${tier}&billing=${billing}&payment=success${isUpgrade ? "&upgrade=true" : ""}`,
       },
@@ -97,13 +98,15 @@ export default function Payment() {
   }, [tier, billing, userEmail, userId, tierInfo]);
 
   useEffect(() => {
+    // Practitioner training (owl) is by application only, never a direct plan checkout.
+    if (tier === "owl") { navigate("/prospectus", { replace: true }); return; }
     if (tier === "wren") {
       navigate("/enroll/details?tier=wren&billing=monthly", { replace: true });
     }
   }, [tier, navigate]);
 
   // Don't render Stripe until auth is resolved AND we have an email
-  if (tier === "wren" || authLoading || !userEmail) return null;
+  if (tier === "wren" || tier === "owl" || authLoading || !userEmail) return null;
 
   return (
     <div className="min-h-screen bg-background">

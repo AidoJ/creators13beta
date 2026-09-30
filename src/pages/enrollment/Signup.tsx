@@ -168,7 +168,8 @@ export default function Signup() {
     // Create subscription/role records via edge function (handles all paths).
     // Clinic referrals skip this entirely — no plan is being bought here, and
     // redemption creates the free plan record plus the practitioner link.
-    if (!isClinic) {
+    // Paid tiers: nothing is written here — the product checkout + webhook handle it.
+    if (!isClinic && tier === "wren") {
       const priceId = tierInfo.stripe?.price_id || null;
       const { error: fnError } = await supabase.functions.invoke("create-checkout", {
         body: {
