@@ -253,6 +253,8 @@ export default function Signup() {
       await redeemClinic();
       return;
     }
+    // Paid tiers write nothing before payment; the product checkout handles them.
+    if (tier !== "wren") return;
 
     const appOrigin = getAppOrigin();
     const priceId = tierInfo.stripe?.price_id || null;
