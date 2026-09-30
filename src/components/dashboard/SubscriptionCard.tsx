@@ -109,8 +109,8 @@ export default function SubscriptionCard() {
         </div>
         <AccessList items={access} />
         {nextStep && nextStep.key !== "plan" && nextStep.key !== "paygate" && (
-          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
-            <p className="text-sm font-semibold text-foreground">Next: {nextStep.label}</p>
+          <div className="rounded-lg border border-banner-border bg-banner text-banner-foreground p-3 space-y-2">
+            <p className="text-sm font-semibold">Next: {nextStep.label}</p>
             <Button size="sm" className="w-full" onClick={() => navigate(nextStep.route)}>
               Continue
               <ArrowRight className="h-4 w-4 ml-2" />
