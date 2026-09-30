@@ -278,6 +278,8 @@
 .prospectus-contact-card { height: 100%; padding: 3cqw 2cqw; border-radius: 1.6cqw; background: hsl(var(--prospectus-paper)); text-align: center; }.prospectus-contact-card .prospectus-brand { width: 18cqw; }.prospectus-contact-card h2 { color: hsl(var(--prospectus-magenta)); font-size: 2.6cqw; line-height: 1.08; margin: 2cqw 0; }
 .prospectus-contact > main { padding: 5cqw 5.5cqw; }.prospectus-contact > main h3 { margin: 0 0 1cqw; font-size: 1.7cqw; }.prospectus-contact > main h3:nth-of-type(2) { margin-top: 3.3cqw; }
 .prospectus-actions { width: min(94vw, 1280px); margin: 1rem auto 0; padding: 1.25rem; display: flex; align-items: center; justify-content: center; gap: 1rem; border: 1px solid hsl(var(--border)); background: hsl(var(--card)); }
+.prospectus-editor-canvas .prospectus-pages { width: 100%; margin: 0; }
+.prospectus-editor-canvas .prospectus-page { width: 100%; box-shadow: none; }
 @media (max-width: 700px) {
   .prospectus-shell { padding-top: .5rem; }.prospectus-toolbar { align-items: flex-start; flex-wrap: wrap; }.prospectus-toolbar > div { width: 100%; margin-left: 0; }.prospectus-toolbar button { flex: 1; font-size: .6rem; }
   .prospectus-pages { width: 100%; gap: .5rem; }.prospectus-page { box-shadow: none; }
