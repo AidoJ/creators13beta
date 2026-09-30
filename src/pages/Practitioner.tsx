@@ -32,7 +32,7 @@ export default function PractitionerDashboard() {
   const [codeCopied, setCodeCopied] = useState(false);
   const { has: hasFeature } = useFeatures();
   const canClinicRefer = hasFeature("prac_clinic_referral");
-  const [activeTab, setActiveTab] = useState("pipeline");
+  const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get("tab") || "pipeline");
   const [searchFilterCaseStudyId, setSearchFilterCaseStudyId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [clientHasCaseStudy, setClientHasCaseStudy] = useState(false);

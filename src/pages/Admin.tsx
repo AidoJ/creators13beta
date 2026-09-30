@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Users, Shield, ChevronDown, ChevronUp, FileText, CheckCircle, Clock, BarChart3, Eye, EyeOff, FolderOpen, Save, HelpCircle, Briefcase, CreditCard, Mail, Send, UserPlus, ExternalLink, Gamepad2, Brain, Megaphone, KeyRound, ShoppingBag, Receipt} from "lucide-react";
+import { Search, Users, Shield, ChevronDown, ChevronUp, FileText, CheckCircle, Clock, BarChart3, Eye, EyeOff, FolderOpen, Save, HelpCircle, Briefcase, CreditCard, Mail, Send, UserPlus, ExternalLink, Gamepad2, Brain, Megaphone, KeyRound, ShoppingBag, Receipt, ListChecks} from "lucide-react";
 import EntitlementsPanel from "@/components/admin/EntitlementsPanel";
 import ProductsPanel from "@/components/admin/ProductsPanel";
 import PaymentsPanel from "@/components/admin/PaymentsPanel";
@@ -30,6 +30,7 @@ import SubscribersTab from "@/components/admin/SubscribersTab";
 import EmailTemplateEditor from "@/components/admin/EmailTemplateEditor";
 import InvitationsManager from "@/components/admin/InvitationsManager";
 import PractitionerApplicationsPanel from "@/components/admin/PractitionerApplicationsPanel";
+import OnboardingStepsPanel from "@/components/admin/OnboardingStepsPanel";
 import { getDirtyMessage, confirmDiscardIfDirty } from "@/components/admin/unsavedChanges";
 import { capitaliseTypeName } from "@/lib/creatorTypes";
 
@@ -448,8 +449,15 @@ export default function AdminDashboard() {
             <TabsTrigger value="access"><KeyRound className="h-3.5 w-3.5 mr-1" />Access Levels</TabsTrigger>
             <TabsTrigger value="products"><ShoppingBag className="h-3.5 w-3.5 mr-1" />Products</TabsTrigger>
             <TabsTrigger value="applications"><UserPlus className="h-3.5 w-3.5 mr-1" />Applications</TabsTrigger>
+            {isCallerAdmin && <TabsTrigger value="onboarding"><ListChecks className="h-3.5 w-3.5 mr-1" />Getting Started</TabsTrigger>}
             {isCallerAdmin && <TabsTrigger value="payments"><Receipt className="h-3.5 w-3.5 mr-1" />Payments</TabsTrigger>}
           </TabsList>
+
+          {isCallerAdmin && (
+            <TabsContent value="onboarding" className="space-y-4">
+              <OnboardingStepsPanel />
+            </TabsContent>
+          )}
 
           {isCallerAdmin && (
             <TabsContent value="payments" className="space-y-4">

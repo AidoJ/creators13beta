@@ -12,6 +12,7 @@ import { sanitizeEventHtml } from "@/components/ui/rich-text-editor";
 import { loadMyAccess, accessLabel } from "@/lib/accessSummary";
 import { EventCover } from "@/components/events/EventCover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { markOnboardingVisited } from "@/lib/onboarding";
 
 
 interface EventSession {
@@ -109,6 +110,7 @@ export default function CommunityEvents() {
   const [loading, setLoading] = useState(true);
   const [accessName, setAccessName] = useState<string>("");
   const [joinableIds, setJoinableIds] = useState<Set<string>>(new Set());
+  useEffect(() => { void markOnboardingVisited("events_visit"); }, []);
   useEffect(() => {
     if (!user) return;
     loadMyAccess(user.id).then((items) => setAccessName(accessLabel(items) ?? "Free access"));

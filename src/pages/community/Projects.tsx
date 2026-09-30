@@ -14,6 +14,7 @@ import projectsIcon from "@/assets/community-icons/projects-icon.png.asset.json"
 
 const GOLD_ICON_FILTER = "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)";
 import { toast } from "@/hooks/use-toast";
+import { markOnboardingVisited } from "@/lib/onboarding";
 import ProjectForm, { MemberOption } from "@/components/projects/ProjectForm";
 import {
   CREATOR_TYPES,
@@ -35,6 +36,7 @@ export default function Projects() {
   const [adminChecked, setAdminChecked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  useEffect(() => { void markOnboardingVisited("projects_visit"); }, []);
 
   const [location, setLocation] = useState("");
   const [funding, setFunding] = useState<string[]>([]);
