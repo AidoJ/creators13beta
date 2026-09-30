@@ -75,6 +75,7 @@ function warmUpMaps() {
 
 type ViewMode = "face" | "map";
 const VIEW_STORAGE_KEY = "c13.community.viewMode";
+const FILTER_STORAGE_KEY = "c13.community.filters";
 
 type MatchRow = {
   user_id: string;
@@ -88,6 +89,8 @@ type MatchRow = {
   community_joined_at: string | null;
   creator_types: LotusCreatorType[] | null;
 };
+
+type MyMapProfile = Pick<MatchRow, "user_id" | "display_name" | "avatar_url" | "location_label" | "location_lat" | "location_lng" | "creator_types"> & { community_visible: boolean };
 
 type CreatorOfMonth = {
   creator_type: string;
@@ -141,8 +144,10 @@ export default function CommunityDashboard() {
   const [featured, setFeatured] = useState<CreatorOfMonth | null>(null);
   const [featuredMeta, setFeaturedMeta] = useState<FeaturedMeta | null>(null);
   const [creatorTypeMeta, setCreatorTypeMeta] = useState<CreatorTypeMeta[]>([]);
-  const [filterMode, setFilterMode] = useState<FilterMode>("month");
-  const [filterValue, setFilterValue] = useState("");
+  const savedFilter = (() => { try { return JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY) || "null"); } catch { return null; } })();
+  const [filterMode, setFilterMode] = useState<FilterMode>(savedFilter?.mode ?? "month");
+  const [filterValue, setFilterValue] = useState(savedFilter?.value ?? "");
+  const [myMapProfile, setMyMapProfile] = useState<MyMapProfile | null>(null);
   const [myCode, setMyCode] = useState<string | null>(null);
   const [myTypes, setMyTypes] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
@@ -191,11 +196,15 @@ export default function CommunityDashboard() {
   }, [view]);
 
   useEffect(() => {
+    try { localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({ mode: filterMode, value: filterValue })); } catch { /* ignore */ }
+  }, [filterMode, filterValue]);
+
+  useEffect(() => {
     if (!user) return;
     let cancelled = false;
 
     (async () => {
-      const [matchesRes, featuredRes, codeRes, mineRes, typeMetaRes] = await Promise.all([
+      const [matchesRes, featuredRes, codeRes, mineRes, typeMetaRes, myProfileRes] = await Promise.all([
         supabase.rpc("get_community_members", { _limit: 200 }),
         supabase.rpc("get_creator_of_the_month"),
         supabase.from("profiles").select("invitation_code, community_visible").eq("user_id", user.id).maybeSingle(),
@@ -205,12 +214,17 @@ export default function CommunityDashboard() {
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase.from("creator_types").select("name, family, team_role, element"),
+        supabase.from("profiles").select("user_id, display_name, avatar_url, location_label, location_lat, location_lng, community_visible").eq("user_id", user.id).maybeSingle(),
       ]);
 
       if (cancelled) return;
 
       const rows = ((matchesRes.data as unknown as MatchRow[] | null) ?? []);
       setMatches(rows);
+      if (myProfileRes.data && mineRes.data) {
+        const mine = mineRes.data;
+        setMyMapProfile({ ...myProfileRes.data, creator_types: [mine.primary_type, mine.secondary_type, mine.type_3, mine.type_4].filter(Boolean).map((type) => ({ type, source: "self_selected" })) } as MyMapProfile);
+      }
 
       // Batch-sign avatars in a single storage round-trip. Skip absolute URLs
       // and stock-avatar refs (resolved locally).
@@ -329,8 +343,8 @@ export default function CommunityDashboard() {
   // Map-mode payload: pre-resolved avatar URLs + flattened featured / primary
   // type so the MapView component stays a presentation layer.
   const mapMembers: MapMember[] = useMemo(
-    () =>
-      filteredMatches.map((m) => ({
+    () => {
+      const others = filteredMatches.map((m) => ({
         user_id: m.user_id,
         display_name: m.display_name,
         avatar_url: resolveAvatar(m.avatar_url),
@@ -339,8 +353,22 @@ export default function CommunityDashboard() {
         score: m.score,
         primary_type: m.creator_types?.[0]?.type?.toLowerCase() ?? null,
         featured: isFeaturedMember(m.creator_types),
-      })),
-    [filteredMatches, resolveAvatar, isFeaturedMember]
+        isSelf: false,
+      }));
+      if (!myMapProfile?.community_visible) return others;
+      return [...others, {
+        user_id: myMapProfile.user_id,
+        display_name: `${myMapProfile.display_name ?? "You"} (you)`,
+        avatar_url: resolveAvatar(myMapProfile.avatar_url),
+        location_lat: myMapProfile.location_lat,
+        location_lng: myMapProfile.location_lng,
+        score: 1,
+        primary_type: myMapProfile.creator_types?.[0]?.type?.toLowerCase() ?? null,
+        featured: false,
+        isSelf: true,
+      }];
+    },
+    [filteredMatches, resolveAvatar, isFeaturedMember, myMapProfile]
   );
 
   const handleSelectMember = useCallback(
