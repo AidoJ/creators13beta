@@ -104,9 +104,10 @@ export default function Dashboard() {
       setProfileComplete(!!visRes.data?.profile_completed_at);
       if (subRes.data) setSubscription(subRes.data as SubData);
       const hasCsRecord = !!(csRes.data && csRes.data.length > 0);
-      const hasConsent = !!profileRes.data?.case_study_consent_at;
+      // Every client gives consent before photos, so consent alone does NOT
+      // make someone a case-study volunteer (it was hiding the consult step).
       const hasReferral = !!(subRes.data && (subRes.data as any).referral_code);
-      setIsCaseStudySubject(hasCsRecord || hasConsent || hasReferral);
+      setIsCaseStudySubject(hasCsRecord || hasReferral);
 
       // Check if any linked practitioner has the trainer role (backend check:
       // clients can't read other people's roles directly).
