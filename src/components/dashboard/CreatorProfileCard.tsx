@@ -223,7 +223,9 @@ export default function CreatorProfileCard({ userId }: CreatorProfileCardProps) 
                   </div>
                   <p className="text-sm font-display font-bold text-muted-foreground">{ph.label}</p>
                   <p className="text-xs text-muted-foreground/70 max-w-xs mx-auto">
-                    This Creator Type will be revealed as your profiling journey continues. Upgrade your tier to unlock more types!
+                    This Creator Type will be revealed as your{" "}
+                    <a href="/shop" className="underline text-primary hover:text-primary/80">profiling journey</a>{" "}
+                    continues.
                   </p>
                 </div>
               </TabsContent>
