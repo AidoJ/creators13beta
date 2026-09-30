@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, Map as MapIcon, Users, Copy, Check, LayoutDashboard, Menu, X, EyeOff } from "lucide-react";
+import { Settings, Map as MapIcon, Users, Copy, Check, LayoutDashboard, Menu, X } from "lucide-react";
 import { capitaliseTypeName, CREATOR_TYPE_NAMES, getCreatorTypeColor } from "@/lib/creatorTypes";
 import { isStockAvatarRef, stockAvatarUrl } from "@/lib/avatar";
 import { glyphForType } from "@/lib/game/glyphs";
@@ -152,7 +152,6 @@ export default function CommunityDashboard() {
   });
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [unplottable, setUnplottable] = useState(0);
-  const [isCommunityVisible, setIsCommunityVisible] = useState<boolean | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
   useEffect(() => {
     if (filterMode !== "month" || filterValue) void markOnboardingVisited("matching_filters");
@@ -236,7 +235,6 @@ export default function CommunityDashboard() {
         if (!cancelled) setFeaturedMeta((metaRow as FeaturedMeta) ?? null);
       }
       if (codeRes.data?.invitation_code) setMyCode(codeRes.data.invitation_code);
-      setIsCommunityVisible(codeRes.data?.community_visible ?? false);
       setCreatorTypeMeta((typeMetaRes.data as CreatorTypeMeta[] | null) ?? []);
       if (mineRes.data) {
         const t = [

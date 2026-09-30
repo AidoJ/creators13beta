@@ -6,7 +6,6 @@ import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 
 import PlayerProfileDiscountCTA from "@/components/dashboard/PlayerProfileDiscountCTA";
 import DiscountCodesCard from "@/components/dashboard/DiscountCodesCard";
-import ProfilingJourneyBlock from "@/components/dashboard/ProfilingJourneyBlock";
 import GettingStartedCard from "@/components/dashboard/GettingStartedCard";
 import PracticeRungCard from "@/components/dashboard/game/PracticeRungCard";
 import QuizStatsCard from "@/components/dashboard/QuizStatsCard";
@@ -89,15 +88,6 @@ export default function PlayerDashboard({ userId, email, firstName, onSignOut }:
         </div>
 
         <PracticeRungCard userId={userId} />
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-stretch [&>*]:h-full">
-          <ProfilingJourneyBlock
-            userId={userId}
-            isPlayerPath={true}
-            isCaseStudy={false}
-            isPaidTier={false}
-            creatorTypes={[]}
-          />
-        </div>
         <QuizStatsCard userId={userId} />
         {!promptDismissed && <DiscountCodesCard userId={userId} />}
 

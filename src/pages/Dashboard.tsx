@@ -18,7 +18,6 @@ import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
 import { loadMyAccess, type AccessItem } from "@/lib/accessSummary";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
 import DiscountCodesCard from "@/components/dashboard/DiscountCodesCard";
-import ProfilingJourneyBlock from "@/components/dashboard/ProfilingJourneyBlock";
 
 import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
 import { Card } from "@/components/ui/card";
@@ -133,7 +132,6 @@ export default function Dashboard() {
   const photosSubmitted = step === "photos_uploaded" || step === "awaiting_profiling" || step === "booking_made" || isComplete;
   const photosUploaded = photosSubmitted;
   // Photos save one by one; unfinished until the member reviews and submits.
-  const photosUnfinished = photoCount > 0 && !photosSubmitted;
   const bookingMade = step === "booking_made" || (isComplete && !!booking);
   const hasDetails = !!(profile?.first_name && profile?.date_of_birth && profile?.gender && profile?.height_cm);
 
@@ -247,16 +245,6 @@ export default function Dashboard() {
 
           <section className="pt-6 mt-4 border-t border-dashed border-border space-y-5">
             <p className="text-xs uppercase tracking-widest text-primary font-semibold">Your profile</p>
-
-            {user && (
-              <ProfilingJourneyBlock
-                userId={user.id}
-                isPlayerPath={isPlayerOnly}
-                isCaseStudy={isCaseStudySubject}
-                isPaidTier={isPaidTier}
-                creatorTypes={creatorTypes}
-              />
-            )}
 
             {/* Two-column layout */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
