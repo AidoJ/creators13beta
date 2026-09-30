@@ -215,7 +215,8 @@ serve(async (req) => {
             unit_amount: product.price_cents,
             product_data: {
               name: product.name,
-              ...(product.description ? { description: product.description } : {}),
+              // Fixed-term: the order summary itself states 13 payments then Connect.
+              ...(continuationText ? { description: continuationText } : product.description ? { description: product.description } : {}),
             },
             ...(recurring ? { recurring: { interval: "month" as const } } : {}),
           },
