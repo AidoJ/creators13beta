@@ -44,6 +44,9 @@ const monthlyAmount = (s: Sub) => {
 
 type Preset = "this_month" | "last_month" | "quarter" | "ytd" | "cal_ytd" | "custom";
 
+/** Connect price each Create/Co-Create subscription moves to after 13 instalments. */
+const CONNECT_CONTINUATION_CENTS = 800;
+
 export default function PaymentsPanel() {
   const [mode, setMode] = useState<"test" | "live">("test");
   const [preset, setPreset] = useState<Preset>("this_month");
@@ -129,6 +132,9 @@ export default function PaymentsPanel() {
   const notCancelling = (s: Sub) => !s.cancel_at && !s.cancel_at_period_end;
   const nextRecurring = recurringActive.filter(notCancelling).reduce((a, s) => a + monthlyAmount(s), 0);
   const nextCourses = courseActive.filter((s) => remainingFor(s) > 0).reduce((a, s) => a + monthlyAmount(s), 0);
+  // After instalment 13 the same subscription continues as Connect.
+  const continuingNext = courseActive.filter((s) => remainingFor(s) === 0 && notCancelling(s)).length;
+  const nextContinuation = continuingNext * CONNECT_CONTINUATION_CENTS;
   const courseRows = useMemo(() => {
     const g = new Map<string, { students: number; remaining: number; amount: number }>();
     courseActive.forEach((s) => {
@@ -149,6 +155,7 @@ export default function PaymentsPanel() {
   for (let k = 1; k <= 11; k++) {
     let month = recurringActive.filter(notCancelling).reduce((a, s) => a + monthlyAmount(s), 0);
     month += courseActive.filter((s) => remainingFor(s) >= k).reduce((a, s) => a + monthlyAmount(s), 0);
+    month += courseActive.filter((s) => remainingFor(s) < k && notCancelling(s)).length * CONNECT_CONTINUATION_CENTS;
     projected += gst.registered ? Math.round((month * 10) / 11) : month;
   }
 
@@ -361,10 +368,11 @@ export default function PaymentsPanel() {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <Card label="Memberships" value={money(nextRecurring)} sub="Actual amounts, excluding anyone scheduled to cancel" />
           <Card label="Course instalments" value={money(nextCourses)} />
-          <Card label="Total expected" value={money(nextRecurring + nextCourses)} />
+          <Card label="Moving to Connect" value={money(nextContinuation)} sub={`${continuingNext} member${continuingNext === 1 ? "" : "s"} past instalment 13`} />
+          <Card label="Total expected" value={money(nextRecurring + nextCourses + nextContinuation)} />
         </div>
         <Table head={["Course", "Students paying", "Instalments left", "Amount left"]} rows={courseRows.map(([k, v]) => [k, String(v.students), String(v.remaining), money(v.amount)])} empty="No course instalments remaining" />
-        <p className="text-xs text-muted-foreground">Create and Co-Create end after their 13th instalment and are not projected beyond it. Move to Connect after 13 months: not yet decided.</p>
+        <p className="text-xs text-muted-foreground">After their 13th instalment, Create and Co-Create continue as Connect at A$8 a month on the same subscription. The forecast includes that, excluding anyone scheduled to cancel.</p>
       </Section>
 
       <Section title="Cancellations and risk">
