@@ -483,7 +483,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
     const baseRow = (start: Date, end: Date) => ({
       title: title.trim(),
-      description: description.replace(/<[^>]*>/g, "").trim() ? description : null,
+      description: (description.replace(/<[^>]*>/g, "").trim() || /<img\b/i.test(description)) ? description : null,
       event_type: eventType,
       scheduled_at: start.toISOString(),
       starts_at: start.toISOString(),
@@ -759,7 +759,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
     const updatePayload: Record<string, any> = {
       title: title.trim(),
-      description: description.replace(/<[^>]*>/g, "").trim() ? description : null,
+      description: (description.replace(/<[^>]*>/g, "").trim() || /<img\b/i.test(description)) ? description : null,
       event_type: eventType,
       scheduled_at: startsAt.toISOString(),
       starts_at: startsAt.toISOString(),
