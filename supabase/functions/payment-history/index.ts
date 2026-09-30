@@ -1,6 +1,10 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { requireUser, AuthError } from "../_shared/auth.ts";
 
+// Older Stripe records carry the retired plan names; show the current ones.
+const planName = (t: string) =>
+  t.replace(/\bCo-Creator\b(?! Jam)/g, "Co-Create").replace(/\bCreator\b(?!s| Type| Jam)/g, "Create");
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -54,7 +58,7 @@ Deno.serve(async (req) => {
         if ((ch.currency ?? "").toLowerCase() !== "aud") continue;
         const inv: any = (ch as any).invoice;
         const line = inv && typeof inv === "object" ? inv.lines?.data?.[0]?.description : null;
-        const desc = line || ch.description || (ch.metadata as any)?.product_name || "Creators 13 purchase";
+        const desc = planName(line || ch.description || (ch.metadata as any)?.product_name || "Creators 13 purchase");
         items.push({
           id: ch.id,
           kind: "payment",
@@ -88,7 +92,7 @@ Deno.serve(async (req) => {
           if (!productNames.has(prodRef)) {
             try { productNames.set(prodRef, (await stripe.products.retrieve(prodRef)).name); } catch { productNames.set(prodRef, "Subscription"); }
           }
-          name = productNames.get(prodRef)!;
+          name = planName(productNames.get(prodRef)!);
         } else if (prodRef?.name) name = prodRef.name;
         const periodEnd = (s.items.data[0] as any)?.current_period_end ?? (s as any).current_period_end ?? null;
         if (s.status === "canceled" && s.canceled_at) {
