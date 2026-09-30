@@ -30,22 +30,9 @@ export default function Booking() {
   useEffect(() => {
     if (!user || loading) return;
     const checkAccess = async () => {
-      const { data: links } = await supabase
-        .from("client_practitioner")
-        .select("practitioner_id")
-        .eq("client_id", user.id)
-        .eq("active", true);
-      if (links && links.length > 0) {
-        const practIds = links.map(l => l.practitioner_id);
-        const { data: trainerRoles } = await supabase
-          .from("user_roles")
-          .select("user_id")
-          .in("user_id", practIds)
-          .eq("role", "trainer");
-        if (trainerRoles && trainerRoles.length > 0) {
-          setHasAccess(true);
-        }
-      }
+      // Clients can't read others' roles; the backend checks their own link.
+      const { data: isTrainer } = await (supabase as any).rpc("my_practitioner_is_trainer");
+      if (isTrainer === true) setHasAccess(true);
       setAccessChecked(true);
     };
     checkAccess();
