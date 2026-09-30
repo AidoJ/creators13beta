@@ -1,4 +1,4 @@
-import { isCaseStudySubject } from "@/lib/caseStudySubject";
+import { isCaseStudySubject as checkCaseStudySubject } from "@/lib/caseStudySubject";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -105,7 +105,7 @@ export default function Dashboard() {
       if (subRes.data) setSubscription(subRes.data as SubData);
       // Consent alone does NOT make someone a case-study volunteer; one shared rule decides.
       void csRes;
-      setIsCaseStudySubject(await isCaseStudySubject(user.id));
+      setIsCaseStudySubject(await checkCaseStudySubject(user.id));
 
       // Check if any linked practitioner has the trainer role (backend check:
       // clients can't read other people's roles directly).
