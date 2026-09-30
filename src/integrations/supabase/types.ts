@@ -3616,6 +3616,28 @@ export type Database = {
       }
       get_joinable_event_ids: { Args: never; Returns: string[] }
       get_match_state: { Args: { _match_id: string }; Returns: Json }
+      get_member_profile_v2: {
+        Args: { _target_user_id: string }
+        Returns: {
+          avatar_url: string
+          bio_intriguing: string
+          bio_superpower: string
+          bio_where_i_live: string
+          certification_level: number
+          community_joined_at: string
+          creator_types: Json
+          display_name: string
+          enabled_channels: string[]
+          location_label: string
+          open_to_contact: boolean
+          practitioner_status: Database["public"]["Enums"]["practitioner_status"]
+          project_dream: string
+          project_seek_me_for: string
+          project_top_skills: string
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          user_id: string
+        }[]
+      }
       get_my_access_catalog: {
         Args: never
         Returns: {
