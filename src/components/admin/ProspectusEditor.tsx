@@ -509,7 +509,7 @@ function Slider({ label, value, max, onChange }: { label: string; value: number;
 function toHex(color?: string): string {
   if (!color) return "#ffffff";
   if (color.startsWith("#")) return color.length === 4 ? `#${[...color.slice(1)].map((c) => c + c).join("")}` : color.slice(0, 7);
-  const m = color.match(/\d+(\.\d+)?/g);
+  const m = (color.match(/rgba?\([^)]*\)/)?.[0] ?? "").match(/\d+(\.\d+)?/g);
   if (!m) return "#ffffff";
   return `#${m.slice(0, 3).map((n) => Math.round(Number(n)).toString(16).padStart(2, "0")).join("")}`;
 }

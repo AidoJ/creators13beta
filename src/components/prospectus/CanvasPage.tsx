@@ -34,7 +34,8 @@ export function ElementContent({ el, signed }: { el: CanvasElement; signed: Reco
 
 export function canvasBackground(layout: CanvasLayout, signed: Record<string, string>): React.CSSProperties {
   const url = layout.bgPath ? signed[layout.bgPath] : "";
-  return { background: layout.bg, backgroundImage: url ? `url(${url})` : undefined, backgroundSize: "cover", backgroundPosition: "center" };
+  if (url) return { backgroundColor: layout.bg?.startsWith("#") || layout.bg?.startsWith("rgb") ? layout.bg : undefined, backgroundImage: `url(${url})`, backgroundSize: "cover", backgroundPosition: "center" };
+  return { background: layout.bg };
 }
 
 /** Read-only render of a free-form page; used on the public page and in the PDF. */
