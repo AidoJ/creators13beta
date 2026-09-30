@@ -3,7 +3,7 @@
  * the storefront — Face Profile, Clinic Profile and Owl are excluded by data,
  * not by wording. Practitioner training is application-gated, never buyable.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { resolvePendingBuy, clearPendingBuy, rememberPendingBuy } from "@/lib/pendingPurchase";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
