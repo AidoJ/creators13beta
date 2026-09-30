@@ -51,9 +51,9 @@ const COPY: Record<string, { bird?: string; title: string; terms: string; featur
   creator: {
     bird: "🐤",
     title: "Create",
-    terms: "13 monthly payments, then Connect at A$8 a month until you cancel",
+    terms: "Then continues as Connect",
     feature: true,
-    after: "13 monthly payments of A$28, then your plan continues as Connect at A$8 a month until you cancel.",
+    after: "continues",
     bullets: [
       "Everything in Connect",
       "Monthly live Zoom call: 13 Creators Q&A",
@@ -62,8 +62,8 @@ const COPY: Record<string, { bird?: string; title: string; terms: string; featur
   co_creator: {
     bird: "🦜",
     title: "Co-Create",
-    terms: "13 monthly payments, then Connect at A$8 a month until you cancel",
-    after: "13 monthly payments of A$88, then your plan continues as Connect at A$8 a month until you cancel.",
+    terms: "Then continues as Connect",
+    after: "continues",
     bullets: [
       "Everything in Create",
       "Monthly live Zoom call: Co-Creator Jam",
@@ -289,6 +289,12 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
             </li>
           ))}
         </ul>
+        {copy.after && product.billing_shape === "fixed_term" && (
+          <p role="note" className="mb-3 text-xs text-foreground">
+            {product.term_months ?? 13} monthly payments of A${(product.price_cents / 100).toFixed(0)}, then your plan
+            continues as Connect at A${((byLevel.taster?.price_cents ?? 800) / 100).toFixed(0)} a month until you cancel.
+          </p>
+        )}
         {replaced.length > 0 && (
           <p role="note" className="mb-3 rounded-xl border border-banner-border bg-banner text-banner-foreground px-3 py-2 text-xs">
             Upgrading: your {replaced.join(" and ")} membership will end when you buy {copy.title}, and you'll be
@@ -306,7 +312,6 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
         >
           {busyId === product.id ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : included ? "Included in your plan" : isHeld ? "You have this" : cta}
         </button>
-        {copy.after && <p className="text-xs text-muted-foreground text-center mt-2">{copy.after}</p>}
       </div>
     );
   };
