@@ -16,11 +16,14 @@ export interface EnrollmentState {
   hasDetails: boolean;
   hasConsent: boolean;
   hasPhotos: boolean;
+  photoCount: number;
   hasBooking: boolean;
   tier: string | null;
   billing: string | null;
   signupPath: string | null;
 }
+
+export const REQUIRED_PHOTO_COUNT = 8;
 
 export async function loadEnrollmentState(userId: string): Promise<EnrollmentState> {
   const [rolesRes, profileRes, subRes, photosRes, bookingRes, cpRes, csRes] = await Promise.all([
@@ -104,7 +107,10 @@ export async function loadEnrollmentState(userId: string): Promise<EnrollmentSta
       profileRes.data?.height_cm
     ),
     hasConsent: !!profileRes.data?.case_study_consent_at,
-    hasPhotos: (photosRes.count || 0) > 0,
+    // All 8 photos are needed before the photo step counts as done; a
+    // partial upload must stay resumable (not bounce the member onward).
+    hasPhotos: (photosRes.count || 0) >= REQUIRED_PHOTO_COUNT,
+    photoCount: photosRes.count || 0,
     hasBooking: !!bookingRes.data,
     tier: subRes.data?.tier ?? null,
     billing: subRes.data?.billing_period ?? null,
