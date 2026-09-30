@@ -21,4 +21,4 @@
 - [x] Add practitioner badge and own-profile/map access
 - [x] Persist member filters in this browser
 - [x] Correct official Creator Type source and enhance self-selected panel
-- [ ] Validate, security scan, publish, and live-check
+- [ ] Publishing requested; confirm deployment and complete live checks
