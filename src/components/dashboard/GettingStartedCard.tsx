@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { loadEnrollmentState } from "@/lib/enrollmentGate";
 import { getNextEnrollmentStep } from "@/lib/enrollmentSteps";
 import type { OnboardingStep } from "@/lib/onboarding";
@@ -31,6 +32,8 @@ export default function GettingStartedCard({ userId, firstName, purchaseSuccess 
   const [loading, setLoading] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourIndex, setTourIndex] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -105,6 +108,13 @@ export default function GettingStartedCard({ userId, firstName, purchaseSuccess 
     navigate(step.route);
   };
 
+  const replayTour = async () => {
+    await (supabase as any).rpc("reset_onboarding_tour");
+    setHelpOpen(false);
+    setTourIndex(0);
+    setTourOpen(true);
+  };
+
   if (loading || steps.length === 0) return null;
   if (collapsed) {
     return (
@@ -168,9 +178,29 @@ export default function GettingStartedCard({ userId, firstName, purchaseSuccess 
             {steps.map((step) => <button key={step.key} onClick={() => { setHelpOpen(false); go(step); }} disabled={!step.route} className="w-full flex items-center gap-3 border-b border-border py-3 text-left"><Check className={cn("h-4 w-4", step.done ? "text-primary" : "text-muted-foreground/30")} /><span className="text-sm">{step.title}</span></button>)}
           </div>
           <p className="text-sm text-muted-foreground mt-6">Need help? Contact us and we'll point you in the right direction.</p>
-          <Button variant="outline" className="w-full mt-3" disabled>Replay the tour — coming in Phase 2</Button>
+          <Button variant="outline" className="w-full mt-3" onClick={() => void replayTour()}>Replay the tour</Button>
         </SheetContent>
       </Sheet>
+
+      <Dialog open={tourOpen} onOpenChange={setTourOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{steps[tourIndex]?.title ?? "Getting started"}</DialogTitle>
+            <DialogDescription>{steps[tourIndex]?.description}</DialogDescription>
+          </DialogHeader>
+          <div className="rounded-xl bg-banner p-5 text-banner-foreground">
+            <p className="text-xs font-semibold uppercase tracking-wide">Step {tourIndex + 1} of {steps.length}</p>
+            <p className="mt-2 text-sm">Use this guide whenever you want to return to the most useful next action. Your progress is saved to your account.</p>
+          </div>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button variant="ghost" onClick={() => setTourOpen(false)}>Close</Button>
+            <div className="flex gap-2">
+              <Button variant="outline" disabled={tourIndex === 0} onClick={() => setTourIndex((i) => i - 1)}>Back</Button>
+              {tourIndex < steps.length - 1 ? <Button onClick={() => setTourIndex((i) => i + 1)}>Next</Button> : <Button onClick={() => setTourOpen(false)}>Finish</Button>}
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
