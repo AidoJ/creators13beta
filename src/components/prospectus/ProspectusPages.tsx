@@ -1,3 +1,5 @@
+import CanvasPage from "./CanvasPage";
+import type { CanvasLayout } from "@/lib/prospectusCanvas";
 import type { ProspectusSection } from "@/lib/prospectus";
 import { splitParagraphs } from "@/lib/prospectus";
 import { plainTextToRichHtml, sanitizeEventHtml } from "@/components/ui/rich-text-editor";
@@ -6,6 +8,8 @@ type Props = {
   sections: ProspectusSection[];
   imageUrls: Record<string, Record<string, string>>;
   activePage?: number;
+  canvases?: Record<number, CanvasLayout>;
+  signed?: Record<string, string>;
 };
 
 function RichText({ text, className = "" }: { text: string; className?: string }) {
@@ -28,7 +32,7 @@ function Brand({ src }: { src?: string }) {
   return src ? <img src={src} crossOrigin="anonymous" className="prospectus-brand" alt="13 Creators" /> : null;
 }
 
-export default function ProspectusPages({ sections, imageUrls, activePage }: Props) {
+export default function ProspectusPages({ sections, imageUrls, activePage, canvases, signed }: Props) {
   const byKey = Object.fromEntries(sections.map((section) => [section.layout_key, section]));
   const cover = byKey.cover;
   const why = byKey.why;
@@ -49,7 +53,7 @@ export default function ProspectusPages({ sections, imageUrls, activePage }: Pro
   const qaParts = contentBlocks(qa?.body ?? "");
 
   return <div className="prospectus-pages">
-    {(!activePage || activePage === 1) && <Page page={1} className="prospectus-cover">
+    {(!activePage || activePage === 1) && (canvases?.[1] ? <CanvasPage page={1} layout={canvases[1]} signed={signed ?? {}} /> : <Page page={1} className="prospectus-cover">
       <div className="prospectus-cover-quotes">
         {coverParts.slice(0, 3).map((quote, index) => <RichText key={index} text={quote} />)}
       </div>
@@ -61,18 +65,18 @@ export default function ProspectusPages({ sections, imageUrls, activePage }: Pro
         </div>
       </div>
       {imageUrls.cover?.figures && <img className="prospectus-figures" src={imageUrls.cover.figures} crossOrigin="anonymous" alt="The Creator Types" />}
-    </Page>}
+    </Page>)}
 
-    {(!activePage || activePage === 2) && <Page page={2} className="prospectus-paper">
+    {(!activePage || activePage === 2) && (canvases?.[2] ? <CanvasPage page={2} layout={canvases[2]} signed={signed ?? {}} /> : <Page page={2} className="prospectus-paper">
       <header className="prospectus-split-header">
         <Brand src={imageUrls.why?.logo} />
         {imageUrls.why?.photo && <img className="prospectus-wide-photo" src={imageUrls.why.photo} crossOrigin="anonymous" alt="Creator Types training" />}
       </header>
       <h2 className="prospectus-title-chip">{why?.heading}</h2>
       <RichText text={why?.body ?? ""} className="prospectus-copy prospectus-copy-wide" />
-    </Page>}
+    </Page>)}
 
-    {(!activePage || activePage === 3) && <Page page={3} className="prospectus-paper prospectus-journey">
+    {(!activePage || activePage === 3) && (canvases?.[3] ? <CanvasPage page={3} layout={canvases[3]} signed={signed ?? {}} /> : <Page page={3} className="prospectus-paper prospectus-journey">
       <div className="prospectus-journey-main">
         <Brand src={imageUrls.journey?.logo} />
         <h2 className="prospectus-title-chip">{journey?.heading}</h2>
@@ -88,9 +92,9 @@ export default function ProspectusPages({ sections, imageUrls, activePage }: Pro
         </div>
         {imageUrls.journey?.walk && <img src={imageUrls.journey.walk} crossOrigin="anonymous" alt="Practitioners walking together" />}
       </aside>
-    </Page>}
+    </Page>)}
 
-    {(!activePage || activePage === 4) && <Page page={4} className="prospectus-training" >
+    {(!activePage || activePage === 4) && (canvases?.[4] ? <CanvasPage page={4} layout={canvases[4]} signed={signed ?? {}} /> : <Page page={4} className="prospectus-training" >
       <div className="prospectus-training-grid">
         {trainingColumns.map((column, index) => <article key={index} className={index === 1 ? "prospectus-textured" : ""} style={index === 1 && imageUrls.training?.texture ? { backgroundImage: `linear-gradient(hsl(var(--prospectus-pink) / .74), hsl(var(--prospectus-pink) / .74)), url(${imageUrls.training.texture})` } : undefined}>
           {index === 0 && <><Brand src={imageUrls.training?.logo} /><h2 className="prospectus-title-chip">{training?.heading}</h2></>}
@@ -98,17 +102,17 @@ export default function ProspectusPages({ sections, imageUrls, activePage }: Pro
           <footer>{["BEGINNER", "INTERMEDIATE", "ADVANCED"][index]}</footer>
         </article>)}
       </div>
-    </Page>}
+    </Page>)}
 
-    {(!activePage || activePage === 5) && <Page page={5} className="prospectus-paper prospectus-qa">
+    {(!activePage || activePage === 5) && (canvases?.[5] ? <CanvasPage page={5} layout={canvases[5]} signed={signed ?? {}} /> : <Page page={5} className="prospectus-paper prospectus-qa">
       <main><h2 className="prospectus-title-chip">{qa?.heading}</h2><div className="prospectus-qa-list">{qaParts.map((part, index) => <RichText key={index} text={part} />)}</div></main>
       <aside style={imageUrls.qa?.texture ? { backgroundImage: `linear-gradient(hsl(var(--prospectus-magenta) / .78), hsl(var(--prospectus-magenta) / .78)), url(${imageUrls.qa.texture})` } : undefined}>
         <Brand src={imageUrls.qa?.logo} />
         <RichText text={expertise?.body ?? ""} className="prospectus-copy prospectus-copy-light" />
       </aside>
-    </Page>}
+    </Page>)}
 
-    {(!activePage || activePage === 6) && <Page page={6} className="prospectus-paper prospectus-contact">
+    {(!activePage || activePage === 6) && (canvases?.[6] ? <CanvasPage page={6} layout={canvases[6]} signed={signed ?? {}} /> : <Page page={6} className="prospectus-paper prospectus-contact">
       <aside style={imageUrls.qa?.texture ? { backgroundImage: `linear-gradient(hsl(var(--prospectus-magenta) / .78), hsl(var(--prospectus-magenta) / .78)), url(${imageUrls.qa.texture})` } : undefined}>
         <div className="prospectus-contact-card"><Brand src={imageUrls.qa?.logo} /><h2>{contact?.heading}</h2><RichText text={contact?.body ?? ""} className="prospectus-copy" /></div>
       </aside>
@@ -116,6 +120,6 @@ export default function ProspectusPages({ sections, imageUrls, activePage }: Pro
         <h3>{eligibility?.heading}</h3><RichText text={eligibility?.body ?? ""} className="prospectus-copy" />
         <h3>{application?.heading}</h3><RichText text={application?.body ?? ""} className="prospectus-copy" />
       </main>
-    </Page>}
+    </Page>)}
   </div>;
 }
