@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { getRequiredEnrollmentPath, loadEnrollmentState } from "@/lib/enrollmentGate";
 import FrontPage from "./FrontPage";
+import { getPendingBuy } from "@/lib/pendingPurchase";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -23,7 +24,7 @@ const Index = () => {
     }
     // Public front page for visitors, and for a signed-in person coming back
     // from sign-in to finish a purchase they started here (?buy=...).
-    if (!user || new URLSearchParams(window.location.search).has("buy")) {
+    if (!user || new URLSearchParams(window.location.search).has("buy") || getPendingBuy(user)) {
       setDestination("__front");
       return;
     }

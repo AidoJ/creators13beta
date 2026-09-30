@@ -4,6 +4,7 @@
  * not by wording. Practitioner training is application-gated, never buyable.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { getPendingBuy, clearPendingBuy, rememberPendingBuy } from "@/lib/pendingPurchase";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -223,18 +224,25 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
   // purchase resumes here automatically.
   const buy = useCallback((productId: string) => {
     if (!user) {
+      rememberPendingBuy(productId);
       navigate(`/auth?mode=signup&returnTo=${encodeURIComponent(`/?buy=${productId}`)}`);
       return;
     }
     startCheckout(productId);
   }, [user, navigate, startCheckout]);
 
-  const pendingBuy = params.get("buy");
+  const pendingBuy = params.get("buy") ?? (user ? getPendingBuy(user) : null);
   useEffect(() => {
     if (!pendingBuy || !user) return;
-    const next = new URLSearchParams(params);
-    next.delete("buy");
-    setParams(next, { replace: true });
+    clearPendingBuy();
+    if ((user.user_metadata as any)?.pending_buy) {
+      supabase.auth.updateUser({ data: { pending_buy: null, pending_buy_at: null } }).catch(() => {});
+    }
+    if (params.has("buy")) {
+      const next = new URLSearchParams(params);
+      next.delete("buy");
+      setParams(next, { replace: true });
+    }
     startCheckout(pendingBuy);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingBuy, user]);

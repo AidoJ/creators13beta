@@ -32,7 +32,9 @@ export default function Auth() {
   const refCode = search.get("ref") || "";
 
   useEffect(() => {
-    if (user) navigate(returnTo, { replace: true });
+    if (!user) return;
+    const pending = extractBuyFromReturnTo(returnTo) ?? getPendingBuy(user);
+    navigate(pending ? `/?buy=${encodeURIComponent(pending)}` : returnTo, { replace: true });
   }, [user, navigate, returnTo]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -43,7 +45,7 @@ export default function Auth() {
     if (error) {
       toast({ title: "Login failed", description: error.message, variant: "destructive" });
     } else {
-      navigate(returnTo);
+      // The effect above forwards once the session is set (incl. pending purchase).
     }
   };
 
@@ -135,6 +137,8 @@ export default function Auth() {
               submitLabel="Create account"
               onSubmit={async (values) => {
                 setLoading(true);
+                const pendingBuy = extractBuyFromReturnTo(returnTo);
+                if (pendingBuy) rememberPendingBuy(pendingBuy);
                 const { data, error } = await supabase.auth.signUp({
                   email: values.email,
                   password: values.password,
@@ -142,7 +146,7 @@ export default function Auth() {
                     // Verification link lands on sign-in; if the link signs
                     // them in, the effect above forwards to their next step.
                     emailRedirectTo: `${getAppOrigin()}/auth?returnTo=${encodeURIComponent(returnTo)}`,
-                    data: { first_name: values.firstName, last_name: values.lastName, phone: values.phone, marketing_opt_in: values.marketingOptIn, ...(refCode.trim() ? { invitation_ref: refCode.trim() } : {}) },
+                    data: { ...(pendingBuy ? { pending_buy: pendingBuy, pending_buy_at: Date.now() } : {}), first_name: values.firstName, last_name: values.lastName, phone: values.phone, marketing_opt_in: values.marketingOptIn, ...(refCode.trim() ? { invitation_ref: refCode.trim() } : {}) },
                   },
                 });
                 if (error) {
