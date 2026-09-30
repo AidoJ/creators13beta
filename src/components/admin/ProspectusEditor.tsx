@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { plainTextToRichHtml, RichTextEditor } from "@/components/ui/rich-text-editor";
 import { toast } from "@/hooks/use-toast";
 import { PROSPECTUS_IMAGE_SLOTS, type ProspectusSection } from "@/lib/prospectus";
 import { ImagePlus, Loader2, Trash2 } from "lucide-react";
@@ -67,12 +67,21 @@ export default function ProspectusEditor() {
       </div>
       {open && (
         <div className="mt-4 space-y-4">
-          <p className="text-xs text-muted-foreground">Edit the wording and pictures below. Leave a blank line between paragraphs; start list lines with “- ” or “1. ”.</p>
+          <p className="text-xs text-muted-foreground">Edit the wording as it will appear in the prospectus. Select text to format it with the controls.</p>
           {rows.map((s) => (
             <div key={s.id} className="space-y-2 rounded-xl border border-border p-3">
               <p className="text-xs font-semibold uppercase text-primary">{s.layout_key === "cover" ? "Page 1 · Cover" : `${s.layout_key === "why" ? "Page 2" : s.layout_key === "journey" ? "Page 3" : s.layout_key === "training" ? "Page 4" : s.layout_key === "qa" || s.layout_key === "expertise" ? "Page 5" : "Page 6"} · ${s.layout_key}`}</p>
               <label className="block text-xs font-medium">Heading<input className="mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={s.heading} onChange={(e) => edit(s.id, { heading: e.target.value })} /></label>
-              <Textarea rows={8} value={s.body} aria-label="Text" onChange={(e) => edit(s.id, { body: e.target.value })} />
+              <div className="space-y-1">
+                <p className="text-xs font-medium">Page content</p>
+                <RichTextEditor
+                  value={plainTextToRichHtml(s.body)}
+                  onChange={(body) => edit(s.id, { body })}
+                  placeholder="Write the page content…"
+                  minHeight={220}
+                  allowImages={false}
+                />
+              </div>
               {(PROSPECTUS_IMAGE_SLOTS[s.layout_key ?? "cover"] ?? []).map((slot) => {
                 const path = s.image_urls?.[slot.key];
                 const marker = `${s.id}:${slot.key}`;

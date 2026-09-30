@@ -1,22 +1,22 @@
 import type { ProspectusSection } from "@/lib/prospectus";
 import { splitParagraphs } from "@/lib/prospectus";
+import { plainTextToRichHtml, sanitizeEventHtml } from "@/components/ui/rich-text-editor";
 
 type Props = {
   sections: ProspectusSection[];
   imageUrls: Record<string, Record<string, string>>;
 };
 
-const lines = (value = "") => value.split("\n").map((line) => line.trim()).filter(Boolean);
-
 function RichText({ text, className = "" }: { text: string; className?: string }) {
-  return <div className={className}>{splitParagraphs(text).map((block, index) => {
-    const blockLines = lines(block);
-    const bullets = blockLines.every((line) => line.startsWith("- "));
-    const numbered = blockLines.every((line) => /^\d+\.\s/.test(line));
-    if (bullets) return <ul key={index}>{blockLines.map((line) => <li key={line}>{line.slice(2)}</li>)}</ul>;
-    if (numbered) return <ol key={index}>{blockLines.map((line) => <li key={line}>{line.replace(/^\d+\.\s/, "")}</li>)}</ol>;
-    return <p key={index}>{block}</p>;
-  })}</div>;
+  const html = sanitizeEventHtml(plainTextToRichHtml(text));
+  return <div className={className} dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
+function contentBlocks(value = ""): string[] {
+  if (!/<\/?[a-z][\s\S]*>/i.test(value)) return splitParagraphs(value);
+  const container = document.createElement("div");
+  container.innerHTML = sanitizeEventHtml(value);
+  return Array.from(container.children).map((child) => child.outerHTML).filter(Boolean);
 }
 
 function Page({ page, children, className = "" }: { page: number; children: React.ReactNode; className?: string }) {
@@ -39,24 +39,24 @@ export default function ProspectusPages({ sections, imageUrls }: Props) {
   const eligibility = byKey.eligibility;
   const application = byKey.application;
 
-  const coverParts = splitParagraphs(cover?.body ?? "");
-  const journeyParts = splitParagraphs(journey?.body ?? "");
+  const coverParts = contentBlocks(cover?.body ?? "");
+  const journeyParts = contentBlocks(journey?.body ?? "");
   const journeyIntro = journeyParts.slice(0, 2).join("\n\n");
   const journeyLearning = journeyParts.slice(2).join("\n\n");
-  const trainingParts = splitParagraphs(training?.body ?? "");
+  const trainingParts = contentBlocks(training?.body ?? "");
   const trainingColumns = [trainingParts.slice(0, 1), trainingParts.slice(1, 2), trainingParts.slice(2)];
-  const qaParts = splitParagraphs(qa?.body ?? "");
+  const qaParts = contentBlocks(qa?.body ?? "");
 
   return <div className="prospectus-pages">
     <Page page={1} className="prospectus-cover">
       <div className="prospectus-cover-quotes">
-        {coverParts.slice(0, 3).map((quote) => <p key={quote}>{quote}</p>)}
+        {coverParts.slice(0, 3).map((quote, index) => <RichText key={index} text={quote} />)}
       </div>
       <div className="prospectus-cover-main">
         {imageUrls.cover?.logo && <img src={imageUrls.cover.logo} crossOrigin="anonymous" alt="13 Creators" />}
         <div>
           <h1>{cover?.heading ?? "Practitioner Certification"}</h1>
-          <p>{coverParts[3]}</p>
+          <RichText text={coverParts[3] ?? ""} />
         </div>
       </div>
       {imageUrls.cover?.figures && <img className="prospectus-figures" src={imageUrls.cover.figures} crossOrigin="anonymous" alt="The Creator Types" />}
@@ -100,7 +100,7 @@ export default function ProspectusPages({ sections, imageUrls }: Props) {
     </Page>
 
     <Page page={5} className="prospectus-paper prospectus-qa">
-      <main><h2 className="prospectus-title-chip">{qa?.heading}</h2><div className="prospectus-qa-list">{qaParts.map((part, index) => index % 2 === 0 ? <h3 key={part}>{part}</h3> : <p key={part}>{part}</p>)}</div></main>
+      <main><h2 className="prospectus-title-chip">{qa?.heading}</h2><div className="prospectus-qa-list">{qaParts.map((part, index) => <RichText key={index} text={part} />)}</div></main>
       <aside style={imageUrls.qa?.texture ? { backgroundImage: `linear-gradient(hsl(var(--prospectus-magenta) / .78), hsl(var(--prospectus-magenta) / .78)), url(${imageUrls.qa.texture})` } : undefined}>
         <Brand src={imageUrls.qa?.logo} />
         <RichText text={expertise?.body ?? ""} className="prospectus-copy prospectus-copy-light" />

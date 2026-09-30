@@ -17,6 +17,8 @@ interface RichTextEditorProps {
   minHeight?: number;
   /** Public Storage bucket name for image uploads. Defaults to email-assets. */
   uploadBucket?: string;
+  /** Hide inline-image controls when imagery is managed separately. */
+  allowImages?: boolean;
 }
 
 /**
@@ -32,6 +34,7 @@ export function RichTextEditor({
   className,
   minHeight = 180,
   uploadBucket = "email-assets",
+  allowImages = true,
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -261,7 +264,7 @@ export function RichTextEditor({
         <ToolbarBtn onClick={() => exec("insertOrderedList")} title="Numbered list"><ListOrdered className="h-3.5 w-3.5" /></ToolbarBtn>
         <Divider />
         <ToolbarBtn onClick={openLinkDialog} title="Insert link"><Link2 className="h-3.5 w-3.5" /></ToolbarBtn>
-        <ToolbarBtn onClick={openImageDialog} title="Insert image"><ImageIcon className="h-3.5 w-3.5" /></ToolbarBtn>
+        {allowImages && <ToolbarBtn onClick={openImageDialog} title="Insert image"><ImageIcon className="h-3.5 w-3.5" /></ToolbarBtn>}
         <Divider />
         <ToolbarBtn onClick={() => exec("undo")} title="Undo"><Undo2 className="h-3.5 w-3.5" /></ToolbarBtn>
         <ToolbarBtn onClick={() => exec("redo")} title="Redo"><Redo2 className="h-3.5 w-3.5" /></ToolbarBtn>
@@ -426,4 +429,23 @@ export function sanitizeEventHtml(html: string | null | undefined): string {
     ALLOWED_TAGS: ["b","strong","i","em","u","a","p","br","ul","ol","li","h2","h3","blockquote","img","span","div"],
     ALLOWED_ATTR: ["href","target","rel","src","alt","width","height","style"],
   });
+}
+
+/** Convert existing plain-text content to editable HTML without changing its wording. */
+export function plainTextToRichHtml(value: string): string {
+  if (!value || /<\/?[a-z][\s\S]*>/i.test(value)) return value;
+  return value
+    .split(/\n\s*\n/)
+    .map((block) => {
+      const escaped = escapeHtml(block.trim());
+      const lines = escaped.split("\n").filter(Boolean);
+      if (lines.length > 0 && lines.every((line) => line.startsWith("- "))) {
+        return `<ul>${lines.map((line) => `<li>${line.slice(2)}</li>`).join("")}</ul>`;
+      }
+      if (lines.length > 0 && lines.every((line) => /^\d+\.\s/.test(line))) {
+        return `<ol>${lines.map((line) => `<li>${line.replace(/^\d+\.\s/, "")}</li>`).join("")}</ol>`;
+      }
+      return `<p>${escaped.replace(/\n/g, "<br>")}</p>`;
+    })
+    .join("");
 }
