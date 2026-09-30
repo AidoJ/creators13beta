@@ -241,10 +241,8 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
     if (!pendingBuy || !user) return;
     clearPendingBuy();
     setStoredBuy(null);
-    if ((user.user_metadata as any)?.pending_buy) {
-      supabase.auth.updateUser({ data: { pending_buy: null, pending_buy_at: null } }).catch(() => {});
-    }
-    if (storedBuy) supabase.auth.updateUser({ data: { pending_buy: null, pending_buy_at: null } }).catch(() => {});
+    // Forget the remembered choice so a later sign-in doesn't reopen checkout.
+    supabase.auth.updateUser({ data: { pending_buy: null, pending_buy_at: null } }).catch(() => {});
     if (params.has("buy")) {
       const next = new URLSearchParams(params);
       next.delete("buy");
