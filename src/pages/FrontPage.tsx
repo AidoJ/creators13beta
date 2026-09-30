@@ -3,7 +3,7 @@
  * the storefront — Face Profile, Clinic Profile and Owl are excluded by data,
  * not by wording. Practitioner training is application-gated, never buyable.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { resolvePendingBuy, clearPendingBuy, rememberPendingBuy } from "@/lib/pendingPurchase";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -202,10 +202,17 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
       },
     });
     setBusyId(null);
+    // Forget the remembered choice only once checkout is confirmed (or the
+    // product is already held), so a temporary failure never loses it.
+    const forgetChoice = () => {
+      clearPendingBuy();
+      supabase.auth.updateUser({ data: { pending_buy: null, pending_buy_at: null } }).catch(() => {});
+    };
     if (error || (data as any)?.error) {
       let body: any = data;
       try { if (!body && (error as any)?.context?.json) body = await (error as any).context.json(); } catch { /* ignore */ }
       const held = body?.error === "already_held";
+      if (held) forgetChoice();
       toast({
         title: held ? "You already have this" : "Couldn't open payment",
         description: body?.message || error?.message || "Please try again.",
@@ -214,10 +221,14 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
       return;
     }
     if ((data as any)?.free) {
+      forgetChoice();
       navigate("/dashboard");
       return;
     }
-    if ((data as any)?.url) window.location.href = (data as any).url as string;
+    if ((data as any)?.url) {
+      forgetChoice();
+      window.location.href = (data as any).url as string;
+    }
   }, [navigate]);
 
   // Buying needs an account, so a signed-out visitor signs up first and the
@@ -237,12 +248,12 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
     resolvePendingBuy(user).then(setStoredBuy);
   }, [user]);
   const pendingBuy = params.get("buy") ?? storedBuy;
+  const resumedRef = useRef<string | null>(null);
   useEffect(() => {
     if (!pendingBuy || !user) return;
-    clearPendingBuy();
+    if (resumedRef.current === pendingBuy) return;
+    resumedRef.current = pendingBuy;
     setStoredBuy(null);
-    // Forget the remembered choice so a later sign-in doesn't reopen checkout.
-    supabase.auth.updateUser({ data: { pending_buy: null, pending_buy_at: null } }).catch(() => {});
     if (params.has("buy")) {
       const next = new URLSearchParams(params);
       next.delete("buy");
