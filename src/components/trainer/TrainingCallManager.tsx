@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Calendar, Plus, Video, Clock, Repeat, Send, Trash2, X, Users, UserPlus, Mail, CheckCircle, Bell, XCircle, Edit, CircleDot, ChevronDown, CalendarClock, Copy, MoreHorizontal } from "lucide-react";
+import { Calendar, Plus, Video, Clock, Repeat, Send, Trash2, X, Users, UserPlus, Mail, CheckCircle, Bell, XCircle, Edit, CircleDot, ChevronDown, CalendarClock, Copy, MoreHorizontal, Upload, Loader2 } from "lucide-react";
+import { EVENT_COVER_BUCKET, MAX_EVENT_COVER_BYTES, ALLOWED_EVENT_COVER_TYPES, resolveEventCoverUrl } from "@/lib/eventCovers";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
@@ -101,6 +102,9 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [recurrence, setRecurrence] = useState("none");
   const [recurrenceEnd, setRecurrenceEnd] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState("");
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const coverFileInputRef = useRef<HTMLInputElement | null>(null);
   const [coverImageFit, setCoverImageFit] = useState<"cover" | "contain">("cover");
   const [coverImagePosition, setCoverImagePosition] = useState("center");
   const [promoLink, setPromoLink] = useState("");
