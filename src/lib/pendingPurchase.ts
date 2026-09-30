@@ -40,3 +40,17 @@ export function getPendingBuy(user: User | null | undefined): string | null {
   }
   return null;
 }
+
+/** Same as getPendingBuy, but refreshes the account's sign-up data from the
+ *  server when the cached session doesn't carry it. */
+export async function resolvePendingBuy(user: User | null | undefined): Promise<string | null> {
+  const local = getPendingBuy(user);
+  if (local || !user) return local;
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data } = await supabase.auth.getUser();
+    return getPendingBuy(data.user);
+  } catch {
+    return null;
+  }
+}

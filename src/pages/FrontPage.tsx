@@ -4,7 +4,7 @@
  * not by wording. Practitioner training is application-gated, never buyable.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getPendingBuy, clearPendingBuy, rememberPendingBuy } from "@/lib/pendingPurchase";
+import { resolvePendingBuy, clearPendingBuy, rememberPendingBuy } from "@/lib/pendingPurchase";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -231,13 +231,18 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
     startCheckout(productId);
   }, [user, navigate, startCheckout]);
 
-  const pendingBuy = params.get("buy") ?? (user ? getPendingBuy(user) : null);
+  const [storedBuy, setStoredBuy] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user) { setStoredBuy(null); return; }
+    resolvePendingBuy(user).then(setStoredBuy);
+  }, [user]);
+  const pendingBuy = params.get("buy") ?? storedBuy;
   useEffect(() => {
     if (!pendingBuy || !user) return;
     clearPendingBuy();
-    if ((user.user_metadata as any)?.pending_buy) {
-      supabase.auth.updateUser({ data: { pending_buy: null, pending_buy_at: null } }).catch(() => {});
-    }
+    setStoredBuy(null);
+    // Forget the remembered choice so a later sign-in doesn't reopen checkout.
+    supabase.auth.updateUser({ data: { pending_buy: null, pending_buy_at: null } }).catch(() => {});
     if (params.has("buy")) {
       const next = new URLSearchParams(params);
       next.delete("buy");
