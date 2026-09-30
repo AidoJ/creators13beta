@@ -224,4 +224,4 @@
 }
 
 /* Tints black line-art PNG icons to the brand gold used by the other icons. */
-.icon-gold { filter: invert(62%) sepia(38%) saturate(718%) hue-rotate(5deg) brightness(92%) contrast(86%); }
+.icon-gold { filter: brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%); }

@@ -127,7 +127,7 @@ export default function LearnPanel({ open, onOpenChange, firstRun = false }: Pro
                 <GraduationCap className="mr-2 h-5 w-5" /> Yes — teach me as I play
               </Button>
               <Button variant="outline" size="lg" className="w-full min-h-12 whitespace-normal h-auto py-3" onClick={close}>
-                <img src={gameIcon.url} alt="" aria-hidden="true" className="mr-2 h-5 w-5 object-contain" /> I'll explore myself
+                <img src={gameIcon.url} alt="" aria-hidden="true" className="icon-gold mr-2 h-5 w-5 object-contain" /> I'll explore myself
               </Button>
               <button
                 type="button"
