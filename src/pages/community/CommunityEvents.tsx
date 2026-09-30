@@ -213,9 +213,9 @@ function EventTile({ ev, past, joinable }: { ev: CommunityEvent; past?: boolean;
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            {ev.open_to && ev.open_to.length > 0 && (
+            {(
               <span className="text-muted-foreground">
-                Open to: {ev.open_to.length === 1 ? ev.open_to[0] : `${ev.open_to.slice(0, -1).join(", ")} and ${ev.open_to[ev.open_to.length - 1]}`}
+                Open to: {!ev.open_to || ev.open_to.length === 0 ? "no membership yet (viewing only)" : ev.open_to.length === 1 ? ev.open_to[0] : `${ev.open_to.slice(0, -1).join(", ")} and ${ev.open_to[ev.open_to.length - 1]}`}
               </span>
             )}
             <Badge variant={ev.has_access ? "default" : "outline"} className="gap-1">
