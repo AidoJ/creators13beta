@@ -3370,6 +3370,7 @@ export type Database = {
           id: string
           is_multi_day: boolean
           location: string
+          open_to: string[]
           promo_label: string
           promo_link: string
           scheduled_at: string

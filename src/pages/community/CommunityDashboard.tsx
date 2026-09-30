@@ -918,29 +918,70 @@ function Honeycomb({
     });
   }, [sorted, dims]);
 
+  // Organic scatter: each member gets a preferred spot seeded from their
+  // member ID (stable between visits), then nudged along a spiral until it
+  // no longer overlaps anyone already placed. Biggest (best match) first.
+  const layout = useMemo(() => {
+    const W = dims.w;
+    if (!W || sizes.length === 0) return { items: [] as { x: number; y: number; s: number }[], height: 0 };
+    const GAP = 10;
+    const placed: { x: number; y: number; r: number }[] = [];
+    const items: { x: number; y: number; s: number }[] = [];
+    const avg = sizes.reduce((a, b) => a + b, 0) / sizes.length;
+    const perRow = Math.max(1, Math.floor(W / (avg * 1.25)));
+    const targetH = Math.max(avg * 1.4, Math.ceil(sizes.length / perRow) * avg * 1.25);
+    sorted.forEach((m, i) => {
+      const s = Math.min(sizes[i] ?? 180, W - 8);
+      const r = s / 2;
+      const h = seedHash(m.user_id);
+      const rand = (k: number) => ((h >>> (k * 5)) % 1000) / 1000;
+      // Best matches gravitate to the top-centre, the rest spread outward.
+      const band = Math.min(1, i / Math.max(4, sorted.length));
+      let px = r + rand(0) * Math.max(0, W - s);
+      let py = r + (band * 0.8 + rand(1) * 0.2) * Math.max(0, targetH - s);
+      if (i === 0) px = W / 2;
+      let angle = rand(2) * Math.PI * 2;
+      let step = 0;
+      const fits = (x: number, y: number) =>
+        x - r >= 0 && x + r <= W && y - r >= 0 &&
+        placed.every((p) => Math.hypot(p.x - x, p.y - y) >= p.r + r + GAP);
+      let x = px, y = py;
+      while (!fits(x, y) && step < 4000) {
+        step++;
+        angle += 0.35;
+        const dist = 4 * Math.sqrt(step) * 3;
+        x = Math.min(W - r, Math.max(r, px + Math.cos(angle) * dist));
+        y = Math.max(r, py + Math.sin(angle) * dist);
+      }
+      placed.push({ x, y, r });
+      items.push({ x, y, s });
+    });
+    const height = Math.max(...placed.map((p) => p.y + p.r)) + 8;
+    return { items, height };
+  }, [sorted, sizes, dims]);
+
   return (
     <div
       ref={containerRef}
-      className="relative flex flex-wrap items-center justify-center gap-x-4 gap-y-2"
-      style={{ minHeight: dims.h || undefined }}
+      className="relative w-full"
+      style={{ height: layout.height || dims.h || undefined }}
     >
       {sorted.map((m, i) => {
         const highlight = isFeatured(m.creator_types);
-        const px = sizes[i] ?? 180;
-        // Honeycomb stagger: every other tile drops by ~25% of its size to
-        // mimic offset hex rows on the game board.
-        const yOffset = i % 2 === 0 ? 0 : Math.round(px * 0.22);
+        const pos = layout.items[i];
+        if (!pos) return null;
         return (
           <div
             key={m.user_id}
-            style={{ transform: `translateY(${yOffset}px)` }}
+            className="absolute"
+            style={{ left: pos.x - pos.s / 2, top: pos.y - pos.s / 2, width: pos.s, height: pos.s }}
             title={`${m.display_name ?? "Member"} — Match strength: ${m.score}`}
           >
             <LotusProfile
               avatarUrl={resolveAvatar(m.avatar_url)}
               displayName={m.display_name ?? "Member"}
               creatorTypes={m.creator_types ?? []}
-              sizePx={px}
+              sizePx={pos.s}
               featuredHighlight={highlight ? "glow" : null}
               featuredColor={featuredColor}
               onClick={() => navigate(`/member/${m.user_id}`)}
@@ -950,6 +991,16 @@ function Honeycomb({
       })}
     </div>
   );
+}
+
+/** Stable 32-bit hash of a member ID so their spot doesn't change per visit. */
+function seedHash(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
 }
 
 
