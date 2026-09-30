@@ -64,6 +64,30 @@ serve(async (req) => {
 
 
     // ------------------------------------------------------------------
+    // PRACTITIONER TRAINING PAYMENT LINK — the product comes from the
+    // application an admin approved, never from the request. Only the
+    // applicant (same account or same email) may use it.
+    // ------------------------------------------------------------------
+    if (body.application_id) {
+      const { data: app } = await supabaseClient
+        .from("practitioner_applications")
+        .select("id, user_id, email, status, payment_product_id")
+        .eq("id", body.application_id).maybeSingle();
+      const mine = app && (app.user_id === userId || String(app.email).toLowerCase() === userEmail.toLowerCase());
+      if (!app || !mine) {
+        return new Response(JSON.stringify({ error: "not_yours", message: "This payment link belongs to a different email address." }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (app.status !== "accepted" || !app.payment_product_id) {
+        return new Response(JSON.stringify({ error: "not_ready", message: "This payment link isn't active yet." }), {
+          status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      body.product_id = app.payment_product_id;
+    }
+
+    // ------------------------------------------------------------------
     // NEW PRODUCT PATH — inline pricing straight from the products table.
     // Runs only when product_id is supplied; the legacy tier flow below is
     // untouched.
@@ -185,6 +209,7 @@ serve(async (req) => {
         term_months: product.term_months ? String(product.term_months) : "",
         reservation_id: reservationId ?? "",
         invitation_id: referralInvitationId ?? "",
+        application_id: body.application_id ? String(body.application_id) : "",
         app_origin: origin,
       };
 

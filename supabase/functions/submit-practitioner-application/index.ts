@@ -20,6 +20,13 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+const QUESTIONS = [
+  "What is your chosen area of expertise to apply the Creator Types?",
+  "How would applying the Creator Types improve outcomes for those people? State a minimum of 3 specific outcomes.",
+  "How do you plan to introduce the Creator Types to those people to encourage them to become a case study?",
+  "How do you intend to evolve your expertise and reach more people over time?",
+];
+
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -44,6 +51,8 @@ serve(async (req) => {
     const phone = String(body.phone ?? "").trim();
     const message = String(body.message ?? "").trim();
     const level = Number(body.level);
+    const rawAnswers = Array.isArray(body.answers) ? body.answers : [];
+    const answers = rawAnswers.slice(0, 4).map((a) => String(a ?? "").trim());
 
     const errors: string[] = [];
     if (name.length < 2 || name.length > 120) errors.push("name");
@@ -51,6 +60,7 @@ serve(async (req) => {
     if (![1, 2, 3].includes(level)) errors.push("level");
     if (message.length > 2000) errors.push("message");
     if (phone.length > 40) errors.push("phone");
+    if (level === 1 && (answers.length !== 4 || answers.some((a) => !a || a.length > 2000))) errors.push("answers");
     if (errors.length) {
       return json({ error: "invalid_request", fields: errors, message: "Please check the highlighted fields." }, 400);
     }
@@ -70,7 +80,7 @@ serve(async (req) => {
 
     const { data: row, error: insErr } = await admin
       .from("practitioner_applications")
-      .insert({ user_id: userId, name, email, phone: phone || null, level, message: message || null })
+      .insert({ user_id: userId, name, email, phone: phone || null, level, message: message || null, answers: level === 1 ? answers : null })
       .select("id")
       .single();
     if (insErr) throw new Error(insErr.message);
@@ -88,13 +98,14 @@ serve(async (req) => {
           const html = `
             <div style="font-family:Questrial,Arial,sans-serif;color:#2E1E33;line-height:1.55">
               <h2 style="font-family:'Lilita One',Arial,sans-serif;color:#B21E4B;margin:0 0 12px">
-                New Practitioner Level ${level} application
+                ${level === 1 ? "New Practitioner Level 1 application" : "Level 2/3 interest registered"}
               </h2>
-              <p><strong>${esc(name)}</strong> has applied to train at Level ${level}.</p>
+              <p><strong>${esc(name)}</strong> ${level === 1 ? "has applied to train at Level 1." : "has registered interest in Level 2/3."}</p>
               <p>
                 Email: ${esc(email)}<br>
                 ${phone ? `Phone: ${esc(phone)}<br>` : ""}
               </p>
+              ${level === 1 ? QUESTIONS.map((q, i) => `<p><strong>${i + 1}. ${q}</strong><br>${esc(answers[i] ?? "")}</p>`).join("") : ""}
               ${message ? `<p style="background:#F7EFF8;padding:12px;border-radius:10px">${esc(message)}</p>` : ""}
               <p><a href="https://creators13beta.lovable.app/admin?tab=applications&application=${row.id}"
                     style="background:#B21E4B;color:#fff;padding:10px 18px;border-radius:99px;text-decoration:none">
@@ -106,7 +117,7 @@ serve(async (req) => {
             body: JSON.stringify({
               from: "13 Creators <noreply@connect.13creators.com>",
               to: [prof.email],
-              subject: `New Practitioner Level ${level} application — ${name}`,
+              subject: `${level === 1 ? "New Practitioner Level 1 application" : "Level 2/3 interest registered"} — ${name}`,
               html,
             }),
           });

@@ -68,6 +68,8 @@ const CommunityEvents = lazy(() => import("./pages/community/CommunityEvents"));
 const Projects = lazy(() => import("./pages/community/Projects"));
 const ProjectDetail = lazy(() => import("./pages/community/ProjectDetail"));
 const Shop = lazy(() => import("./pages/Shop"));
+const Prospectus = lazy(() => import("./pages/Prospectus"));
+const TrainingPayment = lazy(() => import("./pages/TrainingPayment"));
 const LotusPreview = import.meta.env.DEV
   ? lazy(() => import("./pages/_preview/LotusPreview"))
   : null;
@@ -190,6 +192,8 @@ const App = () => (
                 <Route path="/trainer" element={<ProtectedRoute><RoleGuard allowedRoles={["trainer"]}><TrainerDashboard /></RoleGuard></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute><RoleGuard allowedRoles={["trainer", "admin"]}><AdminDashboard /></RoleGuard></ProtectedRoute>} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/prospectus" element={<Suspense fallback={null}><Prospectus /></Suspense>} />
+                <Route path="/pay/training/:applicationId" element={<ProtectedRoute><Suspense fallback={null}><TrainingPayment /></Suspense></ProtectedRoute>} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route path="/guardian-verify" element={<GuardianVerify />} />
                 <Route path="/unsubscribe" element={<Unsubscribe />} />
