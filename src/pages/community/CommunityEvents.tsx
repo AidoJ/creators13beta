@@ -40,6 +40,7 @@ interface CommunityEvent {
   promo_link: string | null;
   promo_label: string | null;
   location: string | null;
+  open_to: string[] | null;
 }
 
 function eventStart(ev: CommunityEvent): Date {
@@ -204,12 +205,24 @@ function EventTile({ ev, past, joinable }: { ev: CommunityEvent; past?: boolean;
     <Card className={`flex flex-col overflow-hidden ${past ? "opacity-70" : ""}`}>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{ev.title}</DialogTitle>
-            <DialogDescription>
+          {/* pr-10 keeps the title and location clear of the close (X) button */}
+          <DialogHeader className="pr-10 text-left">
+            <DialogTitle className="break-words">{ev.title}</DialogTitle>
+            <DialogDescription className="break-words">
               {when}{ev.location ? ` · ${ev.location}` : ""}
             </DialogDescription>
           </DialogHeader>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {ev.open_to && ev.open_to.length > 0 && (
+              <span className="text-muted-foreground">
+                Open to: {ev.open_to.length === 1 ? ev.open_to[0] : `${ev.open_to.slice(0, -1).join(", ")} and ${ev.open_to[ev.open_to.length - 1]}`}
+              </span>
+            )}
+            <Badge variant={ev.has_access ? "default" : "outline"} className="gap-1">
+              {!ev.has_access && <Lock className="h-3 w-3" />}
+              {ev.has_access ? "Open to you" : joinable ? "Upgrade to join" : "Viewing only"}
+            </Badge>
+          </div>
           {ev.description ? (
             <div className="prose prose-sm max-w-none text-foreground" dangerouslySetInnerHTML={{ __html: sanitizeEventHtml(ev.description) }} />
           ) : (
