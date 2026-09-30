@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight, Sparkles } from "lucide-react";
-import { TIERS, type TierKey } from "@/lib/tiers";
+import { planNameSync, type TierKey } from "@/lib/plans";
 
 interface UpsellBannerProps {
   currentTier?: TierKey | null;
@@ -10,11 +10,11 @@ interface UpsellBannerProps {
 const UPGRADE_MAP: Record<string, { target: TierKey; message: string }> = {
   wren: {
     target: "robin",
-    message: "Upgrade to Robin to unlock full Creator Type profiling, 1-on-1 Zoom sessions, and personalised insights.",
+    message: "Upgrade to Create to unlock full Creator Type profiling, 1-on-1 Zoom sessions, and personalised insights.",
   },
   robin: {
     target: "cockatoo",
-    message: "Level up to Cockatoo for ongoing coaching, advanced profiling insights, and priority booking.",
+    message: "Level up to Co-Create for ongoing coaching, advanced profiling insights, and priority booking.",
   },
 };
 
@@ -24,7 +24,7 @@ export default function UpsellBanner({ currentTier }: UpsellBannerProps) {
 
   if (!upgrade) return null;
 
-  const targetTier = TIERS[upgrade.target];
+  const targetTier = { name: planNameSync(upgrade.target) };
 
   return (
     <div className="rounded-2xl border border-secondary/30 bg-gradient-to-r from-secondary/5 via-secondary/10 to-primary/5 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -38,7 +38,7 @@ export default function UpsellBanner({ currentTier }: UpsellBannerProps) {
       <Button
         size="sm"
         className="rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/90 shrink-0"
-        onClick={() => navigate("/enroll")}
+        onClick={() => navigate("/#community")}
       >
         Upgrade <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
       </Button>

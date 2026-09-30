@@ -175,7 +175,7 @@ export default function SubscribersTab({ users, caseStudies, assignedPracMap }: 
       </Dialog>
 
       <p className="text-[10px] text-muted-foreground">
-        Showing {filtered.length} paying subscriber{filtered.length !== 1 ? "s" : ""} (paid checkout purchases, or a legacy Robin, Cockatoo or Owl plan).
+        Showing {filtered.length} paying subscriber{filtered.length !== 1 ? "s" : ""} (paid checkout purchases, or an older Create, Co-Create or Practitioner plan).
       </p>
     </div>
   );

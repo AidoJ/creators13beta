@@ -58,7 +58,7 @@ export async function loadEnrollmentState(userId: string): Promise<EnrollmentSta
   const holdsProfileProduct = heldKeys.some((k) => k.startsWith("profile_") || k === "case_study");
 
   const roles = (rolesRes.data || []).map((r: any) => r.role);
-  // NOTE: "trainee" is NOT staff — trainees are paying clients (e.g. Owl tier)
+  // NOTE: "trainee" is NOT staff — trainees are paying clients (e.g. practitioner training)
   // still required to complete consent/photos/booking. Only practitioner/
   // trainer/admin bypass the client enrolment gate.
   const isStaff = roles.some((r: string) =>

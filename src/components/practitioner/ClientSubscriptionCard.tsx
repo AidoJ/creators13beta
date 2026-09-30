@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { usePlanName } from "@/lib/plans";
+import { planNameSync } from "@/lib/plans";
 import type { TierKey } from "@/lib/plans";
 import { CreditCard, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -58,8 +58,7 @@ export default function ClientSubscriptionCard({ clientId }: ClientSubscriptionC
     );
   }
 
-  const tierInfo = TIERS[sub.tier];
-  const monthlyPrice = tierInfo?.monthlyPrice || 0;
+  const planName = planNameSync(sub.tier);
   const statusColor = sub.status === "active"
     ? "bg-green-500/10 text-green-600 border-green-500/20"
     : sub.status === "past_due"
@@ -84,7 +83,7 @@ export default function ClientSubscriptionCard({ clientId }: ClientSubscriptionC
         </div>
         <div>
           <span className="text-muted-foreground text-xs">Monthly Fee</span>
-          <p className="font-semibold text-foreground">{monthlyPrice === 0 ? "Free" : `$${monthlyPrice} AUD`}</p>
+          <p className="font-semibold text-foreground">{sub.tier === "wren" ? "Free" : "Paid"}</p>
         </div>
         <div>
           <span className="text-muted-foreground text-xs">Billing</span>

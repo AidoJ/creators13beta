@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { usePlanName } from "@/lib/plans";
+import { planNameSync } from "@/lib/plans";
 import type { TierKey } from "@/lib/plans";
 import { ArrowRight, CreditCard, ExternalLink, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -133,6 +133,7 @@ export default function SubscriptionCard() {
   }
 
   const isPaid = sub.tier !== "wren";
+  const planName = planNameSync(sub.tier);
 
   const statusColor = sub.status === "active"
     ? "bg-green-500/10 text-green-600 border-green-500/20"
