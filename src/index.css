@@ -295,3 +295,7 @@
 .prospectus-canvas-text ol { list-style: decimal; padding-left: 1.4em; }
 .prospectus-canvas-text img { max-width: 100%; }
 .prospectus-canvas-missing { width: 100%; height: 100%; display: grid; place-items: center; background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); font-size: 14px; }
+.prospectus-seed .prospectus-pages { width: 1123px !important; margin: 0; }
+.prospectus-seed .prospectus-page { width: 1123px; box-shadow: none; }
+.prospectus-handle { width: 12px !important; height: 12px !important; background: hsl(var(--background)); border: 2px solid hsl(var(--primary)); border-radius: 3px; }
+.prospectus-handle:is([class]) { z-index: 5; }
