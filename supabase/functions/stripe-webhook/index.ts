@@ -1,3 +1,4 @@
+import { attachFixedTermSchedule, switchAccessIfContinued } from "../_shared/fixedTerm.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
@@ -221,6 +222,9 @@ serve(async (req) => {
         if (billingShape === "fixed_term" && termMonths > 0) {
           const end = new Date();
           end.setMonth(end.getMonth() + termMonths);
+          // Safety net only: the switch to Connect at payment 14 ends this
+          // entitlement explicitly. A few days' grace avoids a gap in access.
+          end.setDate(end.getDate() + 3);
           endsAt = end.toISOString();
         }
 
@@ -245,19 +249,10 @@ serve(async (req) => {
         const instalments = termMonths;
         if (billingShape === "fixed_term" && instalments > 0 && subscriptionId) {
           try {
-            const schedule = await stripe.subscriptionSchedules.create({ from_subscription: subscriptionId });
-            const phase = schedule.phases[0];
-            await stripe.subscriptionSchedules.update(schedule.id, {
-              end_behavior: "cancel",
-              phases: [{
-                items: phase.items.map((i: any) => ({ price: i.price as string, quantity: i.quantity ?? 1 })),
-                start_date: phase.start_date,
-                iterations: instalments,
-                metadata: { user_id: userId, level_key: levelKey, product_id: productId },
-              }],
-              metadata: { user_id: userId, level_key: levelKey, product_id: productId },
+            const scheduleId = await attachFixedTermSchedule(stripe, supabase, {
+              subscriptionId, userId, levelKey, productId, instalments,
             });
-            logStep("Fixed-term schedule attached", { scheduleId: schedule.id, iterations: instalments });
+            logStep("Fixed-term schedule attached (then continues as Connect)", { scheduleId, iterations: instalments });
           } catch (e) {
             logStep("ERROR attaching fixed-term schedule", { message: String(e) });
           }
@@ -320,6 +315,8 @@ serve(async (req) => {
 
     if (event.type === "customer.subscription.updated") {
       const subscription = event.data.object as Stripe.Subscription;
+      try { await switchAccessIfContinued(supabase, subscription, logStep); }
+      catch (e) { logStep("ERROR switching to Connect", { message: String(e) }); }
       const customerId = subscription.customer as string;
 
       // Find user by stripe_customer_id

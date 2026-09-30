@@ -188,10 +188,20 @@ serve(async (req) => {
         app_origin: origin,
       };
 
+      // Fixed-term plans: state the 13-payments-then-Connect terms on Stripe's page too.
+      let continuationText: string | null = null;
+      if (product.billing_shape === "fixed_term") {
+        const { data: connect } = await supabaseClient.from("products").select("price_cents")
+          .eq("grants_level_key", "taster").eq("billing_shape", "recurring").eq("active", true).limit(1).maybeSingle();
+        const a = (c: number) => `A$${(c / 100).toFixed(0)}`;
+        continuationText = `${product.term_months ?? 13} monthly payments of ${a(product.price_cents)}, then your plan continues as Connect at ${a(connect?.price_cents ?? 800)} a month until you cancel.`;
+      }
+
       const session = await stripe.checkout.sessions.create({
         customer: customerId,
         customer_email: customerId ? undefined : userEmail,
         mode: recurring ? "subscription" : "payment",
+        ...(continuationText ? { custom_text: { submit: { message: continuationText } } } : {}),
         ...(embedded
           ? { ui_mode: "embedded", return_url: successUrl || `${origin}/dashboard?purchase=success` }
           : {

@@ -4,6 +4,7 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { requireRole, authErrorResponse } from "../_shared/auth.ts";
+import { extendExistingSchedule } from "../_shared/fixedTerm.ts";
 import { recordCharge, fillFee, recordFailedInvoice, syncSubscription } from "../_shared/paymentsLedger.ts";
 
 const corsHeaders = {
@@ -98,6 +99,29 @@ Deno.serve(async (req) => {
         ? await stripe.subscriptions.update(body.subscription_id, { cancel_at_period_end: true })
         : await stripe.subscriptions.cancel(body.subscription_id);
       return json({ subscription: s.id, status: s.status, cancel_at_period_end: s.cancel_at_period_end });
+    }
+
+    // One-off: existing Create / Co-Create subscriptions get the Connect
+    // continuation phase appended. Idempotent; untouched before payment 13.
+    if (action === "extend_fixed_term") {
+      const { data: rows } = await sb.from("payment_subscriptions").select("stripe_subscription_id")
+        .eq("billing_shape", "fixed_term").eq("livemode", livemode).in("status", ["active", "trialing", "past_due"]);
+      const results: Record<string, string> = {};
+      for (const r of rows ?? []) {
+        try { results[r.stripe_subscription_id] = await extendExistingSchedule(stripe, sb, r.stripe_subscription_id); }
+        catch (e) { results[r.stripe_subscription_id] = `error: ${String(e)}`; }
+      }
+      return json({ results });
+    }
+
+    if (action === "inspect_schedule") {
+      const sub = await stripe.subscriptions.retrieve(body.subscription_id);
+      const sid = typeof sub.schedule === "string" ? sub.schedule : sub.schedule?.id;
+      if (!sid) return json({ schedule: null });
+      const sc = await stripe.subscriptionSchedules.retrieve(sid);
+      return json({ end_behavior: sc.end_behavior, phases: sc.phases.map((p: any) => ({
+        start: new Date(p.start_date * 1000).toISOString().slice(0, 10), end: new Date(p.end_date * 1000).toISOString().slice(0, 10),
+        amount: p.items?.[0]?.price, level: p.metadata?.level_key })) });
     }
 
     return json({ error: "Unknown action" }, 400);
