@@ -6,3 +6,6 @@
 - The dashboard Getting Started guide is access-grid driven; its self-only progress function takes no user ID, while admin previews use selected access levels and synthetic state only.
 - Getting Started Phase 2 tours replay from the account-saved guide, while Phase 3 derives “What’s included” from access data and keeps the staff guide admin-editable.
 - Community map and Creator Type filters persist only in the current browser; the member’s own discoverable profile is a distinct “YOU” map marker, never a match result.
+- Plan display names come from access levels via `src/lib/plans.ts`; stored keys (wren/robin/cockatoo/owl) are internal only and never shown — keeps one naming source.
+- Case-study subject status is decided only by the `is_case_study_subject` backend check (`src/lib/caseStudySubject.ts`) — one rule for member, practitioner and staff views.
+- Age from date of birth uses only `ageFromDob` (`src/lib/age.ts`, tested; backend copy `supabase/functions/_shared/age.ts`) — consent thresholds must agree everywhere.
