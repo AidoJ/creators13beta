@@ -927,7 +927,9 @@ function Honeycomb({
     const GAP = 10;
     const placed: { x: number; y: number; r: number }[] = [];
     const items: { x: number; y: number; s: number }[] = [];
-    const targetH = Math.max(dims.h, 360);
+    const avg = sizes.reduce((a, b) => a + b, 0) / sizes.length;
+    const perRow = Math.max(1, Math.floor(W / (avg * 1.25)));
+    const targetH = Math.max(avg * 1.4, Math.ceil(sizes.length / perRow) * avg * 1.25);
     sorted.forEach((m, i) => {
       const s = Math.min(sizes[i] ?? 180, W - 8);
       const r = s / 2;
