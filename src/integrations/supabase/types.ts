@@ -1579,6 +1579,86 @@ export type Database = {
           },
         ]
       }
+      onboarding_state: {
+        Row: {
+          completed_seen_at: string | null
+          created_at: string
+          dismissed_at: string | null
+          updated_at: string
+          user_id: string
+          visited: Json
+        }
+        Insert: {
+          completed_seen_at?: string | null
+          created_at?: string
+          dismissed_at?: string | null
+          updated_at?: string
+          user_id: string
+          visited?: Json
+        }
+        Update: {
+          completed_seen_at?: string | null
+          created_at?: string
+          dismissed_at?: string | null
+          updated_at?: string
+          user_id?: string
+          visited?: Json
+        }
+        Relationships: []
+      }
+      onboarding_steps: {
+        Row: {
+          check_key: string
+          created_at: string
+          cta_label: string
+          description: string
+          enabled: boolean
+          feature_key: string
+          icon_key: string
+          key: string
+          route: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          check_key: string
+          created_at?: string
+          cta_label?: string
+          description?: string
+          enabled?: boolean
+          feature_key: string
+          icon_key?: string
+          key: string
+          route: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          check_key?: string
+          created_at?: string
+          cta_label?: string
+          description?: string
+          enabled?: boolean
+          feature_key?: string
+          icon_key?: string
+          key?: string
+          route?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_steps_feature_key_fkey"
+            columns: ["feature_key"]
+            isOneToOne: false
+            referencedRelation: "features"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       orders: {
         Row: {
           created_at: string
@@ -3507,6 +3587,22 @@ export type Database = {
           other_user_id: string
         }[]
       }
+      get_my_onboarding: {
+        Args: never
+        Returns: {
+          completed_seen_at: string
+          cta_label: string
+          description: string
+          dismissed_at: string
+          done: boolean
+          feature_key: string
+          icon_key: string
+          key: string
+          route: string
+          sort_order: number
+          title: string
+        }[]
+      }
       get_my_top_matches: {
         Args: { _limit?: number }
         Returns: {
@@ -3654,6 +3750,10 @@ export type Database = {
         Args: { _token: string }
         Returns: undefined
       }
+      mark_onboarding_visited: {
+        Args: { _marker_key: string }
+        Returns: undefined
+      }
       marketing_unsubscribe: { Args: { _token: string }; Returns: boolean }
       my_features: { Args: never; Returns: string[] }
       my_practitioner_is_trainer: { Args: never; Returns: boolean }
@@ -3675,6 +3775,19 @@ export type Database = {
             }
             Returns: string
           }
+      preview_onboarding_for_levels: {
+        Args: { _level_keys: string[] }
+        Returns: {
+          cta_label: string
+          description: string
+          feature_key: string
+          icon_key: string
+          key: string
+          route: string
+          sort_order: number
+          title: string
+        }[]
+      }
       reap_abandoned_matches: {
         Args: { _active_idle_minutes?: number; _lobby_idle_minutes?: number }
         Returns: Json

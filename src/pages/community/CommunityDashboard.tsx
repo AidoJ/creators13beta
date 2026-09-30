@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, Map as MapIcon, Users, Copy, Check, LayoutDashboard, Menu, X, EyeOff } from "lucide-react";
+import { Settings, Map as MapIcon, Users, Copy, Check, LayoutDashboard, Menu, X } from "lucide-react";
 import { capitaliseTypeName, CREATOR_TYPE_NAMES, getCreatorTypeColor } from "@/lib/creatorTypes";
 import { isStockAvatarRef, stockAvatarUrl } from "@/lib/avatar";
 import { glyphForType } from "@/lib/game/glyphs";
@@ -34,6 +34,7 @@ import projectsIcon from "@/assets/community-icons/projects-icon.png.asset.json"
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeatures } from "@/hooks/useFeatures";
 import type { MapMember } from "@/components/community/CommunityMapView";
+import { markOnboardingVisited } from "@/lib/onboarding";
 
 // Lazy: Maps JS API only loads when the user actually toggles to Map view.
 const CommunityMapView = lazy(() => import("@/components/community/CommunityMapView"));
@@ -151,12 +152,10 @@ export default function CommunityDashboard() {
   });
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [unplottable, setUnplottable] = useState(0);
-  const [isCommunityVisible, setIsCommunityVisible] = useState<boolean | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
-  const [visibilityBannerDismissed, setVisibilityBannerDismissed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return sessionStorage.getItem("c13.community.visBanner.dismissed") === "1";
-  });
+  useEffect(() => {
+    if (filterMode !== "month" || filterValue) void markOnboardingVisited("matching_filters");
+  }, [filterMode, filterValue]);
 
   // Batch C — poll pending connection-request count for the badge. 60s,
   // and only while the tab is visible to avoid background churn.
@@ -236,7 +235,6 @@ export default function CommunityDashboard() {
         if (!cancelled) setFeaturedMeta((metaRow as FeaturedMeta) ?? null);
       }
       if (codeRes.data?.invitation_code) setMyCode(codeRes.data.invitation_code);
-      setIsCommunityVisible(codeRes.data?.community_visible ?? false);
       setCreatorTypeMeta((typeMetaRes.data as CreatorTypeMeta[] | null) ?? []);
       if (mineRes.data) {
         const t = [
@@ -377,42 +375,6 @@ export default function CommunityDashboard() {
       />
       <div className="relative z-10">
       <DashboardHeader email={user?.email} onSignOut={signOut} />
-
-      {/* Visibility nudge — shown when the viewer's community_visible=false.
-          Session-only dismissal: reappears next visit until they enable. */}
-      {isCommunityVisible === false && !visibilityBannerDismissed && (
-        <div className="container mx-auto px-4 pt-3">
-          <div className="flex items-center gap-3 rounded-lg border border-banner-border bg-banner text-banner-foreground px-4 py-2.5 text-sm">
-            <EyeOff className="h-4 w-4 flex-shrink-0" />
-            <p className="flex-1">
-              Your profile is private, so other members can&apos;t find you yet.{" "}
-              <button
-                type="button"
-                onClick={async () => {
-                  if (!user) return;
-                  const { error } = await supabase.from("profiles").update({ community_visible: true } as never).eq("user_id", user.id);
-                  if (!error) setIsCommunityVisible(true);
-                }}
-                className="font-semibold text-primary hover:underline"
-              >
-                Make me visible
-              </button>
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setVisibilityBannerDismissed(true);
-                try { sessionStorage.setItem("c13.community.visBanner.dismissed", "1"); } catch { /* ignore */ }
-              }}
-              aria-label="Dismiss"
-              className="text-muted-foreground hover:text-foreground flex-shrink-0"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
 
       {/* Everything below the menu/banners lives in this relative box, so the
           rail and top-right controls are anchored under the nav and can never

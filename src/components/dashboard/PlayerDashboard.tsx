@@ -6,8 +6,7 @@ import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 
 import PlayerProfileDiscountCTA from "@/components/dashboard/PlayerProfileDiscountCTA";
 import DiscountCodesCard from "@/components/dashboard/DiscountCodesCard";
-import ProfilingJourneyBlock from "@/components/dashboard/ProfilingJourneyBlock";
-import CreatorsSeenPrompt from "@/components/dashboard/CreatorsSeenPrompt";
+import GettingStartedCard from "@/components/dashboard/GettingStartedCard";
 import PracticeRungCard from "@/components/dashboard/game/PracticeRungCard";
 import QuizStatsCard from "@/components/dashboard/QuizStatsCard";
 import { Card } from "@/components/ui/card";
@@ -45,6 +44,7 @@ export default function PlayerDashboard({ userId, email, firstName, onSignOut }:
         {firstName && (
           <h1 className="font-display text-2xl text-foreground">Welcome, {firstName}.</h1>
         )}
+        <GettingStartedCard userId={userId} firstName={firstName} />
 
         {/* Section teasers — Play & Community surfaces without duplicating
             their content. Matches the paid-tier Me page for nav consistency. */}
@@ -88,16 +88,6 @@ export default function PlayerDashboard({ userId, email, firstName, onSignOut }:
         </div>
 
         <PracticeRungCard userId={userId} />
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-stretch [&>*]:h-full">
-          <CreatorsSeenPrompt userId={userId} />
-          <ProfilingJourneyBlock
-            userId={userId}
-            isPlayerPath={true}
-            isCaseStudy={false}
-            isPaidTier={false}
-            creatorTypes={[]}
-          />
-        </div>
         <QuizStatsCard userId={userId} />
         {!promptDismissed && <DiscountCodesCard userId={userId} />}
 

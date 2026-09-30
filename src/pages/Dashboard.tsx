@@ -13,18 +13,15 @@ import SessionCard from "@/components/dashboard/SessionCard";
 import CreatorProfileCard from "@/components/dashboard/CreatorProfileCard";
 import AnimalMatchesCard from "@/components/dashboard/AnimalMatchesCard";
 import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
-import PurchaseSuccessBanner from "@/components/dashboard/PurchaseSuccessBanner";
+import GettingStartedCard from "@/components/dashboard/GettingStartedCard";
 import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
 import { loadMyAccess, type AccessItem } from "@/lib/accessSummary";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
 import DiscountCodesCard from "@/components/dashboard/DiscountCodesCard";
-import ProfilingJourneyBlock from "@/components/dashboard/ProfilingJourneyBlock";
-import ContinueEnrollmentBlock from "@/components/enrollment/ContinueEnrollmentBlock";
 
 import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
-import CreatorsSeenPrompt from "@/components/dashboard/CreatorsSeenPrompt";
 import { Card } from "@/components/ui/card";
-import { Gamepad2, Globe, ArrowRight, Mail, Camera } from "lucide-react";
+import { Globe, ArrowRight, Mail } from "lucide-react";
 import gameIcon from "@/assets/community-icons/game-icon.png.asset.json";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -135,7 +132,6 @@ export default function Dashboard() {
   const photosSubmitted = step === "photos_uploaded" || step === "awaiting_profiling" || step === "booking_made" || isComplete;
   const photosUploaded = photosSubmitted;
   // Photos save one by one; unfinished until the member reviews and submits.
-  const photosUnfinished = photoCount > 0 && !photosSubmitted;
   const bookingMade = step === "booking_made" || (isComplete && !!booking);
   const hasDetails = !!(profile?.first_name && profile?.date_of_birth && profile?.gender && profile?.height_cm);
 
@@ -191,28 +187,13 @@ export default function Dashboard() {
       <DashboardHeader email={user?.email} onSignOut={signOut} />
 
       <main className="container mx-auto px-4 py-8 max-w-5xl space-y-5">
-        {/* Continue where you left off — appears only for users mid-enrolment.
-            Silent when complete/staff/player-only. Same resolver as the
-            enrollment gate + the recovery sweep so the surfaces never diverge. */}
-        {/* Post-purchase thank-you always sits at the very top. */}
-        <PurchaseSuccessBanner />
-        {photosUnfinished && (
-          <button
-            type="button"
-            onClick={() => navigate("/enroll/photos")}
-            className="w-full text-left rounded-2xl border border-banner-border bg-banner text-banner-foreground p-4 flex items-center gap-3 hover:brightness-95 transition"
-          >
-            <Camera className="h-5 w-5 flex-shrink-0" />
-            <span className="flex-1 text-sm">
-              <span className="font-semibold">Your photo upload isn't finished.</span>{" "}
-              {photoCount < 8
-                ? `You've added ${photoCount} of 8 photos — tap to carry on where you left off.`
-                : "All 8 photos are added — tap to review and submit them."}
-            </span>
-            <ArrowRight className="h-5 w-5 flex-shrink-0" />
-          </button>
+        {user && (
+          <GettingStartedCard
+            userId={user.id}
+            firstName={profile?.first_name}
+            purchaseSuccess={new URLSearchParams(window.location.search).get("purchase") === "success"}
+          />
         )}
-        {user && !photosUnfinished && <ContinueEnrollmentBlock userId={user.id} />}
 
         {/* Section teasers — surface Play & Community without duplicating
             their content here. Phase 2.1: simple label + arrow, no live data. */}
@@ -254,8 +235,6 @@ export default function Dashboard() {
           )}
         </div>
 
-        {user && <CreatorsSeenPrompt userId={user.id} />}
-
         {/* Plan / access card — shown to every member who holds anything,
             not only those who can see the profile section (Connect buyers). */}
         <SubscriptionCard />
@@ -266,16 +245,6 @@ export default function Dashboard() {
 
           <section className="pt-6 mt-4 border-t border-dashed border-border space-y-5">
             <p className="text-xs uppercase tracking-widest text-primary font-semibold">Your profile</p>
-
-            {user && (
-              <ProfilingJourneyBlock
-                userId={user.id}
-                isPlayerPath={isPlayerOnly}
-                isCaseStudy={isCaseStudySubject}
-                isPaidTier={isPaidTier}
-                creatorTypes={creatorTypes}
-              />
-            )}
 
             {/* Two-column layout */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -326,7 +295,7 @@ export default function Dashboard() {
 
             {user && <DiscountCodesCard userId={user.id} />}
             <ZoomRecordingsCard />
-            {user && <CreatorProfileCard userId={user.id} />}
+            {user && <div id="creator-profile"><CreatorProfileCard userId={user.id} /></div>}
             {user && <AnimalMatchesCard userId={user.id} />}
           </section>
         )}

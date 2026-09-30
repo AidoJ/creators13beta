@@ -10,3 +10,5 @@
 - [ ] 8 After 13 months -> Connect $8 (proposal; waiting on go-ahead)
 - [x] 9 Calendly consult button
 - [ ] Live test each after publish
+
+- [ ] Build and validate Phase 1 Getting Started navigator, then publish.

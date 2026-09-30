@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, Lock, Zap, AlertTriangle, Eye, HelpCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { sortCreatorTypes } from "@/lib/creatorTypes";
+import { markOnboardingVisited } from "@/lib/onboarding";
 const GLYPH_IMPORTS: Record<string, () => Promise<{ default: string }>> = {
   lava: () => import("@/assets/glyph-lava.png"),
   fire: () => import("@/assets/glyph-fire.png"),
@@ -63,6 +64,7 @@ export default function CreatorProfileCard({ userId }: CreatorProfileCardProps) 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    void markOnboardingVisited("view_creator_types");
     async function load() {
       const { data } = await supabase
         .from("creator_type_profiles")
