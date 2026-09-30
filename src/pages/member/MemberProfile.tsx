@@ -32,7 +32,7 @@ interface PublicProfile {
   bio_intriguing: string | null;
   tier: TierKey | null;
   community_joined_at: string | null;
-  creator_types: Array<{ type: string; source: LotusCreatorType["source"] }>;
+  creator_types: Array<{ type: string; source: LotusCreatorType["source"]; practitioner_status?: string | null; certification_level?: number | null }>;
   open_to_contact: boolean;
   enabled_channels: string[];
   project_seek_me_for?: string | null;
@@ -174,6 +174,7 @@ export default function MemberProfile() {
   const memberSince = formatMemberSince(profile.community_joined_at);
   const tier = profile.tier ? TIERS[profile.tier] : null;
   const isOwn = user?.id === profile.user_id;
+  const practitioner = profile.creator_types.find((type) => type.practitioner_status === "certified");
 
   const bios: Array<{ key: string; label: string; value: string | null }> = [
     { key: "superpower", label: "Superpower", value: profile.bio_superpower },
@@ -207,6 +208,7 @@ export default function MemberProfile() {
             )}
             <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
               {tier && <Badge variant="secondary" className="font-display tracking-wide">{tier.name}</Badge>}
+              {practitioner && <Badge className="bg-secondary text-secondary-foreground font-display tracking-wide">Certified Level {practitioner.certification_level ?? 1} Practitioner</Badge>}
               {memberSince && <span className="text-xs text-muted-foreground">Member since {memberSince}</span>}
             </div>
           </div>
