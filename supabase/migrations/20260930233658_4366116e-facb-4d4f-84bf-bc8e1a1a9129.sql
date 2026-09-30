@@ -1,0 +1,1 @@
+UPDATE public.access_levels SET display_name = 'Practitioner Membership', updated_at = now() WHERE key = 'owl' AND display_name = 'Owl';
