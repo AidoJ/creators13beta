@@ -90,7 +90,7 @@ export default function PersonalDetailsCard({ profile, hasDetails }: PersonalDet
       </div>
 
       {age !== null && age < 18 && (
-        <div className="rounded-xl border border-banner-border bg-banner text-banner-foreground p-3 mt-2 space-y-1">
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 mt-2 space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">Parent / Guardian</p>
           {guardianDeclared ? (
             <div className="text-xs text-foreground space-y-0.5">

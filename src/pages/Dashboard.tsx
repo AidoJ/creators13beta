@@ -210,7 +210,7 @@ export default function Dashboard() {
             <ArrowRight className="h-5 w-5 flex-shrink-0" />
           </button>
         )}
-        {user && <ContinueEnrollmentBlock userId={user.id} />}
+        {user && !(photoCount > 0 && photoCount < 8) && <ContinueEnrollmentBlock userId={user.id} />}
 
         {/* Section teasers — surface Play & Community without duplicating
             their content here. Phase 2.1: simple label + arrow, no live data. */}
