@@ -11,6 +11,7 @@ import logoFull from "@/assets/13creators-logo-full.png";
 import { SignupFields } from "@/components/auth/SignupFields";
 import { ForgotPasswordDialog } from "@/components/auth/ForgotPasswordDialog";
 import { getAppOrigin } from "@/lib/appOrigin";
+import { extractBuyFromReturnTo, getPendingBuy, rememberPendingBuy } from "@/lib/pendingPurchase";
 
 export default function Auth() {
   // ?mode=signup opens the new-account form (every "sign up"/"buy" button uses it).
