@@ -88,6 +88,14 @@ function inlineStyles(source: Element, clone: Element) {
   srcKids.forEach((kid, i) => cloneKids[i] && inlineStyles(kid, cloneKids[i]));
 }
 
+/** Background as CSS: gradients kept, expiring signed picture URLs removed. */
+function cssBackground(el: Element): string | undefined {
+  const cs = getComputedStyle(el);
+  const gradients = (cs.backgroundImage.match(/(linear|radial)-gradient\((?:[^()]|\([^()]*\))*\)/g) ?? []).join(", ");
+  if (gradients) return isTransparent(cs.backgroundColor) ? gradients : `${gradients}, ${cs.backgroundColor}`;
+  return isTransparent(cs.backgroundColor) ? undefined : cs.backgroundColor;
+}
+
 function isTransparent(color: string) {
   return !color || color === "transparent" || /rgba\([^)]*,\s*0\)$/.test(color);
 }
@@ -107,8 +115,8 @@ export function seedFromPage(page: HTMLElement, urlToPath: Record<string, string
   let z = 1;
   // Coloured panels
   page.querySelectorAll("aside, article, .prospectus-learning, .prospectus-contact-card").forEach((el) => {
-    const bg = getComputedStyle(el).backgroundColor;
-    if (!isTransparent(bg)) elements.push({ id: newId(), type: "box", ...rect(el), z: z++, bg, radius: parseFloat(getComputedStyle(el).borderRadius) || 0 });
+    const bg = cssBackground(el);
+    if (bg) elements.push({ id: newId(), type: "box", ...rect(el), z: z++, bg, radius: parseFloat(getComputedStyle(el).borderRadius) || 0 });
   });
   page.querySelectorAll("img").forEach((img) => {
     const src = img.getAttribute("src") ?? "";
@@ -123,9 +131,9 @@ export function seedFromPage(page: HTMLElement, urlToPath: Record<string, string
     const clone = el.cloneNode(true) as HTMLElement;
     inlineStyles(el, clone);
     const cs = getComputedStyle(el);
-    const bg = cs.backgroundColor;
+    const bg = cssBackground(el);
     const r = rect(el);
-    elements.push({ id: newId(), type: "text", ...r, h: r.h + 6, z: z++, html: sanitizeCanvasHtml(clone.outerHTML), bg: isTransparent(bg) ? undefined : bg, radius: parseFloat(cs.borderRadius) || 0 });
+    elements.push({ id: newId(), type: "text", ...r, h: r.h + 6, z: z++, html: sanitizeCanvasHtml(clone.outerHTML), bg, radius: parseFloat(cs.borderRadius) || 0 });
   }
-  return { bg: getComputedStyle(page).backgroundColor || "#ffffff", elements };
+  return { bg: cssBackground(page) ?? "#ffffff", elements };
 }
