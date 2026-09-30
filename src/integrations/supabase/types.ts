@@ -3736,6 +3736,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_case_study_subject: { Args: { _user_id: string }; Returns: boolean }
       is_match_participant: { Args: { _match_id: string }; Returns: boolean }
       is_project_creator: {
         Args: { _project: string; _user: string }
