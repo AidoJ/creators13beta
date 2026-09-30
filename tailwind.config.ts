@@ -39,6 +39,11 @@ export default {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
         },
+        banner: {
+          DEFAULT: "hsl(var(--banner))",
+          foreground: "hsl(var(--banner-foreground))",
+          border: "hsl(var(--banner-border))",
+        },
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",

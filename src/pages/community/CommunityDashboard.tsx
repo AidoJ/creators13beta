@@ -382,9 +382,9 @@ export default function CommunityDashboard() {
           Session-only dismissal: reappears next visit until they enable. */}
       {isCommunityVisible === false && !visibilityBannerDismissed && (
         <div className="container mx-auto px-4 pt-3">
-          <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm">
-            <EyeOff className="h-4 w-4 text-primary flex-shrink-0" />
-            <p className="flex-1 text-foreground">
+          <div className="flex items-center gap-3 rounded-lg border border-banner-border bg-banner text-banner-foreground px-4 py-2.5 text-sm">
+            <EyeOff className="h-4 w-4 flex-shrink-0" />
+            <p className="flex-1">
               Your profile is private, so other members can&apos;t find you yet.{" "}
               <button
                 type="button"

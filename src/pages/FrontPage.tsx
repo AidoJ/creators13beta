@@ -267,6 +267,10 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
     const included = !heldLevels.has(levelKey) && rank > 0 &&
       Object.entries(MEMBERSHIP_RANK).some(([k, r]) => r > rank && heldLevels.has(k));
     const isHeld = heldLevels.has(levelKey) || included;
+    // Upgrading: name the lower membership(s) that will end and be refunded.
+    const replaced = isHeld ? [] : Object.entries(MEMBERSHIP_RANK)
+      .filter(([k, r]) => r < rank && heldLevels.has(k))
+      .map(([k]) => COPY[k]?.title ?? k);
     if (!product || !copy) return null;
     return (
       <div className={`relative flex flex-col rounded-3xl p-6 border ${isHeld ? "bg-secondary/10 border-2 border-secondary" : `bg-card ${copy.feature ? "border-2 border-primary shadow-lg" : "border-border"}`}`}>
@@ -285,6 +289,12 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
             </li>
           ))}
         </ul>
+        {replaced.length > 0 && (
+          <p role="note" className="mb-3 rounded-xl border border-banner-border bg-banner text-banner-foreground px-3 py-2 text-xs">
+            Upgrading: your {replaced.join(" and ")} membership will end when you buy {copy.title}, and you'll be
+            refunded for the unused part of this month.
+          </p>
+        )}
         <button
           onClick={() => buy(product.id)}
           disabled={busyId === product.id || isHeld}

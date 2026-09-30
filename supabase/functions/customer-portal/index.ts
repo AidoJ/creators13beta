@@ -44,10 +44,23 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
 
     const origin = req.headers.get("origin") || "https://creators13beta.lovable.app";
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: `${origin}/dashboard`,
-    });
+    const body = await req.json().catch(() => ({}));
+    const returnUrl = `${origin}/dashboard?portal=returned`;
+    const params: Stripe.BillingPortal.SessionCreateParams = { customer: customerId, return_url: returnUrl };
+    // Cancel flow: Stripe redirects straight back to the dashboard once the
+    // member confirms, instead of leaving them on Stripe's confirmation page.
+    if (body?.flow === "cancel") {
+      const subs = await stripe.subscriptions.list({ customer: customerId, status: "active", limit: 10 });
+      const target = subs.data.find((s) => !s.cancel_at_period_end) ?? subs.data[0];
+      if (target) {
+        params.flow_data = {
+          type: "subscription_cancel",
+          subscription_cancel: { subscription: target.id },
+          after_completion: { type: "redirect", redirect: { return_url: `${origin}/dashboard?portal=cancelled` } },
+        };
+      }
+    }
+    const portalSession = await stripe.billingPortal.sessions.create(params);
 
     return new Response(JSON.stringify({ url: portalSession.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -66,10 +66,10 @@ export default function SubscriptionCard() {
   }, [user]);
 
 
-  const handleManageSubscription = async () => {
+  const handleManageSubscription = async (flow?: "cancel") => {
     setPortalLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("customer-portal");
+      const { data, error } = await supabase.functions.invoke("customer-portal", { body: flow ? { flow } : {} });
       if (error) {
         // Try to read the structured error body from the edge function
         let msg = "Could not open subscription portal.";
@@ -86,7 +86,7 @@ export default function SubscriptionCard() {
         return;
       }
       if (data?.url) {
-        window.open(data.url, "_blank");
+        window.location.href = data.url;
       }
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Could not open subscription portal.", variant: "destructive" });
@@ -118,10 +118,15 @@ export default function SubscriptionCard() {
           </div>
         )}
         {hasRecurringStripe && (
-          <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="w-full">
-            {portalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ExternalLink className="h-4 w-4 mr-2" />}
-            Manage / Cancel Membership
-          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="outline" size="sm" onClick={() => handleManageSubscription()} disabled={portalLoading}>
+              {portalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ExternalLink className="h-4 w-4 mr-2" />}
+              Manage billing
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => handleManageSubscription("cancel")} disabled={portalLoading}>
+              Cancel membership
+            </Button>
+          </div>
         )}
       </div>
     );
@@ -195,7 +200,7 @@ export default function SubscriptionCard() {
         <Button
           variant="outline"
           size="sm"
-          onClick={handleManageSubscription}
+          onClick={() => handleManageSubscription()}
           disabled={portalLoading}
           className="w-full"
         >

@@ -25,6 +25,7 @@ export default function ProfileWizard() {
   const [step, setStep] = useState(1);
   const { has: hasFeature } = useFeatures();
   const canMessage = hasFeature("community_message_members");
+  const canProject = hasFeature("community_create_profile_project");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -39,6 +40,10 @@ export default function ProfileWizard() {
   const [bioSuper, setBioSuper] = useState("");
   const [bioWhere, setBioWhere] = useState("");
   const [bioIntriguing, setBioIntriguing] = useState("");
+  // Project answers (optional) — Connect and above, same as Settings.
+  const [projSeek, setProjSeek] = useState("");
+  const [projSkills, setProjSkills] = useState("");
+  const [projDream, setProjDream] = useState("");
 
   // Step 3
   const [primaryType, setPrimaryType] = useState<string | null>(null);
@@ -119,6 +124,9 @@ export default function ProfileWizard() {
           if (typeof d.bioSuper === "string") setBioSuper(d.bioSuper);
           if (typeof d.bioWhere === "string") setBioWhere(d.bioWhere);
           if (typeof d.bioIntriguing === "string") setBioIntriguing(d.bioIntriguing);
+          if (typeof d.projSeek === "string") setProjSeek(d.projSeek);
+          if (typeof d.projSkills === "string") setProjSkills(d.projSkills);
+          if (typeof d.projDream === "string") setProjDream(d.projDream);
           if (!typeRes.data?.primary_type && typeof d.primaryType === "string") setPrimaryType(d.primaryType);
           if (typeof d.visible === "boolean") setVisible(d.visible);
           if (typeof d.acceptsMessages === "boolean") setAcceptsMessages(d.acceptsMessages);
@@ -143,11 +151,11 @@ export default function ProfileWizard() {
     if (loading || !user) return;
     try {
       localStorage.setItem(draftKey, JSON.stringify({
-        step, displayName, locationLabel, bioSuper, bioWhere, bioIntriguing,
+        step, displayName, locationLabel, bioSuper, bioWhere, bioIntriguing, projSeek, projSkills, projDream,
         primaryType: alreadyHasCreatorType ? null : primaryType, visible, acceptsMessages,
       }));
     } catch { /* storage full/blocked — non-fatal */ }
-  }, [loading, user, draftKey, step, displayName, locationLabel, bioSuper, bioWhere, bioIntriguing, primaryType, alreadyHasCreatorType, visible, acceptsMessages]);
+  }, [loading, user, draftKey, step, displayName, locationLabel, bioSuper, bioWhere, bioIntriguing, projSeek, projSkills, projDream, primaryType, alreadyHasCreatorType, visible, acceptsMessages]);
 
   const exitWizard = () => {
     toast({ title: "Saved for later", description: "Your answers are kept. Come back any time to finish." });
@@ -157,7 +165,8 @@ export default function ProfileWizard() {
   const canAdvanceStep2 =
     bioSuper.trim().length > 0 && bioSuper.length <= 500 &&
     bioWhere.trim().length > 0 && bioWhere.length <= 500 &&
-    bioIntriguing.trim().length > 0 && bioIntriguing.length <= 500;
+    bioIntriguing.trim().length > 0 && bioIntriguing.length <= 500 &&
+    projSeek.length <= 500 && projSkills.length <= 500 && projDream.length <= 500;
 
   const canAdvanceStep3 = !!primaryType;
 
@@ -227,6 +236,13 @@ export default function ProfileWizard() {
       toast({ title: "Almost there", description: msg, variant: "destructive" });
       if (target === 1) setTimeout(() => document.getElementById(m.includes("location") ? "location" : "display_name")?.focus(), 50);
       return;
+    }
+    if (canProject && (projSeek.trim() || projSkills.trim() || projDream.trim())) {
+      await supabase.from("profiles").update({
+        project_seek_me_for: projSeek.trim() || null,
+        project_top_skills: projSkills.trim() || null,
+        project_dream: projDream.trim() || null,
+      } as never).eq("user_id", user.id);
     }
     try { localStorage.removeItem(draftKey); } catch { /* ignore */ }
     toast({ title: "Welcome to the community!" });
@@ -361,6 +377,18 @@ export default function ProfileWizard() {
                 value={bioIntriguing}
                 onChange={setBioIntriguing}
               />
+
+              {canProject && (
+                <div className="space-y-4 pt-4 border-t border-border">
+                  <div>
+                    <h2 className="font-display font-semibold">Projects</h2>
+                    <p className="text-xs text-muted-foreground mt-1">Optional — helps others find you for projects. You can change these later in Settings.</p>
+                  </div>
+                  <BioField id="proj_seek" label="Seek me for…" value={projSeek} onChange={setProjSeek} />
+                  <BioField id="proj_skills" label="My top skills…" value={projSkills} onChange={setProjSkills} />
+                  <BioField id="proj_dream" label="My dream project…" value={projDream} onChange={setProjDream} />
+                </div>
+              )}
 
               <div className="flex justify-between">
                 <Button variant="outline" onClick={() => setStep(1)}>

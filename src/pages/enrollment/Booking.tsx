@@ -142,6 +142,18 @@ export default function Booking() {
           </p>
         </div>
 
+        <div className="text-center mb-8">
+          <a
+            href="https://calendly.com/creatortypes/ahara-consult"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-8 py-3 font-semibold hover:opacity-90"
+          >
+            <Calendar className="h-5 w-5" /> Book your consult
+          </a>
+          <p className="text-xs text-muted-foreground mt-2">Or pick a time in the calendar below.</p>
+        </div>
+
         {/* Info card */}
         <div className="bg-card border border-border rounded-2xl p-6 mb-8">
           <div className="flex items-start gap-3">
@@ -159,7 +171,7 @@ export default function Booking() {
         <div className="bg-card border border-border rounded-2xl p-0 overflow-hidden mb-8">
           <div 
             className="calendly-inline-widget" 
-            data-url="https://calendly.com/creatortypes/ahara-chat?hide_event_type_details=1&hide_gdpr_block=1"
+            data-url="https://calendly.com/creatortypes/ahara-consult?hide_event_type_details=1&hide_gdpr_block=1"
             style={{ minWidth: "320px", height: calendlyBooked ? "520px" : "700px", transition: "height 0.3s ease" }}
           />
         </div>

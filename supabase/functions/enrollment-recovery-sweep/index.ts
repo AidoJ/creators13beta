@@ -45,7 +45,7 @@ function nextStep(row: any): StepInfo | null {
   const hasDetails =
     !!row.first_name && !!row.date_of_birth && !!row.gender && !!row.height_cm;
   const hasConsent = !!row.case_study_consent_at;
-  const hasPhotos = (row.photo_count || 0) > 0;
+  const hasPhotos = (row.photo_count || 0) >= 8; // all 8 required photos
   const hasBooking = row.has_booking === true;
   const reachedCheckout = !!row.reached_checkout_at;
 
