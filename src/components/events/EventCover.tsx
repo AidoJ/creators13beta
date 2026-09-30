@@ -58,7 +58,7 @@ export function EventCover({
   return (
     <div className="w-full">
       <div
-        className="relative aspect-[16/10] w-full overflow-hidden"
+        className="relative aspect-square w-full overflow-hidden"
       >
         {img ? (
           <img
