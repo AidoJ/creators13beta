@@ -16,6 +16,7 @@ import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 import GettingStartedCard from "@/components/dashboard/GettingStartedCard";
 import WhatsIncluded from "@/components/dashboard/WhatsIncluded";
 import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
+import PendingPurchaseBanner from "@/components/dashboard/PendingPurchaseBanner";
 import { loadMyAccess, type AccessItem } from "@/lib/accessSummary";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
 import DiscountCodesCard from "@/components/dashboard/DiscountCodesCard";
@@ -188,6 +189,7 @@ export default function Dashboard() {
       <DashboardHeader email={user?.email} onSignOut={signOut} />
 
       <main className="container mx-auto px-4 py-8 max-w-5xl space-y-5">
+        <PendingPurchaseBanner />
         {user && (
           <GettingStartedCard
             userId={user.id}
