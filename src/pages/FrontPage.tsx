@@ -505,7 +505,7 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
             Weave the Creator Types into your own expertise. Each level runs for 13 months in a group of no more than 13, and every level is by application.
           </p>
           <div className="flex flex-wrap gap-2 ml-9 mb-7 text-sm text-muted-foreground">
-            {["1. Read the prospectus & apply", "2. Meet A'Hara on Zoom", "3. Join the next intake", "4. Train for 13 months"].map((s) => (
+            {["1. Apply", "2. We review", "3. Join the next intake", "4. Train for 13 months"].map((s) => (
               <span key={s} className="rounded-full border border-border bg-card px-3.5 py-1.5">{s}</span>
             ))}
           </div>
