@@ -68,7 +68,7 @@ export default function PersonalDetailsCard({ profile, hasDetails }: PersonalDet
       </div>
 
       {!hasDetails && (
-        <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2 text-xs text-amber-700">
+        <div className="flex items-center gap-2 rounded-lg bg-banner border border-banner-border px-3 py-2 text-xs text-banner-foreground">
           <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
           <span>Some required details are missing.</span>
           <Button variant="link" size="sm" className="text-xs text-amber-700 underline h-auto p-0 ml-auto" onClick={() => navigate("/enroll/details?returnTo=/dashboard")}>
@@ -90,7 +90,7 @@ export default function PersonalDetailsCard({ profile, hasDetails }: PersonalDet
       </div>
 
       {age !== null && age < 18 && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 mt-2 space-y-1">
+        <div className="rounded-xl border border-banner-border bg-banner text-banner-foreground p-3 mt-2 space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">Parent / Guardian</p>
           {guardianDeclared ? (
             <div className="text-xs text-foreground space-y-0.5">

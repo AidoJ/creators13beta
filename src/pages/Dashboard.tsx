@@ -210,7 +210,7 @@ export default function Dashboard() {
             className="cursor-pointer p-5 flex items-center gap-4 hover:border-primary/40 hover:bg-primary/5 transition-colors group"
           >
             <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <img src={gameIcon.url} alt="" aria-hidden="true" className="h-5 w-5 text-primary object-contain" />
+              <img src={gameIcon.url} alt="" aria-hidden="true" className="icon-gold h-5 w-5 text-primary object-contain" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-foreground">Play</p>

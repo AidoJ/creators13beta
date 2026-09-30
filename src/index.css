@@ -222,3 +222,6 @@
   background: hsl(var(--muted-foreground) / 0.65);
   background-clip: padding-box;
 }
+
+/* Tints black line-art PNG icons to the brand gold used by the other icons. */
+.icon-gold { filter: invert(62%) sepia(38%) saturate(718%) hue-rotate(5deg) brightness(92%) contrast(86%); }

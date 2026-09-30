@@ -57,7 +57,7 @@ export default function PlayerDashboard({ userId, email, firstName, onSignOut }:
             className="cursor-pointer overflow-hidden border-secondary/60 bg-gradient-to-br from-secondary/15 via-secondary/10 to-primary/10 p-4 sm:p-5 flex items-center gap-3 sm:gap-4 shadow-sm hover:border-secondary hover:shadow-md transition-all group"
           >
             <div className="w-12 h-12 rounded-xl border border-secondary/30 bg-secondary/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-              <img src={gameIcon.url} alt="" aria-hidden="true" className="h-6 w-6 text-secondary-foreground object-contain" />
+              <img src={gameIcon.url} alt="" aria-hidden="true" className="icon-gold h-6 w-6 text-secondary-foreground object-contain" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-base sm:text-lg font-display font-bold text-foreground leading-tight whitespace-nowrap">Let&apos;s Play</p>
