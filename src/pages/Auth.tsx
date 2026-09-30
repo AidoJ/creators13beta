@@ -11,7 +11,7 @@ import logoFull from "@/assets/13creators-logo-full.png";
 import { SignupFields } from "@/components/auth/SignupFields";
 import { ForgotPasswordDialog } from "@/components/auth/ForgotPasswordDialog";
 import { getAppOrigin } from "@/lib/appOrigin";
-import { extractBuyFromReturnTo, getPendingBuy, rememberPendingBuy } from "@/lib/pendingPurchase";
+import { extractBuyFromReturnTo, resolvePendingBuy, rememberPendingBuy } from "@/lib/pendingPurchase";
 
 export default function Auth() {
   // ?mode=signup opens the new-account form (every "sign up"/"buy" button uses it).
@@ -34,8 +34,10 @@ export default function Auth() {
 
   useEffect(() => {
     if (!user) return;
-    const pending = extractBuyFromReturnTo(returnTo) ?? getPendingBuy(user);
-    navigate(pending ? `/?buy=${encodeURIComponent(pending)}` : returnTo, { replace: true });
+    (async () => {
+      const pending = extractBuyFromReturnTo(returnTo) ?? (await resolvePendingBuy(user));
+      navigate(pending ? `/?buy=${encodeURIComponent(pending)}` : returnTo, { replace: true });
+    })();
   }, [user, navigate, returnTo]);
 
   const handleLogin = async (e: React.FormEvent) => {
