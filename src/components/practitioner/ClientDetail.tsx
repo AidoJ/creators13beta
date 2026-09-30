@@ -1,3 +1,4 @@
+import { isCaseStudySubject } from "@/lib/caseStudySubject";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -114,7 +115,8 @@ export default function ClientDetail({ clientId, onClientNameLoaded }: ClientDet
       }
       if (bookingRes.data) setBooking(bookingRes.data);
       if (ctRes.data) setCreatorType(ctRes.data);
-      setIsCaseStudySubject(!!(csRes.data && csRes.data.length > 0));
+      void csRes;
+      setIsCaseStudySubject(await isCaseStudySubject(clientId));
       setLoading(false);
     }
     fetchClientData();

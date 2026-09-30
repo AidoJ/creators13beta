@@ -1,3 +1,4 @@
+import { isCaseStudySubject as isCaseStudySubjectRule } from "@/lib/caseStudySubject";
 // Centralised enrollment gate. Single source of truth for "what step is this user
 // allowed to be on right now?". Used by Dashboard + every enrollment page so that
 // users can never skip a step by URL-hopping, stale links, or bookmarks.
@@ -78,11 +79,8 @@ export async function loadEnrollmentState(userId: string): Promise<EnrollmentSta
     .rpc("get_inviting_practitioners_for_current_user");
   const hasInvitation = !!(invitingPractitioners && invitingPractitioners.length > 0);
 
-  const isCaseStudySubject = !!(
-    subRes.data?.referral_code ||
-    hasInvitation ||
-    (csRes.data && csRes.data.length > 0)
-  );
+  void hasInvitation; void csRes;
+  const isCaseStudySubject = await isCaseStudySubjectRule(userId);
 
   const signupPath = (subRes.data as any)?.signup_path ?? null;
   const isPlayerOnly = signupPath === "player";

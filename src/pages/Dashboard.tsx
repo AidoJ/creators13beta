@@ -1,3 +1,4 @@
+import { isCaseStudySubject } from "@/lib/caseStudySubject";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,11 +103,9 @@ export default function Dashboard() {
       setPhotoCount(photosRes.count || 0);
       setProfileComplete(!!visRes.data?.profile_completed_at);
       if (subRes.data) setSubscription(subRes.data as SubData);
-      const hasCsRecord = !!(csRes.data && csRes.data.length > 0);
-      // Every client gives consent before photos, so consent alone does NOT
-      // make someone a case-study volunteer (it was hiding the consult step).
-      const hasReferral = !!(subRes.data && (subRes.data as any).referral_code);
-      setIsCaseStudySubject(hasCsRecord || hasReferral);
+      // Consent alone does NOT make someone a case-study volunteer; one shared rule decides.
+      void csRes;
+      setIsCaseStudySubject(await isCaseStudySubject(user.id));
 
       // Check if any linked practitioner has the trainer role (backend check:
       // clients can't read other people's roles directly).
