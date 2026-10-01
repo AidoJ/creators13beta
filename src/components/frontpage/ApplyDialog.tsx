@@ -69,7 +69,7 @@ export default function ApplyDialog({ level, onClose }: Props) {
             <CheckCircle2 className="h-10 w-10 text-primary mx-auto" />
             <p className="text-foreground font-medium">{isApply ? "Application sent." : "Thanks — we've got it."}</p>
             <p className="text-sm text-muted-foreground">
-              {isApply ? "A'Hara will contact you within 3 days to arrange a time to meet 1:1 on Zoom." : "You'll hear back by email."}
+              {isApply ? "A'Hara will be in touch to arrange a call before your application is accepted." : "You'll hear back by email."}
             </p>
             <Button onClick={() => { reset(); onClose(); }}>Close</Button>
           </div>
@@ -91,8 +91,8 @@ export default function ApplyDialog({ level, onClose }: Props) {
                 <Input id="ap-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="ap-phone">Phone (optional)</Label>
-                <Input id="ap-phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <Label htmlFor="ap-phone">{isApply ? "Phone" : "Phone (optional)"}</Label>
+                <Input id="ap-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required={isApply} minLength={isApply ? 6 : undefined} />
               </div>
             </div>
             {isApply ? (
