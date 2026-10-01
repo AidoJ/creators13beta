@@ -7,6 +7,7 @@ export type GrantOpts = {
   source: "stripe" | "admin" | "code" | "backfill";
   stripeRef?: string | null;
   endsAt?: string | null;
+  productId?: string | null;
 };
 
 /** Grant a level unless the user already holds it actively. Idempotent. */
@@ -31,6 +32,7 @@ export async function grantEntitlement(admin: SupabaseClient, o: GrantOpts): Pro
     source: o.source,
     stripe_ref: o.stripeRef ?? null,
     ends_at: o.endsAt ?? null,
+    product_id: o.productId ?? null,
     status: "active",
   });
   if (error) throw new Error(`Could not grant ${o.levelKey}: ${error.message}`);

@@ -21,6 +21,7 @@ interface ProductRow {
   term_months: number | null;
   grants_level_key: string | null;
   seat_cap: number | null;
+  intake_starts_on: string | null;
   active: boolean | null;
   is_visible_on_storefront: boolean;
   storefront_placement: string;
@@ -36,6 +37,7 @@ const BLANK: Omit<ProductRow, "id"> = {
   term_months: null,
   grants_level_key: null,
   seat_cap: null,
+  intake_starts_on: null,
   active: true,
   is_visible_on_storefront: false,
   storefront_placement: "main",
@@ -89,6 +91,7 @@ export default function ProductsPanel() {
       term_months: editing.billing_shape === "fixed_term" ? Number(editing.term_months) : null,
       grants_level_key: editing.grants_level_key || null,
       seat_cap: editing.seat_cap ? Number(editing.seat_cap) : null,
+      intake_starts_on: editing.intake_starts_on || null,
       active: editing.active ?? true,
       is_visible_on_storefront: editing.is_visible_on_storefront ?? false,
       storefront_placement: editing.storefront_placement || "main",
@@ -196,6 +199,11 @@ export default function ProductsPanel() {
               <Input type="number" value={editing.seat_cap ?? ""}
                 onChange={(e) => setEditing({ ...editing, seat_cap: e.target.value ? Number(e.target.value) : null })} />
             </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Intake starts (training only)</Label>
+              <Input type="date" value={editing.intake_starts_on ?? ""}
+                onChange={(e) => setEditing({ ...editing, intake_starts_on: e.target.value || null })} />
+            </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
@@ -259,6 +267,7 @@ export default function ProductsPanel() {
                   {row.billing_shape === "fixed_term" && row.term_months ? ` x ${row.term_months} months` : ""}
                   {row.billing_shape === "recurring" ? " per month" : ""}
                   {row.seat_cap ? ` · ${row.seat_cap} places` : ""}
+                  {row.intake_starts_on ? ` · starts ${new Date(row.intake_starts_on).toLocaleDateString("en-AU")}` : ""}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-4">

@@ -174,7 +174,7 @@ serve(async (req) => {
         });
         if (resErr) throw new Error(`Could not hold a seat: ${resErr.message}`);
         if (!res) {
-          return new Response(JSON.stringify({ error: "sold_out", message: "This course is fully booked." }), {
+          return new Response(JSON.stringify({ error: "sold_out", message: "This intake is full. Please contact us about the next intake." }), {
             status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }

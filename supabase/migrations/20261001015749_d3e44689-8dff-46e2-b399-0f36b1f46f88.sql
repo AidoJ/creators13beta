@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.seats_taken_for_product(uuid) FROM authenticated;
