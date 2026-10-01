@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 export default function TrainingPayment() {
   const { applicationId } = useParams();
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
 
   useEffect(() => {
     const origin = getAppOrigin();
@@ -17,10 +18,17 @@ export default function TrainingPayment() {
         successUrl: `${origin}/dashboard?purchase=success`,
         cancelUrl: `${origin}/dashboard`,
       },
-    }).then(({ data, error }) => {
+    }).then(async ({ data, error }) => {
       const url = (data as any)?.url;
       if (url) { window.location.href = url; return; }
-      setError((data as any)?.message || (data as any)?.error || error?.message || "This payment link couldn't be opened.");
+      // Non-2xx responses put the server's JSON on error.context, not data.
+      let body: any = data;
+      const ctx = (error as any)?.context;
+      if (!body && ctx && typeof ctx.json === "function") {
+        try { body = await ctx.json(); } catch { /* not JSON */ }
+      }
+      setErrorCode(body?.error ?? null);
+      setError(body?.message || "This payment link couldn't be opened.");
     });
   }, [applicationId]);
 
@@ -30,7 +38,9 @@ export default function TrainingPayment() {
         <div className="max-w-md text-center space-y-3">
           <h1 className="font-display text-2xl">Payment link problem</h1>
           <p className="text-muted-foreground">{error}</p>
-          <p className="text-sm text-muted-foreground">Make sure you're signed in with the email you applied with, or contact us.</p>
+          {errorCode !== "sold_out" && errorCode !== "already_held" && (
+            <p className="text-sm text-muted-foreground">Make sure you're signed in with the email you applied with, or contact us.</p>
+          )}
           <Link to="/dashboard" className="text-primary underline">Go to your dashboard</Link>
         </div>
       ) : (
