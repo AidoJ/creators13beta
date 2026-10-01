@@ -807,6 +807,7 @@ export type Database = {
           ends_at: string | null
           id: string
           level_key: string
+          product_id: string | null
           source: Database["public"]["Enums"]["entitlement_source"]
           starts_at: string
           status: Database["public"]["Enums"]["entitlement_status"]
@@ -819,6 +820,7 @@ export type Database = {
           ends_at?: string | null
           id?: string
           level_key: string
+          product_id?: string | null
           source: Database["public"]["Enums"]["entitlement_source"]
           starts_at?: string
           status?: Database["public"]["Enums"]["entitlement_status"]
@@ -831,6 +833,7 @@ export type Database = {
           ends_at?: string | null
           id?: string
           level_key?: string
+          product_id?: string | null
           source?: Database["public"]["Enums"]["entitlement_source"]
           starts_at?: string
           status?: Database["public"]["Enums"]["entitlement_status"]
@@ -845,6 +848,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "access_levels"
             referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "entitlements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1990,6 +2000,7 @@ export type Database = {
           grants_level_key: string | null
           id: string
           image_url: string | null
+          intake_starts_on: string | null
           is_visible_on_storefront: boolean
           name: string
           price_cents: number
@@ -2012,6 +2023,7 @@ export type Database = {
           grants_level_key?: string | null
           id?: string
           image_url?: string | null
+          intake_starts_on?: string | null
           is_visible_on_storefront?: boolean
           name: string
           price_cents?: number
@@ -2034,6 +2046,7 @@ export type Database = {
           grants_level_key?: string | null
           id?: string
           image_url?: string | null
+          intake_starts_on?: string | null
           is_visible_on_storefront?: boolean
           name?: string
           price_cents?: number
@@ -3891,6 +3904,10 @@ export type Database = {
         Returns: undefined
       }
       seats_taken: { Args: { _level_key: string }; Returns: number }
+      seats_taken_for_product: {
+        Args: { _product_id: string }
+        Returns: number
+      }
       send_contact_request: {
         Args: { _reason: string; _to_user_id: string }
         Returns: string
