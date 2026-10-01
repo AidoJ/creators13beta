@@ -59,7 +59,7 @@ serve(async (req) => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 200) errors.push("email");
     if (![1, 2, 3].includes(level)) errors.push("level");
     if (message.length > 2000) errors.push("message");
-    if (phone.length > 40) errors.push("phone");
+    if (phone.length > 40 || (level === 1 && phone.replace(/\D/g, "").length < 6)) errors.push("phone");
     if (level === 1 && (answers.length !== 4 || answers.some((a) => !a || a.length > 2000))) errors.push("answers");
     if (errors.length) {
       return json({ error: "invalid_request", fields: errors, message: "Please check the highlighted fields." }, 400);
