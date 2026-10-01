@@ -18,6 +18,7 @@ interface Application {
   payment_product_id: string | null;
   payment_link_sent_at: string | null;
   created_at: string;
+  review_notes: string | null;
 }
 interface ProductOpt { id: string; name: string; price_cents: number | null; is_visible_on_storefront: boolean }
 
@@ -29,12 +30,14 @@ export default function PractitionerApplicationsPanel() {
   const [pick, setPick] = useState<Record<string, string>>({});
   const [sending, setSending] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [savingNotes, setSavingNotes] = useState<string | null>(null);
   const focusId = new URLSearchParams(window.location.search).get("application");
 
   const load = useCallback(async () => {
     const [{ data }, { data: prods }] = await Promise.all([
       supabase.from("practitioner_applications" as any)
-        .select("id, name, email, phone, level, message, answers, status, payment_product_id, payment_link_sent_at, created_at")
+        .select("id, name, email, phone, level, message, answers, status, payment_product_id, payment_link_sent_at, created_at, review_notes")
         .order("created_at", { ascending: false }),
       supabase.from("products").select("id, name, price_cents, is_visible_on_storefront").eq("active", true).order("name"),
     ]);
@@ -60,6 +63,17 @@ export default function PractitionerApplicationsPanel() {
       return;
     }
     setRows((r) => r.map((a) => (a.id === id ? { ...a, status } : a)));
+  }
+
+  async function saveNotes(id: string) {
+    setSavingNotes(id);
+    const review_notes = notes[id] ?? "";
+    const { error } = await supabase.from("practitioner_applications" as any).update({ review_notes: review_notes || null }).eq("id", id);
+    setSavingNotes(null);
+    if (error) { toast({ title: "Couldn't save notes", description: error.message, variant: "destructive" }); return; }
+    setRows((r) => r.map((a) => (a.id === id ? { ...a, review_notes: review_notes || null } : a)));
+    setNotes((n) => { const c = { ...n }; delete c[id]; return c; });
+    toast({ title: "Notes saved" });
   }
 
   async function sendLink(a: Application) {
@@ -108,6 +122,20 @@ export default function PractitionerApplicationsPanel() {
                 </div>
               ) : null}
               {a.message && <p className="text-sm mt-2 whitespace-pre-wrap">{a.message}</p>}
+              <div className="mt-3 space-y-1.5">
+                <label htmlFor={`notes-${a.id}`} className="text-xs font-medium text-muted-foreground">Call notes (staff only)</label>
+                <textarea
+                  id={`notes-${a.id}`} rows={3} maxLength={4000}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={notes[a.id] ?? a.review_notes ?? ""}
+                  onChange={(e) => setNotes((n) => ({ ...n, [a.id]: e.target.value }))}
+                />
+                {notes[a.id] !== undefined && notes[a.id] !== (a.review_notes ?? "") && (
+                  <Button size="sm" variant="secondary" className="text-xs" disabled={savingNotes === a.id} onClick={() => saveNotes(a.id)}>
+                    {savingNotes === a.id ? "Saving…" : "Save notes"}
+                  </Button>
+                )}
+              </div>
               <div className="flex flex-wrap gap-2 mt-3">
                 {STATUSES.filter((s) => s !== a.status).map((s) => (
                   <Button key={s} size="sm" variant="outline" className="text-xs" onClick={() => setStatus(a.id, s)}>Mark {s}</Button>
