@@ -22,3 +22,5 @@
 - [x] Persist member filters in this browser
 - [x] Correct official Creator Type source and enhance self-selected panel
 - [ ] Publishing requested; confirm deployment and complete live checks
+- Verify publish landed (function + DB evidence, not build label)
+- Admin tests as aidanleo@yahoo.co.uk: call notes/Contacted status; accept apptest with Nov 2026 intake; L2 register-interest accept + payment link; seat cap 1 test + restore; post-payment trainee/paid_at/Payments page check
