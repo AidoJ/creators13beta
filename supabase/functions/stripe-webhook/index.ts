@@ -207,7 +207,7 @@ serve(async (req) => {
           .from("products").select("seat_cap").eq("id", productId).maybeSingle();
         let seatOk = true;
         if (product?.seat_cap) {
-          const { data: taken } = await supabase.rpc("seats_taken", { _level_key: levelKey });
+          const { data: taken } = await supabase.rpc("seats_taken_for_product", { _product_id: productId });
           // our own reservation is included in the count, hence > seat_cap
           seatOk = (taken ?? 0) <= product.seat_cap;
         }
@@ -229,9 +229,31 @@ serve(async (req) => {
         }
 
         const result = await grantEntitlement(supabase, {
-          userId, levelKey, source: "stripe", stripeRef: subscriptionId || session.id, endsAt,
+          userId, levelKey, source: "stripe", stripeRef: subscriptionId || session.id, endsAt, productId,
         });
         logStep("Entitlement", { userId, levelKey, result });
+
+        // Practitioner training: only a training product, paid through an
+        // ACCEPTED application for that same product, grants the trainee role.
+        const applicationId = session.metadata?.application_id || "";
+        if (/^prac_l[123]_trainee$/.test(levelKey) && applicationId) {
+          const { data: app } = await supabase.from("practitioner_applications")
+            .select("id, status, payment_product_id, email, user_id, paid_at").eq("id", applicationId).maybeSingle();
+          const email = (session.customer_details?.email || session.customer_email || "").toLowerCase();
+          const sameApplicant = app && (app.user_id === userId || String(app.email).toLowerCase() === email);
+          if (app && app.status === "accepted" && app.payment_product_id === productId && sameApplicant) {
+            const { error: roleErr } = await supabase.from("user_roles")
+              .upsert({ user_id: userId, role: "trainee" }, { onConflict: "user_id,role", ignoreDuplicates: true });
+            if (roleErr) logStep("ERROR granting trainee role", { message: roleErr.message });
+            if (!app.paid_at) {
+              await supabase.from("practitioner_applications")
+                .update({ paid_at: new Date().toISOString(), user_id: app.user_id ?? userId }).eq("id", app.id);
+            }
+            logStep("Training paid — trainee role granted", { userId, applicationId });
+          } else {
+            logStep("WARNING: training payment without matching accepted application — no role granted", { userId, applicationId });
+          }
+        }
 
         // Upgrade: a higher membership replaces any lower one (cancel now + pro-rata refund).
         const custId = typeof session.customer === "string" ? session.customer : (session.customer as any)?.id;
