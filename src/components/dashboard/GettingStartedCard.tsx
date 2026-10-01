@@ -101,9 +101,23 @@ export default function GettingStartedCard({ userId, firstName, purchaseSuccess 
   };
 
   const go = (step: OnboardingStep) => {
-    if (!step.route) return;
+    let route = step.route;
+    if (step.key === "profiling_journey" && step.done) route = "/dashboard#creator-profile";
+    if (!route) return;
     if (step.key === "view_creator_types") void (supabase as any).rpc("mark_onboarding_visited", { _marker_key: step.key });
-    navigate(step.route);
+    const [path, hash] = route.split("#");
+    const scrollToTarget = () => {
+      const el = hash ? document.getElementById(hash) : null;
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      else window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    if (path === location.pathname || path === "") {
+      if (hash) window.history.replaceState(null, "", `${location.pathname}${location.search}#${hash}`);
+      scrollToTarget();
+      return;
+    }
+    navigate(route);
+    if (hash) window.setTimeout(scrollToTarget, 400);
   };
 
   const replayTour = async () => {
