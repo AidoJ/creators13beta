@@ -87,6 +87,7 @@ serve(async (req) => {
 
     // Notify the trainers. A failure here must not lose the application.
     const results: string[] = [];
+    const notify = async () => {
     try {
       const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
       if (RESEND_API_KEY) {
@@ -128,8 +129,14 @@ serve(async (req) => {
     } catch (e) {
       console.error("[PRAC-APPLICATION] notify failed", (e as Error).message);
     }
+    };
+    // Reply straight away; trainer emails finish in the background.
+    const p = notify();
+    // deno-lint-ignore no-explicit-any
+    const rt = (globalThis as any).EdgeRuntime;
+    if (rt?.waitUntil) rt.waitUntil(p); else await p;
 
-    return json({ ok: true, id: row.id, notified: results });
+    return json({ ok: true, id: row.id });
   } catch (e) {
     console.error("[PRAC-APPLICATION]", (e as Error).message);
     return json({ error: "server_error", message: "Could not send your application. Please try again." }, 500);
