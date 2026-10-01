@@ -56,9 +56,11 @@ export default function ApplyDialog({ level, onClose }: Props) {
         <DialogHeader>
           <DialogTitle>{isApply ? "Apply for Level 1" : "Register interest in Level 2/3"}</DialogTitle>
           <DialogDescription>
-            {isApply
-              ? "Please read the Practitioner Prospectus first, then answer the four application questions below."
-              : "Levels 2 and 3 are open by application to those who have completed the previous level. Let us know you're interested and we'll be in touch."}
+            {sent
+              ? "Your application has been received."
+              : isApply
+                ? "Please read the Practitioner Prospectus first, then answer the four application questions below."
+                : "Levels 2 and 3 are open by application to those who have completed the previous level. Let us know you're interested and we'll be in touch."}
           </DialogDescription>
         </DialogHeader>
 
