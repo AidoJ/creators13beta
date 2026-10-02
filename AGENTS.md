@@ -9,3 +9,4 @@
 - Plan display names come from access levels via `src/lib/plans.ts`; stored keys (wren/robin/cockatoo/owl) are internal only and never shown — keeps one naming source.
 - Case-study subject status is decided only by the `is_case_study_subject` backend check (`src/lib/caseStudySubject.ts`) — one rule for member, practitioner and staff views.
 - Age from date of birth uses only `ageFromDob` (`src/lib/age.ts`, tested; backend copy `supabase/functions/_shared/age.ts`) — consent thresholds must agree everywhere.
+- Practitioner seals/trainee tag come only from `get_practitioner_badges` (active access entitlements, visible members only) via `src/lib/practitionerBadges.tsx` — never from editable profile fields.
