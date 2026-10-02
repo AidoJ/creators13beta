@@ -44,7 +44,7 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
 
     const origin = req.headers.get("origin") || "https://creators13beta.lovable.app";
-    console.log("customer-portal v2 (no deep expand)");
+    console.log("customer-portal v2");
     const body = await req.json().catch(() => ({}));
     const json = (obj: unknown, status = 200) =>
       new Response(JSON.stringify(obj), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status });
