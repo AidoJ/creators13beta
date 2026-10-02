@@ -1053,7 +1053,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
                   </div>
                 </div>
               )}
-              <p className="text-[10px] text-muted-foreground">Tile aspect is 16:10. If no cover image is set, the first image in the description is used, otherwise a tier-tinted gradient is shown.</p>
+              <p className="text-[10px] text-muted-foreground">Tiles are square. If no cover image is set, the first image in the description is used.</p>
             </div>
 
             {/* Promo / external link */}

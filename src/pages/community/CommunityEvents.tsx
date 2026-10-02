@@ -11,6 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { sanitizeEventHtml } from "@/components/ui/rich-text-editor";
 import { loadMyAccess, accessLabel } from "@/lib/accessSummary";
 import { EventCover } from "@/components/events/EventCover";
+import { resolveEventCoverUrl } from "@/lib/eventCovers";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { markOnboardingVisited } from "@/lib/onboarding";
 
@@ -225,6 +226,9 @@ function EventTile({ ev, past, joinable }: { ev: CommunityEvent; past?: boolean;
               {ev.has_access ? "Open to you" : joinable ? "Upgrade to join" : "Viewing only"}
             </Badge>
           </div>
+          {ev.cover_image_url && !/<img/i.test(ev.description ?? "") && (
+            <DialogCoverImage path={ev.cover_image_url} alt={ev.title} />
+          )}
           {ev.description ? (
             <div className="prose prose-sm max-w-none text-foreground" dangerouslySetInnerHTML={{ __html: sanitizeEventHtml(ev.description) }} />
           ) : (
@@ -314,4 +318,16 @@ function EventTile({ ev, past, joinable }: { ev: CommunityEvent; past?: boolean;
       </div>
     </Card>
   );
+}
+
+/** Uploaded cover image (private path or URL) shown inside the event pop-up. */
+function DialogCoverImage({ path, alt }: { path: string; alt: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    resolveEventCoverUrl(path).then((u) => { if (!cancelled) setUrl(u); });
+    return () => { cancelled = true; };
+  }, [path]);
+  if (!url) return null;
+  return <img src={url} alt={alt} className="w-full max-h-80 object-contain rounded-md bg-muted" />;
 }

@@ -146,12 +146,12 @@ export default function GettingStartedCard({ userId, firstName, purchaseSuccess 
           <div className="flex items-start gap-3">
             <div className="flex-1 min-w-0">
               <h1 className="font-display text-xl sm:text-2xl text-foreground">{title}</h1>
-              {purchaseSuccess && <p className="text-xs text-muted-foreground mt-1">Manage or cancel from What you have below.</p>}
               <p className="text-sm text-muted-foreground mt-1">{completed} of {steps.length} done</p>
             </div>
             <Button variant="ghost" size="icon" aria-label="Getting started help" onClick={() => setHelpOpen(true)}><HelpCircle className="h-5 w-5" /></Button>
           </div>
-          <Progress value={(completed / steps.length) * 100} className="h-2" />
+          {/* Track uses muted (the default secondary is gold and read as "full" at 0%). */}
+          <Progress value={(completed / steps.length) * 100} className="h-2 bg-muted" />
 
           {allDone ? (
             <div className="bg-banner text-banner-foreground border border-banner-border rounded-lg p-4 flex items-center gap-3">
