@@ -9,6 +9,7 @@
  * Avatars are batch-signed client-side via storage.createSignedUrls — one
  * round trip instead of N+1.
  */
+import { usePractitionerBadges, PractitionerSeal, SEALS } from "@/lib/practitionerBadges";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -359,6 +360,7 @@ export default function CommunityDashboard() {
 
   // Map-mode payload: pre-resolved avatar URLs + flattened featured / primary
   // type so the MapView component stays a presentation layer.
+  const mapBadges = usePractitionerBadges([...filteredMatches.map((m) => m.user_id), ...(myMapProfile?.community_visible ? [myMapProfile.user_id] : [])]);
   const mapMembers: MapMember[] = useMemo(
     () => {
       const others = filteredMatches.map((m) => ({
@@ -371,6 +373,7 @@ export default function CommunityDashboard() {
         primary_type: m.creator_types?.[0]?.type?.toLowerCase() ?? null,
         featured: isFeaturedMember(m.creator_types),
         isSelf: false,
+        seal: mapBadges[m.user_id] ?? null,
       }));
       if (!myMapProfile?.community_visible) return others;
       return [...others, {
@@ -383,6 +386,7 @@ export default function CommunityDashboard() {
         primary_type: myMapProfile.creator_types?.[0]?.type?.toLowerCase() ?? null,
         featured: false,
         isSelf: true,
+        seal: mapBadges[myMapProfile.user_id] ?? null,
       }];
     },
     [filteredMatches, resolveAvatar, isFeaturedMember, myMapProfile]
@@ -889,6 +893,7 @@ function Honeycomb({
     () => [...members].sort((a, b) => b.score - a.score),
     [members]
   );
+  const pracBadges = usePractitionerBadges(sorted.map((m) => m.user_id));
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [dims, setDims] = useState({ w: 0, h: 0 });
