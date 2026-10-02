@@ -48,13 +48,27 @@ serve(async (req) => {
     const json = (obj: unknown, status = 200) =>
       new Response(JSON.stringify(obj), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status });
 
-    const activeSubs = async () =>
-      (await stripe.subscriptions.list({ customer: customerId, status: "active", limit: 10, expand: ["data.items.data.price.product"] })).data;
+    // Stripe allows max 4 expansion levels on list calls, so product names are fetched separately.
+    const productNames = new Map<string, string | null>();
+    const activeSubs = async () => {
+      const subs = (await stripe.subscriptions.list({ customer: customerId, status: "active", limit: 10 })).data;
+      for (const s of subs) {
+        const pid = s.items?.data?.[0]?.price?.product;
+        if (typeof pid === "string" && !productNames.has(pid)) {
+          try {
+            const p = await stripe.products.retrieve(pid);
+            productNames.set(pid, (p as any).deleted ? null : p.name);
+          } catch { productNames.set(pid, null); }
+        }
+      }
+      return subs;
+    };
     const periodEnd = (s: Stripe.Subscription) =>
       (s as any).current_period_end ?? s.items?.data?.[0]?.current_period_end ?? null;
     const productName = (s: Stripe.Subscription) => {
       const prod = s.items?.data?.[0]?.price?.product as Stripe.Product | string | undefined;
-      return typeof prod === "object" && prod && !("deleted" in prod && prod.deleted) ? prod.name : null;
+      if (typeof prod === "string") return productNames.get(prod) ?? null;
+      return prod && !("deleted" in prod && prod.deleted) ? prod.name : null;
     };
 
     // Member-safe status: no Stripe ids leave this function.
