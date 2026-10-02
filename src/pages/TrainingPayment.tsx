@@ -26,7 +26,7 @@ export default function TrainingPayment() {
     if (!user) {
       lookupEmailedLink("training", applicationId ?? "").then((info) => {
         if (info && info.state === "open") navigate(lockedAuthUrl(info.email, info.has_account, here), { replace: true });
-        else if (info) setClosed(info.state);
+        else if (info) setClosed(info.state as keyof typeof CLOSED_LINK_MESSAGES);
         else navigate(`/auth?returnTo=${encodeURIComponent(here)}`, { replace: true });
       });
       return;
