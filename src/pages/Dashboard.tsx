@@ -71,6 +71,7 @@ export default function Dashboard() {
   const { ready: featuresReady, features } = useFeatures();
   const isPlayerOnly = !!gateState?.isPlayerOnly;
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [purchasePending, setPurchasePending] = useState(false);
   const [booking, setBooking] = useState<BookingData | null>(null);
   const [subscription, setSubscription] = useState<SubData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -188,8 +189,8 @@ export default function Dashboard() {
       <DashboardHeader email={user?.email} onSignOut={signOut} />
 
       <main className="container mx-auto px-4 py-8 max-w-5xl space-y-5">
-        <PendingPurchaseBanner />
-        {user && (
+        <PendingPurchaseBanner onPendingChange={setPurchasePending} />
+        {user && !purchasePending && (
           <GettingStartedCard
             userId={user.id}
             firstName={profile?.first_name}

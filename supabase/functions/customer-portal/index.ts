@@ -44,7 +44,6 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
 
     const origin = req.headers.get("origin") || "https://creators13beta.lovable.app";
-    console.log("customer-portal v2");
     const body = await req.json().catch(() => ({}));
     const json = (obj: unknown, status = 200) =>
       new Response(JSON.stringify(obj), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status });
@@ -75,9 +74,20 @@ serve(async (req) => {
     // Member-safe status: no Stripe ids leave this function.
     if (body?.flow === "status") {
       const subs = await activeSubs();
+      // Plan names are cosmetic: fall back to our own ledger record if Stripe's lookup failed.
+      const missing = subs.filter((s) => !productName(s)).map((s) => s.id);
+      const ledgerNames = new Map<string, string>();
+      if (missing.length) {
+        try {
+          const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+          const { data } = await admin.from("payment_subscriptions").select("stripe_subscription_id, product_name").in("stripe_subscription_id", missing);
+          for (const r of data ?? []) if (r.product_name) ledgerNames.set(r.stripe_subscription_id, r.product_name);
+        } catch (e) { console.error("customer-portal ledger name fallback failed", String(e)); }
+      }
+      console.log("customer-portal status ok", subs.length);
       return json({
         subscriptions: subs.map((s) => ({
-          product_name: productName(s),
+          product_name: productName(s) ?? ledgerNames.get(s.id) ?? null,
           cancel_at_period_end: !!s.cancel_at_period_end,
           access_until: periodEnd(s) ? new Date(periodEnd(s) * 1000).toISOString() : null,
         })),

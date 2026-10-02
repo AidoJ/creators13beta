@@ -18,6 +18,16 @@ export function clearPendingBuy() {
   try { sessionStorage.setItem(`${KEY}_done`, "1"); } catch { /* ignore */ }
 }
 
+/** Checkout was opened for this product in this browser session: stop the
+ *  automatic re-launch (so leaving Stripe doesn't loop) but keep the choice. */
+export function markCheckoutHandedOff(productId: string) {
+  try { sessionStorage.setItem(`${KEY}_handoff`, productId); } catch { /* ignore */ }
+}
+
+export function wasCheckoutHandedOff(productId: string): boolean {
+  try { return sessionStorage.getItem(`${KEY}_handoff`) === productId; } catch { return false; }
+}
+
 export function extractBuyFromReturnTo(returnTo: string | null): string | null {
   if (!returnTo) return null;
   try { return new URL(returnTo, "https://x").searchParams.get("buy"); } catch { return null; }
