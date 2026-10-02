@@ -35,6 +35,28 @@ export default function GettingStartedCard({ userId, firstName, purchaseSuccess 
   const [helpOpen, setHelpOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const [tourIndex, setTourIndex] = useState(0);
+  const [trainingLevel, setTrainingLevel] = useState<number | null>(null);
+
+  // After paying for a training product, name the level in the welcome.
+  useEffect(() => {
+    if (!purchaseSuccess) return;
+    let cancelled = false;
+    (async () => {
+      const since = new Date(Date.now() - 2 * 86400000).toISOString();
+      const { data } = await supabase
+        .from("entitlements")
+        .select("level_key, starts_at")
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .like("level_key", "prac_l%_trainee")
+        .gte("starts_at", since)
+        .order("starts_at", { ascending: false })
+        .limit(1);
+      const m = data?.[0]?.level_key?.match(/^prac_l(\d)_trainee$/);
+      if (!cancelled && m) setTrainingLevel(Number(m[1]));
+    })();
+    return () => { cancelled = true; };
+  }, [purchaseSuccess, userId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,13 +89,19 @@ export default function GettingStartedCard({ userId, firstName, purchaseSuccess 
           journey.cta_label = "Waiting";
           journey.route = "";
         } else {
+          // Done only on evidence (server: assigned Creator Types). Nothing
+          // outstanding on the client side never ticks the step by itself.
           const next = getNextEnrollmentStep(enrollment, p?.reached_checkout_at ?? null);
-          journey.done = next === null;
-          if (next) {
+          if (next && !journey.done) {
             journey.title = next.label;
             journey.description = "Your progress is saved. Continue your profiling journey.";
             journey.cta_label = "Continue";
             journey.route = next.route;
+          } else if (!journey.done) {
+            journey.title = "Waiting for your profiling session";
+            journey.description = "Your practitioner will confirm your Creator Types after your session.";
+            journey.cta_label = "Waiting";
+            journey.route = "";
           }
         }
       }
@@ -88,7 +116,9 @@ export default function GettingStartedCard({ userId, firstName, purchaseSuccess 
   const completed = steps.filter((step) => step.done).length;
   const next = useMemo(() => steps.find((step) => !step.done), [steps]);
   const allDone = steps.length > 0 && completed === steps.length;
-  const title = purchaseSuccess
+  const title = purchaseSuccess && trainingLevel
+    ? `Welcome to Practitioner Level ${trainingLevel}${firstName ? `, ${firstName}` : ""} — here's where to start`
+    : purchaseSuccess
     ? `Welcome${firstName ? `, ${firstName}` : ""} — here's how to get started`
     : "Getting started";
 
