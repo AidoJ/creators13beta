@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
@@ -35,6 +36,10 @@ export default function ApplyDialog({ level, onClose }: Props) {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!level) return;
+    if ((isApply || phone.trim()) && !phoneOk) {
+      toast({ title: "Check your phone number", description: "Choose your country and enter a valid phone number.", variant: "destructive" });
+      return;
+    }
     setBusy(true);
     const { data, error } = await supabase.functions.invoke("submit-practitioner-application", {
       body: { name, email, phone, message, level, answers: isApply ? answers : undefined },
