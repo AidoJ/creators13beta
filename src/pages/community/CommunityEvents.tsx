@@ -225,6 +225,9 @@ function EventTile({ ev, past, joinable }: { ev: CommunityEvent; past?: boolean;
               {ev.has_access ? "Open to you" : joinable ? "Upgrade to join" : "Viewing only"}
             </Badge>
           </div>
+          {ev.cover_image_url && !/<img/i.test(ev.description ?? "") && (
+            <DialogCoverImage path={ev.cover_image_url} alt={ev.title} />
+          )}
           {ev.description ? (
             <div className="prose prose-sm max-w-none text-foreground" dangerouslySetInnerHTML={{ __html: sanitizeEventHtml(ev.description) }} />
           ) : (
