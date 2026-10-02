@@ -102,22 +102,47 @@ serve(async (req) => {
       const currency = (product.currency || "aud").toLowerCase();
       const levelKey: string | null = product.grants_level_key ?? null;
 
+      // ---- Restricted-audience products --------------------------------
+      // Clinic Profile: only via a valid invitation owned by a practitioner
+      // holding prac_clinic_referral. Training intakes: only via an
+      // accepted application (resolved above, never from the request).
+      const isClinicProduct = product.name === "Clinic Profile";
+      const isTrainingProduct = typeof levelKey === "string" && /^prac_l\d_trainee$/.test(levelKey);
+      const refuse = (error: string, message: string, status = 403) =>
+        new Response(JSON.stringify({ error, message }), {
+          status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      if (isTrainingProduct && !body.application_id) {
+        return refuse("restricted", "Practitioner training is purchased through an accepted application.");
+      }
+      if (isClinicProduct && !body.invitation_id) {
+        return refuse("restricted", "The Clinic Profile is purchased by a practitioner for a referred client.");
+      }
+      if (body.invitation_id && !isClinicProduct) {
+        return refuse("restricted", "This invitation can't be used for that product.");
+      }
+
       // ---- Clinic Profile referral -------------------------------------
       // The practitioner pays on behalf of someone who has no account yet.
       // Nothing may be granted to the payer: the webhook marks the invitation
       // paid, and the access level is granted to the client on redemption.
       let referralInvitationId: string | null = null;
       if (body.invitation_id) {
+        const { data: canRefer } = await supabaseClient.rpc("has_feature", {
+          _uid: userId, _feature_key: "prac_clinic_referral",
+        });
+        if (!canRefer) return refuse("restricted", "Only certified practitioners can buy a Clinic Profile.");
         const { data: invite, error: invErr } = await supabaseClient
           .from("client_invitations")
-          .select("id, practitioner_id, kind, paid_at")
+          .select("id, practitioner_id, kind, paid_at, product_id")
           .eq("id", body.invitation_id)
           .maybeSingle();
         if (invErr) throw new Error(`Could not verify invitation: ${invErr.message}`);
-        if (!invite) throw new Error("Invitation not found");
-        if (invite.practitioner_id !== userId) throw new Error("This invitation is not yours");
-        if (invite.kind !== "clinic_profile") throw new Error("Invitation is not a Clinic Profile referral");
-        if (invite.paid_at) throw new Error("This invitation has already been paid for");
+        if (!invite) return refuse("restricted", "Invitation not found.");
+        if (invite.practitioner_id !== userId) return refuse("restricted", "This invitation is not yours.");
+        if (invite.kind !== "clinic_profile") return refuse("restricted", "Invitation is not a Clinic Profile referral.");
+        if (invite.product_id && invite.product_id !== product.id) return refuse("restricted", "This invitation is for a different product.");
+        if (invite.paid_at) return refuse("already_paid", "This invitation has already been paid for.", 409);
         referralInvitationId = invite.id;
         logStep("Referral purchase", { invitationId: referralInvitationId });
       }
