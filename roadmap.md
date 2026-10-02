@@ -33,3 +33,10 @@
 - [x] 6 "Taking you to payment..." after verify; report URL config
 - [x] 7 Phone input with country code everywhere
 - [ ] Round 3: publish, then live iPad-width tests of 2–7
+
+## Oct 2 requests
+- [ ] Getting Started: evidence-based done; hide profiling step w/o journey; Creator Types step only if assigned; trainee/practitioner step order; list Train4 steps + feature keys
+- [ ] Training welcome heading per level (L1/L2/L3) first dashboard visit after payment
+- [ ] access_levels 'creator' display_name -> "Create"; trainer tool uses shared resolver; audit payments/CSV/emails
+- [ ] Confirm application-only + role grant applies to all 4 training products (by product type, not level)
+- [ ] Trainee role persists after payment 14 (Practitioner area gated by role) — ask A'Hara
