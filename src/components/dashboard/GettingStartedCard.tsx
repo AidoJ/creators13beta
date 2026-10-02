@@ -67,13 +67,19 @@ export default function GettingStartedCard({ userId, firstName, purchaseSuccess 
           journey.cta_label = "Waiting";
           journey.route = "";
         } else {
+          // Done only on evidence (server: assigned Creator Types). Nothing
+          // outstanding on the client side never ticks the step by itself.
           const next = getNextEnrollmentStep(enrollment, p?.reached_checkout_at ?? null);
-          journey.done = next === null;
-          if (next) {
+          if (next && !journey.done) {
             journey.title = next.label;
             journey.description = "Your progress is saved. Continue your profiling journey.";
             journey.cta_label = "Continue";
             journey.route = next.route;
+          } else if (!journey.done) {
+            journey.title = "Waiting for your profiling session";
+            journey.description = "Your practitioner will confirm your Creator Types after your session.";
+            journey.cta_label = "Waiting";
+            journey.route = "";
           }
         }
       }
