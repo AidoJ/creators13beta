@@ -7,7 +7,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { MatchState, PlayerState } from "./types";
 import { capitaliseTypeName } from "@/lib/creatorTypes";
-import { fetchGameSettings } from "./settings";
 
 // Points are ONLY awarded when a game finishes, and only to the winner.
 // Values are pulled from the admin-configurable game_settings row at
@@ -58,45 +57,13 @@ export async function recordProgressDiff(args: {
       return;
     }
 
-    // End-of-game: winner gets full points; on a DRAW (no winnerId — e.g.
-    // End of Days where neither player completed a valid ecosystem before
-    // both piles emptied) every player gets HALF the win points and ELO is
-    // unaffected. Values come from the admin-configurable game_settings row.
-    //
-    // NO-CONTEST: if the match ended because a player disconnected past the
-    // grace window, no points / no ELO / no win-or-loss is recorded on either
-    // side. This prevents rage-quitting from feeding wins to opponents.
-    if (next.endedByDisconnect) {
-      return;
+    // End-of-game (bot matches only — ranked play is finalised server-side by
+    // finalise_ranked_match). Bot games never earn Points or ELO, so the only
+    // thing to persist is newly seen types, through the narrow safe RPC.
+    // Win/loss counts for bot games are recorded via bump_bot_match_stats.
+    if (discoveredNewType) {
+      await (supabase.rpc as any)("bump_types_seen", { _types: [...nextTypes] });
     }
-
-    const settings = await fetchGameSettings();
-    let pointsDelta = 0;
-    let won: boolean | null = null;
-    let eloDelta = 0;
-    if (next.winnerId === selfSlot) {
-      won = true;
-      pointsDelta = settings.points_per_win;
-      eloDelta = settings.elo_win;
-    } else if (next.winnerId) {
-      won = false;
-      eloDelta = settings.elo_loss;
-    } else {
-      // Draw — every player earns half points, ELO neutral, no win/loss recorded.
-      pointsDelta = Math.floor(settings.points_per_win / 2);
-    }
-
-    const perfectEco = nextSelf.ecosystem.placed.size >= 16;
-    if (perfectEco && won) pointsDelta += settings.perfect_eco_bonus;
-
-    await supabase.rpc("bump_player_progress", {
-      _user_id: userId,
-      _points_delta: pointsDelta,
-      _types_seen: [...nextTypes],
-      _won: won,
-      _perfect_eco: perfectEco,
-      _elo_delta: eloDelta,
-    });
   } catch (e) {
     console.warn("recordProgressDiff failed", e);
   }
