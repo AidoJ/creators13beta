@@ -9,7 +9,7 @@
  * Avatars are batch-signed client-side via storage.createSignedUrls — one
  * round trip instead of N+1.
  */
-import { usePractitionerBadges, PractitionerSeal, SEALS } from "@/lib/practitionerBadges";
+import { usePractitionerBadges, PractitionerSeal } from "@/lib/practitionerBadges";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -389,7 +389,7 @@ export default function CommunityDashboard() {
         seal: mapBadges[myMapProfile.user_id] ?? null,
       }];
     },
-    [filteredMatches, resolveAvatar, isFeaturedMember, myMapProfile]
+    [filteredMatches, resolveAvatar, isFeaturedMember, myMapProfile, mapBadges]
   );
 
   const handleSelectMember = useCallback(
