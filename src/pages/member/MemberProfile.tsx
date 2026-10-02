@@ -16,6 +16,7 @@ import { sortCreatorTypes } from "@/lib/creatorTypes";
 import LotusProfile, { LotusCreatorType } from "@/components/community/LotusProfile";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { usePractitionerBadges, PractitionerSeal } from "@/lib/practitionerBadges";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -136,6 +137,7 @@ export default function MemberProfile() {
     return () => { cancelled = true; };
   }, [userId, loadRelation]);
 
+  const pracBadges = usePractitionerBadges(profile ? [profile.user_id] : []);
   const sortedTypes = useMemo<LotusCreatorType[]>(() => {
     if (!profile) return [];
     const names = profile.creator_types.map((t) => t.type);
@@ -174,7 +176,7 @@ export default function MemberProfile() {
   const memberSince = formatMemberSince(profile.community_joined_at);
   const tier = profile.tier ? { name: planNameSync(profile.tier) } : null;
   const isOwn = user?.id === profile.user_id;
-  const practitioner = profile.creator_types.find((type) => type.practitioner_status === "certified");
+  const pracBadge = pracBadges[profile.user_id];
 
   const bios: Array<{ key: string; label: string; value: string | null }> = [
     { key: "superpower", label: "Superpower", value: profile.bio_superpower },
@@ -200,7 +202,7 @@ export default function MemberProfile() {
             size="xl"
           />
           <div className="space-y-2">
-            <h1 className="font-display text-4xl">{profile.display_name ?? "Member"}</h1>
+            <h1 className="font-display text-4xl inline-flex items-center gap-2 justify-center">{profile.display_name ?? "Member"}<PractitionerSeal badge={pracBadge} size={36} /></h1>
             {profile.location_label && (
               <p className="text-muted-foreground flex items-center justify-center gap-1.5">
                 <MapPin className="h-4 w-4" />{profile.location_label}
@@ -208,7 +210,7 @@ export default function MemberProfile() {
             )}
             <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
               {tier && <Badge variant="secondary" className="font-display tracking-wide">{tier.name}</Badge>}
-              {practitioner && <Badge className="bg-secondary text-secondary-foreground font-display tracking-wide">Certified Level {practitioner.certification_level ?? 1} Practitioner</Badge>}
+              {pracBadge === "trainee" && <Badge variant="outline" className="text-xs">Practitioner in training</Badge>}
               {memberSince && <span className="text-xs text-muted-foreground">Member since {memberSince}</span>}
             </div>
           </div>

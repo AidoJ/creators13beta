@@ -996,6 +996,7 @@ function Honeycomb({
             style={{ left: pos.x - pos.s / 2, top: pos.y - pos.s / 2, width: pos.s, height: pos.s }}
             title={`${m.display_name ?? "Member"} — Match strength: ${m.score}`}
           >
+            <PractitionerSeal badge={pracBadges[m.user_id]} size={Math.max(22, Math.round(pos.s * 0.16))} className="absolute top-[8%] right-[8%] z-10" />
             <LotusProfile
               avatarUrl={resolveAvatar(m.avatar_url)}
               displayName={m.display_name ?? "Member"}
