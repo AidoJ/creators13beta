@@ -9,6 +9,7 @@ import { planNameSync, type TierKey } from "@/lib/plans";
 import { getAppOrigin } from "@/lib/appOrigin";
 import EnrollmentHeader from "@/components/enrollment/EnrollmentHeader";
 import { SignupFields } from "@/components/auth/SignupFields";
+import { lookupEmailedLink, lockedAuthUrl } from "@/lib/emailedLink";
 
 export default function Signup() {
   const navigate = useNavigate();
