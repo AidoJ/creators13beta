@@ -13,6 +13,8 @@ export interface SignupFieldsProps {
   submitLabel?: string;
   submitIcon?: "arrow" | "none";
   initial?: Partial<SignupValues>;
+  /** Email came from an emailed link and must not be changed. */
+  emailLocked?: boolean;
   onSubmit: (values: SignupValues & { marketingOptIn: boolean }) => void | Promise<void>;
 }
 
@@ -29,6 +31,7 @@ export function SignupFields({
   submitLabel = "Create account",
   submitIcon = "arrow",
   initial,
+  emailLocked = false,
   onSubmit,
 }: SignupFieldsProps) {
   const [firstName, setFirstName] = useState(initial?.firstName ?? "");
@@ -101,7 +104,10 @@ export function SignupFields({
           type="email"
           autoComplete="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => { if (!emailLocked) setEmail(e.target.value); }}
+          readOnly={emailLocked}
+          aria-readonly={emailLocked}
+          className={emailLocked ? "bg-muted cursor-not-allowed" : undefined}
           placeholder="you@example.com"
           required
         />
