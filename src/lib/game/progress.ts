@@ -7,7 +7,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { MatchState, PlayerState } from "./types";
 import { capitaliseTypeName } from "@/lib/creatorTypes";
-import { fetchGameSettings } from "./settings";
 
 // Points are ONLY awarded when a game finishes, and only to the winner.
 // Values are pulled from the admin-configurable game_settings row at
