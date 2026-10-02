@@ -497,9 +497,10 @@ export default function CommunitySettings() {
           <CreatorCardInfoPopup typeName={infoType} onClose={() => setInfoType(null)} />
         )}
 
-        {/* Contact Preferences lives here only (removed from the dashboard). */}
+        {/* Contact Preferences is also linked from the Me page; ?from=community
+            makes its back button return here. */}
         <Link
-          to="/settings/contact"
+          to="/settings/contact?from=community"
           className="block bg-card border border-border rounded-2xl p-6 hover:border-primary/40 transition-colors"
         >
           <h2 className="font-display font-semibold text-lg">Contact Preferences</h2>
