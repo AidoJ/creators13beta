@@ -9,7 +9,7 @@ import { planNameSync, type TierKey } from "@/lib/plans";
 import { getAppOrigin } from "@/lib/appOrigin";
 import EnrollmentHeader from "@/components/enrollment/EnrollmentHeader";
 import { SignupFields } from "@/components/auth/SignupFields";
-import { lookupEmailedLink, lockedAuthUrl } from "@/lib/emailedLink";
+import { lookupEmailedLink, lockedAuthUrl, CLOSED_LINK_MESSAGES } from "@/lib/emailedLink";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -55,10 +55,12 @@ export default function Signup() {
   // Emailed invitation (case study / clinic): lock the email it was sent to,
   // and send an existing account holder to sign-in with that email instead.
   const [inviteEmail, setInviteEmail] = useState<string | null>(null);
+  const [inviteClosed, setInviteClosed] = useState<"used" | "invalid" | null>(null);
   useEffect(() => {
     if (user || !inviteToken) return;
     lookupEmailedLink("invite", inviteToken).then((info) => {
       if (!info) return;
+      if (info.state !== "open") { setInviteClosed(info.state === "used" ? "used" : "invalid"); return; }
       if (info.has_account) navigate(lockedAuthUrl(info.email, true, authReturnTo), { replace: true });
       else setInviteEmail(info.email);
     });
@@ -347,6 +349,19 @@ export default function Signup() {
     }
     navigate(tier === "wren" ? `/enroll/practitioner?${nextParams.toString()}` : `/enroll/payment?${nextParams.toString()}`);
   };
+
+  if (inviteClosed && !user) {
+    const m = CLOSED_LINK_MESSAGES[inviteClosed];
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground px-6">
+        <div className="max-w-md text-center space-y-4">
+          <h1 className="font-display text-2xl">{m.title}</h1>
+          <p className="text-muted-foreground">{m.body}</p>
+          <a href="/auth?returnTo=%2Fdashboard" className="inline-block rounded-full bg-primary text-primary-foreground px-6 py-2">Sign in</a>
+        </div>
+      </div>
+    );
+  }
 
   if (arrivedVerified) {
     return (
