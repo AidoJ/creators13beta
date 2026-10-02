@@ -71,6 +71,7 @@ export default function Dashboard() {
   const { ready: featuresReady, features } = useFeatures();
   const isPlayerOnly = !!gateState?.isPlayerOnly;
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [purchasePending, setPurchasePending] = useState(false);
   const [booking, setBooking] = useState<BookingData | null>(null);
   const [subscription, setSubscription] = useState<SubData | null>(null);
   const [loading, setLoading] = useState(true);

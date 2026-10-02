@@ -227,7 +227,10 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
       return;
     }
     if ((data as any)?.url) {
-      forgetChoice();
+      // Keep the choice until payment succeeds (dashboard ?purchase=success clears it),
+      // so leaving Stripe unpaid still shows "continue to payment". Only stop the
+      // automatic re-launch for this browser session.
+      markCheckoutHandedOff(productId);
       window.location.href = (data as any).url as string;
     }
   }, [navigate]);
@@ -261,7 +264,9 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
   const [storedBuy, setStoredBuy] = useState<string | null>(null);
   useEffect(() => {
     if (!user) { setStoredBuy(null); return; }
-    resolvePendingBuy(user).then(setStoredBuy);
+    // After leaving Stripe unpaid, don't bounce straight back to checkout;
+    // the dashboard banner offers "Continue to payment" instead.
+    resolvePendingBuy(user).then((id) => setStoredBuy(id && !wasCheckoutHandedOff(id) ? id : null));
   }, [user]);
   const pendingBuy = params.get("buy") ?? storedBuy;
   const resumedRef = useRef<string | null>(null);
