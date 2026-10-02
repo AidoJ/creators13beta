@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidPhone } from "@/components/ui/phone-input";
 
 // Server-side: Supabase Auth project settings (min_length=8, required character
 // classes: lowercase, uppercase, digits, symbols) + HIBP (enabled via
@@ -21,9 +22,8 @@ export const signupSchema = z
     phone: z
       .string()
       .trim()
-      .min(7, "Enter a valid phone number")
       .max(30)
-      .refine((v) => v.replace(/[^\d]/g, "").length >= 7, "Enter a valid phone number"),
+      .refine((v) => isValidPhone(v), "Choose your country and enter a valid phone number"),
     password: passwordPolicy,
     confirmPassword: z.string(),
   })

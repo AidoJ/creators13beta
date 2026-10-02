@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import { PasswordStrengthMeter } from "./PasswordStrengthMeter";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { signupSchema, type SignupValues } from "./signupValidation";
 
 export interface SignupFieldsProps {
@@ -109,15 +110,7 @@ export function SignupFields({
 
       <div className="space-y-1.5">
         <Label htmlFor="sf-phone">Phone *</Label>
-        <Input
-          id="sf-phone"
-          type="tel"
-          autoComplete="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="+61 400 000 000"
-          required
-        />
+        <PhoneInput id="sf-phone" value={phone} onChange={(v) => setPhone(v)} required invalid={!!errors.phone} />
         {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
       </div>
 
