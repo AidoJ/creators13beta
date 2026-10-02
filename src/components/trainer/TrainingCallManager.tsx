@@ -1,4 +1,3 @@
-import { planNameSync, loadPlanNames } from "@/lib/plans";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { loadAccessSummary } from "@/lib/accessSummary";
@@ -63,8 +62,14 @@ interface PractitionerOption {
   user_id: string;
   email: string;
   name: string;
-  tier: "wren" | "robin" | "cockatoo" | "owl";
+  /** Access level keys this person currently holds (always includes "free"). */
+  levels: string[];
 }
+
+const AUDIENCE_LEVEL_KEYS = [
+  "free", "taster", "creator", "co_creator", "owl",
+  "prac_l1_trainee", "prac_l1_certified", "prac_l2_trainee", "prac_l2_certified", "prac_l3_trainee", "prac_l3_certified",
+];
 
 interface TrainingCallManagerProps {
   onCallsChanged?: () => void;
@@ -153,22 +158,24 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [externalEmails, setExternalEmails] = useState<string[]>([]);
   const [newExternalEmail, setNewExternalEmail] = useState("");
-  const [bulkInvitedTiers, setBulkInvitedTiers] = useState<Set<"wren"|"robin"|"cockatoo"|"owl">>(new Set());
+  const [bulkInvitedTiers, setBulkInvitedTiers] = useState<Set<string>>(new Set());
 
-  // Community audience tier grid (Wren/Robin/Cockatoo/Owl × visible/access)
-  type TierKey = "wren" | "robin" | "cockatoo" | "owl";
-  const TIER_KEYS: TierKey[] = ["wren", "robin", "cockatoo", "owl"];
-  const [TIER_LABELS, setTierLabels] = useState<Record<TierKey, string>>(() => ({ wren: planNameSync("wren"), robin: planNameSync("robin"), cockatoo: planNameSync("cockatoo"), owl: planNameSync("owl") }));
-  useEffect(() => { loadPlanNames().then(setTierLabels); }, []);
+  // Community audience grid — rows are access levels (level keys written directly).
+  type TierKey = string;
+  const [TIER_KEYS, setTierKeys] = useState<TierKey[]>(AUDIENCE_LEVEL_KEYS);
+  const [TIER_LABELS, setTierLabels] = useState<Record<TierKey, string>>({});
+  useEffect(() => {
+    supabase.from("access_levels").select("key, display_name, sort_order").in("key", AUDIENCE_LEVEL_KEYS).order("sort_order").then(({ data }) => {
+      if (!data) return;
+      setTierKeys(data.map(d => d.key));
+      setTierLabels(Object.fromEntries(data.map(d => [d.key, d.display_name])));
+    });
+  }, []);
   type TierGrid = Record<TierKey, { visible: boolean; access: boolean }>;
-  const emptyTierGrid = (): TierGrid => ({
-    wren: { visible: false, access: false },
-    robin: { visible: false, access: false },
-    cockatoo: { visible: false, access: false },
-    owl: { visible: false, access: false },
-  });
+  const emptyTierGrid = (): TierGrid => ({});
   const [tierGrid, setTierGrid] = useState<TierGrid>(emptyTierGrid);
-  const anyTierVisible = TIER_KEYS.some(t => tierGrid[t].visible);
+  const cell = (k: TierKey) => tierGrid[k] || { visible: false, access: false };
+  const anyTierVisible = Object.values(tierGrid).some(g => g.visible);
 
   // Edit mode: when set, the form acts as an Edit dialog for an existing call.
   const [editingCallId, setEditingCallId] = useState<string | null>(null);
@@ -180,7 +187,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
   function setTierFlag(tier: TierKey, field: "visible" | "access", value: boolean) {
     setTierGrid(prev => {
-      const next = { ...prev, [tier]: { ...prev[tier] } };
+      const next = { ...prev, [tier]: { ...(prev[tier] || { visible: false, access: false }) } };
       if (field === "visible") {
         next[tier].visible = value;
         // Access requires visible — clear access if visible is turned off
@@ -230,45 +237,22 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
   const fetchPractitioners = useCallback(async () => {
     setPractLoading(true);
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("user_id, role")
-      .in("role", ["practitioner", "trainee"]);
-    if (!roles || roles.length === 0) { setPractLoading(false); return; }
-    const userIds = [...new Set(roles.map(r => r.user_id))];
-    const [{ data: profiles }, { data: subs }, accessMap] = await Promise.all([
-      supabase.from("profiles").select("user_id, email, first_name, last_name").in("user_id", userIds),
-      supabase.from("subscriptions").select("user_id, tier, status, current_period_end").in("user_id", userIds),
-      loadAccessSummary(userIds),
+    const [{ data: roles }, { data: profiles }] = await Promise.all([
+      supabase.from("user_roles").select("user_id, role").in("role", ["practitioner", "trainee"]),
+      supabase.from("profiles").select("user_id, email, first_name, last_name"),
     ]);
-    const tierByUser = new Map<string, PractitionerOption["tier"]>();
-    // Access records first (mapped to the community tier grid via the
-    // access_levels.subscription_tier link); legacy plan row fills gaps.
-    const LEVEL_TO_TIER: Record<string, PractitionerOption["tier"]> = { owl: "owl", co_creator: "cockatoo", creator: "robin" };
-    const RANK = { wren: 0, robin: 1, cockatoo: 2, owl: 3 } as const;
-    for (const [uid, items] of Object.entries(accessMap)) {
-      for (const a of items) {
-        const t = LEVEL_TO_TIER[a.level_key];
-        if (t && (!tierByUser.has(uid) || RANK[t] > RANK[tierByUser.get(uid)!])) tierByUser.set(uid, t);
-      }
-    }
-    const validTiers = new Set(["wren","robin","cockatoo","owl"]);
-    const activeStatuses = new Set(["active","trialing","past_due"]);
-    (subs || []).forEach((s: any) => {
-      const periodOk = !s.current_period_end || new Date(s.current_period_end) > new Date();
-      if (s.tier && validTiers.has(s.tier) && activeStatuses.has(s.status) && periodOk && !tierByUser.has(s.user_id)) {
-        tierByUser.set(s.user_id, s.tier);
-      }
-    });
+    const practIds = new Set((roles || []).map(r => r.user_id));
+    const userIds = (profiles || []).map(p => p.user_id);
+    const accessMap = userIds.length ? await loadAccessSummary(userIds) : {};
     const list: PractitionerOption[] = (profiles || []).map(p => ({
       user_id: p.user_id,
       email: p.email || "",
       name: `${p.first_name || ""} ${p.last_name || ""}`.trim() || p.email || "Unknown",
-      tier: tierByUser.get(p.user_id) || "wren",
+      levels: ["free", ...((accessMap as any)[p.user_id] || []).map((a: any) => a.level_key)],
     })).filter(p => p.email);
     setPractitioners(list);
     // Default: select all
-    setSelectedUserIds(new Set(list.map(p => p.user_id)));
+    setSelectedUserIds(new Set(list.filter(p => practIds.has(p.user_id)).map(p => p.user_id)));
     setPractLoading(false);
   }, []);
 
@@ -300,7 +284,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     // Pull invitees + tier_access for this call
     const [{ data: invs }, { data: tiers }] = await Promise.all([
       supabase.from("training_call_invitees").select("email, user_id").eq("call_id", call.id),
-      supabase.from("training_call_tier_access").select("tier, visible, access").eq("training_call_id", call.id),
+      supabase.from("training_call_tier_access").select("level_key, visible, access").eq("training_call_id", call.id),
     ]);
 
     setTitle(call.title.replace(/^\[DUPLICATE\]\s*/, ''));
@@ -361,7 +345,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
     // Tier grid
     const grid = emptyTierGrid();
     (tiers || []).forEach((t: any) => {
-      if (grid[t.tier as TierKey]) grid[t.tier as TierKey] = { visible: !!t.visible, access: !!t.access };
+      if (t.level_key) grid[t.level_key] = { visible: !!t.visible, access: !!t.access };
     });
     setTierGrid(grid);
     setBulkInvitedTiers(new Set());
@@ -407,7 +391,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
   }
 
   function bulkInviteTier(tier: TierKey) {
-    const ids = practitioners.filter(p => p.tier === tier).map(p => p.user_id);
+    const ids = practitioners.filter(p => p.levels.includes(tier)).map(p => p.user_id);
     if (ids.length === 0) {
       toast({ title: `No ${TIER_LABELS[tier]} members`, description: "No platform users currently on this tier to invite.", variant: "destructive" });
       return;
@@ -422,7 +406,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
       next.add(tier);
       return next;
     });
-    const g = tierGrid[tier];
+    const g = cell(tier);
     if (!g.access) {
       toast({
         title: `Heads up — ${TIER_LABELS[tier]} has no Access`,
@@ -583,11 +567,11 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
       // Insert per-tier community access rows for each created call.
       if (insertedCalls && anyTierVisible) {
-        const tierRows: Array<{ training_call_id: string; tier: TierKey; visible: boolean; access: boolean }> = [];
+        const tierRows: Array<{ training_call_id: string; level_key: string; visible: boolean; access: boolean }> = [];
         for (const inserted of insertedCalls) {
           for (const tier of TIER_KEYS) {
-            const g = tierGrid[tier];
-            if (g.visible) tierRows.push({ training_call_id: inserted.id, tier, visible: true, access: g.access });
+            const g = cell(tier);
+            if (g.visible) tierRows.push({ training_call_id: inserted.id, level_key: tier, visible: true, access: g.access });
           }
         }
         if (tierRows.length > 0) {
@@ -598,7 +582,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
       // Record bulk tier-invite usage (audit only — does not change email send list)
       if (insertedCalls && bulkInvitedTiers.size > 0) {
-        const invRows: Array<{ training_call_id: string; tier: TierKey; invited_by: string }> = [];
+        const invRows: Array<{ training_call_id: string; tier: string; invited_by: string }> = [];
         for (const inserted of insertedCalls) {
           for (const t of bulkInvitedTiers) invRows.push({ training_call_id: inserted.id, tier: t, invited_by: user.id });
         }
@@ -829,10 +813,10 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
 
     // Replace tier_access rows
     await supabase.from("training_call_tier_access").delete().eq("training_call_id", editingCallId);
-    const tierRows: Array<{ training_call_id: string; tier: TierKey; visible: boolean; access: boolean }> = [];
+    const tierRows: Array<{ training_call_id: string; level_key: string; visible: boolean; access: boolean }> = [];
     for (const tier of TIER_KEYS) {
-      const g = tierGrid[tier];
-      if (g.visible) tierRows.push({ training_call_id: editingCallId, tier, visible: true, access: g.access });
+      const g = cell(tier);
+      if (g.visible) tierRows.push({ training_call_id: editingCallId, level_key: tier, visible: true, access: g.access });
     }
     if (tierRows.length > 0) {
       const { error: tierErr } = await supabase.from("training_call_tier_access").insert(tierRows);
@@ -1164,11 +1148,11 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
               Community Audience
             </h4>
             <p className="text-[11px] text-muted-foreground">
-              Choose which membership tiers can <span className="font-medium text-foreground">see</span> this event on their community calendar, and which can <span className="font-medium text-foreground">join</span> (Zoom link delivered). Access requires Visible. Leave all blank to keep this event off the community calendar.
+              Choose which access levels can <span className="font-medium text-foreground">see</span> this event on their community calendar, and which can <span className="font-medium text-foreground">join</span> (Zoom link delivered). Access requires Visible. Leave all blank to keep this event off the community calendar.
             </p>
             <div className="rounded-lg border border-border bg-muted/20 overflow-hidden">
               <div className="grid grid-cols-[1fr_80px_80px] items-center text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/40 px-3 py-1.5">
-                <span>Tier</span>
+                <span>Access level</span>
                 <span className="text-center">Visible</span>
                 <span className="text-center">Access</span>
               </div>
@@ -1177,16 +1161,16 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
                   <span className="text-foreground">{TIER_LABELS[tier]}</span>
                   <div className="flex justify-center">
                     <Checkbox
-                      checked={tierGrid[tier].visible}
+                      checked={cell(tier).visible}
                       onCheckedChange={(v) => setTierFlag(tier, "visible", v === true)}
                       aria-label={`${TIER_LABELS[tier]} visible`}
                     />
                   </div>
                   <div className="flex justify-center">
                     <Checkbox
-                      checked={tierGrid[tier].access}
+                      checked={cell(tier).access}
                       onCheckedChange={(v) => setTierFlag(tier, "access", v === true)}
-                      disabled={!tierGrid[tier].visible}
+                      disabled={!cell(tier).visible}
                       aria-label={`${TIER_LABELS[tier]} access`}
                     />
                   </div>
@@ -1211,12 +1195,12 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
             {/* Bulk invite by tier */}
             <div className="rounded-lg border border-dashed border-border bg-muted/10 p-2.5 space-y-1.5">
               <p className="text-[11px] text-muted-foreground">
-                <span className="font-medium text-foreground">Invite all by tier</span> — adds every platform member of that tier to the email list below.
+                <span className="font-medium text-foreground">Invite all by level</span> — adds every member holding that level to the email list below.
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {TIER_KEYS.map(tier => {
-                  const count = practitioners.filter(p => p.tier === tier).length;
-                  const grantedAccess = tierGrid[tier].access;
+                  const count = practitioners.filter(p => p.levels.includes(tier)).length;
+                  const grantedAccess = cell(tier).access;
                   const alreadyInvited = bulkInvitedTiers.has(tier);
                   return (
                     <Button
@@ -1236,7 +1220,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
                   );
                 })}
               </div>
-              {[...bulkInvitedTiers].some(t => !tierGrid[t].access) && (
+              {[...bulkInvitedTiers].some(t => !cell(t).access) && (
                 <p className="text-[10px] text-amber-500">
                   ⚠ Some bulk-invited tiers don't have Access in the grid — those recipients will get the email but no Zoom link.
                 </p>
@@ -1260,7 +1244,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
                       <span className="text-foreground text-xs font-medium truncate block">{p.name}</span>
                       <span className="text-muted-foreground text-[10px] truncate block">{p.email}</span>
                     </div>
-                    <Badge variant="outline" className="text-[9px] capitalize h-4 px-1">{planNameSync(p.tier)}</Badge>
+                    <Badge variant="outline" className="text-[9px] capitalize h-4 px-1">{TIER_LABELS[[...p.levels].reverse().find(l => TIER_KEYS.includes(l)) || "free"] || "Free"}</Badge>
                   </label>
                 ))}
               </div>

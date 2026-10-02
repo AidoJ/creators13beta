@@ -45,20 +45,55 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://creators13beta.lovable.app";
     const body = await req.json().catch(() => ({}));
+    const json = (obj: unknown, status = 200) =>
+      new Response(JSON.stringify(obj), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status });
+
+    const activeSubs = async () =>
+      (await stripe.subscriptions.list({ customer: customerId, status: "active", limit: 10, expand: ["data.items.data.price.product"] })).data;
+    const periodEnd = (s: Stripe.Subscription) =>
+      (s as any).current_period_end ?? s.items?.data?.[0]?.current_period_end ?? null;
+    const productName = (s: Stripe.Subscription) => {
+      const prod = s.items?.data?.[0]?.price?.product as Stripe.Product | string | undefined;
+      return typeof prod === "object" && prod && !("deleted" in prod && prod.deleted) ? prod.name : null;
+    };
+
+    // Member-safe status: no Stripe ids leave this function.
+    if (body?.flow === "status") {
+      const subs = await activeSubs();
+      return json({
+        subscriptions: subs.map((s) => ({
+          product_name: productName(s),
+          cancel_at_period_end: !!s.cancel_at_period_end,
+          access_until: periodEnd(s) ? new Date(periodEnd(s) * 1000).toISOString() : null,
+        })),
+      });
+    }
+
+    if (body?.flow === "resume") {
+      const subs = (await activeSubs()).filter((s) => s.cancel_at_period_end);
+      if (subs.length === 0) return json({ error: "nothing_to_resume", message: "Your membership is already active." }, 409);
+      for (const s of subs) await stripe.subscriptions.update(s.id, { cancel_at_period_end: false });
+      return json({ resumed: subs.length });
+    }
+
     const returnUrl = `${origin}/dashboard?portal=returned`;
     const params: Stripe.BillingPortal.SessionCreateParams = { customer: customerId, return_url: returnUrl };
     // Cancel flow: Stripe redirects straight back to the dashboard once the
     // member confirms, instead of leaving them on Stripe's confirmation page.
     if (body?.flow === "cancel") {
-      const subs = await stripe.subscriptions.list({ customer: customerId, status: "active", limit: 10 });
-      const target = subs.data.find((s) => !s.cancel_at_period_end) ?? subs.data[0];
-      if (target) {
-        params.flow_data = {
-          type: "subscription_cancel",
-          subscription_cancel: { subscription: target.id },
-          after_completion: { type: "redirect", redirect: { return_url: `${origin}/dashboard?portal=cancelled` } },
-        };
+      const subs = await activeSubs();
+      const target = subs.find((s) => !s.cancel_at_period_end);
+      if (!target) {
+        return json({
+          error: "already_cancelled",
+          message: subs.length ? "Your membership is already cancelled and stays active until the end of the paid period." : "There's no active membership to cancel.",
+        }, 409);
       }
+      params.flow_data = {
+        type: "subscription_cancel",
+        subscription_cancel: { subscription: target.id },
+        after_completion: { type: "redirect", redirect: { return_url: `${origin}/dashboard?portal=cancelled` } },
+      };
     }
     const portalSession = await stripe.billingPortal.sessions.create(params);
 
@@ -67,8 +102,9 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    // Log the detail for staff; never show raw billing errors or ids to members.
+    console.error("customer-portal error", error instanceof Error ? error.message : String(error));
+    return new Response(JSON.stringify({ error: "portal_unavailable", message: "We couldn't open your billing page just now. Please try again, or contact us if it keeps happening." }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
