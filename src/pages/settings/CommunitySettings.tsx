@@ -497,8 +497,15 @@ export default function CommunitySettings() {
           <CreatorCardInfoPopup typeName={infoType} onClose={() => setInfoType(null)} />
         )}
 
-        {/* Contact Preferences moved to /settings/contact (Me → Settings).
-            Account-level handles do not belong under Community settings. */}
+        {/* Contact Preferences lives here only (removed from the dashboard). */}
+        <Link
+          to="/settings/contact"
+          className="block bg-card border border-border rounded-2xl p-6 hover:border-primary/40 transition-colors"
+        >
+          <h2 className="font-display font-semibold text-lg">Contact Preferences</h2>
+          <p className="text-xs text-muted-foreground mt-1">Who can reach you, on which channels, and what handles to share.</p>
+        </Link>
+
 
 
         <section className="bg-card border border-border rounded-2xl p-6 space-y-4">

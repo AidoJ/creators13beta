@@ -16,7 +16,7 @@ import AnimalMatchesCard from "@/components/dashboard/AnimalMatchesCard";
 import ClientFAQSection from "@/components/dashboard/ClientFAQSection";
 import GettingStartedCard from "@/components/dashboard/GettingStartedCard";
 import WhatsIncluded from "@/components/dashboard/WhatsIncluded";
-import SubscriptionCard from "@/components/dashboard/SubscriptionCard";
+import NextStepBanner from "@/components/dashboard/NextStepBanner";
 import PendingPurchaseBanner from "@/components/dashboard/PendingPurchaseBanner";
 import { loadMyAccess, type AccessItem } from "@/lib/accessSummary";
 import ZoomRecordingsCard from "@/components/dashboard/ZoomRecordingsCard";
@@ -196,6 +196,7 @@ export default function Dashboard() {
             purchaseSuccess={new URLSearchParams(window.location.search).get("purchase") === "success"}
           />
         )}
+        <NextStepBanner />
 
         {/* Section teasers — surface Play & Community without duplicating
             their content here. Phase 2.1: simple label + arrow, no live data. */}
@@ -237,9 +238,6 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Plan / access card — shown to every member who holds anything,
-            not only those who can see the profile section (Connect buyers). */}
-        <SubscriptionCard />
 
 
         {/* PROFILE section: visible for paid tiers AND case-study subscribers */}
@@ -302,27 +300,6 @@ export default function Dashboard() {
           </section>
         )}
 
-
-        {/* Account settings */}
-        <section className="pt-6 mt-4 border-t border-dashed border-border">
-          <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-3">Settings</p>
-          <Card
-            role="button"
-            tabIndex={0}
-            onClick={() => navigate("/settings/contact")}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate("/settings/contact"); }}
-            className="cursor-pointer p-5 flex items-center gap-4 hover:border-primary/40 hover:bg-primary/5 transition-colors group"
-          >
-            <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Mail className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground">Contact Preferences</p>
-              <p className="text-xs text-muted-foreground">Who can reach you, on which channels, and what handles to share.</p>
-            </div>
-            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
-          </Card>
-        </section>
 
         <WhatsIncluded />
 
