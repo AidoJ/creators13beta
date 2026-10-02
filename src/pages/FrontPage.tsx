@@ -4,7 +4,7 @@
  * not by wording. Practitioner training is application-gated, never buyable.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { resolvePendingBuy, getPendingBuy, clearPendingBuy, rememberPendingBuy } from "@/lib/pendingPurchase";
+import { resolvePendingBuy, getPendingBuy, clearPendingBuy, rememberPendingBuy, markCheckoutHandedOff, wasCheckoutHandedOff } from "@/lib/pendingPurchase";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -257,7 +257,7 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
     if (authLoading) return;
     if (!user) { setHandingOff(false); return; }
     // Signed in: keep the screen only if there really is a choice to resume.
-    resolvePendingBuy(user).then((id) => { if (!id && !params.get("buy")) setHandingOff(false); else setHandingOff(true); });
+    resolvePendingBuy(user).then((id) => { const resumable = !!id && !wasCheckoutHandedOff(id); if (!resumable && !params.get("buy")) setHandingOff(false); else setHandingOff(true); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user]);
 
