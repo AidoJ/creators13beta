@@ -14,11 +14,14 @@ import { getAppOrigin } from "@/lib/appOrigin";
 import { extractBuyFromReturnTo, resolvePendingBuy, getPendingBuy, rememberPendingBuy } from "@/lib/pendingPurchase";
 
 export default function Auth() {
+  const search = new URLSearchParams(window.location.search);
+  // Emailed links (training payment, invitations) pass the address they were
+  // sent to; lock=1 makes it read-only so the account matches the link.
+  const linkEmail = (search.get("email") || "").trim();
+  const emailLocked = search.get("lock") === "1" && !!linkEmail;
   // ?mode=signup opens the new-account form (every "sign up"/"buy" button uses it).
-  const [isLogin, setIsLogin] = useState(
-    () => new URLSearchParams(window.location.search).get("mode") !== "signup",
-  );
-  const [email, setEmail] = useState("");
+  const [isLogin, setIsLogin] = useState(() => search.get("mode") !== "signup");
+  const [email, setEmail] = useState(linkEmail);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -28,7 +31,6 @@ export default function Auth() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const search = new URLSearchParams(window.location.search);
   const returnTo = search.get("returnTo") || "/dashboard";
   const refCode = search.get("ref") || "";
 
@@ -75,6 +77,13 @@ export default function Auth() {
           <p className="text-muted-foreground mt-1">
             {isLogin ? "Sign in to your account" : "Start your Creator Types journey"}
           </p>
+          {emailLocked && !signupSuccessEmail && (
+            <p className="mt-3 text-sm font-medium text-foreground">
+              {isLogin
+                ? "You already have an account with this email. Sign in to continue to payment."
+                : "Create your account with this email to continue to payment."}
+            </p>
+          )}
         </div>
 
         <div className="bg-card rounded-2xl border border-border p-6 sm:p-8 shadow-sm">
@@ -109,7 +118,7 @@ export default function Auth() {
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Input id="email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => { if (!emailLocked) setEmail(e.target.value); }} readOnly={emailLocked} className={emailLocked ? "bg-muted cursor-not-allowed" : undefined} required />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -148,6 +157,8 @@ export default function Auth() {
             <SignupFields
               loading={loading}
               submitLabel="Create account"
+              initial={linkEmail ? { email: linkEmail } : undefined}
+              emailLocked={emailLocked}
               onSubmit={async (values) => {
                 setLoading(true);
                 const pendingBuy = extractBuyFromReturnTo(returnTo);

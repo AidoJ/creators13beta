@@ -193,7 +193,7 @@ const App = () => (
                 <Route path="/admin" element={<ProtectedRoute><RoleGuard allowedRoles={["trainer", "admin"]}><AdminDashboard /></RoleGuard></ProtectedRoute>} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/prospectus" element={<Suspense fallback={null}><Prospectus /></Suspense>} />
-                <Route path="/pay/training/:applicationId" element={<ProtectedRoute><Suspense fallback={null}><TrainingPayment /></Suspense></ProtectedRoute>} />
+                <Route path="/pay/training/:applicationId" element={<Suspense fallback={null}><TrainingPayment /></Suspense>} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route path="/guardian-verify" element={<GuardianVerify />} />
                 <Route path="/unsubscribe" element={<Unsubscribe />} />

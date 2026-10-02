@@ -1,16 +1,32 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getAppOrigin } from "@/lib/appOrigin";
+import { useAuth } from "@/contexts/AuthContext";
+import { lookupEmailedLink, lockedAuthUrl } from "@/lib/emailedLink";
 import { Loader2 } from "lucide-react";
 
-/** Private payment link emailed to an approved practitioner-training applicant. */
+/**
+ * Private payment link emailed to an approved practitioner-training applicant.
+ * Public route: a signed-out visitor is sent to sign-up (new applicant) or
+ * sign-in (existing account) with the applicant's email locked, then back here.
+ */
 export default function TrainingPayment() {
   const { applicationId } = useParams();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [errorCode, setErrorCode] = useState<string | null>(null);
 
   useEffect(() => {
+    if (loading) return;
+    const here = `/pay/training/${applicationId}`;
+    if (!user) {
+      lookupEmailedLink("training", applicationId ?? "").then((info) => {
+        navigate(info ? lockedAuthUrl(info.email, info.has_account, here) : `/auth?returnTo=${encodeURIComponent(here)}`, { replace: true });
+      });
+      return;
+    }
     const origin = getAppOrigin();
     supabase.functions.invoke("create-checkout", {
       body: {
@@ -30,7 +46,7 @@ export default function TrainingPayment() {
       setErrorCode(body?.error ?? null);
       setError(body?.message || "This payment link couldn't be opened.");
     });
-  }, [applicationId]);
+  }, [applicationId, user, loading, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background text-foreground px-6">

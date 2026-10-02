@@ -10,3 +10,4 @@
 - Case-study subject status is decided only by the `is_case_study_subject` backend check (`src/lib/caseStudySubject.ts`) — one rule for member, practitioner and staff views.
 - Age from date of birth uses only `ageFromDob` (`src/lib/age.ts`, tested; backend copy `supabase/functions/_shared/age.ts`) — consent thresholds must agree everywhere.
 - Practitioner seals/trainee tag come only from `get_practitioner_badges` (active access entitlements, visible members only) via `src/lib/practitionerBadges.tsx` — never from editable profile fields.
+- Emailed links that may reach a new person (training payment, case-study/clinic invites) look up the issued email via `emailed_link_account` (`src/lib/emailedLink.ts`) and open locked sign-up or sign-in — never a bare sign-in wall.

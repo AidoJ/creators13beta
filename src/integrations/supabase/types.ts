@@ -3484,6 +3484,10 @@ export type Database = {
         Args: { _comment?: string; _request_id: string }
         Returns: undefined
       }
+      emailed_link_account: {
+        Args: { _kind: string; _ref: string }
+        Returns: Json
+      }
       enrollment_reminders_unsubscribe: {
         Args: { _token: string }
         Returns: boolean

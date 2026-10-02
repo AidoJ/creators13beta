@@ -9,6 +9,7 @@ import { planNameSync, type TierKey } from "@/lib/plans";
 import { getAppOrigin } from "@/lib/appOrigin";
 import EnrollmentHeader from "@/components/enrollment/EnrollmentHeader";
 import { SignupFields } from "@/components/auth/SignupFields";
+import { lookupEmailedLink, lockedAuthUrl } from "@/lib/emailedLink";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -50,6 +51,19 @@ export default function Signup() {
     : tier === "wren"
       ? `/enroll?${authReturnParams.toString()}`
       : `/enroll/payment?${authReturnParams.toString()}`;
+
+  // Emailed invitation (case study / clinic): lock the email it was sent to,
+  // and send an existing account holder to sign-in with that email instead.
+  const [inviteEmail, setInviteEmail] = useState<string | null>(null);
+  useEffect(() => {
+    if (user || !inviteToken) return;
+    lookupEmailedLink("invite", inviteToken).then((info) => {
+      if (!info) return;
+      if (info.has_account) navigate(lockedAuthUrl(info.email, true, authReturnTo), { replace: true });
+      else setInviteEmail(info.email);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, inviteToken]);
 
   // Query string carried into Details for a clinic signup.
   const clinicDetailsParams = () => {
@@ -415,10 +429,15 @@ export default function Signup() {
           <SignupFields
             loading={loading}
             submitLabel={submitLabel}
-            initial={isClinic ? {
+            initial={inviteEmail ? {
+              email: inviteEmail,
+              firstName: params.get("first_name") || "",
+            } : isClinic ? {
               email: params.get("email") || "",
               firstName: params.get("first_name") || "",
             } : undefined}
+            emailLocked={!!inviteEmail}
+            key={inviteEmail ?? "open"}
             onSubmit={handleSignup}
           />
         </section>
