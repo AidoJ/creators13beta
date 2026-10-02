@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneInput, isValidPhone } from "@/components/ui/phone-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -37,7 +38,7 @@ export default function Details() {
   // Form state
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("+61 ");
+  const [phone, setPhone] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [gender, setGender] = useState("");
   const [genderOther, setGenderOther] = useState("");
@@ -54,7 +55,7 @@ export default function Details() {
   const [guardianConsent, setGuardianConsent] = useState(false);
   const [guardianFirstName, setGuardianFirstName] = useState("");
   const [guardianLastName, setGuardianLastName] = useState("");
-  const [guardianPhone, setGuardianPhone] = useState("+61 ");
+  const [guardianPhone, setGuardianPhone] = useState("");
   const [guardianEmail, setGuardianEmail] = useState("");
 
   // Calculate age from DOB. Returns null if DOB is blank/invalid.
@@ -118,6 +119,11 @@ export default function Details() {
       return;
     }
 
+    if (!isValidPhone(phone)) {
+      toast({ title: "Check your phone number", description: "Choose your country and enter a valid phone number.", variant: "destructive" });
+      return;
+    }
+
     if (isMinor) {
       if (!guardianConsent) {
         toast({ title: "Parent/guardian consent required", description: "Please tick the consent confirmation.", variant: "destructive" });
@@ -127,8 +133,8 @@ export default function Details() {
         toast({ title: "Guardian name required", variant: "destructive" });
         return;
       }
-      if (!/^\+\d[\d\s\-]{6,}$/.test(guardianPhone.trim())) {
-        toast({ title: "Guardian phone must be in international format", description: "e.g. +61 412 345 678", variant: "destructive" });
+      if (!isValidPhone(guardianPhone)) {
+        toast({ title: "Check the guardian's phone number", description: "Choose their country and enter a valid phone number.", variant: "destructive" });
         return;
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guardianEmail.trim())) {
@@ -356,16 +362,7 @@ export default function Details() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="phone">Phone *</Label>
-              <Input id="phone" type="tel" required value={phone} onChange={(e) => {
-                        const val = e.target.value;
-                        // Keep the + prefix if user tries to delete it
-                        if (!val.startsWith("+")) {
-                          setPhone("+" + val.replace(/^\+*/, ""));
-                        } else {
-                          setPhone(val);
-                        }
-                      }} placeholder="+61 412 293 255" />
-                      <p className="text-[11px] text-muted-foreground mt-0.5">Include country code, e.g. +61 for Australia</p>
+              <PhoneInput id="phone" required value={phone} onChange={(v) => setPhone(v)} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="dob">Date of Birth *</Label>
@@ -448,22 +445,7 @@ export default function Details() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="guardianPhone">Guardian Phone *</Label>
-                <Input
-                  id="guardianPhone"
-                  type="tel"
-                  required={isMinor}
-                  value={guardianPhone}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (!val.startsWith("+")) {
-                      setGuardianPhone("+" + val.replace(/^\+*/, ""));
-                    } else {
-                      setGuardianPhone(val);
-                    }
-                  }}
-                  placeholder="+61 412 345 678"
-                />
-                <p className="text-[11px] text-muted-foreground mt-0.5">Must include country code, e.g. +61 for Australia</p>
+                <PhoneInput id="guardianPhone" required={isMinor} value={guardianPhone} onChange={(v) => setGuardianPhone(v)} />
               </div>
 
               <div className="space-y-1.5">

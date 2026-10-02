@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { loadEnrollmentState } from "@/lib/enrollmentGate";
 import { loadMyAccess, type AccessItem } from "@/lib/accessSummary";
 import AccessList from "@/components/access/AccessList";
+import MembershipCancelControls from "@/components/account/MembershipCancelControls";
 import { getNextEnrollmentStep, type EnrollmentStep } from "@/lib/enrollmentSteps";
 
 
@@ -24,11 +25,9 @@ interface SubData {
 
 export default function SubscriptionCard() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
   const [sub, setSub] = useState<SubData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [portalLoading, setPortalLoading] = useState(false);
   const [nextStep, setNextStep] = useState<EnrollmentStep | null>(null);
   const [access, setAccess] = useState<AccessItem[]>([]);
 
@@ -66,34 +65,6 @@ export default function SubscriptionCard() {
   }, [user]);
 
 
-  const handleManageSubscription = async (flow?: "cancel") => {
-    setPortalLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("customer-portal", { body: flow ? { flow } : {} });
-      if (error) {
-        // Try to read the structured error body from the edge function
-        let msg = "Could not open subscription portal.";
-        try {
-          const ctx: any = (error as any).context;
-          if (ctx?.text) {
-            const body = await ctx.text();
-            const parsed = JSON.parse(body);
-            if (parsed?.message) msg = parsed.message;
-            else if (parsed?.error) msg = parsed.error;
-          }
-        } catch { /* ignore */ }
-        toast({ title: "Subscription unavailable", description: msg, variant: "destructive" });
-        return;
-      }
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Could not open subscription portal.", variant: "destructive" });
-    }
-    setPortalLoading(false);
-  };
-
   if (loading) return null;
   if (!sub && access.length === 0) return null;
 
@@ -117,17 +88,7 @@ export default function SubscriptionCard() {
             </Button>
           </div>
         )}
-        {hasRecurringStripe && (
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" size="sm" onClick={() => handleManageSubscription()} disabled={portalLoading}>
-              {portalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ExternalLink className="h-4 w-4 mr-2" />}
-              Manage billing
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => handleManageSubscription("cancel")} disabled={portalLoading}>
-              Cancel membership
-            </Button>
-          </div>
-        )}
+        <MembershipCancelControls enabled={hasRecurringStripe} />
       </div>
     );
   }
@@ -195,22 +156,7 @@ export default function SubscriptionCard() {
 
 
 
-      {isPaid && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleManageSubscription()}
-          disabled={portalLoading}
-          className="w-full"
-        >
-          {portalLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-          ) : (
-            <ExternalLink className="h-4 w-4 mr-2" />
-          )}
-          Manage / Cancel Subscription
-        </Button>
-      )}
+      <MembershipCancelControls enabled={isPaid} fallbackName={planName} />
     </div>
   );
 }

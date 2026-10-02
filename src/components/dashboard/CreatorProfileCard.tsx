@@ -57,6 +57,10 @@ interface CreatorTypeInfo {
   energy_pattern: string | null;
   color_hex: string | null;
   profile_content: ProfileContent | null;
+  signature: string | null;
+  at_the_table: string | null;
+  shadow_side: string | null;
+  you_might_be_if: string | null;
 }
 
 export default function CreatorProfileCard({ userId }: CreatorProfileCardProps) {
@@ -75,10 +79,19 @@ export default function CreatorProfileCard({ userId }: CreatorProfileCardProps) 
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (data) setProfile(data as ProfileResult);
+      setProfile((data as ProfileResult) ?? null);
       setLoading(false);
     }
     load();
+    // A guessed type saved elsewhere in the app shows here straight away.
+    const onUpdate = () => { void load(); };
+    const onVis = () => { if (document.visibilityState === "visible") void load(); };
+    window.addEventListener("c13:creator-type-updated", onUpdate);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("c13:creator-type-updated", onUpdate);
+      document.removeEventListener("visibilitychange", onVis);
+    };
   }, [userId]);
 
   useEffect(() => {
@@ -97,7 +110,7 @@ export default function CreatorProfileCard({ userId }: CreatorProfileCardProps) 
 
       const { data: typesData } = await supabase
         .from("creator_types")
-        .select("name, family, element, team_role, creative_power, natural_power, disaster_state, energy_pattern, color_hex, profile_content")
+        .select("name, family, element, team_role, creative_power, natural_power, disaster_state, energy_pattern, color_hex, profile_content, signature, at_the_table, shadow_side, you_might_be_if")
         .in("name", matchSet);
 
       if (typesData) {
@@ -161,7 +174,12 @@ export default function CreatorProfileCard({ userId }: CreatorProfileCardProps) 
         <h2 className="text-lg font-display font-bold text-foreground">
           Your Creator Type{typeInfos.length > 1 ? "s" : ""}
         </h2>
-        {profile.profiled_at && (
+        {selfSelected && (
+          <span className="ml-auto rounded-full border border-banner-border bg-banner text-banner-foreground px-2.5 py-0.5 text-xs font-semibold">
+            Your pick - not yet officially profiled
+          </span>
+        )}
+        {!selfSelected && profile.profiled_at && (
           <span className="ml-auto text-xs text-muted-foreground">
             Profiled {new Date(profile.profiled_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}
           </span>
@@ -341,6 +359,19 @@ function TypePanel({ info, glyphUrl }: { info: CreatorTypeInfo; glyphUrl?: strin
           {content.description}
         </p>
       )}
+
+      {/* Reference text stored for every Creator Type — shown verbatim. */}
+      {([
+        ["Signature", info.signature],
+        ["At the Table", info.at_the_table],
+        ["Shadow Side", info.shadow_side],
+        [`You might be ${/^[aeiou]/i.test(info.name) ? "an" : "a"} ${info.name} if…`, info.you_might_be_if],
+      ] as const).filter(([, text]) => !!text).map(([label, text]) => (
+        <div key={label} className="space-y-1">
+          <p className="text-sm font-display font-bold" style={{ color }}>{label}</p>
+          <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{text}</p>
+        </div>
+      ))}
 
       {/* Natural State */}
       {content?.natural_state && (

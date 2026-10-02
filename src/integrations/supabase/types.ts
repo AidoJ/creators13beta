@@ -2955,8 +2955,8 @@ export type Database = {
         Row: {
           access: boolean
           created_at: string
-          level_key: string | null
-          tier: Database["public"]["Enums"]["subscription_tier"]
+          level_key: string
+          tier: Database["public"]["Enums"]["subscription_tier"] | null
           training_call_id: string
           updated_at: string
           visible: boolean
@@ -2964,8 +2964,8 @@ export type Database = {
         Insert: {
           access?: boolean
           created_at?: string
-          level_key?: string | null
-          tier: Database["public"]["Enums"]["subscription_tier"]
+          level_key: string
+          tier?: Database["public"]["Enums"]["subscription_tier"] | null
           training_call_id: string
           updated_at?: string
           visible?: boolean
@@ -2973,8 +2973,8 @@ export type Database = {
         Update: {
           access?: boolean
           created_at?: string
-          level_key?: string | null
-          tier?: Database["public"]["Enums"]["subscription_tier"]
+          level_key?: string
+          tier?: Database["public"]["Enums"]["subscription_tier"] | null
           training_call_id?: string
           updated_at?: string
           visible?: boolean

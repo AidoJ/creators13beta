@@ -26,9 +26,10 @@
 - Admin tests as aidanleo@yahoo.co.uk: call notes/Contacted status; accept apptest with Nov 2026 intake; L2 register-interest accept + payment link; seat cap 1 test + restore; post-payment trainee/paid_at/Payments page check
 
 ## Round 3 (A'Hara) — items 1 & 8 resolved by Aidan
-- [ ] 2 Event audience on access levels incl. Connect
-- [ ] 3 Cancelled-state display + Resume, no raw Stripe errors
-- [ ] 4 Map refresh on visibility save; photo nudge
-- [ ] 5 Self-picked type: instant update, full content
-- [ ] 6 "Taking you to payment..." after verify; report URL config
-- [ ] 7 Phone input with country code everywhere
+- [x] 2 Event audience on access levels incl. Connect
+- [x] 3 Cancelled-state display + Resume, no raw Stripe errors
+- [x] 4 Map refresh on visibility save; photo nudge
+- [x] 5 Self-picked type: instant update, full content
+- [x] 6 "Taking you to payment..." after verify; report URL config
+- [x] 7 Phone input with country code everywhere
+- [ ] Round 3: publish, then live iPad-width tests of 2–7

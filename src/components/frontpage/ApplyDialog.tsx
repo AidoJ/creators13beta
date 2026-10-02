@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
@@ -22,6 +23,7 @@ export default function ApplyDialog({ level, onClose }: Props) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneOk, setPhoneOk] = useState(false);
   const [message, setMessage] = useState("");
   const [answers, setAnswers] = useState<string[]>(["", "", "", ""]);
   const [busy, setBusy] = useState(false);
@@ -34,6 +36,10 @@ export default function ApplyDialog({ level, onClose }: Props) {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!level) return;
+    if ((isApply || phone.trim()) && !phoneOk) {
+      toast({ title: "Check your phone number", description: "Choose your country and enter a valid phone number.", variant: "destructive" });
+      return;
+    }
     setBusy(true);
     const { data, error } = await supabase.functions.invoke("submit-practitioner-application", {
       body: { name, email, phone, message, level, answers: isApply ? answers : undefined },
@@ -92,7 +98,7 @@ export default function ApplyDialog({ level, onClose }: Props) {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="ap-phone">{isApply ? "Phone" : "Phone (optional)"}</Label>
-                <Input id="ap-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required={isApply} minLength={isApply ? 6 : undefined} />
+                <PhoneInput id="ap-phone" value={phone} onChange={(v, ok) => { setPhone(v); setPhoneOk(ok); }} required={isApply} />
               </div>
             </div>
             {isApply ? (

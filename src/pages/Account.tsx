@@ -12,6 +12,7 @@ import { Mail, KeyRound, CreditCard } from "lucide-react";
 import { loadMyAccess, type AccessItem } from "@/lib/accessSummary";
 import AccessList from "@/components/access/AccessList";
 import PaymentHistory from "@/components/account/PaymentHistory";
+import MembershipCancelControls from "@/components/account/MembershipCancelControls";
 
 const emailSchema = z.string().trim().email({ message: "Enter a valid email address" }).max(255);
 const passwordSchema = z.string().min(8, { message: "Password must be at least 8 characters" }).max(72);
@@ -27,22 +28,9 @@ export default function Account() {
   const [passwordLoading, setPasswordLoading] = useState(false);
 
   const [access, setAccess] = useState<AccessItem[] | null>(null);
-  const [portalLoading, setPortalLoading] = useState(false);
   const hasRecurring = (access ?? []).some(
     (a) => !!a.stripe_ref && (a.billing_shape === "recurring" || a.billing_shape === "fixed_term"),
   );
-
-  const openPortal = async (flow?: "cancel") => {
-    setPortalLoading(true);
-    // "cancel" opens Stripe's cancel step, which returns to the dashboard once confirmed.
-    const { data, error } = await supabase.functions.invoke("customer-portal", { body: flow ? { flow } : {} });
-    setPortalLoading(false);
-    if (error || !(data as any)?.url) {
-      toast({ title: "Couldn't open billing", description: (data as any)?.message || error?.message || "Please try again.", variant: "destructive" });
-      return;
-    }
-    window.location.href = (data as any).url;
-  };
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -130,21 +118,7 @@ export default function Account() {
             ) : (
               <div className="space-y-4">
                 <AccessList items={access} />
-                {hasRecurring && (
-                  <div className="space-y-1">
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button variant="outline" onClick={() => openPortal()} disabled={portalLoading}>
-                        {portalLoading ? "Opening…" : "Manage billing"}
-                      </Button>
-                      <Button variant="outline" onClick={() => openPortal("cancel")} disabled={portalLoading}>
-                        Cancel subscription
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground text-center">
-                      If you cancel, you keep access until the end of the period you've paid for.
-                    </p>
-                  </div>
-                )}
+                <MembershipCancelControls enabled={hasRecurring} size="default" />
               </div>
             )}
           </CardContent>

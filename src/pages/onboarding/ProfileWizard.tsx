@@ -245,6 +245,8 @@ export default function ProfileWizard() {
       } as never).eq("user_id", user.id);
     }
     try { localStorage.removeItem(draftKey); } catch { /* ignore */ }
+    window.dispatchEvent(new Event("c13:creator-type-updated"));
+    window.dispatchEvent(new Event("c13:community-profile-updated"));
     toast({ title: "Welcome to the community!" });
     navigate("/community/dashboard", { replace: true });
   };

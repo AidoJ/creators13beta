@@ -199,6 +199,7 @@ export default function CommunityDashboard() {
     try { localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({ mode: filterMode, value: filterValue })); } catch { /* ignore */ }
   }, [filterMode, filterValue]);
 
+  const [reloadKey, setReloadKey] = useState(0);
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -221,15 +222,19 @@ export default function CommunityDashboard() {
 
       const rows = ((matchesRes.data as unknown as MatchRow[] | null) ?? []);
       setMatches(rows);
-      if (myProfileRes.data && mineRes.data) {
+      if (myProfileRes.data) {
+        // Own marker never depends on having a Creator Type yet.
         const mine = mineRes.data;
-        setMyMapProfile({ ...myProfileRes.data, creator_types: [mine.primary_type, mine.secondary_type, mine.type_3, mine.type_4].filter(Boolean).map((type) => ({ type, source: mine.source })) } as MyMapProfile);
+        const types = mine ? [mine.primary_type, mine.secondary_type, mine.type_3, mine.type_4].filter(Boolean).map((type) => ({ type, source: mine.source })) : [];
+        setMyMapProfile({ ...myProfileRes.data, creator_types: types } as MyMapProfile);
+      } else {
+        setMyMapProfile(null);
       }
 
       // Batch-sign avatars in a single storage round-trip. Skip absolute URLs
       // and stock-avatar refs (resolved locally).
-      const keys = rows
-        .map((r) => r.avatar_url)
+      // Include the viewer's own avatar so their "YOU" pin shows their photo.
+      const keys = [...rows.map((r) => r.avatar_url), myProfileRes.data?.avatar_url ?? null]
         .filter((v): v is string => !!v && !/^https?:\/\//i.test(v) && !isStockAvatarRef(v));
       if (keys.length > 0) {
         const { data: signed } = await supabase.storage
@@ -271,7 +276,19 @@ export default function CommunityDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, reloadKey]);
+
+  // Re-read when community settings are saved (same tab) or the tab regains focus.
+  useEffect(() => {
+    const bump = () => setReloadKey((k) => k + 1);
+    const onVis = () => { if (document.visibilityState === "visible") bump(); };
+    window.addEventListener("c13:community-profile-updated", bump);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("c13:community-profile-updated", bump);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, []);
 
   const featuredKey = featured?.creator_type?.toLowerCase() ?? null;
   const featuredColor = featuredKey ? getCreatorTypeColor(featuredKey) : undefined;
@@ -809,6 +826,11 @@ export default function CommunityDashboard() {
           </div>
         ) : view === "map" ? (
           <div className="space-y-2">
+            {myMapProfile?.community_visible && !myMapProfile.avatar_url && (
+              <button type="button" onClick={() => navigate("/settings/community")} className="mb-2 w-full rounded-lg border border-banner-border bg-banner text-banner-foreground px-3 py-2 text-left text-sm">
+                <span className="font-semibold">Add a photo</span> — your pin shows a letter until you do. Tap to add one.
+              </button>
+            )}
             <div
               className="rounded-2xl overflow-hidden border border-border"
               style={{ height: "calc(100vh - 9rem)" }}
