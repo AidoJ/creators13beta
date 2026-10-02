@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getAppOrigin } from "@/lib/appOrigin";
 import { useAuth } from "@/contexts/AuthContext";
-import { lookupEmailedLink, lockedAuthUrl } from "@/lib/emailedLink";
+import { lookupEmailedLink, lockedAuthUrl, CLOSED_LINK_MESSAGES } from "@/lib/emailedLink";
 import { Loader2 } from "lucide-react";
 
 /**
@@ -18,12 +18,16 @@ export default function TrainingPayment() {
   const [error, setError] = useState<string | null>(null);
   const [errorCode, setErrorCode] = useState<string | null>(null);
 
+  const [closed, setClosed] = useState<keyof typeof CLOSED_LINK_MESSAGES | null>(null);
+
   useEffect(() => {
     if (loading) return;
     const here = `/pay/training/${applicationId}`;
     if (!user) {
       lookupEmailedLink("training", applicationId ?? "").then((info) => {
-        navigate(info ? lockedAuthUrl(info.email, info.has_account, here) : `/auth?returnTo=${encodeURIComponent(here)}`, { replace: true });
+        if (info && info.state === "open") navigate(lockedAuthUrl(info.email, info.has_account, here), { replace: true });
+        else if (info) setClosed(info.state);
+        else navigate(`/auth?returnTo=${encodeURIComponent(here)}`, { replace: true });
       });
       return;
     }
@@ -50,7 +54,13 @@ export default function TrainingPayment() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background text-foreground px-6">
-      {error ? (
+      {closed ? (
+        <div className="max-w-md text-center space-y-4">
+          <h1 className="font-display text-2xl">{CLOSED_LINK_MESSAGES[closed].title}</h1>
+          <p className="text-muted-foreground">{CLOSED_LINK_MESSAGES[closed].body}</p>
+          <Link to="/auth?returnTo=%2Fdashboard" className="inline-block rounded-full bg-primary text-primary-foreground px-6 py-2">Sign in</Link>
+        </div>
+      ) : error ? (
         <div className="max-w-md text-center space-y-3">
           <h1 className="font-display text-2xl">Payment link problem</h1>
           <p className="text-muted-foreground">{error}</p>

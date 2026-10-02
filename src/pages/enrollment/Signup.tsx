@@ -55,10 +55,12 @@ export default function Signup() {
   // Emailed invitation (case study / clinic): lock the email it was sent to,
   // and send an existing account holder to sign-in with that email instead.
   const [inviteEmail, setInviteEmail] = useState<string | null>(null);
+  const [inviteClosed, setInviteClosed] = useState<"used" | "invalid" | null>(null);
   useEffect(() => {
     if (user || !inviteToken) return;
     lookupEmailedLink("invite", inviteToken).then((info) => {
       if (!info) return;
+      if (info.state !== "open") { setInviteClosed(info.state === "used" ? "used" : "invalid"); return; }
       if (info.has_account) navigate(lockedAuthUrl(info.email, true, authReturnTo), { replace: true });
       else setInviteEmail(info.email);
     });
