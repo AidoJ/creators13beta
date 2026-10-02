@@ -22,6 +22,7 @@
  *   Phase 2.1 because it needs rasterisation to a marker icon, or a much larger
  *   OverlayView footprint that overcrowds the map. Revisit post-launch.
  */
+import { SEALS } from "@/lib/practitionerBadges";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCreatorTypeColor } from "@/lib/creatorTypes";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -44,6 +45,8 @@ export type MapMember = {
   primary_type: string | null; // lowercase creator type or null
   featured: boolean;
   isSelf?: boolean;
+  /** Server-derived practitioner badge (l1/l2/l3/trainee). */
+  seal?: string | null;
 };
 
 interface CommunityMapViewProps {
@@ -310,6 +313,19 @@ function createAvatarOverlay(opts: {
       inner.textContent = (member.display_name ?? "?").charAt(0).toUpperCase();
     }
     wrapper.appendChild(inner);
+
+    // Practitioner seal — top-right, certified levels only.
+    const seal = member.seal && member.seal !== "trainee" ? SEALS[member.seal as "l1" | "l2" | "l3"] : null;
+    if (seal) {
+      const si = document.createElement("img");
+      si.src = seal.url;
+      si.alt = seal.label;
+      si.title = seal.label;
+      const SS = Math.max(22, Math.round(SIZE * 0.22));
+      Object.assign(si.style, { position: "absolute", right: "-4px", top: "-4px", width: `${SS}px`, height: `${SS}px`, filter: "drop-shadow(0 1px 2px rgba(0,0,0,.4))" });
+      wrapper.appendChild(si);
+      div.title += ` — ${seal.label}`;
+    }
 
     // Score badge — small chip in bottom-right.
     const badge = document.createElement("div");
