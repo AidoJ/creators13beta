@@ -6,7 +6,7 @@
  * are revealed only when both sides approve a connection request.
  */
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,12 @@ import type { ContactChannels } from "@/lib/contacts";
 export default function ContactSettings() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  // Back button returns to wherever the member came from (Community settings or Me).
+  const cameFromCommunity = searchParams.get("from") === "community";
+  const backTarget = cameFromCommunity ? "/settings/community" : "/dashboard";
+  const backLabel = cameFromCommunity ? "Community" : "Me";
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -124,8 +129,8 @@ export default function ContactSettings() {
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-display font-bold">Contact Preferences</h1>
-          <Button variant="secondary" size="sm" className="rounded-full shadow-sm" onClick={() => navigate("/dashboard")}>
-            <ArrowLeft className="mr-1 h-4 w-4" /> Me
+          <Button variant="secondary" size="sm" className="rounded-full shadow-sm" onClick={() => navigate(backTarget)}>
+            <ArrowLeft className="mr-1 h-4 w-4" /> {backLabel}
           </Button>
         </div>
 

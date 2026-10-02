@@ -303,6 +303,25 @@ export default function Dashboard() {
 
         <WhatsIncluded />
 
+        {/* Contact Preferences — linked from the Me page for everyone (also
+            reachable from Community settings; ?from=me sets its back button). */}
+        <Card
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate("/settings/contact?from=me")}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate("/settings/contact?from=me"); }}
+          className="cursor-pointer p-5 flex items-center gap-4 hover:border-primary/40 hover:bg-primary/5 transition-colors group"
+        >
+          <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Mail className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">Contact Preferences</p>
+            <p className="text-xs text-muted-foreground">Who can reach you, on which channels, and what handles to share.</p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+        </Card>
+
         {/* FAQs — full width */}
         <ClientFAQSection />
       </main>
