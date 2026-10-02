@@ -4,7 +4,7 @@
  * not by wording. Practitioner training is application-gated, never buyable.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { resolvePendingBuy, clearPendingBuy, rememberPendingBuy } from "@/lib/pendingPurchase";
+import { resolvePendingBuy, getPendingBuy, clearPendingBuy, rememberPendingBuy } from "@/lib/pendingPurchase";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
