@@ -224,6 +224,7 @@ export default function CommunitySettings() {
 
     if (visible && !hadJoinedAt) setHadJoinedAt(true);
     setSaving(false);
+    window.dispatchEvent(new Event("c13:community-profile-updated"));
     toast({ title: "Settings saved" });
   };
 
