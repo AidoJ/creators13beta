@@ -24,3 +24,11 @@
 - [ ] Publishing requested; confirm deployment and complete live checks
 - Verify publish landed (function + DB evidence, not build label)
 - Admin tests as aidanleo@yahoo.co.uk: call notes/Contacted status; accept apptest with Nov 2026 intake; L2 register-interest accept + payment link; seat cap 1 test + restore; post-payment trainee/paid_at/Payments page check
+
+## Round 3 (A'Hara) — items 1 & 8 resolved by Aidan
+- [ ] 2 Event audience on access levels incl. Connect
+- [ ] 3 Cancelled-state display + Resume, no raw Stripe errors
+- [ ] 4 Map refresh on visibility save; photo nudge
+- [ ] 5 Self-picked type: instant update, full content
+- [ ] 6 "Taking you to payment..." after verify; report URL config
+- [ ] 7 Phone input with country code everywhere
