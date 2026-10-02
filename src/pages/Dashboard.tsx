@@ -188,8 +188,8 @@ export default function Dashboard() {
       <DashboardHeader email={user?.email} onSignOut={signOut} />
 
       <main className="container mx-auto px-4 py-8 max-w-5xl space-y-5">
-        <PendingPurchaseBanner />
-        {user && (
+        <PendingPurchaseBanner onPendingChange={setPurchasePending} />
+        {user && !purchasePending && (
           <GettingStartedCard
             userId={user.id}
             firstName={profile?.first_name}
