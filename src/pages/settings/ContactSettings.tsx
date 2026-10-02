@@ -6,7 +6,7 @@
  * are revealed only when both sides approve a connection request.
  */
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,12 @@ import type { ContactChannels } from "@/lib/contacts";
 export default function ContactSettings() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  // Back button returns to wherever the member came from (Community settings or Me).
+  const cameFromCommunity = searchParams.get("from") === "community";
+  const backTarget = cameFromCommunity ? "/settings/community" : "/dashboard";
+  const backLabel = cameFromCommunity ? "Community" : "Me";
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
