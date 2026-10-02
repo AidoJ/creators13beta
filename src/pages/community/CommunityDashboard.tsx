@@ -826,6 +826,11 @@ export default function CommunityDashboard() {
           </div>
         ) : view === "map" ? (
           <div className="space-y-2">
+            {myMapProfile?.community_visible && !myMapProfile.avatar_url && (
+              <button type="button" onClick={() => navigate("/settings/community")} className="mb-2 w-full rounded-lg border border-banner-border bg-banner text-banner-foreground px-3 py-2 text-left text-sm">
+                <span className="font-semibold">Add a photo</span> — your pin shows a letter until you do. Tap to add one.
+              </button>
+            )}
             <div
               className="rounded-2xl overflow-hidden border border-border"
               style={{ height: "calc(100vh - 9rem)" }}

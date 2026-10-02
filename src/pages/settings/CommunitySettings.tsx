@@ -252,6 +252,11 @@ export default function CommunitySettings() {
 
         <section className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <h2 className="font-display font-semibold text-lg">Profile</h2>
+          {!avatarUrl && !(hideAvatar && stockAvatar) && (
+            <p className="rounded-lg border border-banner-border bg-banner text-banner-foreground px-3 py-2 text-sm">
+              <span className="font-semibold">Add a photo</span> — members see it on your map pin and profile instead of a letter.
+            </p>
+          )}
           <div className="flex items-center gap-4">
             <div className="h-20 w-20 rounded-full overflow-hidden border border-border bg-muted flex items-center justify-center flex-shrink-0">
               {hideAvatar ? (
