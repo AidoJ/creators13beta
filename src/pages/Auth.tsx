@@ -6,12 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Leaf, Eye, EyeOff } from "lucide-react";
+import { Leaf, Eye, EyeOff, Loader2 } from "lucide-react";
 import logoFull from "@/assets/13creators-logo-full.png";
 import { SignupFields } from "@/components/auth/SignupFields";
 import { ForgotPasswordDialog } from "@/components/auth/ForgotPasswordDialog";
 import { getAppOrigin } from "@/lib/appOrigin";
-import { extractBuyFromReturnTo, resolvePendingBuy, rememberPendingBuy } from "@/lib/pendingPurchase";
+import { extractBuyFromReturnTo, resolvePendingBuy, getPendingBuy, rememberPendingBuy } from "@/lib/pendingPurchase";
 
 export default function Auth() {
   // ?mode=signup opens the new-account form (every "sign up"/"buy" button uses it).
@@ -52,7 +52,7 @@ export default function Auth() {
     }
   };
 
-  const arrivingFromLink = /access_token=|[?&]code=|type=signup/.test(window.location.hash + window.location.search);
+  const arrivingFromLink = /access_token=|[?&]code=|type=signup/.test(window.location.hash + window.location.search) && !/error=/.test(window.location.hash + window.location.search);
   if ((user || arrivingFromLink) && (extractBuyFromReturnTo(returnTo) || getPendingBuy(user))) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-3" role="status" aria-live="polite">
