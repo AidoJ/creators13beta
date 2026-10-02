@@ -133,7 +133,7 @@ interface FrontPageProps {
 }
 
 export default function FrontPage({ shopMode = false }: FrontPageProps) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
@@ -202,6 +202,7 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
       },
     });
     setBusyId(null);
+    if (error || (data as any)?.error) setHandingOff(false);
     // Forget the remembered choice only once checkout is confirmed (or the
     // product is already held), so a temporary failure never loses it.
     const forgetChoice = () => {
@@ -241,6 +242,21 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
     }
     startCheckout(productId);
   }, [user, navigate, startCheckout]);
+
+  // While a saved product choice is being resumed (e.g. straight after the
+  // verification link), show a payment hand-off screen instead of the homepage.
+  const [handingOff, setHandingOff] = useState<boolean>(() => {
+    const h = typeof window !== "undefined" ? window.location.hash + window.location.search : "";
+    const arrivingSignedIn = /access_token=|[?&]code=|type=signup/.test(h);
+    return !!params.get("buy") || (!!getPendingBuy(null) && arrivingSignedIn);
+  });
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) { setHandingOff(false); return; }
+    // Signed in: keep the screen only if there really is a choice to resume.
+    resolvePendingBuy(user).then((id) => { if (!id && !params.get("buy")) setHandingOff(false); else setHandingOff(true); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, user]);
 
   const [storedBuy, setStoredBuy] = useState<string | null>(null);
   useEffect(() => {
@@ -326,6 +342,15 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
       </div>
     );
   };
+
+  if (handingOff) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-3" role="status" aria-live="polite">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="font-display text-xl">Taking you to payment...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
