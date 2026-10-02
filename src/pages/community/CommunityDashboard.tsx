@@ -947,21 +947,22 @@ function Honeycomb({
     const items: { x: number; y: number; s: number }[] = [];
     const avg = sizes.reduce((a, b) => a + b, 0) / sizes.length;
     const perRow = Math.max(1, Math.floor(W / (avg * 1.25)));
-    const targetH = Math.max(avg * 1.4, Math.ceil(sizes.length / perRow) * avg * 1.25);
+    // Fill the whole available area (not just the rows the count needs).
+    const targetH = Math.max(dims.h || 0, avg * 1.4, Math.ceil(sizes.length / perRow) * avg * 1.25);
     sorted.forEach((m, i) => {
       const s = Math.min(sizes[i] ?? 180, W - 8);
       const r = s / 2;
       const h = seedHash(m.user_id);
       const rand = (k: number) => ((h >>> (k * 5)) % 1000) / 1000;
-      // Best matches gravitate to the top-centre, the rest spread outward.
-      const band = Math.min(1, i / Math.max(4, sorted.length));
+      // Stable seeded spot anywhere in the area; best match starts centred.
       let px = r + rand(0) * Math.max(0, W - s);
-      let py = r + (band * 0.8 + rand(1) * 0.2) * Math.max(0, targetH - s);
-      if (i === 0) px = W / 2;
+      let py = r + rand(1) * Math.max(0, targetH - s);
+      if (i === 0) { px = W / 2; py = Math.max(r, targetH / 2); }
       let angle = rand(2) * Math.PI * 2;
       let step = 0;
+      const inArea = (y: number) => step > 2000 || y + r <= targetH;
       const fits = (x: number, y: number) =>
-        x - r >= 0 && x + r <= W && y - r >= 0 &&
+        x - r >= 0 && x + r <= W && y - r >= 0 && inArea(y) &&
         placed.every((p) => Math.hypot(p.x - x, p.y - y) >= p.r + r + GAP);
       let x = px, y = py;
       while (!fits(x, y) && step < 4000) {
@@ -974,7 +975,7 @@ function Honeycomb({
       placed.push({ x, y, r });
       items.push({ x, y, s });
     });
-    const height = Math.max(...placed.map((p) => p.y + p.r)) + 8;
+    const height = Math.max(targetH, ...placed.map((p) => p.y + p.r + 8));
     return { items, height };
   }, [sorted, sizes, dims]);
 
