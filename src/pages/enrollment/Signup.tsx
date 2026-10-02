@@ -428,10 +428,15 @@ export default function Signup() {
           <SignupFields
             loading={loading}
             submitLabel={submitLabel}
-            initial={isClinic ? {
+            initial={inviteEmail ? {
+              email: inviteEmail,
+              firstName: params.get("first_name") || "",
+            } : isClinic ? {
               email: params.get("email") || "",
               firstName: params.get("first_name") || "",
             } : undefined}
+            emailLocked={!!inviteEmail}
+            key={inviteEmail ?? "open"}
             onSubmit={handleSignup}
           />
         </section>
