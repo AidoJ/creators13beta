@@ -52,6 +52,16 @@ export default function Auth() {
     }
   };
 
+  const arrivingFromLink = /access_token=|[?&]code=|type=signup/.test(window.location.hash + window.location.search);
+  if ((user || arrivingFromLink) && (extractBuyFromReturnTo(returnTo) || getPendingBuy(user))) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-3" role="status" aria-live="polite">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="font-display text-xl">Taking you to payment...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
