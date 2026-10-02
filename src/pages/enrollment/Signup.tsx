@@ -51,6 +51,19 @@ export default function Signup() {
       ? `/enroll?${authReturnParams.toString()}`
       : `/enroll/payment?${authReturnParams.toString()}`;
 
+  // Emailed invitation (case study / clinic): lock the email it was sent to,
+  // and send an existing account holder to sign-in with that email instead.
+  const [inviteEmail, setInviteEmail] = useState<string | null>(null);
+  useEffect(() => {
+    if (user || !inviteToken) return;
+    lookupEmailedLink("invite", inviteToken).then((info) => {
+      if (!info) return;
+      if (info.has_account) navigate(lockedAuthUrl(info.email, true, authReturnTo), { replace: true });
+      else setInviteEmail(info.email);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, inviteToken]);
+
   // Query string carried into Details for a clinic signup.
   const clinicDetailsParams = () => {
     const p = new URLSearchParams({ tier: "wren", billing: "monthly", clinic: "true", invite: inviteToken });
