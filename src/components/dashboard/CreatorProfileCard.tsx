@@ -85,8 +85,13 @@ export default function CreatorProfileCard({ userId }: CreatorProfileCardProps) 
     load();
     // A guessed type saved elsewhere in the app shows here straight away.
     const onUpdate = () => { void load(); };
+    const onVis = () => { if (document.visibilityState === "visible") void load(); };
     window.addEventListener("c13:creator-type-updated", onUpdate);
-    return () => window.removeEventListener("c13:creator-type-updated", onUpdate);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("c13:creator-type-updated", onUpdate);
+      document.removeEventListener("visibilitychange", onVis);
+    };
   }, [userId]);
 
   useEffect(() => {
