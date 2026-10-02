@@ -220,6 +220,7 @@ export default function CommunitySettings() {
         return;
       }
       setCtSource("self_selected");
+      window.dispatchEvent(new Event("c13:creator-type-updated"));
     }
 
     if (visible && !hadJoinedAt) setHadJoinedAt(true);
