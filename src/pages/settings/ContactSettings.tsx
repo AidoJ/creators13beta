@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -174,10 +175,10 @@ export default function ContactSettings() {
               </div>
               {enPhone && (
                 <div className="space-y-2 pl-6">
-                  <Input
-                    type="tel" placeholder="+61 400 000 000"
+                  <PhoneInput
+                    id="ch_phone_number"
                     value={ch.phone_number ?? ""}
-                    onChange={(e) => setCh((c) => ({ ...c, phone_number: e.target.value }))}
+                    onChange={(v) => setCh((c) => ({ ...c, phone_number: v }))}
                   />
                   <div className="flex flex-wrap gap-4">
                     <div className="flex items-center gap-2">
@@ -202,9 +203,9 @@ export default function ContactSettings() {
                 <Label htmlFor="ch_w" className="cursor-pointer">WhatsApp</Label>
               </div>
               {enWhats && (
-                <Input placeholder="+61 400 000 000 (can differ from Phone)"
+                <PhoneInput id="ch_whatsapp"
                   value={ch.whatsapp ?? ""}
-                  onChange={(e) => setCh((c) => ({ ...c, whatsapp: e.target.value }))} />
+                  onChange={(v) => setCh((c) => ({ ...c, whatsapp: v }))} />
               )}
             </div>
 
