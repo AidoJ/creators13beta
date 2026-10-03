@@ -230,6 +230,7 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
       // Keep the choice until payment succeeds (dashboard ?purchase=success clears it),
       // so leaving Stripe unpaid still shows "continue to payment". Only stop the
       // automatic re-launch for this browser session.
+      rememberPendingBuy(productId);
       markCheckoutHandedOff(productId);
       window.location.href = (data as any).url as string;
     }
