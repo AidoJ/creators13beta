@@ -9,6 +9,7 @@ import DiscountCodesCard from "@/components/dashboard/DiscountCodesCard";
 import GettingStartedCard from "@/components/dashboard/GettingStartedCard";
 import WhatsIncluded from "@/components/dashboard/WhatsIncluded";
 import PracticeRungCard from "@/components/dashboard/game/PracticeRungCard";
+import CreatorsSeenPrompt from "@/components/dashboard/CreatorsSeenPrompt";
 import QuizStatsCard from "@/components/dashboard/QuizStatsCard";
 import { Card } from "@/components/ui/card";
 import { Gamepad2, Globe, ArrowRight, Mail } from "lucide-react";
@@ -88,6 +89,7 @@ export default function PlayerDashboard({ userId, email, firstName, onSignOut }:
           )}
         </div>
 
+        <CreatorsSeenPrompt userId={userId} />
         <PracticeRungCard userId={userId} />
         <QuizStatsCard userId={userId} />
         {!promptDismissed && <DiscountCodesCard userId={userId} />}
