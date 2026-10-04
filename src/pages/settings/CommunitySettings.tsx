@@ -507,16 +507,16 @@ export default function CommunitySettings() {
               <h2 className="font-display font-semibold text-lg">Contact Preferences</h2>
               <p className="text-xs text-muted-foreground mt-1">
                 {openToContact
-                  ? `On — ${Object.entries(ch).filter(([, v]) => (v as any)?.enabled).length || "no"} channel(s) shared.`
+                  ? `On — ${Object.entries(ch).filter(([k, v]) => !!v && typeof v === "string" && k !== "phone_call_ok" && k !== "phone_sms_ok").length || "no"} channel(s) shared.`
                   : "Off — other members can't contact you."}
               </p>
             </div>
             <Switch
               checked={openToContact}
               onCheckedChange={async (v) => {
-                if (!userId) return;
+                if (!user) return;
                 setOpenToContact(v);
-                const { error } = await supabase.from("profiles").update({ open_to_contact: v } as never).eq("user_id", userId);
+                const { error } = await supabase.from("profiles").update({ open_to_contact: v } as never).eq("user_id", user.id);
                 if (error) { setOpenToContact(!v); toast({ title: "Couldn't save", description: error.message, variant: "destructive" }); return; }
                 if (v) navigate("/settings/contact?from=community");
               }}
