@@ -25,9 +25,9 @@ export default function ContactSettings() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   // Back button returns to wherever the member came from (Community settings or Me).
-  const cameFromCommunity = searchParams.get("from") === "community";
-  const backTarget = cameFromCommunity ? "/settings/community" : "/dashboard";
-  const backLabel = cameFromCommunity ? "Community" : "Me";
+  const cameFromAccount = searchParams.get("from") === "account";
+  const backTarget = cameFromAccount ? "/account" : "/settings/community";
+  const backLabel = cameFromAccount ? "Account" : "Community";
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
