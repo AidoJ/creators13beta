@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PaymentConfirmGate } from "@/components/dashboard/PaymentConfirmGate";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -125,7 +126,7 @@ const App = () => (
                 <Route path="/onboarding/profile" element={<ProtectedRoute><ProfileWizard /></ProtectedRoute>} />
                 <Route path="/settings/community" element={<ProtectedRoute><RequiresCompletedProfile anyPath><CommunitySettings /></RequiresCompletedProfile></ProtectedRoute>} />
                 <Route path="/settings/contact" element={<ProtectedRoute><ContactSettings /></ProtectedRoute>} />
-                <Route path="/dashboard" element={<ProtectedRoute><RequiresCompletedProfile><Dashboard /></RequiresCompletedProfile></ProtectedRoute>} />
+                <Route path="/dashboard" element={<ProtectedRoute><PaymentConfirmGate><RequiresCompletedProfile><Dashboard /></RequiresCompletedProfile></PaymentConfirmGate></ProtectedRoute>} />
                 <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
                 <Route path="/shop" element={<ProtectedRoute><Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}><Shop /></Suspense></ProtectedRoute>} />
                 <Route

@@ -24,17 +24,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Keep the same user object while it's the same person with unchanged
+    // account data. Token refreshes and duplicate auth events otherwise hand
+    // out a new object each time, and every page keyed on `user` reloads
+    // (the post-payment dashboard flicker).
+    const keepStable = (next: User | null) =>
+      setUser((prev) =>
+        prev && next && prev.id === next.id && prev.updated_at === next.updated_at &&
+        JSON.stringify(prev.user_metadata) === JSON.stringify(next.user_metadata)
+          ? prev
+          : next,
+      );
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
-        setUser(session?.user ?? null);
+        keepStable(session?.user ?? null);
         setLoading(false);
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      keepStable(session?.user ?? null);
       setLoading(false);
     });
 
