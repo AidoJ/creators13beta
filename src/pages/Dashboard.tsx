@@ -1,5 +1,6 @@
 import { isCaseStudySubject as checkCaseStudySubject } from "@/lib/caseStudySubject";
 import { useEffect, useState } from "react";
+import { useOnDataChanged } from "@/lib/dataChanged";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useEnrollmentGate } from "@/hooks/useEnrollmentGate";
@@ -83,6 +84,9 @@ export default function Dashboard() {
    * "be seen" gate, not a "see" gate — so we only need profile_completed_at). */
   const [profileComplete, setProfileComplete] = useState(false);
   const [myAccess, setMyAccess] = useState<AccessItem[]>([]);
+  // Re-read straight after a save elsewhere (Creator Type, avatar, access).
+  const [reloadKey, setReloadKey] = useState(0);
+  useOnDataChanged(() => setReloadKey((k) => k + 1));
 
 
   useEffect(() => {
@@ -126,7 +130,8 @@ export default function Dashboard() {
       setLoading(false);
     };
     fetchData();
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, reloadKey]);
 
   const step = profile?.enrollment_step || null;
   // Derive progress from actual data, not just enrollment_step

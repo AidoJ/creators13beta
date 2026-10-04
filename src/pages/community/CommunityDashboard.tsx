@@ -277,16 +277,19 @@ export default function CommunityDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [user, reloadKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, reloadKey]);
 
   // Re-read when community settings are saved (same tab) or the tab regains focus.
   useEffect(() => {
     const bump = () => setReloadKey((k) => k + 1);
     const onVis = () => { if (document.visibilityState === "visible") bump(); };
     window.addEventListener("c13:community-profile-updated", bump);
+    window.addEventListener("c13:data-changed", bump);
     document.addEventListener("visibilitychange", onVis);
     return () => {
       window.removeEventListener("c13:community-profile-updated", bump);
+      window.removeEventListener("c13:data-changed", bump);
       document.removeEventListener("visibilitychange", onVis);
     };
   }, []);

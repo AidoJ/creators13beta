@@ -98,6 +98,16 @@ function levelBadgeClass(key: string): string {
 export default function AdminDashboard() {
   const { user, signOut } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
+  // Count of applications still marked "new", so a missed email can't hide one.
+  const [newApplications, setNewApplications] = useState(0);
+  useEffect(() => {
+    const load = () => (supabase.from("practitioner_applications" as any)
+      .select("id", { count: "exact", head: true }).eq("status", "new") as any)
+      .then(({ count }: { count: number | null }) => setNewApplications(count ?? 0));
+    load();
+    const id = window.setInterval(load, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
   const [caseStudies, setCaseStudies] = useState<CaseStudyRow[]>([]);
   const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
   const [photoCounts, setPhotoCounts] = useState<{ user_id: string; count: number }[]>([]);
@@ -449,7 +459,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="marketing"><Megaphone className="h-3.5 w-3.5 mr-1" />Marketing</TabsTrigger>
             <TabsTrigger value="access"><KeyRound className="h-3.5 w-3.5 mr-1" />Access Levels</TabsTrigger>
             <TabsTrigger value="products"><ShoppingBag className="h-3.5 w-3.5 mr-1" />Products</TabsTrigger>
-            <TabsTrigger value="applications"><UserPlus className="h-3.5 w-3.5 mr-1" />Applications</TabsTrigger>
+            <TabsTrigger value="applications"><UserPlus className="h-3.5 w-3.5 mr-1" />Applications{newApplications > 0 && <span aria-label={`${newApplications} new`} className="ml-1.5 rounded-full bg-primary text-primary-foreground px-1.5 text-[0.65rem] leading-4">{newApplications}</span>}</TabsTrigger>
             {isCallerAdmin && <TabsTrigger value="onboarding"><ListChecks className="h-3.5 w-3.5 mr-1" />Getting Started</TabsTrigger>}
             {isCallerAdmin && <TabsTrigger value="payments"><Receipt className="h-3.5 w-3.5 mr-1" />Payments</TabsTrigger>}
           </TabsList>

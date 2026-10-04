@@ -91,8 +91,11 @@ serve(async (req) => {
     try {
       const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
       if (RESEND_API_KEY) {
-        const { data: roles } = await admin.from("user_roles").select("user_id").eq("role", "trainer");
-        for (const r of roles ?? []) {
+        // Trainers AND admins, once each (A'Hara holds admin only).
+        const { data: roles } = await admin.from("user_roles").select("user_id").in("role", ["trainer", "admin"]);
+        const ids = [...new Set((roles ?? []).map((r) => r.user_id))];
+        for (const uid of ids) {
+          const r = { user_id: uid };
           const { data: prof } = await admin
             .from("profiles").select("email, first_name").eq("user_id", r.user_id).maybeSingle();
           if (!prof?.email) continue;
@@ -123,6 +126,7 @@ serve(async (req) => {
             }),
           });
           results.push(res.ok ? "sent" : "error");
+          console.log("[PRAC-APPLICATION] notify", row.id, prof.email, res.status);
           await new Promise((r) => setTimeout(r, 600));
         }
       }

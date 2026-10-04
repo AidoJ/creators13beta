@@ -11,7 +11,7 @@ import logoFull from "@/assets/13creators-logo-full.png";
 import { SignupFields } from "@/components/auth/SignupFields";
 import { ForgotPasswordDialog } from "@/components/auth/ForgotPasswordDialog";
 import { getAppOrigin } from "@/lib/appOrigin";
-import { extractBuyFromReturnTo, resolvePendingBuy, getPendingBuy, rememberPendingBuy } from "@/lib/pendingPurchase";
+import { extractBuyFromReturnTo, resolveAutoResumeBuy, getAutoResumeBuy, rememberPendingBuy, clearPendingBuy, isExplicitLinkReturn, forgetPendingBuyEverywhere } from "@/lib/pendingPurchase";
 
 export default function Auth() {
   const search = new URLSearchParams(window.location.search);
@@ -37,7 +37,15 @@ export default function Auth() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const pending = extractBuyFromReturnTo(returnTo) ?? (await resolvePendingBuy(user));
+      const explicitBuy = extractBuyFromReturnTo(returnTo);
+      if (explicitBuy) { navigate(`/?buy=${encodeURIComponent(explicitBuy)}`, { replace: true }); return; }
+      // An emailed link (payment link, invitation) always wins over a saved choice.
+      if (isExplicitLinkReturn(returnTo)) {
+        void forgetPendingBuyEverywhere(user);
+        navigate(returnTo, { replace: true });
+        return;
+      }
+      const pending = await resolveAutoResumeBuy(user);
       navigate(pending ? `/?buy=${encodeURIComponent(pending)}` : returnTo, { replace: true });
     })();
   }, [user, navigate, returnTo]);
@@ -55,7 +63,7 @@ export default function Auth() {
   };
 
   const arrivingFromLink = /access_token=|[?&]code=|type=signup/.test(window.location.hash + window.location.search) && !/error=/.test(window.location.hash + window.location.search);
-  if ((user || arrivingFromLink) && (extractBuyFromReturnTo(returnTo) || getPendingBuy(user))) {
+  if ((user || arrivingFromLink) && (extractBuyFromReturnTo(returnTo) || (!isExplicitLinkReturn(returnTo) && getAutoResumeBuy(user)))) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-3" role="status" aria-live="polite">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -161,8 +169,15 @@ export default function Auth() {
               emailLocked={emailLocked}
               onSubmit={async (values) => {
                 setLoading(true);
-                const pendingBuy = extractBuyFromReturnTo(returnTo);
-                if (pendingBuy) rememberPendingBuy(pendingBuy);
+                let pendingBuy = extractBuyFromReturnTo(returnTo);
+                if (pendingBuy) {
+                  // Restricted products (training, Clinic Profile) are never saved.
+                  const { data: prod } = await supabase.from("products")
+                    .select("is_visible_on_storefront, grants_level_key").eq("id", pendingBuy).maybeSingle();
+                  const restricted = !prod || !prod.is_visible_on_storefront || (prod.grants_level_key ?? "").startsWith("prac_");
+                  if (restricted) { clearPendingBuy(); pendingBuy = null; }
+                  else rememberPendingBuy(pendingBuy);
+                } else if (isExplicitLinkReturn(returnTo)) clearPendingBuy();
                 const { data, error } = await supabase.auth.signUp({
                   email: values.email,
                   password: values.password,

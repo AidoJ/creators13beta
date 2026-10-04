@@ -1,3 +1,4 @@
+import { notifyDataChanged } from "@/lib/dataChanged";
 import { useCallback, useEffect, useState } from "react";
 import { ExternalLink, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -81,6 +82,7 @@ export default function MembershipCancelControls({ enabled, fallbackName = "Memb
       toast({ title: "Membership resumed", description: "Your membership will continue as normal." });
     }
     refresh();
+    notifyDataChanged("access");
   };
 
   if (!enabled) return null;

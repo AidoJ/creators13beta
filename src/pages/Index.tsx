@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { getRequiredEnrollmentPath, loadEnrollmentState } from "@/lib/enrollmentGate";
 import FrontPage from "./FrontPage";
-import { resolvePendingBuy } from "@/lib/pendingPurchase";
+import { resolveAutoResumeBuy } from "@/lib/pendingPurchase";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -31,7 +31,7 @@ const Index = () => {
 
 
     (async () => {
-      if (await resolvePendingBuy(user)) {
+      if (await resolveAutoResumeBuy(user)) {
         setDestination("__front");
         return;
       }
