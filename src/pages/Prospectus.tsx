@@ -6,6 +6,7 @@ import { downloadProspectusPdf } from "@/lib/downloadProspectusPdf";
 import { useProspectusData } from "@/lib/useProspectusData";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 export default function Prospectus() {
   const { rows, imageUrls, canvases, signed } = useProspectusData();
@@ -17,7 +18,9 @@ export default function Prospectus() {
 
   async function download() {
     setDownloading(true);
-    try { await downloadProspectusPdf(); } finally { setDownloading(false); }
+    try { await downloadProspectusPdf(); }
+    catch (e) { toast({ title: "Couldn't create the PDF", description: (e as Error).message || "Please try again.", variant: "destructive" }); }
+    finally { setDownloading(false); }
   }
 
   return (
