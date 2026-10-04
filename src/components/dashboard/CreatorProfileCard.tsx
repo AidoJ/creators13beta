@@ -23,6 +23,8 @@ const GLYPH_IMPORTS: Record<string, () => Promise<{ default: string }>> = {
 
 interface CreatorProfileCardProps {
   userId: string;
+  /** Render only when the member picked a type themselves (no "coming soon" placeholder). */
+  selfPickOnly?: boolean;
 }
 
 interface ProfileResult {
@@ -63,7 +65,7 @@ interface CreatorTypeInfo {
   you_might_be_if: string | null;
 }
 
-export default function CreatorProfileCard({ userId }: CreatorProfileCardProps) {
+export default function CreatorProfileCard({ userId, selfPickOnly = false }: CreatorProfileCardProps) {
   const [profile, setProfile] = useState<ProfileResult | null>(null);
   const [typeInfos, setTypeInfos] = useState<CreatorTypeInfo[]>([]);
   const [glyphUrls, setGlyphUrls] = useState<Record<string, string>>({});
@@ -140,6 +142,7 @@ export default function CreatorProfileCard({ userId }: CreatorProfileCardProps) 
   if (loading) return null;
 
   const primaryInfo = typeInfos[0];
+  if (selfPickOnly && (profile?.source !== "self_selected" || !primaryInfo)) return null;
 
   if (!profile?.primary_type || !primaryInfo) {
     return (

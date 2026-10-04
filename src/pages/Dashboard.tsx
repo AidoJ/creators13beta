@@ -305,6 +305,12 @@ export default function Dashboard() {
           </section>
         )}
 
+        {/* Members without the profile section still see a Creator Type they picked themselves. */}
+        {!showProfileSection && user && (
+          <div id="creator-profile"><CreatorProfileCard userId={user.id} selfPickOnly /></div>
+        )}
+
+
 
         {/* FAQs — full width */}
         <ClientFAQSection />
