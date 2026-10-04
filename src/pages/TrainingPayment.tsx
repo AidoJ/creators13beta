@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getAppOrigin } from "@/lib/appOrigin";
 import { useAuth } from "@/contexts/AuthContext";
 import { lookupEmailedLink, lockedAuthUrl, CLOSED_LINK_MESSAGES } from "@/lib/emailedLink";
+import { forgetPendingBuyEverywhere } from "@/lib/pendingPurchase";
 import { Loader2 } from "lucide-react";
 
 /**
@@ -31,6 +32,8 @@ export default function TrainingPayment() {
       });
       return;
     }
+    // This explicit link overrides any saved storefront choice.
+    void forgetPendingBuyEverywhere(user);
     const origin = getAppOrigin();
     supabase.functions.invoke("create-checkout", {
       body: {
