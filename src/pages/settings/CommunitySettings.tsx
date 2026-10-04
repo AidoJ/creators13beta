@@ -220,12 +220,12 @@ export default function CommunitySettings() {
         return;
       }
       setCtSource("self_selected");
-      window.dispatchEvent(new Event("c13:creator-type-updated"));
+      notifyDataChanged("creator-type");
     }
 
     if (visible && !hadJoinedAt) setHadJoinedAt(true);
     setSaving(false);
-    window.dispatchEvent(new Event("c13:community-profile-updated"));
+    notifyDataChanged("community-profile");
     toast({ title: "Settings saved" });
   };
 
@@ -323,6 +323,7 @@ export default function CommunitySettings() {
                   setAvatarUrl(signed ? `${signed}#${Date.now()}` : signed);
                   setUploadingAvatar(false);
                   toast({ title: "Photo updated" });
+                  notifyDataChanged("avatar");
                 }}
               />
               <p className="text-xs text-muted-foreground">JPEG, PNG or WebP. Max 5MB. Square works best.</p>
