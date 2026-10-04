@@ -4,7 +4,7 @@
  * not by wording. Practitioner training is application-gated, never buyable.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { resolvePendingBuy, getPendingBuy, clearPendingBuy, rememberPendingBuy, markCheckoutHandedOff, wasCheckoutHandedOff } from "@/lib/pendingPurchase";
+import { resolveAutoResumeBuy, getAutoResumeBuy, clearPendingBuy, rememberPendingBuy, markCheckoutHandedOff, wasCheckoutHandedOff } from "@/lib/pendingPurchase";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -213,7 +213,8 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
       let body: any = data;
       try { if (!body && (error as any)?.context?.json) body = await (error as any).context.json(); } catch { /* ignore */ }
       const held = body?.error === "already_held";
-      if (held) forgetChoice();
+      // A refused restricted product must never stay saved and keep resuming.
+      if (held || body?.error === "restricted" || body?.error === "already_paid") forgetChoice();
       toast({
         title: held ? "You already have this" : "Couldn't open payment",
         description: body?.message || error?.message || "Please try again.",
@@ -252,22 +253,22 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
   const [handingOff, setHandingOff] = useState<boolean>(() => {
     const h = typeof window !== "undefined" ? window.location.hash + window.location.search : "";
     const arrivingSignedIn = /access_token=|[?&]code=|type=signup/.test(h);
-    return !!params.get("buy") || (!!getPendingBuy(null) && arrivingSignedIn);
+    return !!params.get("buy") || (!!getAutoResumeBuy(null) && arrivingSignedIn);
   });
   useEffect(() => {
     if (authLoading) return;
     if (!user) { setHandingOff(false); return; }
     // Signed in: keep the screen only if there really is a choice to resume.
-    resolvePendingBuy(user).then((id) => { const resumable = !!id && !wasCheckoutHandedOff(id); if (!resumable && !params.get("buy")) setHandingOff(false); else setHandingOff(true); });
+    resolveAutoResumeBuy(user).then((id) => { const resumable = !!id && !wasCheckoutHandedOff(id); if (!resumable && !params.get("buy")) setHandingOff(false); else setHandingOff(true); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user]);
 
   const [storedBuy, setStoredBuy] = useState<string | null>(null);
   useEffect(() => {
     if (!user) { setStoredBuy(null); return; }
-    // After leaving Stripe unpaid, don't bounce straight back to checkout;
-    // the dashboard banner offers "Continue to payment" instead.
-    resolvePendingBuy(user).then((id) => setStoredBuy(id && !wasCheckoutHandedOff(id) ? id : null));
+    // Only auto-resume a fresh choice (30 min); older ones get the dashboard
+    // "continue to payment" banner instead.
+    resolveAutoResumeBuy(user).then((id) => setStoredBuy(id && !wasCheckoutHandedOff(id) ? id : null));
   }, [user]);
   const pendingBuy = params.get("buy") ?? storedBuy;
   const resumedRef = useRef<string | null>(null);
