@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowRight, CalendarDays, Camera, Check, ChevronDown, ChevronUp,
   ClipboardList, Filter, Folder, FolderPlus, Gamepad2, HelpCircle,
-  MapPin, Share2, Sparkles, Stethoscope, User, UserPlus, Users,
+  MapPin, Share2, Sparkles, Send, User, UserPlus, Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ const icons = {
   camera: Camera, sparkles: Sparkles, user: User, map: MapPin, users: Users,
   filter: Filter, calendar: CalendarDays, folder: Folder, "folder-plus": FolderPlus,
   game: Gamepad2, "user-plus": UserPlus, share: Share2,
-  clipboard: ClipboardList, stethoscope: Stethoscope,
+  clipboard: ClipboardList, stethoscope: Send, // legacy key; non-medical icon
 };
 
 type Props = { userId: string; firstName?: string | null; purchaseSuccess?: boolean };

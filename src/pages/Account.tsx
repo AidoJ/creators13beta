@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import WhatsIncluded from "@/components/dashboard/WhatsIncluded";
+import { useEnrollmentGate } from "@/hooks/useEnrollmentGate";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
-import { Mail, KeyRound, CreditCard } from "lucide-react";
+import { Mail, KeyRound, CreditCard, ArrowRight } from "lucide-react";
 import { loadMyAccess, type AccessItem } from "@/lib/accessSummary";
 import AccessList from "@/components/access/AccessList";
 import PaymentHistory from "@/components/account/PaymentHistory";
@@ -27,6 +29,8 @@ export default function Account() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
 
+  const { state: gateState } = useEnrollmentGate();
+  const isPlayerOnly = !!gateState?.isPlayerOnly;
   const [access, setAccess] = useState<AccessItem[] | null>(null);
   const hasRecurring = (access ?? []).some(
     (a) => !!a.stripe_ref && (a.billing_shape === "recurring" || a.billing_shape === "fixed_term"),
@@ -108,6 +112,7 @@ export default function Account() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <CreditCard className="h-4 w-4 text-primary" /> What you have
+              <Link to="/shop" className="ml-auto text-sm font-normal text-primary hover:underline">Upgrade</Link>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -123,6 +128,22 @@ export default function Account() {
             )}
           </CardContent>
         </Card>
+
+        <WhatsIncluded />
+
+        {isPlayerOnly && (
+          <Link
+            to="/settings/contact?from=account"
+            className="flex items-center gap-4 bg-card border border-border rounded-lg p-5 hover:border-primary/40 transition-colors group"
+          >
+            <Mail className="h-5 w-5 text-primary flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground">Contact Preferences</p>
+              <p className="text-xs text-muted-foreground">Who can reach you, on which channels, and what handles to share.</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary flex-shrink-0" />
+          </Link>
+        )}
 
         <PaymentHistory />
 
