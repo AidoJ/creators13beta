@@ -98,6 +98,16 @@ function levelBadgeClass(key: string): string {
 export default function AdminDashboard() {
   const { user, signOut } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
+  // Count of applications still marked "new", so a missed email can't hide one.
+  const [newApplications, setNewApplications] = useState(0);
+  useEffect(() => {
+    const load = () => (supabase.from("practitioner_applications" as any)
+      .select("id", { count: "exact", head: true }).eq("status", "new") as any)
+      .then(({ count }: { count: number | null }) => setNewApplications(count ?? 0));
+    load();
+    const id = window.setInterval(load, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
   const [caseStudies, setCaseStudies] = useState<CaseStudyRow[]>([]);
   const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
   const [photoCounts, setPhotoCounts] = useState<{ user_id: string; count: number }[]>([]);
