@@ -1043,7 +1043,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
               </div>
               {coverPreviewUrl && (
                 <div className="rounded-md overflow-hidden border border-border max-w-sm">
-                  <div className="relative aspect-[16/10] w-full bg-muted">
+                  <div className="relative aspect-square w-full bg-muted">
                     <img
                       src={coverPreviewUrl}
                       alt=""
@@ -1053,7 +1053,7 @@ export default function TrainingCallManager({ onCallsChanged }: TrainingCallMana
                   </div>
                 </div>
               )}
-              <p className="text-[10px] text-muted-foreground">Tiles are square. If no cover image is set, the first image in the description is used.</p>
+              <p className="text-[10px] text-muted-foreground">Tiles are square (shown up to about 600 × 600 px). Upload a square image of 1200 × 1200 px, JPG or PNG, under 1 MB. If no cover image is set, the first image in the description is used.</p>
             </div>
 
             {/* Promo / external link */}

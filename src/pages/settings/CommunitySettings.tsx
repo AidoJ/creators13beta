@@ -499,17 +499,34 @@ export default function CommunitySettings() {
           <CreatorCardInfoPopup typeName={infoType} onClose={() => setInfoType(null)} />
         )}
 
-        {/* Contact Preferences is also linked from the Me page; ?from=community
-            makes its back button return here. */}
-        <Link
-          to="/settings/contact?from=community"
-          className="block bg-card border border-border rounded-2xl p-6 hover:border-primary/40 transition-colors"
-        >
-          <h2 className="font-display font-semibold text-lg">Contact Preferences</h2>
-          <p className="text-xs text-muted-foreground mt-1">Who can reach you, on which channels, and what handles to share.</p>
-        </Link>
-
-
+        {/* Contact Preferences: on/off at a glance. Turning on saves and opens
+            the details screen; turning off saves immediately. */}
+        <section className="bg-card border border-border rounded-2xl p-6 space-y-3">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="font-display font-semibold text-lg">Contact Preferences</h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                {openToContact
+                  ? `On — ${Object.entries(ch).filter(([k, v]) => !!v && typeof v === "string" && k !== "phone_call_ok" && k !== "phone_sms_ok").length || "no"} channel(s) shared.`
+                  : "Off — other members can't contact you."}
+              </p>
+            </div>
+            <Switch
+              checked={openToContact}
+              onCheckedChange={async (v) => {
+                if (!user) return;
+                setOpenToContact(v);
+                const { error } = await supabase.from("profiles").update({ open_to_contact: v } as never).eq("user_id", user.id);
+                if (error) { setOpenToContact(!v); toast({ title: "Couldn't save", description: error.message, variant: "destructive" }); return; }
+                if (v) navigate("/settings/contact?from=community");
+              }}
+              aria-label="Contact Preferences on or off"
+            />
+          </div>
+          {openToContact && (
+            <Link to="/settings/contact?from=community" className="text-sm text-primary hover:underline">Edit details</Link>
+          )}
+        </section>
 
         <section className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <h2 className="font-display font-semibold text-lg">Discoverability</h2>
