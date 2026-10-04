@@ -169,9 +169,15 @@ export default function Auth() {
               emailLocked={emailLocked}
               onSubmit={async (values) => {
                 setLoading(true);
-                const pendingBuy = extractBuyFromReturnTo(returnTo);
-                if (pendingBuy) rememberPendingBuy(pendingBuy);
-                else if (isExplicitLinkReturn(returnTo)) clearPendingBuy();
+                let pendingBuy = extractBuyFromReturnTo(returnTo);
+                if (pendingBuy) {
+                  // Restricted products (training, Clinic Profile) are never saved.
+                  const { data: prod } = await supabase.from("products")
+                    .select("is_visible_on_storefront, grants_level_key").eq("id", pendingBuy).maybeSingle();
+                  const restricted = !prod || !prod.is_visible_on_storefront || (prod.grants_level_key ?? "").startsWith("prac_");
+                  if (restricted) { clearPendingBuy(); pendingBuy = null; }
+                  else rememberPendingBuy(pendingBuy);
+                } else if (isExplicitLinkReturn(returnTo)) clearPendingBuy();
                 const { data, error } = await supabase.auth.signUp({
                   email: values.email,
                   password: values.password,
