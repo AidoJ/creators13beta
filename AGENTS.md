@@ -3,6 +3,7 @@
 - A front-page product chosen before sign-up is remembered in localStorage and in the account sign-up data (`pending_buy`), so checkout resumes after email verification wherever the link lands.
 - Trusted SECURITY DEFINER flows that must write guarded guardian fields set the transaction-local flag `app.guardian_trusted` (checked by `profiles_guard_certification`).
 - Prospectus pages are free-form drag-and-drop canvases (1123x794 design space) stored in `prospectus_sections.canvas_layout` on each page's first section, seeded from the structured layout; pages without a canvas fall back to the structured renderer. Images store storage paths only and are re-signed on load (bucket needs a public read policy) so web and PDF match.
+- Prospectus PDF export normalises only the capture clone to the unscaled design dimensions and resolves computed styles before capture, because responsive transforms can clip page content in html2canvas.
 - The dashboard Getting Started guide is access-grid driven; its self-only progress function takes no user ID, while admin previews use selected access levels and synthetic state only.
 - Getting Started Phase 2 tours replay from the account-saved guide, while Phase 3 derives “What’s included” from access data and keeps the staff guide admin-editable.
 - Community map and Creator Type filters persist only in the current browser; the member’s own discoverable profile is a distinct “YOU” map marker, never a match result.
