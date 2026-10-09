@@ -1,6 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { planNameSync } from "@/lib/plans";
 import { billingLabel, type AccessItem } from "@/lib/accessSummary";
 import { MEMBERSHIP_RANK, includedByTraining, includedLabel } from "@/lib/trainingIncludes";
 
@@ -15,12 +14,8 @@ export default function AccessList({ items }: { items: AccessItem[] }) {
     .map((k) => ({ key: k, level: includedByTraining(k, heldKeys) }))
     .filter((x): x is { key: string; level: number } => x.level !== null)
     .sort((a, b) => MEMBERSHIP_RANK[b.key] - MEMBERSHIP_RANK[a.key]);
-  const [names, setNames] = useState<Record<string, string>>({});
-  useEffect(() => {
-    if (!included.length) return;
-    supabase.from("access_levels").select("key, display_name").in("key", Object.keys(MEMBERSHIP_RANK))
-      .then(({ data }) => setNames(Object.fromEntries((data ?? []).map((l) => [l.key, l.display_name]))));
-  }, [included.length]);
+  // Members can't read access levels directly; use the shared plan names.
+  const names: Record<string, string> = { taster: "Connect", creator: planNameSync("robin"), co_creator: planNameSync("cockatoo") };
   if (items.length === 0) return null;
   return (
     <ul className="space-y-2">
