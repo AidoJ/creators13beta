@@ -37,6 +37,7 @@ export default function InviteClientForm({ practitionerCode }: InviteClientFormP
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [templateHtml, setTemplateHtml] = useState<string | null>(null);
+  const [templateError, setTemplateError] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -45,12 +46,14 @@ export default function InviteClientForm({ practitionerCode }: InviteClientFormP
   }, [user]);
 
   async function fetchTemplate() {
-    const { data } = await supabase
+    setTemplateError(false);
+    const { data, error } = await supabase
       .from("email_templates")
       .select("html_body")
       .eq("template_key", "case_study_invite")
-      .single();
+      .maybeSingle();
     if (data) setTemplateHtml(data.html_body);
+    else { console.error("Invite template load failed", error); setTemplateError(true); }
   }
 
   const previewHtml = useMemo(() => {
@@ -177,6 +180,11 @@ export default function InviteClientForm({ practitionerCode }: InviteClientFormP
               }}
             />
           </div>
+        </div>
+      ) : templateError ? (
+        <div className="rounded-2xl border border-destructive/40 bg-card p-6 text-center text-sm space-y-3">
+          <p className="text-foreground">The email preview couldn't be loaded. You can still create invitations below.</p>
+          <Button size="sm" variant="outline" onClick={fetchTemplate}>Try again</Button>
         </div>
       ) : (
         <div className="rounded-2xl border border-border bg-card p-6 text-center text-muted-foreground text-sm">
