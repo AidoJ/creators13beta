@@ -14,6 +14,7 @@ import { Loader2 } from "lucide-react";
 import ApplyDialog from "@/components/frontpage/ApplyDialog";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { loadMyAccess } from "@/lib/accessSummary";
+import { MEMBERSHIP_RANK, includedByTraining, includedLabel } from "@/lib/trainingIncludes";
 import floatingGameButton from "@/assets/community-icons/floating-game-button.png.asset.json";
 
 interface Product {
@@ -125,7 +126,6 @@ function priceLabel(p: Product) {
 
 const hexClip = { clipPath: "polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)" };
 
-import { MEMBERSHIP_RANK, includedByTraining, includedLabel } from "@/lib/trainingIncludes";
 
 interface FrontPageProps {
   shopMode?: boolean;
