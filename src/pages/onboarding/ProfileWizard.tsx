@@ -55,6 +55,7 @@ export default function ProfileWizard() {
   const [isPaidUser, setIsPaidUser] = useState(false);
   const [alreadyHasCreatorType, setAlreadyHasCreatorType] = useState(false);
   const [step1Tried, setStep1Tried] = useState(false);
+  const [placing, setPlacing] = useState(false);
 
   // Redirect away if not signed in
   useEffect(() => {
@@ -245,6 +246,18 @@ export default function ProfileWizard() {
       } as never).eq("user_id", user.id);
     }
     try { localStorage.removeItem(draftKey); } catch { /* ignore */ }
+    // The map position is looked up in the background after saving. Wait up
+    // to 10 seconds for it so the member lands with their pin already placed.
+    setPlacing(true);
+    const deadline = Date.now() + 10_000;
+    while (Date.now() < deadline) {
+      const { data: pos } = await supabase.from("profiles").select("location_lat, location_lng").eq("user_id", user.id).maybeSingle();
+      if (pos?.location_lat != null && pos?.location_lng != null) break;
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    setPlacing(false);
+    // Backup: the community page keeps re-checking for a short while.
+    try { sessionStorage.setItem("c13:just-finished-wizard", String(Date.now())); } catch { /* ignore */ }
     window.dispatchEvent(new Event("c13:creator-type-updated"));
     window.dispatchEvent(new Event("c13:community-profile-updated"));
     toast({ title: "Welcome to the community!" });
@@ -495,12 +508,15 @@ export default function ProfileWizard() {
               </div>
               )}
 
+              {placing && (
+                <p className="text-sm text-muted-foreground text-center" role="status">Placing you on the map...</p>
+              )}
               <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setStep(3)} disabled={submitting}>
+                <Button variant="outline" onClick={() => setStep(3)} disabled={submitting || placing}>
                   <ArrowLeft className="mr-1 h-4 w-4" /> Back
                 </Button>
-                <Button onClick={submit} disabled={submitting}>
-                  {submitting ? <Leaf className="h-4 w-4 animate-spin" /> : "Finish"}
+                <Button onClick={submit} disabled={submitting || placing}>
+                  {submitting || placing ? <Leaf className="h-4 w-4 animate-spin" /> : "Finish"}
                 </Button>
               </div>
             </div>
