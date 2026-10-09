@@ -245,6 +245,18 @@ export default function ProfileWizard() {
       } as never).eq("user_id", user.id);
     }
     try { localStorage.removeItem(draftKey); } catch { /* ignore */ }
+    // The map position is looked up in the background after saving. Wait up
+    // to 10 seconds for it so the member lands with their pin already placed.
+    setPlacing(true);
+    const deadline = Date.now() + 10_000;
+    while (Date.now() < deadline) {
+      const { data: pos } = await supabase.from("profiles").select("location_lat, location_lng").eq("user_id", user.id).maybeSingle();
+      if (pos?.location_lat != null && pos?.location_lng != null) break;
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    setPlacing(false);
+    // Backup: the community page keeps re-checking for a short while.
+    try { sessionStorage.setItem("c13:just-finished-wizard", String(Date.now())); } catch { /* ignore */ }
     window.dispatchEvent(new Event("c13:creator-type-updated"));
     window.dispatchEvent(new Event("c13:community-profile-updated"));
     toast({ title: "Welcome to the community!" });
