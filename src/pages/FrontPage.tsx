@@ -125,8 +125,7 @@ function priceLabel(p: Product) {
 
 const hexClip = { clipPath: "polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)" };
 
-// Membership order — must match supabase/functions/_shared/membership.ts.
-const MEMBERSHIP_RANK: Record<string, number> = { taster: 1, creator: 2, co_creator: 3 };
+import { MEMBERSHIP_RANK, includedByTraining, includedLabel } from "@/lib/trainingIncludes";
 
 interface FrontPageProps {
   shopMode?: boolean;
@@ -212,7 +211,7 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
     if (error || (data as any)?.error) {
       let body: any = data;
       try { if (!body && (error as any)?.context?.json) body = await (error as any).context.json(); } catch { /* ignore */ }
-      const held = body?.error === "already_held";
+      const held = body?.error === "already_held" || body?.error === "included_in_training";
       // A refused restricted product must never stay saved and keep resuming.
       if (held || body?.error === "restricted" || body?.error === "already_paid") forgetChoice();
       toast({
@@ -300,7 +299,8 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
     const rank = MEMBERSHIP_RANK[levelKey] ?? 0;
     const included = !heldLevels.has(levelKey) && rank > 0 &&
       Object.entries(MEMBERSHIP_RANK).some(([k, r]) => r > rank && heldLevels.has(k));
-    const isHeld = heldLevels.has(levelKey) || included;
+    const trainingLevel = heldLevels.has(levelKey) ? null : includedByTraining(levelKey, heldLevels);
+    const isHeld = heldLevels.has(levelKey) || included || trainingLevel !== null;
     // Upgrading: name the lower membership(s) that will end and be refunded.
     const replaced = isHeld ? [] : Object.entries(MEMBERSHIP_RANK)
       .filter(([k, r]) => r < rank && heldLevels.has(k))
@@ -344,7 +344,7 @@ export default function FrontPage({ shopMode = false }: FrontPageProps) {
               : copy.feature ? "bg-primary text-primary-foreground hover:opacity-90" : "bg-card text-primary hover:bg-muted"
           }`}
         >
-          {busyId === product.id ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : included ? "Included in your plan" : isHeld ? "You have this" : cta}
+          {busyId === product.id ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : trainingLevel !== null ? includedLabel(trainingLevel) : included ? "Included in your plan" : isHeld ? "You have this" : cta}
         </button>
       </div>
     );
