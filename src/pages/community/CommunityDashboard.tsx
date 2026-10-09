@@ -224,11 +224,17 @@ export default function CommunityDashboard() {
 
       const rows = ((matchesRes.data as unknown as MatchRow[] | null) ?? []);
       setMatches(rows);
-      // A typed location is placed on the map by a background lookup that
-      // finishes a few seconds after saving (e.g. right after the profile
-      // wizard's Finish). Re-read until the position arrives, without a reload.
+      // Backup only: the wizard already waits up to 10s for the map position.
+      // Re-check for ~30s if the member just finished the wizard, or is
+      // discoverable but has no position yet.
       const me = myProfileRes.data;
-      if (me?.location_label && (me.location_lat == null || me.location_lng == null) && coordRetries.current < 15) {
+      let justFinished = false;
+      try {
+        const ts = Number(sessionStorage.getItem("c13:just-finished-wizard") || 0);
+        justFinished = ts > 0 && Date.now() - ts < 60_000;
+      } catch { /* ignore */ }
+      const needsBackup = justFinished || !!me?.community_visible;
+      if (needsBackup && me?.location_label && (me.location_lat == null || me.location_lng == null) && coordRetries.current < 15) {
         coordRetries.current += 1;
         window.setTimeout(() => { if (!cancelled) setReloadKey((k) => k + 1); }, 2000);
       } else if (me?.location_lat != null) {

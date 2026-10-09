@@ -55,6 +55,7 @@ export default function ProfileWizard() {
   const [isPaidUser, setIsPaidUser] = useState(false);
   const [alreadyHasCreatorType, setAlreadyHasCreatorType] = useState(false);
   const [step1Tried, setStep1Tried] = useState(false);
+  const [placing, setPlacing] = useState(false);
 
   // Redirect away if not signed in
   useEffect(() => {
@@ -507,12 +508,15 @@ export default function ProfileWizard() {
               </div>
               )}
 
+              {placing && (
+                <p className="text-sm text-muted-foreground text-center" role="status">Placing you on the map...</p>
+              )}
               <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setStep(3)} disabled={submitting}>
+                <Button variant="outline" onClick={() => setStep(3)} disabled={submitting || placing}>
                   <ArrowLeft className="mr-1 h-4 w-4" /> Back
                 </Button>
-                <Button onClick={submit} disabled={submitting}>
-                  {submitting ? <Leaf className="h-4 w-4 animate-spin" /> : "Finish"}
+                <Button onClick={submit} disabled={submitting || placing}>
+                  {submitting || placing ? <Leaf className="h-4 w-4 animate-spin" /> : "Finish"}
                 </Button>
               </div>
             </div>
