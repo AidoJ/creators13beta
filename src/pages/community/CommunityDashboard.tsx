@@ -239,6 +239,7 @@ export default function CommunityDashboard() {
         window.setTimeout(() => { if (!cancelled) setReloadKey((k) => k + 1); }, 2000);
       } else if (me?.location_lat != null) {
         coordRetries.current = 0;
+        try { sessionStorage.removeItem("c13:just-finished-wizard"); } catch { /* ignore */ }
       }
       if (myProfileRes.data) {
         // Own marker never depends on having a Creator Type yet.
