@@ -42,8 +42,8 @@
 - [ ] Trainee role persists after payment 14 (Practitioner area gated by role) — ask A'Hara
 
 ## Round 5 final clean-up (preview only, Aido publishes)
-- [ ] 1 Training includes membership: shop/what-you-have "Included", server refusal, cancel+refund lower, continue Connect after
-- [ ] 2 Practitioner Invite tab hang (template load) + error/retry
-- [ ] 3 Map after profile wizard Finish: refetch
-- [ ] 4 Creator Type text rule (guess = card-game text; profiled = loaded w/ fallback)
-- [ ] 5 Getting Started icons + "You're all set" once then hide
+- [x] 1 Training includes membership: shop/what-you-have "Included", server refusal, cancel+refund lower, continue Connect after
+- [x] 2 Practitioner Invite tab hang (template load) + error/retry
+- [x] 3 Map after profile wizard Finish: refetch
+- [x] 4 Creator Type text rule (guess = card-game text; profiled = loaded w/ fallback)
+- [x] 5 Getting Started icons + "You're all set" once then hide

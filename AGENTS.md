@@ -12,3 +12,4 @@
 - Age from date of birth uses only `ageFromDob` (`src/lib/age.ts`, tested; backend copy `supabase/functions/_shared/age.ts`) — consent thresholds must agree everywhere.
 - Practitioner seals/trainee tag come only from `get_practitioner_badges` (active access entitlements, visible members only) via `src/lib/practitionerBadges.tsx` — never from editable profile fields.
 - Emailed links that may reach a new person (training payment, case-study/clinic invites) look up the issued email via `emailed_link_account` (`src/lib/emailedLink.ts`) and open locked sign-up or sign-in — never a bare sign-in wall.
+- Practitioner training includes memberships (L1 → Create, L2/L3 → Co-Create) via `TRAINING_COVERS`, mirrored in `src/lib/trainingIncludes.ts` and `supabase/functions/_shared/membership.ts`; checkout refuses included memberships and the training purchase replaces lower paid ones — one rule for shop, account and server.
