@@ -201,6 +201,7 @@ export default function CommunityDashboard() {
   }, [filterMode, filterValue]);
 
   const [reloadKey, setReloadKey] = useState(0);
+  const coordRetries = useRef(0);
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -223,6 +224,16 @@ export default function CommunityDashboard() {
 
       const rows = ((matchesRes.data as unknown as MatchRow[] | null) ?? []);
       setMatches(rows);
+      // A typed location is placed on the map by a background lookup that
+      // finishes a few seconds after saving (e.g. right after the profile
+      // wizard's Finish). Re-read until the position arrives, without a reload.
+      const me = myProfileRes.data;
+      if (me?.location_label && (me.location_lat == null || me.location_lng == null) && coordRetries.current < 15) {
+        coordRetries.current += 1;
+        window.setTimeout(() => { if (!cancelled) setReloadKey((k) => k + 1); }, 2000);
+      } else if (me?.location_lat != null) {
+        coordRetries.current = 0;
+      }
       if (myProfileRes.data) {
         // Own marker never depends on having a Creator Type yet.
         const mine = mineRes.data;

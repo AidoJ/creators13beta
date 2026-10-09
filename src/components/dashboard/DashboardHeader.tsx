@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Users, GraduationCap, Settings, Menu, X, UserCog } from "lucide-react";
+import { HelpCircle, LogOut, User, Users, GraduationCap, Settings, Menu, X, UserCog } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/13creators-logo.png";
@@ -137,6 +137,12 @@ export default function DashboardHeader({ email, onSignOut }: DashboardHeaderPro
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground hidden 2xl:inline max-w-48 truncate">{email}</span>
+          <Button variant="ghost" size="icon" className="min-h-11 min-w-11 xl:min-h-8 xl:min-w-8" aria-label="Getting started help" onClick={() => {
+            if (location.pathname === "/dashboard") window.dispatchEvent(new Event("c13:open-getting-started-help"));
+            else navigate("/dashboard?help=getting-started");
+          }}>
+            <HelpCircle className="h-4 w-4" />
+          </Button>
           <Button variant="ghost" size="sm" className="text-xs min-h-11 xl:min-h-8 px-2 sm:px-3" onClick={onSignOut}>
             <LogOut className="h-3.5 w-3.5 mr-1" /> Sign Out
           </Button>
