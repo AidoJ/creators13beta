@@ -6,6 +6,11 @@ export const MEMBERSHIP_RANK: Record<string, number> = { taster: 1, creator: 2, 
 
 export const rankOf = (levelKey: string | null | undefined) => (levelKey ? MEMBERSHIP_RANK[levelKey] ?? 0 : 0);
 
+// Practitioner training includes a membership while its access is active:
+// Level 1 includes Create (and Connect); Levels 2/3 include Co-Create (and below).
+// Keep in sync with TRAINING_COVERS in src/lib/trainingIncludes.ts.
+export const TRAINING_COVERS: Record<string, number> = { prac_l1_trainee: 2, prac_l2_trainee: 3, prac_l3_trainee: 3 };
+
 /**
  * Cancel every lower membership subscription the customer still has and refund
  * the unused part of its current period, pro rata by time:
@@ -16,7 +21,10 @@ export async function replaceLowerMemberships(
   stripe: Stripe,
   opts: { customerId: string; newSubscriptionId: string | null; newLevelKey: string; log: (m: string, d?: unknown) => void },
 ) {
-  const newRank = rankOf(opts.newLevelKey);
+  // Training covers memberships up to AND including its rank; a membership
+  // purchase only replaces strictly lower ones.
+  const cover = TRAINING_COVERS[opts.newLevelKey] ?? 0;
+  const newRank = cover ? cover + 1 : rankOf(opts.newLevelKey);
   if (!newRank) return [];
   const results: unknown[] = [];
   const subs = await stripe.subscriptions.list({ customer: opts.customerId, status: "all", limit: 100 });

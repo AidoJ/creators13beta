@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { grantEntitlement, levelKeyForTier } from "../_shared/entitlements.ts";
-import { MEMBERSHIP_RANK } from "../_shared/membership.ts";
+import { MEMBERSHIP_RANK, TRAINING_COVERS } from "../_shared/membership.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -168,6 +168,20 @@ serve(async (req) => {
         // A higher membership already includes this lower one.
         const myRank = MEMBERSHIP_RANK[levelKey] ?? 0;
         if (myRank) {
+          const coveringTraining = Object.keys(TRAINING_COVERS).filter((k) => TRAINING_COVERS[k] >= myRank);
+          const { data: trainingHeld } = await supabaseClient
+            .from("entitlements").select("id")
+            .eq("user_id", userId).in("level_key", coveringTraining).eq("status", "active")
+            .lte("starts_at", nowIso)
+            .or(`ends_at.is.null,ends_at.gt.${nowIso}`)
+            .limit(1).maybeSingle();
+          if (trainingHeld) {
+            logStep("Rejected: included in training", { userId, levelKey });
+            return new Response(JSON.stringify({
+              error: "included_in_training",
+              message: "Included in your training.",
+            }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
           const higher = Object.keys(MEMBERSHIP_RANK).filter((k) => MEMBERSHIP_RANK[k] > myRank);
           const { data: higherHeld } = await supabaseClient
             .from("entitlements").select("id")
