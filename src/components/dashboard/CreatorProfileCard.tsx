@@ -209,7 +209,7 @@ export default function CreatorProfileCard({ userId, selfPickOnly = false }: Cre
         }));
 
         if (revealedCount === 1 && placeholderCount === 0) {
-          return <TypePanel info={primaryInfo} glyphUrl={glyphUrls[primaryInfo.name.toLowerCase()]} />;
+          return <TypePanel info={primaryInfo} glyphUrl={glyphUrls[primaryInfo.name.toLowerCase()]} guess={selfSelected} />;
         }
 
         return (
@@ -247,7 +247,7 @@ export default function CreatorProfileCard({ userId, selfPickOnly = false }: Cre
 
             {typeInfos.map((info) => (
               <TabsContent key={info.name} value={info.name.toLowerCase()} className="mt-4">
-                <TypePanel info={info} glyphUrl={glyphUrls[info.name.toLowerCase()]} />
+                <TypePanel info={info} glyphUrl={glyphUrls[info.name.toLowerCase()]} guess={selfSelected} />
               </TabsContent>
             ))}
 
@@ -274,9 +274,14 @@ export default function CreatorProfileCard({ userId, selfPickOnly = false }: Cre
 }
 
 /* ─── Single type panel (reused per tab) ─── */
-function TypePanel({ info, glyphUrl }: { info: CreatorTypeInfo; glyphUrl?: string }) {
+function TypePanel({ info, glyphUrl, guess }: { info: CreatorTypeInfo; glyphUrl?: string; guess: boolean }) {
   const color = info.color_hex || "hsl(var(--primary))";
-  const content = info.profile_content;
+  // Rule: a self-picked guess always shows the card-game text only. An
+  // officially profiled type shows its loaded description where one exists,
+  // falling back to the card-game text where it doesn't.
+  const loaded = info.profile_content && Object.keys(info.profile_content).length > 0 ? info.profile_content : null;
+  const content = guess ? null : loaded;
+  const showCardText = guess || !loaded;
 
   return (
     <div className="space-y-5">
@@ -363,8 +368,8 @@ function TypePanel({ info, glyphUrl }: { info: CreatorTypeInfo; glyphUrl?: strin
         </p>
       )}
 
-      {/* Reference text stored for every Creator Type — shown verbatim. */}
-      {([
+      {/* Card-game reference text — shown verbatim. */}
+      {showCardText && ([
         ["Signature", info.signature],
         ["At the Table", info.at_the_table],
         ["Shadow Side", info.shadow_side],
