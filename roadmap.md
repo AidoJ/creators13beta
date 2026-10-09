@@ -40,3 +40,10 @@
 - [x] access_levels 'creator' display_name -> "Create"; trainer tool uses shared resolver; audit payments/CSV/emails
 - [x] Confirm application-only + role grant applies to all 4 training products (by product type, not level)
 - [ ] Trainee role persists after payment 14 (Practitioner area gated by role) — ask A'Hara
+
+## Round 5 final clean-up (preview only, Aido publishes)
+- [ ] 1 Training includes membership: shop/what-you-have "Included", server refusal, cancel+refund lower, continue Connect after
+- [ ] 2 Practitioner Invite tab hang (template load) + error/retry
+- [ ] 3 Map after profile wizard Finish: refetch
+- [ ] 4 Creator Type text rule (guess = card-game text; profiled = loaded w/ fallback)
+- [ ] 5 Getting Started icons + "You're all set" once then hide
