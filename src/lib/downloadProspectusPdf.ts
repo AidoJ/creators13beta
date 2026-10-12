@@ -40,11 +40,17 @@ export async function downloadProspectusPdf() {
         if (stage) stage.style.transform = "none";
         // Resolve container-query typography to px in the browser before
         // html2canvas parses it (also supports the structured fallback pages).
+        // Only the size-related properties that use container units are copied;
+        // copying every computed property (~350 per element) stalled iPad Safari.
+        const SIZE_PROPS = ["font-size", "line-height", "letter-spacing", "padding", "margin", "gap", "border-radius", "border-width", "width", "height", "top", "left"];
+        const view = clonedDocument.defaultView;
         for (const node of [clonedPage, ...Array.from(clonedPage.querySelectorAll<HTMLElement>("*"))]) {
-          const computed = clonedDocument.defaultView?.getComputedStyle(node);
+          const computed = view?.getComputedStyle(node);
           if (!computed) continue;
-          const values = Array.from(computed, (property) => [property, computed.getPropertyValue(property)]);
-          for (const [property, value] of values) node.style.setProperty(property, value);
+          for (const property of SIZE_PROPS) {
+            const value = computed.getPropertyValue(property);
+            if (value) node.style.setProperty(property, value);
+          }
         }
       },
     }), 40000, `Page ${index + 1}`);

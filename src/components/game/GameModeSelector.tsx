@@ -93,9 +93,9 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onCancel?.(); }}>
-      <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-2xl max-h-[90dvh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
-          <DialogTitle className="font-display text-2xl">Choose a Game Type</DialogTitle>
+          <DialogTitle className="font-display text-2xl pr-8">Choose a Game Type</DialogTitle>
           <DialogDescription>Pick how this match ends.</DialogDescription>
         </DialogHeader>
 
@@ -183,10 +183,10 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
 
         {/* Bot difficulty — applies to solo vs bot only */}
         <div className="rounded-lg border border-border bg-card/40 p-3 mt-2">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
             <Bot className="w-4 h-4 text-muted-foreground" />
             <Label className="text-sm font-semibold">Bot difficulty</Label>
-            <span className="text-[11px] text-muted-foreground ml-auto">Bot games don't earn Points or affect ELO.</span>
+            <span className="text-[11px] text-muted-foreground w-full sm:w-auto sm:ml-auto">Bot games don't earn Points or affect ELO.</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {(["easy", "medium", "hard"] as const).map((d) => {
@@ -201,7 +201,7 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
                   type="button"
                   onClick={() => setDifficulty(d)}
                   className={
-                    "min-h-11 rounded-md border p-2 text-left transition-all " +
+                    "min-h-11 min-w-0 rounded-md border p-2 text-left transition-all " +
                     (active ? "border-primary bg-primary/10 ring-2 ring-primary/40" : "border-border hover:border-primary/50 bg-background")
                   }
                 >
@@ -232,7 +232,7 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
           </span>
         </button>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
+        <DialogFooter className="flex-col sm:flex-row sm:flex-wrap gap-2 [&>button]:w-full sm:[&>button]:w-auto [&>button]:whitespace-normal [&>button]:h-auto [&>button]:min-h-10">
           {onCancel && (
             <Button variant="outline" onClick={onCancel}>Cancel</Button>
           )}

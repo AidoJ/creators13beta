@@ -142,7 +142,9 @@ export default function CreatorProfileCard({ userId, selfPickOnly = false }: Cre
   if (loading) return null;
 
   const primaryInfo = typeInfos[0];
-  if (selfPickOnly && (profile?.source !== "self_selected" || !primaryInfo)) return null;
+  // Outside the profile section: show whatever is assigned (official first,
+  // since an official assignment overwrites the guess), but no "coming soon" box.
+  if (selfPickOnly && !primaryInfo) return null;
 
   if (!profile?.primary_type || !primaryInfo) {
     return (

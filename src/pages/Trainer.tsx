@@ -152,6 +152,7 @@ export default function TrainerDashboard() {
           const types = cs.creator_types_identified.map(capitaliseTypeName);
           const { error: upsertErr } = await supabase.from("creator_type_profiles").upsert({
             user_id: cs.subject_user_id,
+            source: "case_study",
             primary_type: types[0] || null,
             secondary_type: types[1] || null,
             type_3: types[2] || null,
