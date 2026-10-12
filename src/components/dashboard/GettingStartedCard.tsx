@@ -35,8 +35,10 @@ const imageIcons: Record<string, string> = {
   game: gameIcon.url, calendar: eventsIcon.url, folder: projectsIcon.url,
   "folder-plus": projectsIcon.url, filter: filterIcon.url, users: connectIcon.url,
 };
-function StepIcon({ iconKey, className }: { iconKey: string; className: string }) {
-  const img = imageIcons[iconKey];
+// Game-related steps share the hexagon-star Game icon.
+const GAME_STEPS = new Set(["first_game", "meet_creators", "invite_friend"]);
+function StepIcon({ iconKey, stepKey, className }: { iconKey: string; stepKey?: string; className: string }) {
+  const img = stepKey && GAME_STEPS.has(stepKey) ? gameIcon.url : imageIcons[iconKey];
   if (img) return <img src={img} alt="" aria-hidden className={cn(className, "object-contain")} style={{ filter: "brightness(0) saturate(100%) invert(72%) sepia(43%) saturate(459%) hue-rotate(8deg) brightness(91%) contrast(86%)" }} />;
   const Icon = icons[iconKey as keyof typeof icons] ?? Sparkles;
   return <Icon className={className} />;
@@ -229,12 +231,12 @@ export default function GettingStartedCard({ userId, firstName, purchaseSuccess 
 
   if (loading || steps.length === 0) return null;
   if (retired) return <>{helpSheet}{tourDialog}</>;
-  if (collapsed && !allDone) {
+  if (collapsed) {
     return (
       <div className="flex items-center gap-3 border border-border bg-card px-4 py-3 rounded-lg">
         <Check className="h-4 w-4 text-primary" />
         <p className="flex-1 text-sm font-semibold">Getting started — {completed} of {steps.length} done</p>
-        <Button variant="ghost" size="sm" onClick={() => void setDismissed(false)}><ChevronDown className="h-4 w-4 mr-1" /> Show</Button>
+        <Button variant="outline" size="sm" className="hover:bg-muted hover:text-foreground" onClick={() => void setDismissed(false)}><ChevronDown className="h-4 w-4 mr-1" /> Show</Button>
         <Button variant="ghost" size="icon" aria-label="Getting started help" onClick={() => setHelpOpen(true)}><HelpCircle className="h-4 w-4" /></Button>
       </div>
     );
@@ -279,7 +281,7 @@ export default function GettingStartedCard({ userId, firstName, purchaseSuccess 
               );
             })}
           </div>
-          <Button variant="ghost" size="sm" onClick={() => void setDismissed(true)}><ChevronUp className="h-4 w-4 mr-1" /> Hide for now</Button>
+          <Button variant="outline" size="sm" className="hover:bg-muted hover:text-foreground" onClick={() => void setDismissed(true)}><ChevronUp className="h-4 w-4 mr-1" /> Hide for now</Button>
         </div>
       </Card>
 
