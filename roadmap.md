@@ -47,3 +47,11 @@
 - [x] 3 Map after profile wizard Finish: refetch
 - [x] 4 Creator Type text rule (guess = card-game text; profiled = loaded w/ fallback)
 - [x] 5 Getting Started icons + "You're all set" once then hide
+
+## Closing round 0838 (preview only)
+- [x] 1 Yo Bro marked official; dashboard verified (lotus/profile screen not yet captured)
+- [ ] 2 Four Creator Types end to end in Trainer Panel (disposable member)
+- [x] 3 Read-only audit
+- [ ] 4 Connections approve/decline/double-tap live check
+- [x] 5 Stored prospectus PDF: admin Generate, progress, retry, stale notice, member download
+- [ ] 6 iPad screenshots of new icons / Snow hexagon; lotus Snow file location
