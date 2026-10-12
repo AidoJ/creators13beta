@@ -121,8 +121,8 @@ export default function CreatorTypeAssignmentForm({ clientId, clientName }: Crea
       profiling_data: {
         ...existingProfilingData,
         notes,
-        type_3: types[2] || null,
-        type_4: types[3] || null,
+        type_3: ordered[2] || null,
+        type_4: ordered[3] || null,
       } as unknown as Record<string, never>,
     };
 
@@ -139,7 +139,7 @@ export default function CreatorTypeAssignmentForm({ clientId, clientName }: Crea
 
       // Full set assigned → notify the client their full Creator Profile is complete.
       const assigned = types.filter(Boolean);
-      if (assigned.length >= maxSlots) {
+      if (assigned.length >= tierSlots) {
         void supabase.functions.invoke("notify-full-profile", {
           body: { client_user_id: clientId, creator_types: assigned },
         });
