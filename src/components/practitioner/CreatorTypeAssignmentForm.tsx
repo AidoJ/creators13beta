@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Sparkles, Save, Loader2, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { TierKey } from "@/lib/plans";
+import { planNameSync, type TierKey } from "@/lib/plans";
 import { getCreatorTypeColor } from "@/lib/creatorTypes";
 
 interface CreatorType {
@@ -181,7 +181,7 @@ export default function CreatorTypeAssignmentForm({ clientId, clientName }: Crea
         <span className="text-xs text-muted-foreground">
           {clientTier ? (
             <>
-              <span className="capitalize font-semibold">{clientTier}</span> tier — {tierSlots} type{tierSlots > 1 ? "s" : ""}
+              <span className="font-semibold">{planNameSync(clientTier)}</span> — {tierSlots} type{tierSlots > 1 ? "s" : ""}
               {isCaseStudy && clientTier === "wren" && " (case study)"}
             </>
           ) : "No subscription"}
