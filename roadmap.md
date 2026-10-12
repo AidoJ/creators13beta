@@ -50,8 +50,8 @@
 
 ## Closing round 0838 (preview only)
 - [x] 1 Yo Bro marked official; dashboard verified (lotus/profile screen not yet captured)
-- [ ] 2 Four Creator Types end to end in Trainer Panel (disposable member)
+- [x] 2 Four Creator Types end to end in Trainer Panel (disposable member)
 - [x] 3 Read-only audit
-- [ ] 4 Connections approve/decline/double-tap live check
+- [x] 4 Connections approve/decline/double-tap live check
 - [x] 5 Stored prospectus PDF: admin Generate, progress, retry, stale notice, member download
-- [ ] 6 iPad screenshots of new icons / Snow hexagon; lotus Snow file location
+- [x] 6 iPad screenshots (picker, welcome panel, resource library not captured) of new icons / Snow hexagon; lotus Snow file location
