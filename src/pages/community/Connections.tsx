@@ -132,6 +132,7 @@ export default function Connections() {
   const [revokeFor, setRevokeFor] = useState<Approved | null>(null);
   const [withdrawFor, setWithdrawFor] = useState<Outgoing | null>(null);
   const [busy, setBusy] = useState(false);
+  const inFlight = useRef(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -174,9 +175,12 @@ export default function Connections() {
   };
 
   const handleApprove = async (id: string) => {
-    if (busy) return;
+    // A ref (not state) so a second tap in the same instant is ignored.
+    if (inFlight.current) return;
+    inFlight.current = true;
     setBusy(true);
     const { error } = await (supabase as any).rpc("approve_contact_request", { _request_id: id });
+    inFlight.current = false;
     setBusy(false);
     await refresh();
     if (error) {
