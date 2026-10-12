@@ -19,7 +19,7 @@ export default function Prospectus() {
   async function download() {
     setDownloading(true);
     try { await downloadProspectusPdf(); }
-    catch (e) { toast({ title: "Couldn't create the PDF", description: (e as Error).message || "Please try again.", variant: "destructive" }); }
+    catch { toast({ title: "The prospectus isn't ready yet", description: "Please try again later." }); }
     finally { setDownloading(false); }
   }
 
@@ -28,7 +28,7 @@ export default function Prospectus() {
       <div className="prospectus-toolbar print:hidden">
         <Link to="/#practitioner" className="text-sm text-muted-foreground hover:text-foreground">← Back</Link>
         <div className="flex gap-2 ml-auto">
-          <Button variant="outline" onClick={download} disabled={downloading || !rows?.length}>{downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}Download prospectus</Button>
+          <Button variant="outline" onClick={download} disabled={downloading}>{downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}Download prospectus</Button>
           <Button onClick={() => setApply(1)}>Apply for Level 1</Button>
         </div>
       </div>

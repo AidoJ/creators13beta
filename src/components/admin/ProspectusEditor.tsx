@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import ProspectusPages from "@/components/prospectus/ProspectusPages";
+import ProspectusPdfGenerator from "@/components/admin/ProspectusPdfGenerator";
 import { canvasBackground, ElementContent, elementStyle } from "@/components/prospectus/CanvasPage";
 import { useProspectusData } from "@/lib/useProspectusData";
 import {
@@ -302,7 +303,7 @@ export default function ProspectusEditor() {
       const { error } = await supabase.from("prospectus_sections" as any).update({ canvas_layout: clean as any }).eq("id", row.id);
       if (error) { failed = true; toast({ title: `Couldn't save ${PAGE_LABELS[p - 1]}`, description: error.message, variant: "destructive" }); }
     }
-    if (!failed) { setDirty(new Set()); await reload(); toast({ title: "Prospectus saved", description: "The public page and PDF now show your changes." }); }
+    if (!failed) { setDirty(new Set()); await reload(); toast({ title: "Prospectus saved", description: "The public page shows your changes. Regenerate the PDF to update the download." }); }
     setBusy(null);
   }
   async function resetPage() {
@@ -353,6 +354,7 @@ export default function ProspectusEditor() {
         <Button variant="outline" asChild><a href="/prospectus" target="_blank" rel="noreferrer">View public page</a></Button>
       </div>
     </div>
+    <ProspectusPdfGenerator />
 
     <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : close())}>
       <DialogContent className="max-w-none w-screen h-[100dvh] p-0 gap-0 rounded-none flex flex-col [&>button]:hidden">

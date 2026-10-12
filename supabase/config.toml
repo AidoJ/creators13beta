@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.geocode-location]
 verify_jwt = false
+
+[functions.prospectus-pdf]
+verify_jwt = false
