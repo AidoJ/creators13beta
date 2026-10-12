@@ -146,7 +146,9 @@ export default function Connections() {
       (supabase as any).rpc("get_outgoing_contact_requests"),
       (supabase as any).rpc("get_my_approved_contacts"),
     ]);
-    const ins = (inRes.data ?? []) as Incoming[];
+    // The incoming list returns every status; Pending shows only open requests
+    // (approved ones live in Approved, declined/revoked are history).
+    const ins = ((inRes.data ?? []) as Incoming[]).filter((r) => r.status === "pending");
     const outs = (outRes.data ?? []) as Outgoing[];
     const aps = (apRes.data ?? []) as Approved[];
     setIncoming(ins);
@@ -172,12 +174,19 @@ export default function Connections() {
   };
 
   const handleApprove = async (id: string) => {
+    if (busy) return;
     setBusy(true);
     const { error } = await (supabase as any).rpc("approve_contact_request", { _request_id: id });
     setBusy(false);
-    if (error) { toast({ title: "Couldn't approve", description: error.message, variant: "destructive" }); return; }
+    await refresh();
+    if (error) {
+      const stale = /not pending/i.test(error.message);
+      toast(stale
+        ? { title: "Already answered", description: "This request was already approved or declined. The list has been refreshed." }
+        : { title: "Couldn't approve", description: error.message, variant: "destructive" });
+      return;
+    }
     toast({ title: "Connection approved" });
-    void refresh();
   };
 
   const submitDecline = async () => {
