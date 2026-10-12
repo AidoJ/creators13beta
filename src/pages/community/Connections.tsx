@@ -3,7 +3,7 @@
  * Three tabs: Pending (incoming), Approved (with revealed channels), Sent (outgoing).
  * No in-app messaging — handles only.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Check, Copy, Leaf, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
