@@ -181,7 +181,7 @@ export default function CreatorTypeAssignmentForm({ clientId, clientName }: Crea
         <span className="text-xs text-muted-foreground">
           {clientTier ? (
             <>
-              <span className="capitalize font-semibold">{clientTier}</span> tier — {maxSlots} type{maxSlots > 1 ? "s" : ""}
+              <span className="capitalize font-semibold">{clientTier}</span> tier — {tierSlots} type{tierSlots > 1 ? "s" : ""}
               {isCaseStudy && clientTier === "wren" && " (case study)"}
             </>
           ) : "No subscription"}
