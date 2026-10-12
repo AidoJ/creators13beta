@@ -262,7 +262,7 @@ export default function GettingStartedCard({ userId, firstName, purchaseSuccess 
             </div>
           ) : next ? (
             <button type="button" disabled={!next.route} onClick={() => go(next)} className="w-full text-left bg-banner text-banner-foreground border border-banner-border rounded-lg p-4 sm:p-5 flex items-center gap-4 disabled:cursor-default">
-              <StepIcon iconKey={next.icon_key} className="h-7 w-7 shrink-0" />
+              <StepIcon iconKey={next.icon_key} stepKey={next.key} className="h-7 w-7 shrink-0" />
               <span className="flex-1 min-w-0"><span className="block text-xs uppercase font-semibold">Next step</span><span className="block font-display text-lg mt-0.5">{next.title}</span><span className="block text-sm opacity-80 mt-1">{next.description}</span></span>
               {next.route ? <span className="inline-flex items-center gap-1 text-sm font-semibold">{next.cta_label}<ArrowRight className="h-4 w-4" /></span> : <span className="text-sm font-semibold">Waiting</span>}
             </button>
@@ -273,7 +273,7 @@ export default function GettingStartedCard({ userId, firstName, purchaseSuccess 
               return (
                 <button key={step.key} type="button" disabled={!step.route} onClick={() => go(step)} className="w-full min-h-12 py-3 flex items-center gap-3 text-left disabled:cursor-default group">
                   <span className={cn("h-7 w-7 rounded-full border flex items-center justify-center shrink-0", step.done ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground")}>
-                    {step.done ? <Check className="h-4 w-4" /> : <StepIcon iconKey={step.icon_key} className="h-4 w-4" />}
+                    {step.done ? <Check className="h-4 w-4" /> : <StepIcon iconKey={step.icon_key} stepKey={step.key} className="h-4 w-4" />}
                   </span>
                   <span className={cn("flex-1 text-sm", step.done ? "text-muted-foreground line-through" : "text-foreground")}>{step.title}</span>
                   {step.route && <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary" />}
