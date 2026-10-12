@@ -232,7 +232,7 @@ export function GameModeSelector({ open, onCancel, onChoose, onChooseMultiplayer
           </span>
         </button>
 
-        <DialogFooter className="flex-col sm:flex-row sm:flex-wrap gap-2 [&>button]:w-full sm:[&>button]:w-auto">
+        <DialogFooter className="flex-col sm:flex-row sm:flex-wrap gap-2 [&>button]:w-full sm:[&>button]:w-auto [&>button]:whitespace-normal [&>button]:h-auto [&>button]:min-h-10">
           {onCancel && (
             <Button variant="outline" onClick={onCancel}>Cancel</Button>
           )}

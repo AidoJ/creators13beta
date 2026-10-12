@@ -86,7 +86,10 @@ export default function CreatorTypeAssignmentForm({ clientId, clientName }: Crea
     load();
   }, [clientId]);
 
-  const maxSlots = getMaxSlots(clientTier, isCaseStudy);
+  // Plan-based count is used only to decide when the "full profile" email goes.
+  // Certified profilers always see all four dropdowns (type 1 required, 2-4 optional).
+  const tierSlots = getMaxSlots(clientTier, isCaseStudy);
+  const maxSlots = 4;
 
   const handleSave = async () => {
     if (!types[0] || !user) return;
@@ -103,12 +106,16 @@ export default function CreatorTypeAssignmentForm({ clientId, clientName }: Crea
         ? (latestProfileData.profiling_data as Record<string, unknown>)
         : {};
 
+    // Keep the chosen order but close gaps (e.g. type 1 + type 3 → slots 1, 2).
+    const ordered = types.filter(Boolean);
     const payload = {
       user_id: clientId,
-      primary_type: types[0],
-      secondary_type: types[1] || null,
-      type_3: types[2] || null,
-      type_4: types[3] || null,
+      // Official assignment: replaces any self-guess in full colour everywhere.
+      source: "practitioner",
+      primary_type: ordered[0],
+      secondary_type: ordered[1] || null,
+      type_3: ordered[2] || null,
+      type_4: ordered[3] || null,
       profiled_by: user.id,
       profiled_at: new Date().toISOString(),
       profiling_data: {
