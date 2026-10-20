@@ -1,4 +1,7 @@
 # Roadmap
+## Approved Beta test-data cleanup
+- [ ] Remove only confirmed test applications and payment-ledger rows; preserve KEEP data, access and ambiguous rows.
+- [ ] Verify before/after counts and unchanged KEEP/shared fingerprints; report exceptions.
 ## Approved account cleanup 2b
 - [x] Recheck immutable manifest and KEEP identity-stable fields; pause and drain job 3.
 - [x] Remove exact approved rows, accounts and 120 files; preserve KEEP data and shared content.
