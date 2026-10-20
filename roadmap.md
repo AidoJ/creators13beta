@@ -1,4 +1,7 @@
 # Roadmap
+## Approved remaining Beta finance and test cleanup
+- [ ] Remove approved finance/test rows with protected-access exceptions and before/after fingerprints.
+- [ ] Remove only unowned files proven unreferenced; verify retained files and orphan checks; report.
 ## Approved Beta test-data cleanup
 - [x] Remove only confirmed test applications and payment-ledger rows; preserve KEEP data, access and ambiguous rows.
 - [x] Verify before/after counts and unchanged KEEP/shared fingerprints; report exceptions.
