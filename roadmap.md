@@ -1,4 +1,8 @@
 # Roadmap
+## Approved account cleanup 2b
+- [ ] Recheck immutable manifest and KEEP identity-stable fields; pause and drain job 3.
+- [ ] Remove exact approved rows, accounts and 120 files; preserve KEEP data and shared content.
+- [ ] Restore job 3 and verify retained files/matches, protected fingerprints and orphan references; report counts.
 ## Round 2 (A'Hara)
 - [x] 1 Banner colour #E9D694
 - [x] 2 Gold Play icon

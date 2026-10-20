@@ -15,3 +15,4 @@
 - Practitioner training includes memberships (L1 → Create, L2/L3 → Co-Create) via `TRAINING_COVERS`, mirrored in `src/lib/trainingIncludes.ts` and `supabase/functions/_shared/membership.ts`; checkout refuses included memberships and the training purchase replaces lower paid ones — one rule for shop, account and server.
 
 - Imported Creator Types (`import-creator-types`) always set `source` explicitly, map people by email and mark rows `profiling_data.imported_from_live`; never rely on the `source` column default — that default marks rows official.
+- One-off account cleanup uses an expiring admin-only function with an immutable exact allow-list, then removes the function after verification; this prevents arbitrary or repeated future deletion.
